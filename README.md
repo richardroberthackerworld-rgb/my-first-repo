@@ -2,7 +2,7 @@
 
 A simple starter project.
 
-## Instalation
+## Installation
 
 ```bash
 git clone https://github.com/richardroberthackerworld-rgb/my-first-repo.git
@@ -17,6 +17,6 @@ Open `hello.py` and run it:
 python hello.py
 ```
 
-## Licence
+## License
 
 MIT
