@@ -254,7 +254,7 @@ function makeVideoClip(m, inPoint = 0, dur = null) {
     id: uid(), mediaId: m.id, kind: m.kind, name: m.name,
     in: inPoint, dur: dur != null ? dur : (m.kind === 'image' ? 4 : (m.duration || 4)),
     speed: 1, volume: 1, grade: defaultGrade(), effect: 'none',
-    motion: 'none', humanFx: 'none', humanColor: '#00D4FF',
+    motion: 'none', humanFx: 'none', humanColor: '#00D4FF', fit: 'fit',
     transition: { type: 'none', dur: 0.8 },
     start: 0, transDur: 0,
   };
@@ -358,7 +358,9 @@ function drawClipInto(o, clip, t) {
   if (!sw || !sh) { o.restore(); return; }
 
   const lt = t - clip.start;
-  const s = Math.max(PW / sw, PH / sh);
+  // 'fit' shows the whole source at its original shape (bars if needed);
+  // 'fill' crops it to fill the frame
+  const s = (clip.fit === 'fill' ? Math.max : Math.min)(PW / sw, PH / sh);
   const dw = sw * s, dh = sh * s, dx = (PW - dw) / 2, dy = (PH - dh) / 2;
   const filter = buildFilter(clip.grade, clip.effect);
 
@@ -1842,6 +1844,9 @@ function buildTransitionTab(body, clip) {
 }
 
 function buildClipTab(body, clip) {
+  sectionLabel(body, '// Framing');
+  chipGrid(body, [{ name: 'Fit (whole image)', id: 'fit' }, { name: 'Fill (crop to frame)', id: 'fill' }],
+    op => (clip.fit || 'fit') === op.id, op => { clip.fit = op.id; }, true);
   if (clip.kind === 'video') {
     sliderRow(body, 'Speed', clip.speed, 0.25, 3, 0.05, v => v.toFixed(2) + '×', v => {
       const srcSpan = clip.dur * clip.speed;
