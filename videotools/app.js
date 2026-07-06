@@ -24,6 +24,42 @@ const FF_CDNS = [
 
 let _ffmpegInstance = null;
 let _ffmpegLoading = null;
+let _ffPreflightOk = false;
+
+/* FFmpeg boots inside a module worker created from a blob: URL that then
+   dynamic-imports the (blob) core. When that's blocked — file:// pages,
+   strict security modes, some privacy extensions — the worker dies silently
+   and load() hangs. Detect those cases up front with a real answer. */
+async function _ffPreflight() {
+  if (_ffPreflightOk) return;
+  if (typeof WebAssembly === 'undefined' || !WebAssembly.instantiate) {
+    throw new Error('This browser does not support WebAssembly, which the FFmpeg engine needs. Use a current version of Chrome, Edge, Firefox or Safari (and turn off strict/enhanced security mode for this site).');
+  }
+  const coreURL = URL.createObjectURL(new Blob(['export default 1;'], { type: 'text/javascript' }));
+  const workerURL = URL.createObjectURL(new Blob(
+    [`import(${JSON.stringify(coreURL)}).then(m => self.postMessage(m.default), e => self.postMessage('ERR:' + e.message));`],
+    { type: 'text/javascript' }
+  ));
+  try {
+    await new Promise((res, rej) => {
+      let w = null;
+      const t = setTimeout(() => { if (w) w.terminate(); rej(new Error('worker start timed out')); }, 8000);
+      try { w = new Worker(workerURL, { type: 'module' }); }
+      catch (e) { clearTimeout(t); rej(e); return; }
+      w.onmessage = ev => { clearTimeout(t); w.terminate(); ev.data === 1 ? res() : rej(new Error(String(ev.data))); };
+      w.onerror = ev => { clearTimeout(t); w.terminate(); rej(new Error((ev && ev.message) || 'worker failed to start')); };
+    });
+    _ffPreflightOk = true;
+  } catch (e) {
+    if (location.protocol === 'file:') {
+      throw new Error('This tool cannot run from a page opened as a local file (file://) — the browser blocks the background worker FFmpeg needs. Serve the folder over http(s) (any web host, or locally e.g. "npx serve") and open it from there.');
+    }
+    throw new Error('Your browser blocked the background worker FFmpeg runs in (' + (e && e.message) + '). This is usually a strict privacy/security extension or the browser’s enhanced security mode — allow this site, or try another browser.');
+  } finally {
+    URL.revokeObjectURL(coreURL);
+    URL.revokeObjectURL(workerURL);
+  }
+}
 
 /* Fetch with real progress + stall watchdog. Rejects if the connection sits
    idle (no new bytes) for `stallMs` — a hung CDN must fail, not hang the UI. */
@@ -55,12 +91,27 @@ async function _ffFetchBlob(url, onBytes, { firstByteMs = 20000, stallMs = 15000
   }
   clearTimeout(watchdog);
 
+  // a truncated file must never be cached — it would brick every later run
+  if (total && received !== total) {
+    throw new Error('download incomplete (' + received + ' of ' + total + ' bytes) for ' + url);
+  }
+
   const blob = new Blob(chunks);
   try {
     const cache = await caches.open(cacheName);
     await cache.put(url, new Response(blob, { headers: { 'Content-Length': String(blob.size) } }));
   } catch (_) { /* best-effort cache */ }
   return blob;
+}
+
+/* Drop this CDN's cached engine files — used when the engine fails to start
+   from them, so the retry re-downloads fresh copies instead of reusing a
+   possibly corrupt cache entry forever. */
+async function _ffPurgeCache(urls) {
+  try {
+    const cache = await caches.open('vidlab-ffmpeg-v1');
+    for (const u of urls) await cache.delete(u);
+  } catch (_) { /* Cache API unavailable */ }
 }
 
 /* Make sure the UMD libraries themselves exist. They are injected on demand
@@ -103,11 +154,15 @@ async function getFFmpeg(onStatus) {
   if (_ffmpegLoading) return _ffmpegLoading;
 
   _ffmpegLoading = (async () => {
+    await _ffPreflight();
     await _ffEnsureLibs();
     const { FFmpeg } = FFmpegWASM;
 
     let lastErr = null;
     for (const cdn of FF_CDNS) {
+      const urls = [`${cdn.core}/ffmpeg-core.js`, `${cdn.core}/ffmpeg-core.wasm`, `${cdn.ffmpeg}/814.ffmpeg.js`];
+      let ffmpeg = null;
+      let downloaded = false;
       try {
         const label = 'Downloading FFmpeg engine (~31 MB, cached after first run)';
         onStatus && onStatus(label + '…');
@@ -117,13 +172,14 @@ async function getFFmpeg(onStatus) {
           onStatus && onStatus(`${label} — ${mb}${tot} MB…`);
         };
         const [coreBlob, wasmBlob, workerBlob] = [
-          await _ffFetchBlob(`${cdn.core}/ffmpeg-core.js`),
-          await _ffFetchBlob(`${cdn.core}/ffmpeg-core.wasm`, prog),
+          await _ffFetchBlob(urls[0]),
+          await _ffFetchBlob(urls[1], prog),
           // worker chunk must be loaded via blob to allow cross-origin CDN use
-          await _ffFetchBlob(`${cdn.ffmpeg}/814.ffmpeg.js`),
+          await _ffFetchBlob(urls[2]),
         ];
+        downloaded = true;
         onStatus && onStatus('Starting FFmpeg engine…');
-        const ffmpeg = new FFmpeg();
+        ffmpeg = new FFmpeg();
         const loadP = ffmpeg.load({
           coreURL: URL.createObjectURL(new Blob([await coreBlob.arrayBuffer()], { type: 'text/javascript' })),
           wasmURL: URL.createObjectURL(new Blob([await wasmBlob.arrayBuffer()], { type: 'application/wasm' })),
@@ -131,17 +187,21 @@ async function getFFmpeg(onStatus) {
         });
         await Promise.race([
           loadP,
-          new Promise((_, rej) => setTimeout(() => rej(new Error('engine start timed out')), 45000)),
+          new Promise((_, rej) => setTimeout(() => rej(new Error('engine start timed out')), 60000)),
         ]);
         _ffmpegInstance = ffmpeg;
         return ffmpeg;
       } catch (err) {
         console.warn('[VidLab] FFmpeg load via ' + cdn.name + ' failed:', err);
         lastErr = err;
+        try { if (ffmpeg) ffmpeg.terminate(); } catch (_) { /* not started */ }
+        // files downloaded fine but the engine wouldn't start from them —
+        // don't trust the cached copies on the next attempt
+        if (downloaded) await _ffPurgeCache(urls);
       }
     }
     throw new Error(
-      'Could not download the FFmpeg engine (' + (lastErr && lastErr.message) + '). ' +
+      'Could not start the FFmpeg engine (' + (lastErr && lastErr.message) + '). ' +
       'Check your internet connection or disable ad/script blockers for this page, then click the button again to retry.'
     );
   })();
