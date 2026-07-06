@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Remove Watermark from Image Free — Smart Inpainting, No Upload | VidLab</title>
+  <meta name="description" content="Erase watermarks, logos and text from photos free. Brush over the watermark and smart inpainting reconstructs the area. 100% in your browser — no upload.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="logo" href="index.html"><span class="logo-mark">▶</span> Vid<b>Lab</b></a>
+      <nav class="nav-links">
+        <a href="index.html">All Tools</a>
+        <a href="watermark-remover.html">Video Watermark</a>
+        <a href="image-watermark.html" class="active">Image Watermark</a>
+        <a href="compressor.html">Compressor</a>
+        <a href="toolkit.html">Toolkit</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero" style="padding-bottom:24px">
+    <div class="hero-badge"><span class="dot"></span> SMART INPAINTING · NO UPLOAD · FREE</div>
+    <h1>Erase watermarks<br><span class="grad-text">from any image</span></h1>
+    <p class="hero-sub">Brush over a watermark, logo, text or any unwanted object and smart inpainting
+      reconstructs what's underneath. All in your browser — your photo never leaves your device.</p>
+  </section>
+
+  <main class="tool-wrap">
+
+    <div class="dropzone" id="dropzone">
+      <input type="file" id="fileInput" accept="image/*" hidden>
+      <div class="dz-icon">🖼️</div>
+      <h2>Upload an image</h2>
+      <p>Drag &amp; drop, paste (Ctrl+V), or</p>
+      <button class="btn btn-primary btn-lg" type="button">Choose Image</button>
+      <div class="dz-formats">
+        <span class="chip">JPG</span><span class="chip">PNG</span><span class="chip">WEBP</span><span class="chip">BMP</span>
+      </div>
+      <p class="dz-privacy">🔒 Private by design — processing happens locally in your browser.</p>
+    </div>
+
+    <div class="hidden" id="editor">
+      <div class="toolbar">
+        <button class="btn btn-ghost btn-sm" id="newFileBtn">↺ New image</button>
+        <span class="mono" id="fileMeta" style="font-size:12px;color:var(--dim)"></span>
+        <div class="toolbar-spacer"></div>
+        <button class="btn btn-ghost" id="undoBtn">↩ Undo</button>
+        <button class="btn btn-primary" id="processBtn" disabled>✨ Erase Marked Area</button>
+      </div>
+
+      <div class="workspace">
+        <div class="stage">
+          <div class="canvas-holder" id="canvasHolder">
+            <canvas id="imgCanvas"></canvas>
+            <canvas id="maskCanvas" class="overlay"></canvas>
+          </div>
+          <div class="stage-overlay hidden" id="overlay">
+            <div class="spinner"></div>
+            <div class="overlay-status" id="overlayStatus">Inpainting…</div>
+            <div class="overlay-bar"><div class="overlay-bar-fill" id="overlayBar"></div></div>
+            <div class="overlay-note">Reconstructing the marked area from its surroundings…</div>
+          </div>
+        </div>
+
+        <aside class="panel">
+          <h3>Brush</h3>
+          <div class="seg" id="brushSeg">
+            <button class="active" data-tool="brush">🖌️ Mark</button>
+            <button data-tool="erase">🧹 Unmark</button>
+          </div>
+          <div class="field">
+            <label>Brush size</label>
+            <div class="range-row">
+              <input type="range" id="brushSize" min="6" max="120" value="30">
+              <span class="range-val" id="brushVal">30</span>
+            </div>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="clearMaskBtn">Clear marks</button>
+
+          <h3>Quality</h3>
+          <div class="field">
+            <div class="range-row">
+              <input type="range" id="passes" min="1" max="3" value="2">
+              <span class="range-val" id="passesVal">Good</span>
+            </div>
+            <span class="hint">Higher = smoother fill, slower on large areas.</span>
+          </div>
+
+          <div class="notice">Works best on watermarks over smooth areas (sky, walls, water, bokeh). Mark slightly beyond the watermark's edges.</div>
+          <div class="notice warn">Only edit images you own or have permission to modify.</div>
+
+          <div class="ad-slot rect">Ad · 300×250</div>
+        </aside>
+      </div>
+
+      <div class="toolbar hidden" id="resultBar" style="margin-top:16px">
+        <button class="btn btn-ghost" id="compareBtn" title="Hold to see the original">👁 Hold to compare</button>
+        <div class="toolbar-spacer"></div>
+        <button class="btn btn-ghost" id="downloadJpgBtn">⬇ JPG</button>
+        <button class="btn btn-primary" id="downloadPngBtn">⬇ Download PNG</button>
+      </div>
+    </div>
+
+    <div class="ad-slot">Advertisement · 728×90</div>
+  </main>
+
+  <section class="section">
+    <div class="section-label">// How it works</div>
+    <h2>Content-aware fill, in your browser</h2>
+    <div class="steps">
+      <div class="step tool-card"><div class="step-num">STEP 01</div><h3>Mark the watermark</h3><p>Paint over the logo or text with the brush. Cover it fully — spill over the edges a little.</p></div>
+      <div class="step tool-card"><div class="step-num">STEP 02</div><h3>Pyramid inpainting</h3><p>The algorithm rebuilds the marked region from the surrounding pixels at multiple scales, so both color and soft gradients carry across.</p></div>
+      <div class="step tool-card"><div class="step-num">STEP 03</div><h3>Compare &amp; save</h3><p>Hold the compare button to flip between before and after, then download as PNG or JPG.</p></div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-bottom" style="border-top:none">
+      <span>© 2026 7BY.IN — VIDLAB</span>
+      <span><a href="index.html">ALL TOOLS</a> · <a href="../privacy-policy.html">PRIVACY</a></span>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+  <script>
+  (() => {
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    const editor = document.getElementById('editor');
+    const imgCanvas = document.getElementById('imgCanvas');
+    const maskCanvas = document.getElementById('maskCanvas');
+    const ictx = imgCanvas.getContext('2d', { willReadFrequently: true });
+    const mctx = maskCanvas.getContext('2d', { willReadFrequently: true });
+    const overlay = makeOverlay(
+      document.getElementById('overlay'),
+      document.getElementById('overlayStatus'),
+      document.getElementById('overlayBar')
+    );
+    const processBtn = document.getElementById('processBtn');
+
+    let W = 0, H = 0;
+    let originalData = null;     // ImageData as first loaded
+    let history = [];            // stack of ImageData for undo
+    let tool = 'brush';
+    let painting = false;
+    let lastPt = null;
+    let hasMask = false;
+    let fileName = 'image';
+
+    /* ---------- load ---------- */
+    setupDropzone(dropzone, fileInput, loadFile);
+    document.addEventListener('paste', e => {
+      const item = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith('image/'));
+      if (item) loadFile(item.getAsFile());
+    });
+
+    function loadFile(file) {
+      if (!file || !file.type.startsWith('image/')) { toastError('Please choose an image file.'); return; }
+      fileName = file.name || 'image';
+      const img = new Image();
+      img.onload = () => {
+        // cap at 2500px for memory / speed
+        const s = Math.min(1, 2500 / Math.max(img.naturalWidth, img.naturalHeight));
+        W = Math.round(img.naturalWidth * s);
+        H = Math.round(img.naturalHeight * s);
+        imgCanvas.width = W; imgCanvas.height = H;
+        maskCanvas.width = W; maskCanvas.height = H;
+        ictx.drawImage(img, 0, 0, W, H);
+        originalData = ictx.getImageData(0, 0, W, H);
+        history = [];
+        mctx.clearRect(0, 0, W, H);
+        hasMask = false;
+        dropzone.classList.add('hidden');
+        editor.classList.remove('hidden');
+        document.getElementById('resultBar').classList.add('hidden');
+        document.getElementById('fileMeta').textContent = `${fileName} · ${W}×${H}`;
+        updateBtns();
+      };
+      img.src = URL.createObjectURL(file);
+    }
+
+    document.getElementById('newFileBtn').addEventListener('click', () => {
+      editor.classList.add('hidden');
+      dropzone.classList.remove('hidden');
+      fileInput.value = '';
+    });
+
+    /* ---------- brush ---------- */
+    document.querySelectorAll('#brushSeg button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#brushSeg button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        tool = btn.dataset.tool;
+      });
+    });
+    document.getElementById('brushSize').addEventListener('input', e => {
+      document.getElementById('brushVal').textContent = e.target.value;
+    });
+    document.getElementById('passes').addEventListener('input', e => {
+      document.getElementById('passesVal').textContent = ['Fast', 'Good', 'Best'][e.target.value - 1];
+    });
+    document.getElementById('clearMaskBtn').addEventListener('click', () => {
+      mctx.clearRect(0, 0, W, H);
+      hasMask = false;
+      updateBtns();
+    });
+
+    function evtPt(e) {
+      const r = maskCanvas.getBoundingClientRect();
+      const cx = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+      const cy = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
+      return { x: cx * W / r.width, y: cy * H / r.height };
+    }
+    function stamp(a, b) {
+      const size = +document.getElementById('brushSize').value * (W / maskCanvas.getBoundingClientRect().width);
+      mctx.save();
+      mctx.globalCompositeOperation = tool === 'erase' ? 'destination-out' : 'source-over';
+      mctx.strokeStyle = mctx.fillStyle = 'rgba(255,0,110,0.55)';
+      mctx.lineWidth = size;
+      mctx.lineCap = 'round';
+      mctx.lineJoin = 'round';
+      mctx.beginPath();
+      mctx.moveTo(a.x, a.y);
+      mctx.lineTo(b.x, b.y);
+      mctx.stroke();
+      mctx.restore();
+      if (tool === 'brush') hasMask = true;
+    }
+    maskCanvas.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      painting = true;
+      lastPt = evtPt(e);
+      stamp(lastPt, lastPt);
+      updateBtns();
+    });
+    window.addEventListener('pointermove', e => {
+      if (!painting) return;
+      const p = evtPt(e);
+      stamp(lastPt, p);
+      lastPt = p;
+    });
+    window.addEventListener('pointerup', () => { painting = false; updateBtns(); });
+
+    function updateBtns() {
+      processBtn.disabled = !hasMask;
+      document.getElementById('undoBtn').disabled = history.length === 0;
+    }
+
+    /* ---------- inpainting: pyramid diffusion ---------- */
+    // Rebuilds masked pixels from surroundings: solve at a coarse scale first
+    // (captures color gradients), then refine at each finer scale.
+    function inpaint(imageData, maskArr, w, h, quality) {
+      const levels = [];
+      let cw = w, ch = h;
+      let cImg = new Float32Array(imageData.data.length);
+      for (let i = 0; i < imageData.data.length; i++) cImg[i] = imageData.data[i];
+      let cMask = maskArr;
+      levels.push({ w: cw, h: ch, img: cImg, mask: cMask });
+      while (Math.max(cw, ch) > 32) {
+        const nw = Math.max(16, cw >> 1), nh = Math.max(16, ch >> 1);
+        const prev = levels[levels.length - 1];
+        const nImg = new Float32Array(nw * nh * 4);
+        const nMask = new Uint8Array(nw * nh);
+        for (let y = 0; y < nh; y++) {
+          for (let x = 0; x < nw; x++) {
+            const sx = Math.min(prev.w - 1, x * 2), sy = Math.min(prev.h - 1, y * 2);
+            let r = 0, g = 0, b = 0, a = 0, n = 0, m = 0, mc = 0;
+            for (let dy = 0; dy < 2; dy++) for (let dx = 0; dx < 2; dx++) {
+              const px = Math.min(prev.w - 1, sx + dx), py = Math.min(prev.h - 1, sy + dy);
+              const pi = (py * prev.w + px);
+              mc++;
+              if (prev.mask[pi]) { m++; continue; }
+              const o = pi * 4;
+              r += prev.img[o]; g += prev.img[o + 1]; b += prev.img[o + 2]; a += prev.img[o + 3];
+              n++;
+            }
+            const oi = (y * nw + x);
+            if (n > 0) {
+              const o = oi * 4;
+              nImg[o] = r / n; nImg[o + 1] = g / n; nImg[o + 2] = b / n; nImg[o + 3] = a / n;
+              nMask[oi] = 0;
+            } else {
+              nMask[oi] = 1;
+            }
+          }
+        }
+        levels.push({ w: nw, h: nh, img: nImg, mask: nMask });
+        cw = nw; ch = nh;
+        if (nw <= 16 || nh <= 16) break;
+      }
+
+      const itersCoarse = 200 * quality;
+      const itersFine = 30 * quality;
+
+      // solve coarsest level by diffusion (unknowns start at 0 alpha-weighted)
+      diffuse(levels[levels.length - 1], itersCoarse);
+
+      // walk back up: upsample solved masked values, then diffuse to refine
+      for (let li = levels.length - 2; li >= 0; li--) {
+        const fine = levels[li], coarse = levels[li + 1];
+        for (let y = 0; y < fine.h; y++) {
+          for (let x = 0; x < fine.w; x++) {
+            const fi = y * fine.w + x;
+            if (!fine.mask[fi]) continue;
+            const cx = Math.min(coarse.w - 1, x >> 1), cy = Math.min(coarse.h - 1, y >> 1);
+            const co = (cy * coarse.w + cx) * 4, fo = fi * 4;
+            fine.img[fo] = coarse.img[co];
+            fine.img[fo + 1] = coarse.img[co + 1];
+            fine.img[fo + 2] = coarse.img[co + 2];
+            fine.img[fo + 3] = coarse.img[co + 3];
+          }
+        }
+        diffuse(fine, li === 0 ? itersFine * 2 : itersFine);
+      }
+
+      const out = levels[0].img;
+      for (let i = 0; i < imageData.data.length; i++) imageData.data[i] = out[i];
+      return imageData;
+    }
+
+    function diffuse(level, iters) {
+      const { w, h, img, mask } = level;
+      // collect masked pixel indices once
+      const idx = [];
+      for (let i = 0; i < mask.length; i++) if (mask[i]) idx.push(i);
+      if (!idx.length) return;
+      for (let it = 0; it < iters; it++) {
+        for (let k = 0; k < idx.length; k++) {
+          const i = idx[k];
+          const x = i % w, y = (i / w) | 0;
+          let r = 0, g = 0, b = 0, a = 0, n = 0;
+          if (x > 0) { const o = (i - 1) * 4; r += img[o]; g += img[o + 1]; b += img[o + 2]; a += img[o + 3]; n++; }
+          if (x < w - 1) { const o = (i + 1) * 4; r += img[o]; g += img[o + 1]; b += img[o + 2]; a += img[o + 3]; n++; }
+          if (y > 0) { const o = (i - w) * 4; r += img[o]; g += img[o + 1]; b += img[o + 2]; a += img[o + 3]; n++; }
+          if (y < h - 1) { const o = (i + w) * 4; r += img[o]; g += img[o + 1]; b += img[o + 2]; a += img[o + 3]; n++; }
+          const o = i * 4;
+          img[o] = r / n; img[o + 1] = g / n; img[o + 2] = b / n; img[o + 3] = a / n;
+        }
+      }
+    }
+
+    /* ---------- process ---------- */
+    processBtn.addEventListener('click', () => {
+      if (!hasMask) return;
+      overlay.show('Inpainting…');
+      overlay.progress(0.15);
+      // let the overlay paint before the heavy sync work
+      setTimeout(() => {
+        try {
+          const quality = +document.getElementById('passes').value;
+          const maskData = mctx.getImageData(0, 0, W, H).data;
+          const maskArr = new Uint8Array(W * H);
+          let count = 0;
+          for (let i = 0; i < W * H; i++) {
+            if (maskData[i * 4 + 3] > 40) { maskArr[i] = 1; count++; }
+          }
+          if (!count) { overlay.hide(); return; }
+
+          history.push(ictx.getImageData(0, 0, W, H));
+          const imgData = ictx.getImageData(0, 0, W, H);
+          overlay.progress(0.4);
+          inpaint(imgData, maskArr, W, H, quality);
+          ictx.putImageData(imgData, 0, 0);
+          overlay.progress(1);
+
+          mctx.clearRect(0, 0, W, H);
+          hasMask = false;
+          document.getElementById('resultBar').classList.remove('hidden');
+          updateBtns();
+        } catch (err) {
+          console.error(err);
+          toastError('Inpainting failed: ' + (err.message || err));
+        } finally {
+          overlay.hide();
+        }
+      }, 60);
+    });
+
+    document.getElementById('undoBtn').addEventListener('click', () => {
+      const prev = history.pop();
+      if (prev) ictx.putImageData(prev, 0, 0);
+      updateBtns();
+    });
+
+    /* ---------- compare + download ---------- */
+    const compareBtn = document.getElementById('compareBtn');
+    let compareSnapshot = null;
+    function showOriginal(on) {
+      if (on) {
+        compareSnapshot = ictx.getImageData(0, 0, W, H);
+        ictx.putImageData(originalData, 0, 0);
+      } else if (compareSnapshot) {
+        ictx.putImageData(compareSnapshot, 0, 0);
+        compareSnapshot = null;
+      }
+    }
+    compareBtn.addEventListener('pointerdown', () => showOriginal(true));
+    window.addEventListener('pointerup', () => showOriginal(false));
+
+    function download(type, ext, q) {
+      imgCanvas.toBlob(blob => downloadBlob(blob, baseName(fileName) + '_clean.' + ext), type, q);
+    }
+    document.getElementById('downloadPngBtn').addEventListener('click', () => download('image/png', 'png'));
+    document.getElementById('downloadJpgBtn').addEventListener('click', () => download('image/jpeg', 'jpg', 0.92));
+  })();
+  </script>
+</body>
+</html>

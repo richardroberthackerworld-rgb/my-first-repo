@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Editor — Timeline, Transitions, Text Effects &amp; Color Grading | VidLab</title>
+  <meta name="description" content="Free CapCut-style video editor in your browser. Multi-track timeline, transitions, animated text effects, visual effects and full color grading. No upload, no watermark.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="editor.css">
+</head>
+<body>
+
+  <!-- ============ TOP BAR ============ -->
+  <header class="topbar">
+    <a class="logo" href="../index.html"><span class="logo-mark">▶</span> Vid<b>Lab</b> <span class="logo-sub">Editor</span></a>
+    <input id="projectName" class="project-name" value="Untitled project" spellcheck="false">
+    <div class="topbar-right">
+      <label class="aspect-label mono">CANVAS</label>
+      <select id="aspectSelect" class="select">
+        <option value="16:9" selected>16:9 · Landscape</option>
+        <option value="9:16">9:16 · Portrait</option>
+        <option value="1:1">1:1 · Square</option>
+      </select>
+      <label class="aspect-label mono">QUALITY</label>
+      <select id="qualitySelect" class="select">
+        <option value="720" selected>720p</option>
+        <option value="1080">1080p · FHD</option>
+        <option value="1440">1440p · 2K</option>
+        <option value="2160">2160p · 4K</option>
+      </select>
+      <button id="exportBtn" class="btn btn-primary">⬇ Export</button>
+    </div>
+  </header>
+
+  <!-- ============ WORKSPACE ============ -->
+  <main class="workspace">
+
+    <!-- Left panel: media + text -->
+    <aside class="panel panel-left">
+      <div class="panel-tabs">
+        <button class="ptab active" data-tab="media">Media</button>
+        <button class="ptab" data-tab="text">Text</button>
+        <button class="ptab" data-tab="gfx">FX</button>
+        <button class="ptab" data-tab="audio">Audio</button>
+      </div>
+
+      <div class="ptab-page" id="page-media">
+        <div class="dropzone" id="dropzone">
+          <div class="dz-icon">🎬</div>
+          <div class="dz-title">Import media</div>
+          <div class="dz-sub">Drop files or click to browse</div>
+          <div class="dz-formats mono">MP4 · WEBM · MOV · JPG · PNG · MP3 · WAV</div>
+          <input type="file" id="fileInput" multiple accept="video/*,image/*,audio/*" hidden>
+        </div>
+        <div class="media-grid" id="mediaGrid"></div>
+      </div>
+
+      <div class="ptab-page hidden" id="page-text">
+        <div class="panel-hint">Click a style to add text at the playhead.</div>
+        <div class="text-presets" id="textPresets"></div>
+      </div>
+
+      <div class="ptab-page hidden" id="page-gfx">
+        <div class="panel-hint">Motion graphics overlays — click to add at the playhead, then tune position, colors and speed in the inspector.</div>
+        <div class="gfx-presets" id="gfxPresets"></div>
+      </div>
+
+      <div class="ptab-page hidden" id="page-audio">
+        <div class="panel-hint">Audio files you import appear here. Click to add to the audio track at the playhead.</div>
+        <div class="media-grid" id="audioGrid"></div>
+      </div>
+    </aside>
+
+    <!-- Center: preview -->
+    <section class="stage">
+      <div class="preview-wrap" id="previewWrap">
+        <canvas id="preview" width="1280" height="720"></canvas>
+      </div>
+      <div class="transport">
+        <button class="tbtn" id="toStartBtn" title="Go to start (Home)">⏮</button>
+        <button class="tbtn tbtn-play" id="playBtn" title="Play / Pause (Space)">▶</button>
+        <button class="tbtn" id="toEndBtn" title="Go to end (End)">⏭</button>
+        <div class="timecode mono"><span id="tcCur">00:00.0</span> <span class="tc-sep">/</span> <span id="tcTotal">00:00.0</span></div>
+      </div>
+    </section>
+
+    <!-- Right panel: inspector -->
+    <aside class="panel panel-right" id="inspector">
+      <div class="inspector-empty">
+        <div class="ie-icon">✦</div>
+        <p>Select a clip on the timeline to edit its <b>color grade</b>, <b>effects</b>, <b>transition</b>, speed and volume.</p>
+      </div>
+    </aside>
+  </main>
+
+  <!-- ============ TIMELINE ============ -->
+  <footer class="timeline-area">
+    <div class="tl-toolbar">
+      <button class="tlbtn" id="splitBtn" title="Split clip at playhead (S)">✂ Split</button>
+      <button class="tlbtn" id="dupBtn" title="Duplicate selected clip (D)">⧉ Duplicate</button>
+      <button class="tlbtn tlbtn-danger" id="delBtn" title="Delete selected (Del)">🗑 Delete</button>
+      <div class="tl-spacer"></div>
+      <span class="mono tl-zoom-label">ZOOM</span>
+      <input type="range" id="zoomSlider" min="20" max="220" value="70" class="zoom-slider">
+    </div>
+    <div class="tl-scroll" id="tlScroll">
+      <div class="tl-inner" id="tlInner">
+        <canvas class="tl-ruler" id="ruler" height="26"></canvas>
+        <div class="tl-track" id="trackText"><span class="track-tag mono">T</span></div>
+        <div class="tl-track" id="trackGfx"><span class="track-tag mono">G</span></div>
+        <div class="tl-track tl-track-video" id="trackVideo"><span class="track-tag mono">V</span></div>
+        <div class="tl-track" id="trackAudio"><span class="track-tag mono">A</span></div>
+        <div class="playhead" id="playhead"><div class="playhead-cap"></div></div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ============ EXPORT MODAL ============ -->
+  <div class="modal-backdrop hidden" id="exportModal">
+    <div class="modal">
+      <h3 id="exportTitle">Exporting video…</h3>
+      <p class="modal-sub" id="exportSub">Playing through your timeline in real time and recording it. Keep this tab focused.</p>
+      <div class="progress-track"><div class="progress-fill" id="exportProgress"></div></div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="exportCancel">Cancel</button>
+        <a class="btn btn-primary hidden" id="exportDownload" download="vidlab-export.webm">⬇ Download WebM</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="editor.js"></script>
+</body>
+</html>

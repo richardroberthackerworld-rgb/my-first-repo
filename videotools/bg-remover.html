@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Remove Video Background Free — AI, No Green Screen Needed | VidLab</title>
+  <meta name="description" content="Remove the background from any video with AI — free, in your browser. Replace it with a color, green screen, blur, or your own image. No upload, no sign-up.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="logo" href="index.html"><span class="logo-mark">▶</span> Vid<b>Lab</b></a>
+      <nav class="nav-links">
+        <a href="index.html">All Tools</a>
+        <a href="watermark-remover.html">Watermark Remover</a>
+        <a href="compressor.html">Compressor</a>
+        <a href="bg-remover.html" class="active">BG Remover</a>
+        <a href="toolkit.html">Toolkit</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero" style="padding-bottom:24px">
+    <div class="hero-badge"><span class="dot"></span> ON-DEVICE AI · NO GREEN SCREEN · FREE</div>
+    <h1>Remove video backgrounds<br><span class="grad-text">with AI</span></h1>
+    <p class="hero-sub">AI segmentation separates you from your background in real time — no green screen
+      needed. Replace it with a solid color, a virtual green screen, a blur, or your own image.</p>
+  </section>
+
+  <main class="tool-wrap">
+
+    <div class="dropzone" id="dropzone">
+      <input type="file" id="fileInput" accept="video/*" hidden>
+      <div class="dz-icon">👤</div>
+      <h2>Upload a video with a person in it</h2>
+      <p>Works best on talking-head, selfie and webcam-style videos. Drag &amp; drop or</p>
+      <button class="btn btn-primary btn-lg" type="button">Choose Video</button>
+      <div class="dz-formats">
+        <span class="chip">MP4</span><span class="chip">MOV</span><span class="chip">WEBM</span>
+      </div>
+      <p class="dz-privacy">🔒 Private by design — the AI model runs on your device.</p>
+    </div>
+
+    <div class="hidden" id="editor">
+      <div class="toolbar">
+        <button class="btn btn-ghost btn-sm" id="newFileBtn">↺ New video</button>
+        <span class="mono" id="fileMeta" style="font-size:12px;color:var(--dim)"></span>
+        <div class="toolbar-spacer"></div>
+        <button class="btn btn-ghost" id="previewBtn">▶ Live Preview</button>
+        <button class="btn btn-primary" id="exportBtn">🎬 Export Video</button>
+      </div>
+
+      <div class="workspace">
+        <div class="stage">
+          <div class="checkerboard">
+            <canvas id="outCanvas"></canvas>
+          </div>
+          <div class="stage-overlay hidden" id="overlay">
+            <div class="spinner"></div>
+            <div class="overlay-status" id="overlayStatus">Loading…</div>
+            <div class="overlay-bar"><div class="overlay-bar-fill" id="overlayBar"></div></div>
+            <div class="overlay-note" id="overlayNote">Export plays the video once while recording — keep this tab visible until it finishes.</div>
+          </div>
+        </div>
+
+        <aside class="panel">
+          <h3>New Background</h3>
+          <div class="seg" id="bgSeg">
+            <button class="active" data-bg="color">🎨 Color</button>
+            <button data-bg="image">🖼️ Image</button>
+            <button data-bg="blur">🌫️ Blur</button>
+          </div>
+
+          <div class="field" id="colorField">
+            <label>Pick a color</label>
+            <div class="swatches">
+              <div class="swatch active" data-color="#00B140" style="background:#00B140" title="Green screen"></div>
+              <div class="swatch" data-color="#0047FF" style="background:#0047FF" title="Blue screen"></div>
+              <div class="swatch" data-color="#FFFFFF" style="background:#FFFFFF" title="White"></div>
+              <div class="swatch" data-color="#14141F" style="background:#14141F" title="Black"></div>
+              <div class="swatch" data-color="#FF006E" style="background:#FF006E" title="Magenta"></div>
+              <input type="color" id="customColor" value="#00B140" style="width:30px;height:30px;border:none;background:none;cursor:pointer" title="Custom color">
+            </div>
+            <span class="hint">Green (#00B140) gives you a chroma-key-ready clip for any editor.</span>
+          </div>
+
+          <div class="field hidden" id="imageField">
+            <label>Background image</label>
+            <input type="file" id="bgImageInput" accept="image/*">
+            <span class="hint">The image is scaled to fill the frame.</span>
+          </div>
+
+          <div class="field hidden" id="blurField">
+            <label>Blur strength</label>
+            <div class="range-row">
+              <input type="range" id="blurAmt" min="4" max="30" value="14">
+              <span class="range-val" id="blurVal">14px</span>
+            </div>
+          </div>
+
+          <h3>Edge Smoothing</h3>
+          <div class="range-row">
+            <input type="range" id="edgeSmooth" min="0" max="8" value="3">
+            <span class="range-val" id="edgeVal">3px</span>
+          </div>
+
+          <div class="notice">Output is saved as WebM (VP9/VP8) with the original audio. Works best on videos with one clearly visible person.</div>
+
+          <div class="ad-slot rect">Ad · 300×250</div>
+        </aside>
+      </div>
+
+      <div class="hidden" id="resultWrap" style="margin-top:24px">
+        <div class="stage">
+          <div class="section-label">// Result</div>
+          <video id="resultVideo" controls style="max-height:60vh"></video>
+          <div class="toolbar" style="margin-top:14px;margin-bottom:0">
+            <div class="result-stats">
+              <span class="stat">Output <b id="statOut">—</b></span>
+            </div>
+            <div class="toolbar-spacer"></div>
+            <button class="btn btn-primary" id="downloadBtn">⬇ Download WebM</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ad-slot">Advertisement · 728×90</div>
+  </main>
+
+  <section class="section">
+    <div class="section-label">// Tips</div>
+    <h2>Get the cleanest cut</h2>
+    <div class="steps">
+      <div class="step tool-card"><div class="step-num">TIP 01</div><h3>Good lighting</h3><p>Even, front-facing light gives the AI clean edges around hair and shoulders.</p></div>
+      <div class="step tool-card"><div class="step-num">TIP 02</div><h3>Contrast helps</h3><p>Stand out from your background — avoid wearing the same color as the wall behind you.</p></div>
+      <div class="step tool-card"><div class="step-num">TIP 03</div><h3>Green screen export</h3><p>Export with the green background, then chroma-key it in CapCut, Premiere or DaVinci for full transparency.</p></div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-bottom" style="border-top:none">
+      <span>© 2026 7BY.IN — VIDLAB</span>
+      <span><a href="index.html">ALL TOOLS</a> · <a href="../privacy-policy.html">PRIVACY</a></span>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+  <script>
+  (() => {
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    const editor = document.getElementById('editor');
+    const outCanvas = document.getElementById('outCanvas');
+    const ctx = outCanvas.getContext('2d');
+    const overlay = makeOverlay(
+      document.getElementById('overlay'),
+      document.getElementById('overlayStatus'),
+      document.getElementById('overlayBar')
+    );
+
+    const video = document.createElement('video');
+    video.playsInline = true;
+    video.crossOrigin = 'anonymous';
+
+    let currentFile = null;
+    let vw = 0, vh = 0;
+    let bgMode = 'color';
+    let bgColor = '#00B140';
+    let bgImage = null;
+    let segmenter = null;
+    let segReady = null;
+    let running = false;       // frame loop active
+    let recorder = null;
+    let resultBlob = null;
+    let lastResults = null;
+
+    /* ---------- segmentation ---------- */
+    /* Two independent CDNs; if the first stalls or is blocked, the loader
+       falls back to the second automatically (same pattern as FF_CDNS in
+       app.js). Version-pinned so the library script and the wasm/model
+       assets it fetches always match across CDNs. */
+    const MP_VER = '0.1.1675465747';
+    const MP_CDNS = [
+      { name: 'jsDelivr', base: 'https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation@' + MP_VER },
+      { name: 'unpkg',    base: 'https://unpkg.com/@mediapipe/selfie_segmentation@' + MP_VER },
+    ];
+    const MP_SCRIPT_TIMEOUT_MS = 20000;
+    const MP_INIT_TIMEOUT_MS = 30000;
+
+    function injectScript(src, timeoutMs) {
+      return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        const t = setTimeout(() => { s.remove(); reject(new Error('script timed out: ' + src)); }, timeoutMs);
+        s.src = src;
+        s.onload = () => { clearTimeout(t); resolve(); };
+        s.onerror = () => { clearTimeout(t); s.remove(); reject(new Error('script failed: ' + src)); };
+        document.head.appendChild(s);
+      });
+    }
+
+    let segLibFrom = null; // CDN that successfully served the library script
+    async function loadSegLib() {
+      if (window.SelfieSegmentation) return;
+      let lastErr = null;
+      for (const cdn of MP_CDNS) {
+        try {
+          await injectScript(cdn.base + '/selfie_segmentation.js', MP_SCRIPT_TIMEOUT_MS);
+          if (window.SelfieSegmentation) { segLibFrom = cdn; return; }
+        } catch (e) {
+          console.warn('[VidLab] SelfieSegmentation library via ' + cdn.name + ' failed:', e);
+          lastErr = e;
+        }
+      }
+      throw lastErr || new Error('SelfieSegmentation library could not be loaded from any CDN');
+    }
+
+    function getSegmenter() {
+      if (segmenter) return Promise.resolve(segmenter);
+      if (segReady) return segReady;
+      segReady = (async () => {
+        let lastErr = null;
+        try {
+          await loadSegLib();
+          // try the wasm/model assets from the CDN that served the script first
+          const cdns = segLibFrom ? [segLibFrom, ...MP_CDNS.filter(c => c !== segLibFrom)] : MP_CDNS;
+          for (const cdn of cdns) {
+            try {
+              const ss = new SelfieSegmentation({ locateFile: f => `${cdn.base}/${f}` });
+              ss.setOptions({ modelSelection: 1 });
+              ss.onResults(r => { lastResults = r; drawComposite(r); });
+              // initialize() downloads the wasm + model; race it against a
+              // watchdog so a stalled CDN fails over instead of hanging the UI
+              await Promise.race([
+                ss.initialize(),
+                new Promise((_, rej) => setTimeout(() =>
+                  rej(new Error('model download timed out')), MP_INIT_TIMEOUT_MS)),
+              ]);
+              segmenter = ss;
+              return ss;
+            } catch (e) {
+              console.warn('[VidLab] segmentation model via ' + cdn.name + ' failed:', e);
+              lastErr = e;
+            }
+          }
+        } catch (e) { lastErr = e; }
+        throw new Error(
+          'Could not load the AI model (' + (lastErr && lastErr.message) + '). ' +
+          'Check your internet connection or disable ad/script blockers for this page, then re-select your video to retry.'
+        );
+      })();
+      // a failed attempt must not poison future retries
+      segReady.catch(() => { segReady = null; });
+      return segReady;
+    }
+
+    function drawComposite(results) {
+      const smooth = +document.getElementById('edgeSmooth').value;
+      ctx.save();
+      ctx.clearRect(0, 0, vw, vh);
+
+      // 1. draw mask (person = opaque)
+      ctx.filter = smooth > 0 ? `blur(${smooth}px)` : 'none';
+      ctx.drawImage(results.segmentationMask, 0, 0, vw, vh);
+      ctx.filter = 'none';
+
+      // 2. keep person pixels from the frame
+      ctx.globalCompositeOperation = 'source-in';
+      ctx.drawImage(results.image, 0, 0, vw, vh);
+
+      // 3. paint the new background behind
+      ctx.globalCompositeOperation = 'destination-over';
+      if (bgMode === 'color') {
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, vw, vh);
+      } else if (bgMode === 'image' && bgImage) {
+        drawCover(bgImage, bgImage.naturalWidth, bgImage.naturalHeight);
+      } else if (bgMode === 'blur') {
+        const amt = +document.getElementById('blurAmt').value;
+        ctx.filter = `blur(${amt}px)`;
+        // overscan slightly so blurred edges don't show transparent fringes
+        ctx.drawImage(results.image, -amt, -amt, vw + amt * 2, vh + amt * 2);
+        ctx.filter = 'none';
+      } else {
+        ctx.fillStyle = '#00B140';
+        ctx.fillRect(0, 0, vw, vh);
+      }
+      ctx.restore();
+    }
+
+    function drawCover(img, iw, ih) {
+      const s = Math.max(vw / iw, vh / ih);
+      const w = iw * s, h = ih * s;
+      ctx.drawImage(img, (vw - w) / 2, (vh - h) / 2, w, h);
+    }
+
+    async function frameLoop() {
+      while (running && !video.paused && !video.ended) {
+        try {
+          await segmenter.send({ image: video });
+        } catch (e) {
+          console.error(e);
+          break;
+        }
+        await new Promise(r => requestAnimationFrame(r));
+      }
+      running = false;
+    }
+
+    /* ---------- file load ---------- */
+    setupDropzone(dropzone, fileInput, file => {
+      if (!file.type.startsWith('video/') && !/\.(mp4|mov|webm|m4v)$/i.test(file.name)) {
+        toastError('Please choose a video file.');
+        return;
+      }
+      currentFile = file;
+      resultBlob = null;
+      document.getElementById('resultWrap').classList.add('hidden');
+      video.src = URL.createObjectURL(file);
+      video.addEventListener('loadedmetadata', async () => {
+        vw = video.videoWidth; vh = video.videoHeight;
+        outCanvas.width = vw; outCanvas.height = vh;
+        document.getElementById('fileMeta').textContent =
+          `${file.name} · ${vw}×${vh} · ${formatTime(video.duration)} · ${formatBytes(file.size)}`;
+        dropzone.classList.add('hidden');
+        editor.classList.remove('hidden');
+        // show first processed frame
+        overlay.show('Loading AI model (~2 MB, cached after first run)…');
+        try {
+          await getSegmenter();
+          video.currentTime = 0.01;
+          await new Promise(r => video.addEventListener('seeked', r, { once: true }));
+          await segmenter.send({ image: video });
+        } catch (e) {
+          console.error(e);
+          toastError(e && e.message ? e.message : 'Could not load the AI model. Check your internet connection and reload.');
+        }
+        overlay.hide();
+      }, { once: true });
+    });
+
+    document.getElementById('newFileBtn').addEventListener('click', () => {
+      running = false;
+      video.pause();
+      editor.classList.add('hidden');
+      dropzone.classList.remove('hidden');
+      fileInput.value = '';
+    });
+
+    /* ---------- controls ---------- */
+    document.querySelectorAll('#bgSeg button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#bgSeg button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        bgMode = btn.dataset.bg;
+        document.getElementById('colorField').classList.toggle('hidden', bgMode !== 'color');
+        document.getElementById('imageField').classList.toggle('hidden', bgMode !== 'image');
+        document.getElementById('blurField').classList.toggle('hidden', bgMode !== 'blur');
+        if (lastResults) drawComposite(lastResults);
+      });
+    });
+    document.querySelectorAll('.swatch').forEach(sw => {
+      sw.addEventListener('click', () => {
+        document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+        sw.classList.add('active');
+        bgColor = sw.dataset.color;
+        if (lastResults) drawComposite(lastResults);
+      });
+    });
+    document.getElementById('customColor').addEventListener('input', e => {
+      document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+      bgColor = e.target.value;
+      if (lastResults) drawComposite(lastResults);
+    });
+    document.getElementById('bgImageInput').addEventListener('change', e => {
+      const f = e.target.files[0];
+      if (!f) return;
+      const img = new Image();
+      img.onload = () => { bgImage = img; if (lastResults) drawComposite(lastResults); };
+      img.src = URL.createObjectURL(f);
+    });
+    document.getElementById('blurAmt').addEventListener('input', e => {
+      document.getElementById('blurVal').textContent = e.target.value + 'px';
+      if (lastResults) drawComposite(lastResults);
+    });
+    document.getElementById('edgeSmooth').addEventListener('input', e => {
+      document.getElementById('edgeVal').textContent = e.target.value + 'px';
+      if (lastResults) drawComposite(lastResults);
+    });
+
+    /* ---------- preview ---------- */
+    document.getElementById('previewBtn').addEventListener('click', async () => {
+      if (!segmenter) return;
+      if (running) { running = false; video.pause(); document.getElementById('previewBtn').textContent = '▶ Live Preview'; return; }
+      video.muted = true;
+      video.currentTime = 0;
+      await video.play();
+      running = true;
+      document.getElementById('previewBtn').textContent = '⏸ Stop Preview';
+      await frameLoop();
+      document.getElementById('previewBtn').textContent = '▶ Live Preview';
+    });
+
+    /* ---------- export ---------- */
+    document.getElementById('exportBtn').addEventListener('click', async () => {
+      if (!segmenter || !currentFile) return;
+      const exportBtn = document.getElementById('exportBtn');
+      exportBtn.disabled = true;
+      running = false;
+      video.pause();
+      overlay.show('Recording — playing video once…');
+
+      try {
+        const canvasStream = outCanvas.captureStream(30);
+        // pull audio from the source video if the browser supports it
+        let audioTracks = [];
+        try {
+          const es = video.captureStream ? video.captureStream() : (video.mozCaptureStream ? video.mozCaptureStream() : null);
+          if (es) audioTracks = es.getAudioTracks();
+        } catch (e) { /* no audio capture support — export video-only */ }
+        const stream = new MediaStream([...canvasStream.getVideoTracks(), ...audioTracks]);
+
+        const mime = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm']
+          .find(m => MediaRecorder.isTypeSupported(m)) || '';
+        recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 6_000_000 });
+        const chunks = [];
+        recorder.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+        const done = new Promise(r => { recorder.onstop = r; });
+
+        video.muted = false;
+        video.volume = 0.0001; // keep the audio pipeline alive without blasting sound
+        video.currentTime = 0;
+        await video.play();
+        running = true;
+        recorder.start(500);
+
+        const progTimer = setInterval(() => {
+          overlay.progress(video.currentTime / (video.duration || 1));
+          overlay.status(`Recording — ${formatTime(video.currentTime)} / ${formatTime(video.duration)}`);
+        }, 250);
+
+        await frameLoop();          // returns when video ends or errors
+        recorder.stop();
+        await done;
+        clearInterval(progTimer);
+
+        resultBlob = new Blob(chunks, { type: 'video/webm' });
+        document.getElementById('resultVideo').src = URL.createObjectURL(resultBlob);
+        document.getElementById('statOut').textContent = formatBytes(resultBlob.size);
+        document.getElementById('resultWrap').classList.remove('hidden');
+        document.getElementById('resultWrap').scrollIntoView({ behavior: 'smooth' });
+      } catch (err) {
+        console.error(err);
+        toastError('Export failed: ' + (err.message || err));
+      } finally {
+        video.muted = true;
+        overlay.hide();
+        exportBtn.disabled = false;
+      }
+    });
+
+    document.getElementById('downloadBtn').addEventListener('click', () => {
+      if (resultBlob) downloadBlob(resultBlob, baseName(currentFile.name) + '_nobg.webm');
+    });
+
+    /* start fetching the library in the background so the first file drop is
+       fast; errors are ignored — getSegmenter() retries with full fallback */
+    loadSegLib().catch(() => {});
+  })();
+  </script>
+</body>
+</html>

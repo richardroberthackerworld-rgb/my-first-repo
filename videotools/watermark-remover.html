@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Remove Watermark from Video — Free, AI Blend, No Upload | VidLab</title>
+  <meta name="description" content="Remove logos, watermarks and text from videos free. Draw a box over the watermark and it's blended into the video seamlessly. 100% in your browser — no upload, no sign-up.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="logo" href="index.html"><span class="logo-mark">▶</span> Vid<b>Lab</b></a>
+      <nav class="nav-links">
+        <a href="index.html">All Tools</a>
+        <a href="watermark-remover.html" class="active">Watermark Remover</a>
+        <a href="compressor.html">Compressor</a>
+        <a href="bg-remover.html">BG Remover</a>
+        <a href="toolkit.html">Toolkit</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero" style="padding-bottom:24px">
+    <div class="hero-badge"><span class="dot"></span> AI BLEND · NO UPLOAD · FREE</div>
+    <h1>Remove watermarks<br><span class="grad-text">from any video</span></h1>
+    <p class="hero-sub">Draw a box over the logo or watermark and it gets reconstructed from the
+      surrounding pixels on every frame — blended right into the video. Runs entirely on your device.</p>
+  </section>
+
+  <main class="tool-wrap">
+
+    <!-- Upload -->
+    <div class="dropzone" id="dropzone">
+      <input type="file" id="fileInput" accept="video/*" hidden>
+      <div class="dz-icon">🧽</div>
+      <h2>Upload a video</h2>
+      <p>Drag &amp; drop or</p>
+      <button class="btn btn-primary btn-lg" type="button">Choose Video</button>
+      <div class="dz-formats">
+        <span class="chip">MP4</span><span class="chip">MOV</span><span class="chip">WEBM</span><span class="chip">MKV</span><span class="chip">AVI</span>
+      </div>
+      <p class="dz-privacy">🔒 Private by design — your video never leaves this device.</p>
+    </div>
+
+    <!-- Editor -->
+    <div class="hidden" id="editor">
+      <div class="toolbar">
+        <button class="btn btn-ghost btn-sm" id="newFileBtn">↺ New video</button>
+        <span class="mono" id="fileMeta" style="font-size:12px;color:var(--dim)"></span>
+        <div class="toolbar-spacer"></div>
+        <button class="btn btn-primary" id="processBtn" disabled>✨ Remove Watermark</button>
+      </div>
+
+      <div class="workspace">
+        <div class="stage">
+          <div class="canvas-holder" id="canvasHolder">
+            <canvas id="frameCanvas"></canvas>
+            <canvas id="drawCanvas" class="overlay"></canvas>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:12px">
+            <span class="mono" id="timeLabel" style="font-size:12px;color:var(--muted);min-width:76px">0:00 / 0:00</span>
+            <input type="range" id="scrub" min="0" max="1000" value="0">
+          </div>
+          <p class="hint" style="font-size:13px;color:var(--dim);margin-top:8px">
+            ✏️ Drag on the video to draw a box over each watermark. Scrub the timeline to check the logo stays inside the box.
+          </p>
+
+          <div class="stage-overlay hidden" id="overlay">
+            <div class="spinner"></div>
+            <div class="overlay-status" id="overlayStatus">Loading…</div>
+            <div class="overlay-bar"><div class="overlay-bar-fill" id="overlayBar"></div></div>
+            <div class="overlay-note">Processing runs on your device — expect roughly the video's duration. Keep this tab open.</div>
+          </div>
+        </div>
+
+        <aside class="panel">
+          <h3>Watermark Regions</h3>
+          <div class="boxes-list" id="boxesList">
+            <div class="hint" style="font-size:13px;color:var(--dim)" id="noBoxes">No regions yet — draw on the video.</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="clearBoxesBtn">Clear all regions</button>
+
+          <h3>Removal Mode</h3>
+          <div class="seg" id="modeSeg">
+            <button class="active" data-mode="blend">✨ AI Blend</button>
+            <button data-mode="blur">🌫️ Blur</button>
+          </div>
+          <p class="hint" style="font-size:12px;color:var(--dim)" id="modeHint">
+            Blend reconstructs the area from surrounding pixels — best for logos on fairly uniform backgrounds.
+          </p>
+
+          <h3>Output Quality</h3>
+          <div class="field">
+            <div class="range-row">
+              <input type="range" id="quality" min="18" max="32" value="22">
+              <span class="range-val" id="qualityVal">High</span>
+            </div>
+            <span class="hint">Higher quality = larger file, slower processing.</span>
+          </div>
+
+          <div class="notice warn">Only remove watermarks from videos you own or have permission to edit.</div>
+
+          <div class="ad-slot rect">Ad · 300×250</div>
+        </aside>
+      </div>
+
+      <!-- Result -->
+      <div class="hidden" id="resultWrap" style="margin-top:24px">
+        <div class="stage">
+          <div class="section-label">// Result</div>
+          <video id="resultVideo" controls style="max-height:60vh"></video>
+          <div class="toolbar" style="margin-top:14px;margin-bottom:0">
+            <div class="result-stats">
+              <span class="stat">Original <b id="statIn">—</b></span>
+              <span class="stat">Output <b id="statOut">—</b></span>
+            </div>
+            <div class="toolbar-spacer"></div>
+            <button class="btn btn-primary" id="downloadBtn">⬇ Download MP4</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ad-slot">Advertisement · 728×90</div>
+  </main>
+
+  <!-- How-to -->
+  <section class="section">
+    <div class="section-label">// How to remove a watermark from a video</div>
+    <h2>Three steps, zero uploads</h2>
+    <div class="steps">
+      <div class="step tool-card"><div class="step-num">STEP 01</div><h3>Upload your video</h3><p>Drop any MP4, MOV, WebM, MKV or AVI file. It's loaded into your browser's memory only.</p></div>
+      <div class="step tool-card"><div class="step-num">STEP 02</div><h3>Mark the watermark</h3><p>Drag a box over each logo or text overlay. Scrub the timeline to make sure it's covered throughout.</p></div>
+      <div class="step tool-card"><div class="step-num">STEP 03</div><h3>Blend &amp; download</h3><p>The AI blend filter reconstructs the region on every frame. Preview the result, then download your clean MP4.</p></div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-bottom" style="border-top:none">
+      <span>© 2026 7BY.IN — VIDLAB</span>
+      <span><a href="index.html">ALL TOOLS</a> · <a href="../privacy-policy.html">PRIVACY</a></span>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+  <script>
+  (() => {
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    const editor = document.getElementById('editor');
+    const frameCanvas = document.getElementById('frameCanvas');
+    const drawCanvas = document.getElementById('drawCanvas');
+    const fctx = frameCanvas.getContext('2d');
+    const dctx = drawCanvas.getContext('2d');
+    const scrub = document.getElementById('scrub');
+    const timeLabel = document.getElementById('timeLabel');
+    const boxesList = document.getElementById('boxesList');
+    const noBoxes = document.getElementById('noBoxes');
+    const processBtn = document.getElementById('processBtn');
+    const overlay = makeOverlay(
+      document.getElementById('overlay'),
+      document.getElementById('overlayStatus'),
+      document.getElementById('overlayBar')
+    );
+    const qualityEl = document.getElementById('quality');
+    const qualityVal = document.getElementById('qualityVal');
+    const modeHint = document.getElementById('modeHint');
+
+    const video = document.createElement('video');
+    video.muted = true;
+    video.playsInline = true;
+
+    let currentFile = null;
+    let boxes = [];          // {x,y,w,h} in native video pixels
+    let mode = 'blend';
+    let vw = 0, vh = 0;
+    let drawing = null;      // {x0,y0,x1,y1} in native pixels while dragging
+    let resultBlob = null;
+
+    /* ---------- file load ---------- */
+    setupDropzone(dropzone, fileInput, loadFile);
+
+    function loadFile(file) {
+      if (!file.type.startsWith('video/') && !/\.(mp4|mov|webm|mkv|avi|m4v)$/i.test(file.name)) {
+        toastError('Please choose a video file.');
+        return;
+      }
+      currentFile = file;
+      boxes = [];
+      resultBlob = null;
+      document.getElementById('resultWrap').classList.add('hidden');
+      video.src = URL.createObjectURL(file);
+      video.addEventListener('loadedmetadata', onMeta, { once: true });
+    }
+
+    function onMeta() {
+      vw = video.videoWidth; vh = video.videoHeight;
+      frameCanvas.width = vw; frameCanvas.height = vh;
+      drawCanvas.width = vw; drawCanvas.height = vh;
+      dropzone.classList.add('hidden');
+      editor.classList.remove('hidden');
+      document.getElementById('fileMeta').textContent =
+        `${currentFile.name} · ${vw}×${vh} · ${formatTime(video.duration)} · ${formatBytes(currentFile.size)}`;
+      video.currentTime = 0.01;
+      video.addEventListener('seeked', renderFrame);
+      renderBoxes();
+      updateProcessBtn();
+    }
+
+    function renderFrame() {
+      fctx.drawImage(video, 0, 0, vw, vh);
+      timeLabel.textContent = `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
+    }
+
+    scrub.addEventListener('input', () => {
+      if (!video.duration) return;
+      video.currentTime = (scrub.value / 1000) * video.duration;
+    });
+
+    /* ---------- box drawing ---------- */
+    function evtToNative(e) {
+      const r = drawCanvas.getBoundingClientRect();
+      const cx = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+      const cy = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
+      return {
+        x: Math.max(0, Math.min(vw, cx * vw / r.width)),
+        y: Math.max(0, Math.min(vh, cy * vh / r.height)),
+      };
+    }
+
+    function startDraw(e) {
+      e.preventDefault();
+      const p = evtToNative(e);
+      drawing = { x0: p.x, y0: p.y, x1: p.x, y1: p.y };
+    }
+    function moveDraw(e) {
+      if (!drawing) return;
+      e.preventDefault();
+      const p = evtToNative(e);
+      drawing.x1 = p.x; drawing.y1 = p.y;
+      renderBoxes();
+    }
+    function endDraw() {
+      if (!drawing) return;
+      const b = normBox(drawing);
+      drawing = null;
+      if (b.w > 8 && b.h > 8) boxes.push(b);
+      renderBoxes();
+      updateProcessBtn();
+    }
+    function normBox(d) {
+      const x = Math.round(Math.min(d.x0, d.x1));
+      const y = Math.round(Math.min(d.y0, d.y1));
+      return { x, y, w: Math.round(Math.abs(d.x1 - d.x0)), h: Math.round(Math.abs(d.y1 - d.y0)) };
+    }
+
+    drawCanvas.addEventListener('mousedown', startDraw);
+    window.addEventListener('mousemove', moveDraw);
+    window.addEventListener('mouseup', endDraw);
+    drawCanvas.addEventListener('touchstart', startDraw, { passive: false });
+    drawCanvas.addEventListener('touchmove', moveDraw, { passive: false });
+    drawCanvas.addEventListener('touchend', endDraw);
+
+    function renderBoxes() {
+      dctx.clearRect(0, 0, vw, vh);
+      const all = drawing ? [...boxes, normBox(drawing)] : boxes;
+      const lw = Math.max(2, vw / 400);
+      all.forEach((b, i) => {
+        dctx.fillStyle = 'rgba(255,0,110,0.18)';
+        dctx.strokeStyle = '#FF006E';
+        dctx.lineWidth = lw;
+        dctx.fillRect(b.x, b.y, b.w, b.h);
+        dctx.strokeRect(b.x, b.y, b.w, b.h);
+        dctx.fillStyle = '#FF006E';
+        const fs = Math.max(14, vw / 60);
+        dctx.font = `600 ${fs}px Outfit, sans-serif`;
+        dctx.fillText(String(i + 1), b.x + lw * 3, b.y + fs + lw * 2);
+      });
+      // side list
+      boxesList.querySelectorAll('.box-item').forEach(el => el.remove());
+      noBoxes.style.display = boxes.length ? 'none' : 'block';
+      boxes.forEach((b, i) => {
+        const el = document.createElement('div');
+        el.className = 'box-item';
+        el.innerHTML = `<span>#${i + 1}</span><span>${b.w}×${b.h} @ ${b.x},${b.y}</span><button class="del" title="Remove">✕</button>`;
+        el.querySelector('.del').addEventListener('click', () => {
+          boxes.splice(i, 1);
+          renderBoxes();
+          updateProcessBtn();
+        });
+        boxesList.appendChild(el);
+      });
+    }
+
+    document.getElementById('clearBoxesBtn').addEventListener('click', () => {
+      boxes = []; renderBoxes(); updateProcessBtn();
+    });
+    document.getElementById('newFileBtn').addEventListener('click', () => {
+      editor.classList.add('hidden');
+      dropzone.classList.remove('hidden');
+      fileInput.value = '';
+    });
+
+    function updateProcessBtn() { processBtn.disabled = boxes.length === 0; }
+
+    /* ---------- mode & quality ---------- */
+    document.querySelectorAll('#modeSeg button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#modeSeg button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        mode = btn.dataset.mode;
+        modeHint.textContent = mode === 'blend'
+          ? 'Blend reconstructs the area from surrounding pixels — best for logos on fairly uniform backgrounds.'
+          : 'Blur softens the region instead of reconstructing it — best for busy, detailed backgrounds.';
+      });
+    });
+    qualityEl.addEventListener('input', () => {
+      const v = +qualityEl.value;
+      qualityVal.textContent = v <= 20 ? 'Max' : v <= 24 ? 'High' : v <= 28 ? 'Medium' : 'Low';
+    });
+
+    /* ---------- ffmpeg filter builders ---------- */
+    // delogo needs the box strictly inside the frame (>=1px margin)
+    function clampBox(b) {
+      const x = Math.min(Math.max(1, b.x), vw - 3);
+      const y = Math.min(Math.max(1, b.y), vh - 3);
+      const w = Math.max(2, Math.min(b.w, vw - 1 - x));
+      const h = Math.max(2, Math.min(b.h, vh - 1 - y));
+      return { x, y, w, h };
+    }
+
+    function buildBlendFilter() {
+      return boxes.map(b => {
+        const c = clampBox(b);
+        return `delogo=x=${c.x}:y=${c.y}:w=${c.w}:h=${c.h}`;
+      }).join(',');
+    }
+
+    function buildBlurFilter() {
+      // chain: for each box, crop it, blur it, overlay it back
+      let src = '[0:v]';
+      const parts = [];
+      boxes.forEach((b, i) => {
+        const c = clampBox(b);
+        const r = Math.max(2, Math.min(20, Math.floor(Math.min(c.w, c.h) / 4)));
+        const out = i === boxes.length - 1 ? '[vout]' : `[v${i}]`;
+        parts.push(`${src}split[a${i}][b${i}]`);
+        parts.push(`[b${i}]crop=${c.w}:${c.h}:${c.x}:${c.y},boxblur=${r}:2[c${i}]`);
+        parts.push(`[a${i}][c${i}]overlay=${c.x}:${c.y}${out}`);
+        src = out;
+      });
+      return parts.join(';');
+    }
+
+    /* ---------- processing ---------- */
+    processBtn.addEventListener('click', async () => {
+      if (!boxes.length || !currentFile) return;
+      processBtn.disabled = true;
+      overlay.show('Loading engine…');
+      try {
+        const ffmpeg = await getFFmpeg(s => overlay.status(s));
+        const onProg = ({ progress }) => overlay.progress(progress);
+        ffmpeg.on('progress', onProg);
+
+        overlay.status('Reading video…');
+        const inName = 'in_' + (currentFile.name.match(/\.\w+$/) ? currentFile.name.replace(/^.*(\.\w+)$/, 'video$1') : 'video.mp4');
+        await ffmpeg.writeFile(inName, await ffFetchFile(currentFile));
+
+        overlay.status(mode === 'blend' ? 'Blending watermark into video…' : 'Blurring watermark…');
+        const crf = String(qualityEl.value);
+        let args;
+        if (mode === 'blend') {
+          args = ['-i', inName, '-vf', buildBlendFilter(),
+                  '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', crf,
+                  '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart', 'out.mp4'];
+        } else {
+          args = ['-i', inName, '-filter_complex', buildBlurFilter(), '-map', '[vout]', '-map', '0:a?',
+                  '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', crf,
+                  '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart', 'out.mp4'];
+        }
+        const rc = await ffmpeg.exec(args);
+        ffmpeg.off('progress', onProg);
+        if (rc !== 0) throw new Error('FFmpeg exited with code ' + rc);
+
+        const data = await ffmpeg.readFile('out.mp4');
+        resultBlob = new Blob([data.buffer], { type: 'video/mp4' });
+        await ffmpeg.deleteFile(inName).catch(() => {});
+        await ffmpeg.deleteFile('out.mp4').catch(() => {});
+
+        document.getElementById('resultVideo').src = URL.createObjectURL(resultBlob);
+        document.getElementById('statIn').textContent = formatBytes(currentFile.size);
+        document.getElementById('statOut').textContent = formatBytes(resultBlob.size);
+        document.getElementById('resultWrap').classList.remove('hidden');
+        document.getElementById('resultWrap').scrollIntoView({ behavior: 'smooth' });
+      } catch (err) {
+        console.error(err);
+        toastError('Processing failed: ' + (err.message || err) + '\nTry a smaller video or a different format.');
+      } finally {
+        overlay.hide();
+        processBtn.disabled = boxes.length === 0;
+      }
+    });
+
+    document.getElementById('downloadBtn').addEventListener('click', () => {
+      if (resultBlob) downloadBlob(resultBlob, baseName(currentFile.name) + '_clean.mp4');
+    });
+
+    /* start fetching the ffmpeg wrapper libs in the background so the first
+       run is fast; errors are ignored — getFFmpeg() retries with fallback */
+    _ffEnsureLibs().catch(() => {});
+  })();
+  </script>
+</body>
+</html>

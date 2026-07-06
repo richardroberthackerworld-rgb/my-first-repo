@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Compress Video Online Free — No Upload, No Watermark | VidLab</title>
+  <meta name="description" content="Compress videos free in your browser. Reduce MP4, MOV and WebM file size with adjustable quality and resolution. No upload, no sign-up, no watermark.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="logo" href="index.html"><span class="logo-mark">▶</span> Vid<b>Lab</b></a>
+      <nav class="nav-links">
+        <a href="index.html">All Tools</a>
+        <a href="watermark-remover.html">Watermark Remover</a>
+        <a href="compressor.html" class="active">Compressor</a>
+        <a href="bg-remover.html">BG Remover</a>
+        <a href="toolkit.html">Toolkit</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero" style="padding-bottom:24px">
+    <div class="hero-badge"><span class="dot"></span> NO UPLOAD · NO WATERMARK · FREE</div>
+    <h1>Compress videos<br><span class="grad-text">without losing quality</span></h1>
+    <p class="hero-sub">Shrink your video's file size with smart H.264 encoding. Pick a quality level and
+      resolution, see exactly how much you saved. Everything runs on your device.</p>
+  </section>
+
+  <main class="tool-wrap">
+
+    <div class="dropzone" id="dropzone">
+      <input type="file" id="fileInput" accept="video/*" hidden>
+      <div class="dz-icon">🗜️</div>
+      <h2>Upload a video</h2>
+      <p>Drag &amp; drop or</p>
+      <button class="btn btn-primary btn-lg" type="button">Choose Video</button>
+      <div class="dz-formats">
+        <span class="chip">MP4</span><span class="chip">MOV</span><span class="chip">WEBM</span><span class="chip">MKV</span><span class="chip">AVI</span>
+      </div>
+      <p class="dz-privacy">🔒 Private by design — your video never leaves this device.</p>
+    </div>
+
+    <div class="hidden" id="editor">
+      <div class="toolbar">
+        <button class="btn btn-ghost btn-sm" id="newFileBtn">↺ New video</button>
+        <span class="mono" id="fileMeta" style="font-size:12px;color:var(--dim)"></span>
+        <div class="toolbar-spacer"></div>
+        <button class="btn btn-primary" id="processBtn">🗜️ Compress Video</button>
+      </div>
+
+      <div class="workspace">
+        <div class="stage">
+          <video id="preview" controls></video>
+          <div class="stage-overlay hidden" id="overlay">
+            <div class="spinner"></div>
+            <div class="overlay-status" id="overlayStatus">Loading…</div>
+            <div class="overlay-bar"><div class="overlay-bar-fill" id="overlayBar"></div></div>
+            <div class="overlay-note">Compression runs on your device — expect roughly the video's duration. Keep this tab open.</div>
+          </div>
+        </div>
+
+        <aside class="panel">
+          <h3>Compression Level</h3>
+          <div class="field">
+            <div class="range-row">
+              <input type="range" id="quality" min="20" max="38" value="28">
+              <span class="range-val" id="qualityVal">Balanced</span>
+            </div>
+            <span class="hint" id="qualityHint">Balanced — big size reduction, quality loss barely visible.</span>
+          </div>
+
+          <h3>Resolution</h3>
+          <div class="field">
+            <select id="resolution">
+              <option value="0">Keep original</option>
+              <option value="1080">1080p (Full HD)</option>
+              <option value="720" selected>720p (HD)</option>
+              <option value="480">480p (SD)</option>
+              <option value="360">360p (Small)</option>
+            </select>
+            <span class="hint">Lowering resolution gives the biggest size savings.</span>
+          </div>
+
+          <h3>Audio</h3>
+          <label class="checkbox-row"><input type="checkbox" id="keepAudio" checked> Keep audio (96 kbps AAC)</label>
+
+          <div class="notice">Rule of thumb: 720p + Balanced cuts most phone videos to ~20–30% of the original size.</div>
+
+          <div class="ad-slot rect">Ad · 300×250</div>
+        </aside>
+      </div>
+
+      <div class="hidden" id="resultWrap" style="margin-top:24px">
+        <div class="stage">
+          <div class="section-label">// Result</div>
+          <video id="resultVideo" controls style="max-height:60vh"></video>
+          <div class="toolbar" style="margin-top:14px;margin-bottom:0">
+            <div class="result-stats">
+              <span class="stat">Original <b id="statIn">—</b></span>
+              <span class="stat">Compressed <b id="statOut">—</b></span>
+              <span class="stat good">Saved <b id="statSaved">—</b></span>
+            </div>
+            <div class="toolbar-spacer"></div>
+            <button class="btn btn-primary" id="downloadBtn">⬇ Download MP4</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ad-slot">Advertisement · 728×90</div>
+  </main>
+
+  <section class="section">
+    <div class="section-label">// How it works</div>
+    <h2>Smart compression, explained</h2>
+    <div class="steps">
+      <div class="step tool-card"><div class="step-num">STEP 01</div><h3>Modern encoding</h3><p>Your video is re-encoded with H.264 using CRF rate control — bits go where your eyes will notice them.</p></div>
+      <div class="step tool-card"><div class="step-num">STEP 02</div><h3>Resolution scaling</h3><p>Most videos are watched on screens smaller than they were shot for. Downscaling to 720p is usually invisible on a phone.</p></div>
+      <div class="step tool-card"><div class="step-num">STEP 03</div><h3>Audio slimming</h3><p>Audio is re-encoded to efficient 96 kbps AAC — transparent for speech and most music.</p></div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-bottom" style="border-top:none">
+      <span>© 2026 7BY.IN — VIDLAB</span>
+      <span><a href="index.html">ALL TOOLS</a> · <a href="../privacy-policy.html">PRIVACY</a></span>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+  <script>
+  (() => {
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    const editor = document.getElementById('editor');
+    const preview = document.getElementById('preview');
+    const overlay = makeOverlay(
+      document.getElementById('overlay'),
+      document.getElementById('overlayStatus'),
+      document.getElementById('overlayBar')
+    );
+    const qualityEl = document.getElementById('quality');
+    const qualityVal = document.getElementById('qualityVal');
+    const qualityHint = document.getElementById('qualityHint');
+    const processBtn = document.getElementById('processBtn');
+
+    let currentFile = null;
+    let resultBlob = null;
+
+    setupDropzone(dropzone, fileInput, file => {
+      if (!file.type.startsWith('video/') && !/\.(mp4|mov|webm|mkv|avi|m4v)$/i.test(file.name)) {
+        toastError('Please choose a video file.');
+        return;
+      }
+      currentFile = file;
+      resultBlob = null;
+      document.getElementById('resultWrap').classList.add('hidden');
+      preview.src = URL.createObjectURL(file);
+      preview.addEventListener('loadedmetadata', () => {
+        document.getElementById('fileMeta').textContent =
+          `${file.name} · ${preview.videoWidth}×${preview.videoHeight} · ${formatTime(preview.duration)} · ${formatBytes(file.size)}`;
+      }, { once: true });
+      dropzone.classList.add('hidden');
+      editor.classList.remove('hidden');
+    });
+
+    document.getElementById('newFileBtn').addEventListener('click', () => {
+      editor.classList.add('hidden');
+      dropzone.classList.remove('hidden');
+      fileInput.value = '';
+    });
+
+    qualityEl.addEventListener('input', () => {
+      const v = +qualityEl.value;
+      if (v <= 23) { qualityVal.textContent = 'Light'; qualityHint.textContent = 'Light — near-original quality, modest savings.'; }
+      else if (v <= 30) { qualityVal.textContent = 'Balanced'; qualityHint.textContent = 'Balanced — big size reduction, quality loss barely visible.'; }
+      else { qualityVal.textContent = 'Max'; qualityHint.textContent = 'Max — smallest file, visible quality loss on detailed scenes.'; }
+    });
+
+    processBtn.addEventListener('click', async () => {
+      if (!currentFile) return;
+      processBtn.disabled = true;
+      overlay.show('Loading engine…');
+      try {
+        const ffmpeg = await getFFmpeg(s => overlay.status(s));
+        const onProg = ({ progress }) => overlay.progress(progress);
+        ffmpeg.on('progress', onProg);
+
+        overlay.status('Reading video…');
+        await ffmpeg.writeFile('in.dat', await ffFetchFile(currentFile));
+
+        overlay.status('Compressing…');
+        const crf = String(qualityEl.value);
+        const res = +document.getElementById('resolution').value;
+        const keepAudio = document.getElementById('keepAudio').checked;
+
+        const args = ['-i', 'in.dat'];
+        // never upscale; keep height even so libx264 accepts it, width auto (-2 = even)
+        if (res > 0) args.push('-vf', `scale=-2:2*trunc(min(${res}\\,ih)/2)`);
+        else args.push('-vf', `scale=trunc(iw/2)*2:trunc(ih/2)*2`);
+        args.push('-c:v', 'libx264', '-preset', 'ultrafast', '-crf', crf);
+        if (keepAudio) args.push('-c:a', 'aac', '-b:a', '96k');
+        else args.push('-an');
+        args.push('-movflags', '+faststart', 'out.mp4');
+
+        const rc = await ffmpeg.exec(args);
+        ffmpeg.off('progress', onProg);
+        if (rc !== 0) throw new Error('FFmpeg exited with code ' + rc);
+
+        const data = await ffmpeg.readFile('out.mp4');
+        resultBlob = new Blob([data.buffer], { type: 'video/mp4' });
+        await ffmpeg.deleteFile('in.dat').catch(() => {});
+        await ffmpeg.deleteFile('out.mp4').catch(() => {});
+
+        const saved = Math.max(0, 100 - (resultBlob.size / currentFile.size) * 100);
+        document.getElementById('resultVideo').src = URL.createObjectURL(resultBlob);
+        document.getElementById('statIn').textContent = formatBytes(currentFile.size);
+        document.getElementById('statOut').textContent = formatBytes(resultBlob.size);
+        document.getElementById('statSaved').textContent = saved.toFixed(0) + '%';
+        document.getElementById('resultWrap').classList.remove('hidden');
+        document.getElementById('resultWrap').scrollIntoView({ behavior: 'smooth' });
+      } catch (err) {
+        console.error(err);
+        toastError('Compression failed: ' + (err.message || err) + '\nTry a smaller video or a different format.');
+      } finally {
+        overlay.hide();
+        processBtn.disabled = false;
+      }
+    });
+
+    document.getElementById('downloadBtn').addEventListener('click', () => {
+      if (resultBlob) downloadBlob(resultBlob, baseName(currentFile.name) + '_compressed.mp4');
+    });
+
+    /* start fetching the ffmpeg wrapper libs in the background so the first
+       run is fast; errors are ignored — getFFmpeg() retries with fallback */
+    _ffEnsureLibs().catch(() => {});
+  })();
+  </script>
+</body>
+</html>
