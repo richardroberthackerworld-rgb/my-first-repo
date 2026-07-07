@@ -23,6 +23,7 @@
         <a href="bg-remover.html" class="active">BG Remover</a>
         <a href="toolkit.html">Toolkit</a>
       </nav>
+      <span id="creditBadge" class="mono" style="font-size:12px;color:var(--muted);margin-right:10px"></span>
       <a href="../pricing.html" class="btn btn-primary nav-cta">⭐ Get Pro</a>
     </div>
   </header>
@@ -151,6 +152,7 @@
   </footer>
 
   <script src="app.js"></script>
+  <script src="../assets/credits.js"></script>
   <script>
   (() => {
     const dropzone = document.getElementById('dropzone');
@@ -167,6 +169,16 @@
     const video = document.createElement('video');
     video.playsInline = true;
     video.crossOrigin = 'anonymous';
+
+    /* ---------- credits: 2 per started minute of video (charged on export) ---------- */
+    const CREDITS_PER_MIN = 2;
+    const vidCreditCost = sec => Math.max(CREDITS_PER_MIN, Math.ceil((sec || 0) / 60) * CREDITS_PER_MIN);
+    function renderCreditBadge() {
+      const el = document.getElementById('creditBadge');
+      if (el && window.Credits) el.textContent = '⚡ ' + Credits.balance() + ' credits';
+    }
+    window.renderCredits = renderCreditBadge; // credits.js refreshes this after server sync
+    renderCreditBadge();
 
     let currentFile = null;
     let vw = 0, vh = 0;
@@ -409,6 +421,11 @@
     /* ---------- export ---------- */
     document.getElementById('exportBtn').addEventListener('click', async () => {
       if (!segmenter || !currentFile) return;
+      const need = vidCreditCost(video.duration);
+      if (window.Credits && !Credits.canSpend(need)) {
+        toastError('Exporting this video needs ' + need + ' credits (2 per minute of video) — you have ' + Credits.balance() + '. Free credits refresh daily, or tap ⭐ Get Pro for more.');
+        return;
+      }
       const exportBtn = document.getElementById('exportBtn');
       exportBtn.disabled = true;
       running = false;
@@ -454,6 +471,8 @@
         document.getElementById('statOut').textContent = formatBytes(resultBlob.size);
         document.getElementById('resultWrap').classList.remove('hidden');
         document.getElementById('resultWrap').scrollIntoView({ behavior: 'smooth' });
+        // charge only after a successful export
+        if (window.Credits) { Credits.spend(need); renderCreditBadge(); }
       } catch (err) {
         console.error(err);
         toastError('Export failed: ' + (err.message || err));

@@ -23,6 +23,7 @@
         <a href="bg-remover.html">BG Remover</a>
         <a href="toolkit.html">Toolkit</a>
       </nav>
+      <span id="creditBadge" class="mono" style="font-size:12px;color:var(--muted);margin-right:10px"></span>
       <a href="../pricing.html" class="btn btn-primary nav-cta">⭐ Get Pro</a>
     </div>
   </header>
@@ -148,6 +149,7 @@
   </footer>
 
   <script src="app.js"></script>
+  <script src="../assets/credits.js"></script>
   <script>
   (() => {
     const dropzone = document.getElementById('dropzone');
@@ -174,6 +176,16 @@
     const video = document.createElement('video');
     video.muted = true;
     video.playsInline = true;
+
+    /* ---------- credits: 2 per started minute of video ---------- */
+    const CREDITS_PER_MIN = 2;
+    const vidCreditCost = sec => Math.max(CREDITS_PER_MIN, Math.ceil((sec || 0) / 60) * CREDITS_PER_MIN);
+    function renderCreditBadge() {
+      const el = document.getElementById('creditBadge');
+      if (el && window.Credits) el.textContent = '⚡ ' + Credits.balance() + ' credits';
+    }
+    window.renderCredits = renderCreditBadge; // credits.js refreshes this after server sync
+    renderCreditBadge();
 
     let currentFile = null;
     let boxes = [];          // {x,y,w,h} in native video pixels
@@ -360,6 +372,11 @@
     /* ---------- processing ---------- */
     processBtn.addEventListener('click', async () => {
       if (!boxes.length || !currentFile) return;
+      const need = vidCreditCost(video.duration);
+      if (window.Credits && !Credits.canSpend(need)) {
+        toastError('This video needs ' + need + ' credits (2 per minute of video) — you have ' + Credits.balance() + '. Free credits refresh daily, or tap ⭐ Get Pro for more.');
+        return;
+      }
       processBtn.disabled = true;
       overlay.show('Please wait while processing…');
       try {
@@ -397,6 +414,8 @@
         document.getElementById('statOut').textContent = formatBytes(resultBlob.size);
         document.getElementById('resultWrap').classList.remove('hidden');
         document.getElementById('resultWrap').scrollIntoView({ behavior: 'smooth' });
+        // charge only after a successful run
+        if (window.Credits) { Credits.spend(need); renderCreditBadge(); }
       } catch (err) {
         console.error(err);
         toastError('Processing failed: ' + (err.message || err) + '\nTry a smaller video or a different format.');
