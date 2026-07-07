@@ -33,7 +33,7 @@ let _ffPreflightOk = false;
 async function _ffPreflight() {
   if (_ffPreflightOk) return;
   if (typeof WebAssembly === 'undefined' || !WebAssembly.instantiate) {
-    throw new Error('This browser does not support WebAssembly, which the FFmpeg engine needs. Use a current version of Chrome, Edge, Firefox or Safari (and turn off strict/enhanced security mode for this site).');
+    throw new Error('This browser does not support WebAssembly, which this tool needs. Use a current version of Chrome, Edge, Firefox or Safari (and turn off strict/enhanced security mode for this site).');
   }
   const coreURL = URL.createObjectURL(new Blob(['export default 1;'], { type: 'text/javascript' }));
   const workerURL = URL.createObjectURL(new Blob(
@@ -52,9 +52,9 @@ async function _ffPreflight() {
     _ffPreflightOk = true;
   } catch (e) {
     if (location.protocol === 'file:') {
-      throw new Error('This tool cannot run from a page opened as a local file (file://) — the browser blocks the background worker FFmpeg needs. Serve the folder over http(s) (any web host, or locally e.g. "npx serve") and open it from there.');
+      throw new Error('This tool cannot run from a page opened as a local file (file://) — the browser blocks the background worker it needs. Serve the folder over http(s) (any web host, or locally e.g. "npx serve") and open it from there.');
     }
-    throw new Error('Your browser blocked the background worker FFmpeg runs in (' + (e && e.message) + '). This is usually a strict privacy/security extension or the browser’s enhanced security mode — allow this site, or try another browser.');
+    throw new Error('Your browser blocked the background worker this tool runs in (' + (e && e.message) + '). This is usually a strict privacy/security extension or the browser’s enhanced security mode — allow this site, or try another browser.');
   } finally {
     URL.revokeObjectURL(coreURL);
     URL.revokeObjectURL(workerURL);
@@ -164,12 +164,11 @@ async function getFFmpeg(onStatus) {
       let ffmpeg = null;
       let downloaded = false;
       try {
-        const label = 'Downloading FFmpeg engine (~31 MB, cached after first run)';
+        const label = 'Setting things up — one-time only, saved for next time';
         onStatus && onStatus(label + '…');
         const prog = (received, total) => {
-          const mb = (received / 1048576).toFixed(1);
-          const tot = total ? ' / ' + (total / 1048576).toFixed(1) : '';
-          onStatus && onStatus(`${label} — ${mb}${tot} MB…`);
+          const pct = total ? ' ' + Math.round(received / total * 100) + '%' : '';
+          onStatus && onStatus(`${label}…${pct}`);
         };
         const [coreBlob, wasmBlob, workerBlob] = [
           await _ffFetchBlob(urls[0]),
@@ -178,7 +177,7 @@ async function getFFmpeg(onStatus) {
           await _ffFetchBlob(urls[2]),
         ];
         downloaded = true;
-        onStatus && onStatus('Starting FFmpeg engine…');
+        onStatus && onStatus('Almost ready…');
         ffmpeg = new FFmpeg();
         const loadP = ffmpeg.load({
           coreURL: URL.createObjectURL(new Blob([await coreBlob.arrayBuffer()], { type: 'text/javascript' })),
@@ -201,7 +200,7 @@ async function getFFmpeg(onStatus) {
       }
     }
     throw new Error(
-      'Could not start the FFmpeg engine (' + (lastErr && lastErr.message) + '). ' +
+      'Could not start the processing engine (' + (lastErr && lastErr.message) + '). ' +
       'Check your internet connection or disable ad/script blockers for this page, then click the button again to retry.'
     );
   })();
@@ -245,6 +244,9 @@ function parseTimeInput(v, fallback) {
 }
 
 function downloadBlob(blob, filename) {
+  // every download from the site carries the 7by.in name
+  const ext = ((filename || '').match(/\.[^.]+$/) || ['.dat'])[0];
+  filename = 'Downloaded from 7by.in' + ext;
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;

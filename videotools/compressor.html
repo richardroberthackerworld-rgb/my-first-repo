@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Compress Video Online Free — No Upload, No Watermark | VidLab</title>
   <meta name="description" content="Compress videos free in your browser. Reduce MP4, MOV and WebM file size with adjustable quality and resolution. No upload, no sign-up, no watermark.">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8250159057339426" crossorigin="anonymous"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -22,6 +23,7 @@
         <a href="bg-remover.html">BG Remover</a>
         <a href="toolkit.html">Toolkit</a>
       </nav>
+      <a href="../pricing.html" class="btn btn-primary nav-cta">⭐ Get Pro</a>
     </div>
   </header>
 
@@ -92,7 +94,6 @@
 
           <div class="notice">Rule of thumb: 720p + Balanced cuts most phone videos to ~20–30% of the original size.</div>
 
-          <div class="ad-slot rect">Ad · 300×250</div>
         </aside>
       </div>
 
@@ -113,7 +114,6 @@
       </div>
     </div>
 
-    <div class="ad-slot">Advertisement · 728×90</div>
   </main>
 
   <section class="section">
@@ -128,7 +128,7 @@
 
   <footer class="footer">
     <div class="footer-bottom" style="border-top:none">
-      <span>© 2026 7BY.IN — VIDLAB</span>
+      <span>© 2026 7BY.IN — VIDLAB · DEVELOPED BY 7BY.IN · FOUNDER &amp; CEO SHIRANDASU SANDEEP</span>
       <span><a href="index.html">ALL TOOLS</a> · <a href="../privacy-policy.html">PRIVACY</a></span>
     </div>
   </footer>
@@ -186,7 +186,7 @@
     processBtn.addEventListener('click', async () => {
       if (!currentFile) return;
       processBtn.disabled = true;
-      overlay.show('Loading engine…');
+      overlay.show('Please wait while processing…');
       try {
         const ffmpeg = await getFFmpeg(s => overlay.status(s));
         const onProg = ({ progress }) => overlay.progress(progress);
@@ -211,7 +211,7 @@
 
         const rc = await ffmpeg.exec(args);
         ffmpeg.off('progress', onProg);
-        if (rc !== 0) throw new Error('FFmpeg exited with code ' + rc);
+        if (rc !== 0) throw new Error('Processing failed (code ' + rc + ')');
 
         const data = await ffmpeg.readFile('out.mp4');
         resultBlob = new Blob([data.buffer], { type: 'video/mp4' });

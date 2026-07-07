@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Video Editor — Timeline, Transitions, Text Effects &amp; Color Grading | VidLab</title>
-  <meta name="description" content="Free CapCut-style video editor in your browser. Multi-track timeline, transitions, animated text effects, visual effects and full color grading. No upload, no watermark.">
+  <title>ClipCut — Free Online Video Editor: Timeline, Transitions, Text &amp; Color | 7by.in</title>
+  <meta name="description" content="ClipCut — free CapCut-style video editor in your browser. Multi-track timeline, transitions, animated text effects, visual effects and full color grading. No upload, no watermark.">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8250159057339426" crossorigin="anonymous"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -14,7 +15,8 @@
 
   <!-- ============ TOP BAR ============ -->
   <header class="topbar">
-    <a class="logo" href="../index.html"><span class="logo-mark">▶</span> Vid<b>Lab</b> <span class="logo-sub">Editor</span></a>
+    <a class="logo" href="../index.html"><span class="logo-mark">✂</span> Clip<b>Cut</b> <span class="logo-sub">by 7by.in</span></a>
+    <a class="btn btn-ghost" href="../index.html" style="text-decoration:none">🏠 Home</a>
     <input id="projectName" class="project-name" value="Untitled project" spellcheck="false">
     <div class="topbar-right">
       <label class="aspect-label mono">CANVAS</label>
@@ -30,6 +32,7 @@
         <option value="1440">1440p · 2K</option>
         <option value="2160">2160p · 4K</option>
       </select>
+      <a href="../../pricing.html" class="btn btn-ghost" style="text-decoration:none">⭐ Get Pro</a>
       <button id="exportBtn" class="btn btn-primary">⬇ Export</button>
     </div>
   </header>
@@ -121,15 +124,16 @@
   <div class="modal-backdrop hidden" id="exportModal">
     <div class="modal">
       <h3 id="exportTitle">Exporting video…</h3>
-      <p class="modal-sub" id="exportSub">Playing through your timeline in real time and recording it. Keep this tab focused.</p>
+      <p class="modal-sub" id="exportSub">Your video is processing, please wait…</p>
       <div class="progress-track"><div class="progress-fill" id="exportProgress"></div></div>
       <div class="modal-actions">
         <button class="btn btn-ghost" id="exportCancel">Cancel</button>
-        <a class="btn btn-primary hidden" id="exportDownload" download="vidlab-export.webm">⬇ Download WebM</a>
+        <a class="btn btn-primary hidden" id="exportDownload" download="Downloaded from 7by.in.mp4">⬇ Download Video</a>
       </div>
     </div>
   </div>
 
+  <script src="../app.js"></script>
   <script src="editor.js"></script>
 </body>
 </html>

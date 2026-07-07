@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Video Toolkit — Trim, Convert, GIF, Mute, Extract MP3 Free | VidLab</title>
   <meta name="description" content="Free browser video toolkit: trim and cut videos, convert to MP4/WebM/GIF, mute videos, extract MP3 audio. No upload, no sign-up, no watermark.">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8250159057339426" crossorigin="anonymous"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -22,6 +23,7 @@
         <a href="bg-remover.html">BG Remover</a>
         <a href="toolkit.html" class="active">Toolkit</a>
       </nav>
+      <a href="../pricing.html" class="btn btn-primary nav-cta">⭐ Get Pro</a>
     </div>
   </header>
 
@@ -118,7 +120,6 @@
 
           <button class="btn btn-primary" id="processBtn" style="margin-top:6px">⚡ Run</button>
 
-          <div class="ad-slot rect">Ad · 300×250</div>
         </aside>
       </div>
 
@@ -139,12 +140,11 @@
       </div>
     </div>
 
-    <div class="ad-slot">Advertisement · 728×90</div>
   </main>
 
   <footer class="footer">
     <div class="footer-bottom" style="border-top:none">
-      <span>© 2026 7BY.IN — VIDLAB</span>
+      <span>© 2026 7BY.IN — VIDLAB · DEVELOPED BY 7BY.IN · FOUNDER &amp; CEO SHIRANDASU SANDEEP</span>
       <span><a href="index.html">ALL TOOLS</a> · <a href="../privacy-policy.html">PRIVACY</a></span>
     </div>
   </footer>
@@ -207,7 +207,7 @@
       if (!currentFile) return;
       const action = actionEl.value;
       processBtn.disabled = true;
-      overlay.show('Loading engine…');
+      overlay.show('Please wait while processing…');
       try {
         const ffmpeg = await getFFmpeg(s => overlay.status(s));
         const onProg = ({ progress }) => overlay.progress(progress);
@@ -269,7 +269,7 @@
         overlay.status(statusMsg);
         const rc = await ffmpeg.exec(args);
         ffmpeg.off('progress', onProg);
-        if (rc !== 0) throw new Error('FFmpeg exited with code ' + rc + (action === 'trim' && document.getElementById('fastTrim').checked ? '. Try unchecking "Lossless fast trim".' : ''));
+        if (rc !== 0) throw new Error('Processing failed (code ' + rc + ')' + (action === 'trim' && document.getElementById('fastTrim').checked ? '. Try unchecking "Lossless fast trim".' : ''));
 
         const data = await ffmpeg.readFile(outFile);
         resultBlob = new Blob([data.buffer], { type: mime });

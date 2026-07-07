@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Remove Watermark from Video — Free, AI Blend, No Upload | VidLab</title>
   <meta name="description" content="Remove logos, watermarks and text from videos free. Draw a box over the watermark and it's blended into the video seamlessly. 100% in your browser — no upload, no sign-up.">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8250159057339426" crossorigin="anonymous"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -22,6 +23,7 @@
         <a href="bg-remover.html">BG Remover</a>
         <a href="toolkit.html">Toolkit</a>
       </nav>
+      <a href="../pricing.html" class="btn btn-primary nav-cta">⭐ Get Pro</a>
     </div>
   </header>
 
@@ -105,7 +107,6 @@
 
           <div class="notice warn">Only remove watermarks from videos you own or have permission to edit.</div>
 
-          <div class="ad-slot rect">Ad · 300×250</div>
         </aside>
       </div>
 
@@ -126,7 +127,6 @@
       </div>
     </div>
 
-    <div class="ad-slot">Advertisement · 728×90</div>
   </main>
 
   <!-- How-to -->
@@ -142,7 +142,7 @@
 
   <footer class="footer">
     <div class="footer-bottom" style="border-top:none">
-      <span>© 2026 7BY.IN — VIDLAB</span>
+      <span>© 2026 7BY.IN — VIDLAB · DEVELOPED BY 7BY.IN · FOUNDER &amp; CEO SHIRANDASU SANDEEP</span>
       <span><a href="index.html">ALL TOOLS</a> · <a href="../privacy-policy.html">PRIVACY</a></span>
     </div>
   </footer>
@@ -361,7 +361,7 @@
     processBtn.addEventListener('click', async () => {
       if (!boxes.length || !currentFile) return;
       processBtn.disabled = true;
-      overlay.show('Loading engine…');
+      overlay.show('Please wait while processing…');
       try {
         const ffmpeg = await getFFmpeg(s => overlay.status(s));
         const onProg = ({ progress }) => overlay.progress(progress);
@@ -371,7 +371,7 @@
         const inName = 'in_' + (currentFile.name.match(/\.\w+$/) ? currentFile.name.replace(/^.*(\.\w+)$/, 'video$1') : 'video.mp4');
         await ffmpeg.writeFile(inName, await ffFetchFile(currentFile));
 
-        overlay.status(mode === 'blend' ? 'Blending watermark into video…' : 'Blurring watermark…');
+        overlay.status('Please wait while removing your video watermark…');
         const crf = String(qualityEl.value);
         let args;
         if (mode === 'blend') {
@@ -385,7 +385,7 @@
         }
         const rc = await ffmpeg.exec(args);
         ffmpeg.off('progress', onProg);
-        if (rc !== 0) throw new Error('FFmpeg exited with code ' + rc);
+        if (rc !== 0) throw new Error('Processing failed (code ' + rc + ')');
 
         const data = await ffmpeg.readFile('out.mp4');
         resultBlob = new Blob([data.buffer], { type: 'video/mp4' });

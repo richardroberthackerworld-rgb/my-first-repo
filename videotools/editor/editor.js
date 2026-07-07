@@ -226,8 +226,14 @@ function renderMediaGrid() {
       : (m.thumb ? `<img class="media-thumb" src="${m.thumb}" alt="">` : `<div class="media-thumb-audio">${m.kind === 'video' ? '🎞️' : '🖼️'}</div>`);
     item.innerHTML = `${thumb}<div class="media-name">${escapeHtml(m.name)}</div>
       <div class="media-dur mono">${m.kind === 'image' ? 'IMAGE' : fmtTime(m.duration)}</div>
-      <button class="media-add" title="Add to timeline">+</button>`;
+      <button class="media-add" title="Add to timeline">+</button>
+      <button class="media-del" title="Remove from library">✕</button>`;
     item.addEventListener('click', () => addMediaToTimeline(m));
+    item.querySelector('.media-del').addEventListener('click', e => {
+      e.stopPropagation();
+      media.splice(media.indexOf(m), 1);
+      renderMediaGrid();
+    });
     (m.kind === 'audio' ? agrid : grid).appendChild(item);
   });
 }
@@ -255,6 +261,7 @@ function makeVideoClip(m, inPoint = 0, dur = null) {
     in: inPoint, dur: dur != null ? dur : (m.kind === 'image' ? 4 : (m.duration || 4)),
     speed: 1, volume: 1, grade: defaultGrade(), effect: 'none',
     motion: 'none', humanFx: 'none', humanColor: '#00D4FF', fit: 'fit',
+    crop: { l: 0, t: 0, r: 0, b: 0 },   // fractions cut from each edge
     transition: { type: 'none', dur: 0.8 },
     start: 0, transDur: 0,
   };
@@ -267,6 +274,8 @@ function makeVideoClip(m, inPoint = 0, dur = null) {
     hookClipAudio(c);
   } else {
     c.el = m.el;
+    // image may still be decoding when added — repaint once it's ready
+    if (m.kind === 'image' && !m.el.complete) m.el.addEventListener('load', () => { needsRedraw = true; }, { once: true });
   }
   return c;
 }
@@ -358,18 +367,24 @@ function drawClipInto(o, clip, t) {
   if (!sw || !sh) { o.restore(); return; }
 
   const lt = t - clip.start;
-  // 'fit' shows the whole source at its original shape (bars if needed);
-  // 'fill' crops it to fill the frame
-  const s = (clip.fit === 'fill' ? Math.max : Math.min)(PW / sw, PH / sh);
-  const dw = sw * s, dh = sh * s, dx = (PW - dw) / 2, dy = (PH - dh) / 2;
+  const crop = clip.crop || { l: 0, t: 0, r: 0, b: 0 };
+  const cwf = Math.max(0.05, 1 - crop.l - crop.r), chf = Math.max(0.05, 1 - crop.t - crop.b);
+  // 'fit' shows the whole (cropped) source at its original shape (bars if
+  // needed); 'fill' crops it further to fill the frame
+  const s = (clip.fit === 'fill' ? Math.max : Math.min)(PW / (sw * cwf), PH / (sh * chf));
+  const dw = sw * cwf * s, dh = sh * chf * s, dx = (PW - dw) / 2, dy = (PH - dh) / 2;
   const filter = buildFilter(clip.grade, clip.effect);
 
-  /* draws any image-like source into `target` with the clip's cover-fit + motion */
+  /* draws any image-like source into `target` with the clip's crop, fit and
+     motion; the crop is applied as fractions so it also maps onto proxies
+     like the segmentation mask, whatever their pixel size */
   const drawSrc = (target, img, flt) => {
+    const iw = img.videoWidth || img.naturalWidth || img.width;
+    const ih = img.videoHeight || img.naturalHeight || img.height;
     target.save();
     applyMotion(target, clip, lt);
     if (flt) target.filter = flt;
-    target.drawImage(img, dx, dy, dw, dh);
+    target.drawImage(img, iw * crop.l, ih * crop.t, iw * cwf, ih * chf, dx, dy, dw, dh);
     target.restore();
   };
 
@@ -1755,7 +1770,7 @@ function buildHumanTab(body, clip) {
   sectionLabel(body, '// Human effects · AI');
   const hint = document.createElement('div');
   hint.className = 'panel-hint';
-  hint.textContent = 'On-device AI separates the person from the background. The model (~2 MB) downloads once on first use — nothing is uploaded. Works best on talking-head footage.';
+  hint.textContent = 'On-device AI separates the person from the background. It sets up once on first use and is saved for next time — nothing is uploaded. Works best on talking-head footage.';
   body.appendChild(hint);
   const status = document.createElement('div');
   status.className = 'seg-status' + (segStatus === 'ready' ? ' ready' : '');
@@ -1847,6 +1862,12 @@ function buildClipTab(body, clip) {
   sectionLabel(body, '// Framing');
   chipGrid(body, [{ name: 'Fit (whole image)', id: 'fit' }, { name: 'Fill (crop to frame)', id: 'fill' }],
     op => (clip.fit || 'fit') === op.id, op => { clip.fit = op.id; }, true);
+  sectionLabel(body, '// Custom crop');
+  if (!clip.crop) clip.crop = { l: 0, t: 0, r: 0, b: 0 };
+  sliderRow(body, 'Crop left', Math.round(clip.crop.l * 100), 0, 45, 1, v => v + '%', v => { clip.crop.l = v / 100; });
+  sliderRow(body, 'Crop right', Math.round(clip.crop.r * 100), 0, 45, 1, v => v + '%', v => { clip.crop.r = v / 100; });
+  sliderRow(body, 'Crop top', Math.round(clip.crop.t * 100), 0, 45, 1, v => v + '%', v => { clip.crop.t = v / 100; });
+  sliderRow(body, 'Crop bottom', Math.round(clip.crop.b * 100), 0, 45, 1, v => v + '%', v => { clip.crop.b = v / 100; });
   if (clip.kind === 'video') {
     sliderRow(body, 'Speed', clip.speed, 0.25, 3, 0.05, v => v.toFixed(2) + '×', v => {
       const srcSpan = clip.dur * clip.speed;
@@ -1939,7 +1960,13 @@ function hookClipAudio(c) {
    EXPORT
    ============================================================ */
 function pickMime() {
-  const opts = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
+  // prefer recording straight to MP4 (newer Chrome/Safari); otherwise record
+  // WebM and convert to MP4 with the processing engine after recording
+  const opts = [
+    'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
+    'video/mp4',
+    'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm',
+  ];
   return opts.find(m => MediaRecorder.isTypeSupported(m)) || '';
 }
 
@@ -1959,21 +1986,50 @@ function startExport() {
   const bitrates = { 720: 8_000_000, 1080: 14_000_000, 1440: 24_000_000, 2160: 42_000_000 };
   recorder = new MediaRecorder(stream, { mimeType: pickMime(), videoBitsPerSecond: bitrates[curQuality] || 8_000_000 });
   recorder.ondataavailable = e => { if (e.data.size) exportChunks.push(e.data); };
-  recorder.onstop = () => {
+  recorder.onstop = async () => {
     if (exportCancelled) return;
-    const blob = new Blob(exportChunks, { type: 'video/webm' });
+    const recMime = (recorder.mimeType || 'video/webm').split(';')[0];
+    let blob = new Blob(exportChunks, { type: recMime });
+    let ext = recMime.includes('mp4') ? '.mp4' : '.webm';
+    if (ext !== '.mp4' && typeof getFFmpeg === 'function') {
+      try {
+        $('exportTitle').textContent = 'Finalizing…';
+        $('exportSub').textContent = 'Your video is processing, please wait…';
+        $('exportProgress').style.width = '0%';
+        const ffmpeg = await getFFmpeg(s => { $('exportSub').textContent = s; });
+        if (exportCancelled) return;
+        $('exportSub').textContent = 'Your video is processing, please wait…';
+        const onProg = ({ progress }) => { $('exportProgress').style.width = (clamp(progress, 0, 1) * 100).toFixed(1) + '%'; };
+        ffmpeg.on('progress', onProg);
+        await ffmpeg.writeFile('in.webm', new Uint8Array(await blob.arrayBuffer()));
+        const rc = await ffmpeg.exec(['-i', 'in.webm', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20',
+          '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', 'out.mp4']);
+        ffmpeg.off('progress', onProg);
+        if (rc === 0) {
+          const data = await ffmpeg.readFile('out.mp4');
+          blob = new Blob([data.buffer], { type: 'video/mp4' });
+          ext = '.mp4';
+        }
+        await ffmpeg.deleteFile('in.webm').catch(() => {});
+        await ffmpeg.deleteFile('out.mp4').catch(() => {});
+      } catch (e) {
+        console.warn('[ClipCut] MP4 conversion unavailable, keeping recorded format:', e);
+      }
+      if (exportCancelled) return;
+    }
     exportUrl = URL.createObjectURL(blob);
     const dl = $('exportDownload');
     dl.href = exportUrl;
-    dl.download = ($('projectName').value.trim().replace(/[^\w-]+/g, '-') || 'vidlab-export') + '.webm';
+    dl.download = 'Downloaded from 7by.in' + ext;
     dl.classList.remove('hidden');
     $('exportTitle').textContent = 'Export complete ✓';
-    $('exportSub').textContent = `WebM · ${(blob.size / 1048576).toFixed(1)} MB · ${PW}×${PH} @ 30fps`;
+    $('exportSub').textContent = `${ext === '.mp4' ? 'MP4' : 'Video'} · ${(blob.size / 1048576).toFixed(1)} MB · ${PW}×${PH} @ 30fps`;
+    $('exportProgress').style.width = '100%';
     $('exportCancel').textContent = 'Close';
   };
 
   $('exportTitle').textContent = 'Exporting video…';
-  $('exportSub').textContent = 'Playing through your timeline in real time and recording it. Keep this tab focused.';
+  $('exportSub').textContent = 'Your video is processing, please wait…';
   $('exportDownload').classList.add('hidden');
   $('exportCancel').textContent = 'Cancel';
   $('exportProgress').style.width = '0%';

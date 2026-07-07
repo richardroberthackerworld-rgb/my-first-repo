@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Remove Watermark from Image Free — Smart Inpainting, No Upload | VidLab</title>
   <meta name="description" content="Erase watermarks, logos and text from photos free. Brush over the watermark and smart inpainting reconstructs the area. 100% in your browser — no upload.">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8250159057339426" crossorigin="anonymous"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -22,6 +23,7 @@
         <a href="compressor.html">Compressor</a>
         <a href="toolkit.html">Toolkit</a>
       </nav>
+      <a href="../pricing.html" class="btn btn-primary nav-cta">⭐ Get Pro</a>
     </div>
   </header>
 
@@ -96,7 +98,6 @@
           <div class="notice">Works best on watermarks over smooth areas (sky, walls, water, bokeh). Mark slightly beyond the watermark's edges.</div>
           <div class="notice warn">Only edit images you own or have permission to modify.</div>
 
-          <div class="ad-slot rect">Ad · 300×250</div>
         </aside>
       </div>
 
@@ -108,7 +109,6 @@
       </div>
     </div>
 
-    <div class="ad-slot">Advertisement · 728×90</div>
   </main>
 
   <section class="section">
@@ -123,7 +123,7 @@
 
   <footer class="footer">
     <div class="footer-bottom" style="border-top:none">
-      <span>© 2026 7BY.IN — VIDLAB</span>
+      <span>© 2026 7BY.IN — VIDLAB · DEVELOPED BY 7BY.IN · FOUNDER &amp; CEO SHIRANDASU SANDEEP</span>
       <span><a href="index.html">ALL TOOLS</a> · <a href="../privacy-policy.html">PRIVACY</a></span>
     </div>
   </footer>
@@ -153,6 +153,11 @@
     let lastPt = null;
     let hasMask = false;
     let fileName = 'image';
+    let origImg = null;          // full-resolution source image
+    let natW = 0, natH = 0;      // its native size (may exceed the 2500px working cap)
+    // all areas ever inpainted — used to rebuild the result at full resolution
+    const cumMaskCv = document.createElement('canvas');
+    const cumMaskCtx = cumMaskCv.getContext('2d');
 
     /* ---------- load ---------- */
     setupDropzone(dropzone, fileInput, loadFile);
@@ -172,6 +177,9 @@
         H = Math.round(img.naturalHeight * s);
         imgCanvas.width = W; imgCanvas.height = H;
         maskCanvas.width = W; maskCanvas.height = H;
+        cumMaskCv.width = W; cumMaskCv.height = H;
+        cumMaskCtx.clearRect(0, 0, W, H);
+        origImg = img; natW = img.naturalWidth; natH = img.naturalHeight;
         ictx.drawImage(img, 0, 0, W, H);
         originalData = ictx.getImageData(0, 0, W, H);
         history = [];
@@ -370,6 +378,7 @@
           ictx.putImageData(imgData, 0, 0);
           overlay.progress(1);
 
+          cumMaskCtx.drawImage(maskCanvas, 0, 0); // remember what was repaired
           mctx.clearRect(0, 0, W, H);
           hasMask = false;
           document.getElementById('resultBar').classList.remove('hidden');
@@ -405,7 +414,24 @@
     window.addEventListener('pointerup', () => showOriginal(false));
 
     function download(type, ext, q) {
-      imgCanvas.toBlob(blob => downloadBlob(blob, baseName(fileName) + '_clean.' + ext), type, q);
+      // the tool works on a capped-size canvas for speed; downloads rebuild
+      // the image at its ORIGINAL resolution by patching only repaired areas
+      let outCv = imgCanvas;
+      if (origImg && natW > W) {
+        outCv = document.createElement('canvas');
+        outCv.width = natW; outCv.height = natH;
+        const octx = outCv.getContext('2d');
+        octx.drawImage(origImg, 0, 0, natW, natH);
+        const patch = document.createElement('canvas');
+        patch.width = natW; patch.height = natH;
+        const pctx = patch.getContext('2d');
+        pctx.imageSmoothingQuality = 'high';
+        pctx.drawImage(imgCanvas, 0, 0, natW, natH);
+        pctx.globalCompositeOperation = 'destination-in';
+        pctx.drawImage(cumMaskCv, 0, 0, natW, natH);
+        octx.drawImage(patch, 0, 0);
+      }
+      outCv.toBlob(blob => downloadBlob(blob, baseName(fileName) + '_clean.' + ext), type, q);
     }
     document.getElementById('downloadPngBtn').addEventListener('click', () => download('image/png', 'png'));
     document.getElementById('downloadJpgBtn').addEventListener('click', () => download('image/jpeg', 'jpg', 0.92));
