@@ -1,0 +1,5 @@
+# 7Pay — block direct web access to the SQLite database folder.
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteRule ^data/ - [F,L]
+</IfModule>
