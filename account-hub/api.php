@@ -5,6 +5,7 @@
  * Actions: me, signup, login, logout, google, order, verify, consume, webhook
  */
 require __DIR__ . '/lib.php';
+api_guard();
 cors();
 boot_session();
 

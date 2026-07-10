@@ -5,6 +5,22 @@
 
 $CFG = require __DIR__ . '/config.php';
 
+/* Turn uncaught exceptions (bad DB config, etc.) into clean JSON instead of an
+   HTML 500 page the frontend can't parse — which left buttons stuck on
+   "Sending code…". Call from JSON endpoints (api.php). */
+function api_guard() {
+	set_exception_handler(function ($e) {
+		error_log('[7by-hub] ' . get_class($e) . ': ' . $e->getMessage());
+		$msg = ($e instanceof PDOException)
+			? 'Database connection failed. Site owner: fill the "db" block in config.php (cPanel → MySQL Databases).'
+			: 'Server error. Please try again.';
+		http_response_code(500);
+		header('Content-Type: application/json');
+		echo json_encode(array('ok' => false, 'error' => $msg));
+		exit;
+	});
+}
+
 /* ---------------- Database (PDO) + auto-migrate ---------------- */
 function db() {
 	global $CFG;

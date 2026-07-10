@@ -13,7 +13,13 @@
       method: 'POST', credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data || {}),
-    }).then(function (r) { return r.json().then(function (j) { return { status: r.status, body: j }; }); });
+    }).then(function (r) {
+      return r.json().then(function (j) { return { status: r.status, body: j }; });
+    }).catch(function () {
+      // Network failure or a non-JSON (fatal) server response — never leave
+      // the UI hanging on "Sending…"; surface it so the user can retry.
+      return { status: 0, body: { ok: false, error: 'Could not reach the server. Please try again.' } };
+    });
   }
 
   function msg(text, ok) {
