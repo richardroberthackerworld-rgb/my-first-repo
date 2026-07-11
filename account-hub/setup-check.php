@@ -76,7 +76,23 @@ $gw = isset($CFG['gateway']) ? $CFG['gateway'] : 'razorpay';
 if ($gw === 'sevenpay') {
 	$sp = isset($CFG['sevenpay']) ? $CFG['sevenpay'] : array();
 	$spOk = !empty($sp['key_id']) && !is_todo($sp['key_id']) && !empty($sp['key_secret']) && !is_todo($sp['key_secret']);
-	row('Payments (7Pay)', $spOk ? true : 'warn', $spOk ? 'Configured, using ' . (isset($sp['base_url']) ? $sp['base_url'] : '?') : 'gateway is "sevenpay" but key_id/key_secret still have TODOs — payments will fail until filled. Not needed for login/OTP.');
+	if (!$spOk) {
+		row('Payments (7Pay)', 'warn', 'gateway is "sevenpay" but key_id/key_secret still have TODOs — payments will fail until filled. Not needed for login/OTP.');
+	} else {
+		// Live connectivity + auth test against the gateway (a 404 on a fake
+		// lookup proves the URL is right AND the credentials are accepted).
+		$base = rtrim((string)($sp['base_url'] ?? ''), '/');
+		$ch = curl_init($base . '/api.php?action=payment.fetch&id=ping_setup_check');
+		curl_setopt_array($ch, array(CURLOPT_RETURNTRANSFER => true, CURLOPT_USERPWD => $sp['key_id'] . ':' . $sp['key_secret'], CURLOPT_TIMEOUT => 8));
+		curl_exec($ch);
+		$code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+		$cerr = curl_error($ch);
+		curl_close($ch);
+		if ($code === 404)      row('Payments (7Pay)', true, 'Connected to ' . $base . ' and authenticated — orders will work.');
+		elseif ($code === 401)  row('Payments (7Pay)', false, $base . ' is reachable but rejected the credentials — key_id/key_secret here do NOT match the merchant in the gateway\'s config.php.');
+		elseif ($code === 0)    row('Payments (7Pay)', false, 'Could not connect to ' . $base . ' (' . ($cerr ?: 'no response') . ') — check base_url (is it https://7pay.7by.in?).');
+		else                    row('Payments (7Pay)', false, $base . ' answered HTTP ' . $code . ' — unexpected; check base_url points at the 7Pay folder.');
+	}
 } else {
 	$rzOk = !is_todo($CFG['razorpay']['key_id']);
 	row('Payments (Razorpay)', $rzOk ? true : 'warn', $rzOk ? 'Key configured.' : 'Razorpay keys still TODO — payments will fail until filled. Not needed for login/OTP.');
