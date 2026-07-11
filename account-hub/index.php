@@ -94,9 +94,11 @@ $UNIT = !empty($P['unit_note']) ? $P['unit_note'] : 'Each tool shows how many cr
 				<div class="astep" data-step="home">
 					<h2 class="auth-title">Welcome back</h2>
 					<p class="auth-sub"><?php echo htmlspecialchars($P['auth_sub']); ?></p>
+					<?php if (strpos($CFG['google']['client_id'], 'TODO') !== 0): // hide Google until a real client ID is configured ?>
 					<div id="g_id_onload" data-client_id="<?php echo htmlspecialchars($CFG['google']['client_id']); ?>" data-callback="onGoogle" data-auto_prompt="false"></div>
 					<div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="outline" data-text="continue_with" data-size="large" data-width="330" data-logo_alignment="left"></div>
 					<div class="or"><span>or</span></div>
+					<?php endif; ?>
 					<button type="button" class="btn btn-outline btn-block btn-mail" data-go="choice">✉&nbsp; Continue with email</button>
 				</div>
 
@@ -193,6 +195,6 @@ $UNIT = !empty($P['unit_note']) ? $P['unit_note'] : 'Each tool shows how many cr
 		</main>
 	</div>
 
-	<script src="/assets/account.js?v=7"></script>
+	<script src="/assets/account.js?v=8"></script>
 </body>
 </html>
