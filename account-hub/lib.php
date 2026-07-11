@@ -172,7 +172,7 @@ function email_template($heading, $blocks) {
 	.   '<tr><td style="background-color:#4F46E5;background-image:linear-gradient(120deg,#4F46E5,#7C3AED);border-radius:16px 16px 0 0;padding:24px 36px" align="left">'
 	.     '<table role="presentation" cellpadding="0" cellspacing="0"><tr>'
 	.       '<td style="background-color:#ffffff;border-radius:12px;padding:9px 16px">'
-	.         '<img src="https://account.7by.in/assets/logo-email.png" width="60" alt="7By" style="display:block;width:60px;height:auto;border:0">'
+	.         '<img src="https://account.7by.in/assets/logo-email.png" width="60" height="49" alt="7by" style="display:block;width:60px;height:auto;border:0;font-family:Arial,Helvetica,sans-serif;font-size:20px;font-weight:bold;color:#4F46E5;line-height:49px">'
 	.       '</td>'
 	.       '<td style="padding-left:14px;font-family:Arial,Helvetica,sans-serif;font-size:20px;font-weight:bold;color:#ffffff;letter-spacing:-0.5px">7By<span style="font-weight:normal;color:rgba(255,255,255,0.75)">.in</span></td>'
 	.     '</tr></table>'
