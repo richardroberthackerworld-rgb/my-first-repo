@@ -183,7 +183,7 @@ function email_template($heading, $blocks) {
 
 	// Footer
 	.   '<tr><td style="padding:22px 12px;text-align:center;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.7;color:#9A9AB0">'
-	.     'Sent by <a href="https://7by.in" style="color:#4F46E5;text-decoration:none">7By</a> — free AI audio, image &amp; video tools'
+	.     'Sent by <a href="https://7by.in" style="color:#4F46E5;text-decoration:none">7By</a> — free AI tools'
 	.     '<br>&copy; ' . $year . ' 7By.in &middot; This is an automated message, replies aren\'t monitored.'
 	.   '</td></tr>'
 	.   '</table>'
