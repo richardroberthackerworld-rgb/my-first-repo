@@ -167,11 +167,14 @@ function email_template($heading, $blocks) {
 	. '<tr><td align="center">'
 	.   '<table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%">'
 
-	// Header band — brand gradient with solid fallback
-	.   '<tr><td style="background-color:#4F46E5;background-image:linear-gradient(120deg,#4F46E5,#7C3AED);border-radius:16px 16px 0 0;padding:28px 36px" align="left">'
+	// Header band — brand gradient with solid fallback; real 7By logo in a
+	// white rounded chip (hosted on the hub — email clients need absolute URLs)
+	.   '<tr><td style="background-color:#4F46E5;background-image:linear-gradient(120deg,#4F46E5,#7C3AED);border-radius:16px 16px 0 0;padding:24px 36px" align="left">'
 	.     '<table role="presentation" cellpadding="0" cellspacing="0"><tr>'
-	.       '<td style="background-color:rgba(255,255,255,0.18);border-radius:10px;width:40px;height:40px;text-align:center;vertical-align:middle;font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:bold;color:#ffffff">7</td>'
-	.       '<td style="padding-left:12px;font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:bold;color:#ffffff;letter-spacing:-0.5px">7By<span style="font-weight:normal;color:rgba(255,255,255,0.75)">.in</span></td>'
+	.       '<td style="background-color:#ffffff;border-radius:12px;padding:9px 16px">'
+	.         '<img src="https://account.7by.in/assets/logo-email.png" width="60" alt="7By" style="display:block;width:60px;height:auto;border:0">'
+	.       '</td>'
+	.       '<td style="padding-left:14px;font-family:Arial,Helvetica,sans-serif;font-size:20px;font-weight:bold;color:#ffffff;letter-spacing:-0.5px">7By<span style="font-weight:normal;color:rgba(255,255,255,0.75)">.in</span></td>'
 	.     '</tr></table>'
 	.   '</td></tr>'
 
