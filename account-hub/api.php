@@ -30,7 +30,8 @@ switch ($action) {
 		$exists = db()->prepare('SELECT id FROM users WHERE email = ?');
 		$exists->execute(array($email));
 		if ($exists->fetch()) fail('An account with this email already exists. Please sign in.');
-		issue_otp($email, 'signup', array('name' => $name, 'password_hash' => password_hash($pass, PASSWORD_DEFAULT)));
+		$sent = issue_otp($email, 'signup', array('name' => $name, 'password_hash' => password_hash($pass, PASSWORD_DEFAULT)));
+		if (!$sent) fail('Could not send the verification email. Site owner: configure the "smtp" block in config.php (see setup-check.php).', 502);
 		json_out(array('ok' => true));
 		break;
 	}

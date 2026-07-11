@@ -84,7 +84,69 @@ function mail_from() {
 	return 'no-reply@' . $host;
 }
 
+/**
+ * Minimal SMTP client (AUTH LOGIN) — sends through a real cPanel mailbox so
+ * OTP emails actually arrive instead of being dropped/spam-binned like the
+ * host's bare mail(). Returns true on a 250 after DATA, false otherwise.
+ */
+function smtp_send($to, $subject, $html) {
+	global $CFG;
+	$s = $CFG['smtp'];
+	$from = mail_from();
+	$remote = ($s['secure'] === 'ssl' ? 'ssl://' : 'tcp://') . $s['host'] . ':' . (int)$s['port'];
+	$ctx = stream_context_create(array('ssl' => array('verify_peer' => false, 'verify_peer_name' => false)));
+	$fp = @stream_socket_client($remote, $errno, $errstr, 12, STREAM_CLIENT_CONNECT, $ctx);
+	if (!$fp) { error_log('[7by-hub] SMTP connect failed: ' . $errstr); return false; }
+	stream_set_timeout($fp, 12);
+
+	$read = function () use ($fp) {
+		$out = '';
+		while (($line = fgets($fp, 515)) !== false) {
+			$out .= $line;
+			if (strlen($line) < 4 || $line[3] !== '-') break; // last line of a multiline reply
+		}
+		return $out;
+	};
+	$say = function ($cmd, $expect) use ($fp, $read) {
+		fwrite($fp, $cmd . "\r\n");
+		$r = $read();
+		if ((int)substr($r, 0, 3) !== $expect) { error_log('[7by-hub] SMTP "' . substr($cmd, 0, 12) . '…" got: ' . trim($r)); return false; }
+		return true;
+	};
+
+	$hostname = isset($_SERVER['HTTP_HOST']) ? preg_replace('/[^a-zA-Z0-9.\-]/', '', $_SERVER['HTTP_HOST']) : 'localhost';
+	if ((int)substr($read(), 0, 3) !== 220) { fclose($fp); return false; } // banner
+	if (!$say('EHLO ' . $hostname, 250)) { fclose($fp); return false; }
+	if ($s['secure'] === 'tls') {
+		if (!$say('STARTTLS', 220)) { fclose($fp); return false; }
+		if (!@stream_socket_enable_crypto($fp, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) { fclose($fp); return false; }
+		if (!$say('EHLO ' . $hostname, 250)) { fclose($fp); return false; }
+	}
+	if (!$say('AUTH LOGIN', 334) || !$say(base64_encode($s['user']), 334) || !$say(base64_encode($s['pass']), 235)) { fclose($fp); return false; }
+	if (!$say('MAIL FROM:<' . $s['user'] . '>', 250)) { fclose($fp); return false; }
+	if (!$say('RCPT TO:<' . $to . '>', 250)) { fclose($fp); return false; }
+	if (!$say('DATA', 354)) { fclose($fp); return false; }
+
+	$headers  = 'From: 7By <' . $from . ">\r\n";
+	$headers .= 'Reply-To: ' . $from . "\r\n";
+	$headers .= 'To: <' . $to . ">\r\n";
+	$headers .= 'Subject: ' . preg_replace('/[\r\n]/', ' ', $subject) . "\r\n";
+	$headers .= 'Date: ' . date('r') . "\r\n";
+	$headers .= 'Message-ID: <' . bin2hex(random_bytes(12)) . '@' . preg_replace('/^.*@/', '', $from) . ">\r\n";
+	$headers .= "MIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n";
+	$body = preg_replace('/^\./m', '..', $html); // dot-stuffing
+	$ok = $say($headers . "\r\n" . $body . "\r\n.", 250);
+	fwrite($fp, "QUIT\r\n");
+	fclose($fp);
+	return $ok;
+}
+
 function send_email($to, $subject, $html) {
+	global $CFG;
+	// Prefer authenticated SMTP when configured; fall back to bare mail().
+	if (!empty($CFG['smtp']['user']) && strpos($CFG['smtp']['user'], 'TODO') !== 0) {
+		return smtp_send($to, $subject, $html);
+	}
 	$from = mail_from();
 	$headers  = 'From: 7By <' . $from . ">\r\n";
 	$headers .= 'Reply-To: ' . $from . "\r\n";
@@ -93,7 +155,8 @@ function send_email($to, $subject, $html) {
 	return @mail($to, $subject, $html, $headers);
 }
 
-// Create a fresh OTP for this email+purpose (replaces any previous one) and email it.
+// Create a fresh OTP for this email+purpose (replaces any previous one) and
+// email it. Returns whether the email was actually accepted for delivery.
 function issue_otp($email, $purpose, $data = null) {
 	$code = gen_otp();
 	db()->prepare('DELETE FROM otps WHERE email = ? AND purpose = ?')->execute(array($email, $purpose));
@@ -106,8 +169,7 @@ function issue_otp($email, $purpose, $data = null) {
 		. '<p style="font-size:32px;font-weight:bold;letter-spacing:6px">' . $code . '</p>'
 		. '<p style="color:#666">This code expires in 10 minutes. If you didn\'t request it, you can ignore this email.</p>'
 		. '</div>';
-	send_email($email, $title . ' — code ' . $code, $html);
-	return $code;
+	return (bool)send_email($email, $title . ' — code ' . $code, $html);
 }
 
 // Return the OTP row if a valid, unexpired code matches; else null.

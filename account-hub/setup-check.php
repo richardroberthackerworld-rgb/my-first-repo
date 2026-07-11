@@ -5,7 +5,7 @@
  * which config values still need attention. Shows statuses only, never secrets.
  * You can delete this file once everything is green.
  */
-$CFG = require __DIR__ . '/config.php';
+require __DIR__ . '/lib.php'; // defines send_email/smtp_send and loads $CFG
 
 function row($name, $ok, $detail) {
 	$icon = $ok === true ? '✅' : ($ok === 'warn' ? '⚠️' : '❌');
@@ -19,7 +19,18 @@ echo '<!doctype html><html><head><meta charset="utf-8"><title>7By Hub — setup 
 table{border-collapse:collapse;width:100%}td{padding:10px 12px;border-bottom:1px solid #eee;font-size:15px;vertical-align:top}
 h1{font-size:26px}p{color:#555}.foot{margin-top:24px;font-size:13px;color:#888}</style>
 </head><body><h1>7By Account Hub — setup check</h1>
-<p>Fix anything with a ❌, then reload this page. Delete this file when all green.</p><table>';
+<p>Fix anything with a ❌, then reload this page. Delete this file when all green.</p>';
+
+/* One-click email delivery test: /setup-check.php?testmail=you@example.com */
+if (!empty($_GET['testmail']) && filter_var($_GET['testmail'], FILTER_VALIDATE_EMAIL)) {
+	$t = $_GET['testmail'];
+	$ok = send_email($t, '7By test email', '<p>If you can read this, email sending on account.7by.in works. 🎉</p>');
+	echo '<p style="padding:12px 16px;border-radius:8px;background:' . ($ok ? '#e7f8ef' : '#fdeaea') . '">'
+		. ($ok ? '✅ Test email accepted for delivery to <b>' : '❌ Sending failed to <b>') . htmlspecialchars($t)
+		. '</b>.' . ($ok ? ' Check the inbox (and spam folder).' : ' Check the smtp block in config.php — host/port/user/password.') . '</p>';
+}
+
+echo '<table>';
 
 /* PHP */
 row('PHP version', version_compare(PHP_VERSION, '7.4', '>='), 'PHP ' . PHP_VERSION . (version_compare(PHP_VERSION, '7.4', '>=') ? ' — fine' : ' — too old, pick PHP 8.x in cPanel MultiPHP Manager'));
@@ -47,9 +58,12 @@ row('app_secret', !is_todo($CFG['app_secret']), is_todo($CFG['app_secret'])
 	: 'Set.');
 
 /* Email */
-row('Email (OTP codes)', function_exists('mail') ? true : false, function_exists('mail')
-	? 'PHP mail() is available. OTPs send from ' . (isset($CFG['mail_from']) && $CFG['mail_from'] ? $CFG['mail_from'] : 'no-reply@' . (isset($_SERVER['HTTP_HOST']) ? preg_replace('/^www\./', '', $_SERVER['HTTP_HOST']) : '7by.in')) . '. If codes don\'t arrive, check the spam folder first.'
-	: 'mail() is disabled on this host — ask your hosting provider.');
+$smtpConfigured = !empty($CFG['smtp']['user']) && !is_todo($CFG['smtp']['user']);
+if ($smtpConfigured) {
+	row('Email (OTP codes)', true, 'SMTP configured: ' . $CFG['smtp']['user'] . ' via ' . $CFG['smtp']['host'] . ':' . $CFG['smtp']['port'] . '. Use the test form below to confirm delivery.');
+} else {
+	row('Email (OTP codes)', 'warn', 'Using bare PHP mail() — often dropped or spam-binned. Recommended: cPanel → Email Accounts → create no-reply@7by.in, then fill the "smtp" block in config.php.');
+}
 
 /* Google */
 row('Google Sign-In', is_todo($CFG['google']['client_id']) ? 'warn' : true, is_todo($CFG['google']['client_id'])
@@ -73,4 +87,9 @@ $cd = $CFG['cookie_domain'];
 row('Cookie domain', ($host === '' || substr($host, -strlen(trim($cd, '.'))) === trim($cd, '.')) ? true : 'warn',
 	'cookie_domain is "' . $cd . '"' . ($host ? ' and this page is served from "' . $host . '"' : '') . '. They must match (login is shared across *.7by.in).');
 
-echo '</table><p class="foot">7By Account Hub · setup-check.php · shows configuration status only, never secret values.</p></body></html>';
+echo '</table>
+<form method="get" style="margin-top:22px;display:flex;gap:8px">
+	<input name="testmail" type="email" required placeholder="you@example.com" style="flex:1;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:15px">
+	<button style="padding:10px 18px;border:0;border-radius:8px;background:#4f46e5;color:#fff;font-size:15px;cursor:pointer">Send test email</button>
+</form>
+<p class="foot">7By Account Hub · setup-check.php · shows configuration status only, never secret values. Delete this file when done.</p></body></html>';
