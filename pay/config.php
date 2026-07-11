@@ -53,12 +53,14 @@ return array(
 	// site between gateways is a one-line change.
 	'merchants' => array(
 
-		// 7By Account Hub (credits system on account.7by.in)
+		// 7By Account Hub (credits system on account.7by.in).
+		// key_secret + webhook_secret must MATCH the 'sevenpay' block in
+		// account-hub/config.php. Flip mode to 'live' to take real payments.
 		'7pay_7by' => array(
 			'name'           => '7By',
 			'key_secret'     => 'TODO_change_me_7by_secret',
 			'mode'           => 'test',
-			'webhook_url'    => '', // e.g. https://account.7by.in/api.php?action=sevenpay_webhook
+			'webhook_url'    => 'https://account.7by.in/api.php?action=sevenpay_webhook',
 			'webhook_secret' => 'TODO_change_me_7by_webhook_secret',
 		),
 
