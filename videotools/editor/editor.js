@@ -87,6 +87,7 @@ const EFFECTS = [
   { id: 'pixelate', name: 'Pixelate' }, { id: 'scanlines', name: 'Scanlines' }, { id: 'invert', name: 'Invert' },
   { id: 'mirror', name: 'Mirror' }, { id: 'kaleido', name: 'Kaleido' }, { id: 'zoomblur', name: 'Zoom Blur' },
   { id: 'oldfilm', name: 'Old Film' }, { id: 'duotone', name: 'Duotone' }, { id: 'rgbwave', name: 'RGB Wave' },
+  { id: 'cinebars', name: 'Cinema Bars' }, { id: 'strobe', name: 'Strobe' }, { id: 'retrowave', name: 'Retrowave' },
 ];
 
 const MOTIONS = [
@@ -624,6 +625,30 @@ function applyEffect(o, clip, t) {
       break;
     }
     case 'scanlines': drawScanlines(o, 0.22); break;
+    case 'cinebars': {
+      const bh = Math.round(PH * 0.12);
+      o.fillStyle = '#000';
+      o.fillRect(0, 0, PW, bh);
+      o.fillRect(0, PH - bh, PW, bh);
+      break;
+    }
+    case 'strobe': {
+      if (Math.sin(t * 18) > 0.55) {
+        o.fillStyle = 'rgba(255,255,255,0.32)';
+        o.fillRect(0, 0, PW, PH);
+      }
+      break;
+    }
+    case 'retrowave': {
+      const g2 = o.createLinearGradient(0, 0, 0, PH);
+      g2.addColorStop(0, '#00D4FF'); g2.addColorStop(1, '#FF006E');
+      o.globalCompositeOperation = 'overlay';
+      o.globalAlpha = 0.5;
+      o.fillStyle = g2; o.fillRect(0, 0, PW, PH);
+      o.globalCompositeOperation = 'source-over'; o.globalAlpha = 1;
+      drawScanlines(o, 0.14);
+      break;
+    }
   }
 }
 
@@ -1031,6 +1056,349 @@ function renderGfxPresets() {
     el.className = 'gfx-preset';
     el.innerHTML = `<span class="gp-icon">${p.icon}</span><span class="gp-name">${p.name}</span>`;
     el.addEventListener('click', () => addGfxClip(p));
+    wrap.appendChild(el);
+  });
+}
+
+/* ============================================================
+   TEMPLATES — one-tap styled timelines (CapCut-style)
+   A template is a list of scenes; each scene styles one media
+   slot (grade/effect/motion/transition) and overlays text.
+   Uses the user's imported media in order, or generates
+   placeholder slides they can replace.
+   ============================================================ */
+const TPL_PALETTES = [
+  ['#FF006E', '#8338EC'], ['#3A86FF', '#00D4FF'], ['#FB5607', '#FFBE0B'],
+  ['#00C896', '#02745C'], ['#5F0F40', '#FB8B24'], ['#1D3557', '#E63946'],
+];
+
+const TEMPLATES = [
+  /* ---- intros & openers (16:9) ---- */
+  { id: 'bold-intro', name: 'Bold YouTube Intro', icon: '🎬', tag: 'Intro · 7s', aspect: '16:9', grad: 0,
+    scenes: [
+      { dur: 2.4, grade: 'Cinematic', motion: 'zoomfast', trans: 'fade',
+        texts: [{ text: 'YOUR CHANNEL', size: 104, effect: 'pop', y: 0.45 }, { text: 'new video every week', size: 38, color: '#00D4FF', effect: 'fade', y: 0.62, at: 0.5, weight: 500 }] },
+      { dur: 2.4, grade: 'Vivid', motion: 'kbin', trans: 'slideleft', texts: [{ text: 'THIS WEEK…', size: 84, effect: 'slide', y: 0.5 }] },
+      { dur: 2.4, grade: 'Cinematic', motion: 'kbout', texts: [{ text: "LET'S GO", size: 110, effect: 'zoom', y: 0.5, color: '#FFB800' }] },
+    ],
+    gfx: [{ preset: 'sweep', at: 0, dur: 2.4 }] },
+
+  { id: 'neon-gamer', name: 'Neon Gamer Intro', icon: '🎮', tag: 'Gaming · 7s', aspect: '16:9', grad: 0,
+    scenes: [
+      { dur: 2.2, grade: 'Cyberpunk', effect: 'glitch', motion: 'handheld', trans: 'fadeblack',
+        texts: [{ text: 'GAME ON', size: 120, effect: 'neon', color: '#00D4FF' }] },
+      { dur: 2.4, grade: 'Cyberpunk', effect: 'chromatic', motion: 'pulse', trans: 'blurwarp',
+        texts: [{ text: 'LEVEL UP YOUR FEED', size: 60, effect: 'glow', color: '#FF006E' }] },
+      { dur: 2.4, grade: 'Noir', effect: 'scanlines', motion: 'zoomfast', texts: [{ text: 'SUBSCRIBE', size: 96, effect: 'shake', color: '#00C896' }] },
+    ],
+    gfx: [{ preset: 'ring', at: 0.2, dur: 2, color: '#00D4FF' }] },
+
+  { id: 'minimal-tech', name: 'Minimal Tech Intro', icon: '💻', tag: 'Tech · 6s', aspect: '16:9', grad: 1,
+    scenes: [
+      { dur: 3, grade: 'Cool', motion: 'kbin', trans: 'fade', texts: [{ text: 'the future, reviewed', size: 56, effect: 'typewriter', font: 'JetBrains Mono', weight: 400 }] },
+      { dur: 3, grade: 'Cool', motion: 'driftup', texts: [{ text: 'TECH DECODED', size: 88, effect: 'fade' }] },
+    ],
+    gfx: [{ preset: 'progress', at: 0, dur: 6, color: '#00D4FF' }] },
+
+  { id: 'cine-vlog', name: 'Cinematic Vlog Opener', icon: '🌅', tag: 'Vlog · 8s', aspect: '16:9', grad: 4,
+    scenes: [
+      { dur: 2.6, grade: 'Cinematic', effect: 'cinebars', motion: 'panleft', trans: 'fade', texts: [{ text: 'A DAY IN MY LIFE', size: 72, effect: 'fade', y: 0.72 }] },
+      { dur: 2.6, grade: 'Cinematic', effect: 'cinebars', motion: 'kbin', trans: 'fade', texts: [{ text: 'ep. 12', size: 40, effect: 'fade', y: 0.72, font: 'JetBrains Mono', weight: 400 }] },
+      { dur: 2.8, grade: 'Sunset', effect: 'cinebars', motion: 'kbout', texts: [{ text: 'enjoy ✨', size: 60, effect: 'glow', y: 0.72 }] },
+    ] },
+
+  { id: 'travel', name: 'Travel Montage', icon: '✈️', tag: 'Travel · 10s', aspect: '16:9', grad: 2,
+    scenes: [
+      { dur: 2.5, grade: 'Sunset', motion: 'panright', trans: 'wipeleft', texts: [{ text: 'WANDER', size: 110, effect: 'wave', color: '#FFB800' }] },
+      { dur: 2.5, grade: 'Warm', motion: 'kbin', trans: 'wiperight', texts: [{ text: 'EXPLORE', size: 110, effect: 'wave', color: '#FFFFFF' }] },
+      { dur: 2.5, grade: 'Vivid', motion: 'panleft', trans: 'circleopen', texts: [{ text: 'DISCOVER', size: 110, effect: 'wave', color: '#00D4FF' }] },
+      { dur: 2.5, grade: 'Sunset', motion: 'kbout', texts: [{ text: 'come with me', size: 54, effect: 'fade', weight: 500 }] },
+    ],
+    gfx: [{ preset: 'lightleak', at: 0, dur: 10, color: '#FFB800' }] },
+
+  { id: 'tutorial', name: 'Tutorial Opener', icon: '📚', tag: 'Howto · 6s', aspect: '16:9', grad: 1,
+    scenes: [
+      { dur: 3, grade: 'Cool', motion: 'kbin', trans: 'wipedown', texts: [{ text: 'HOW TO…', size: 96, effect: 'slide' }] },
+      { dur: 3, grade: 'None', motion: 'none', texts: [{ text: 'step by step, no skips', size: 48, effect: 'fade', bg: true, weight: 500 }] },
+    ],
+    gfx: [{ preset: 'lowerthird', at: 3, dur: 3, text: 'Your Name', text2: 'Tutorials · Weekly' }] },
+
+  { id: 'news-flash', name: 'News Flash', icon: '🗞️', tag: 'News · 6s', aspect: '16:9', grad: 5,
+    scenes: [
+      { dur: 1.6, grade: 'Noir', effect: 'strobe', motion: 'zoomfast', trans: 'slideleft', texts: [{ text: 'BREAKING', size: 120, effect: 'shake', color: '#FF4444' }] },
+      { dur: 2.2, grade: 'Noir', motion: 'none', trans: 'slideleft', texts: [{ text: 'THE STORY EVERYONE MISSED', size: 56, effect: 'slide', bg: true }] },
+      { dur: 2.2, grade: 'Cool', motion: 'kbin', texts: [{ text: 'full report inside', size: 44, effect: 'fade', y: 0.7, weight: 500 }] },
+    ],
+    gfx: [{ preset: 'progress', at: 0, dur: 6, color: '#FF4444' }] },
+
+  { id: 'podcast', name: 'Podcast Promo', icon: '🎙️', tag: 'Podcast · 8s', aspect: '16:9', grad: 4,
+    scenes: [
+      { dur: 4, grade: 'Faded', motion: 'pulse', trans: 'fade', texts: [{ text: '"the quote that stops the scroll"', size: 52, effect: 'typewriter', font: 'Georgia', weight: 400 }] },
+      { dur: 4, grade: 'Faded', motion: 'kbin', texts: [{ text: 'NEW EPISODE', size: 84, effect: 'pop' }, { text: 'listen everywhere', size: 36, effect: 'fade', y: 0.64, at: 0.6, weight: 500 }] },
+    ],
+    gfx: [{ preset: 'ring', at: 4, dur: 3, color: '#FF006E' }] },
+
+  { id: 'recipe', name: 'Recipe Card', icon: '🍳', tag: 'Food · 7s', aspect: '16:9', grad: 2,
+    scenes: [
+      { dur: 2.4, grade: 'Warm', motion: 'kbout', trans: 'circleopen', texts: [{ text: 'TODAY WE COOK', size: 76, effect: 'bounce' }] },
+      { dur: 2.4, grade: 'Warm', motion: 'kbin', trans: 'fade', texts: [{ text: 'ready in 20 minutes', size: 46, effect: 'fade', bg: true, weight: 500 }] },
+      { dur: 2.4, grade: 'Vivid', motion: 'pulse', texts: [{ text: 'BON APPÉTIT', size: 84, effect: 'zoom', color: '#FFB800' }] },
+    ],
+    gfx: [{ preset: 'sticker', at: 4.8, dur: 2.4, emoji: '😋', x: 0.82, y: 0.24, scale: 1.2 }] },
+
+  { id: 'fitness', name: 'Fitness Hype', icon: '💪', tag: 'Fitness · 6s', aspect: '16:9', grad: 5,
+    scenes: [
+      { dur: 1.8, grade: 'Vivid', effect: 'strobe', motion: 'zoomfast', trans: 'fadeblack', texts: [{ text: 'NO EXCUSES', size: 104, effect: 'shake' }] },
+      { dur: 2.1, grade: 'Noir', motion: 'handheld', trans: 'fadeblack', texts: [{ text: 'TRAIN. EAT. REPEAT.', size: 66, effect: 'pop' }] },
+      { dur: 2.1, grade: 'Vivid', motion: 'zoomfast', texts: [{ text: "LET'S WORK", size: 96, effect: 'zoom', color: '#00C896' }] },
+    ],
+    gfx: [{ preset: 'sweep', at: 0, dur: 2 }] },
+
+  { id: 'product', name: 'Product Showcase', icon: '🛍️', tag: 'Promo · 8s', aspect: '16:9', grad: 0,
+    scenes: [
+      { dur: 2.6, grade: 'Cinematic', motion: 'spinin', trans: 'fade', texts: [{ text: 'INTRODUCING', size: 60, effect: 'fade', y: 0.3, weight: 500 }] },
+      { dur: 2.6, grade: 'Cinematic', motion: 'kbin', trans: 'blurwarp', texts: [{ text: 'THE ONE YOU WAITED FOR', size: 64, effect: 'gradient' }] },
+      { dur: 2.8, grade: 'Vivid', motion: 'pulse', texts: [{ text: 'AVAILABLE NOW', size: 80, effect: 'glow', color: '#00D4FF' }] },
+    ],
+    gfx: [{ preset: 'sweep', at: 2.6, dur: 2.6 }] },
+
+  { id: 'unboxing', name: 'Unboxing Time', icon: '📦', tag: 'Unbox · 6s', aspect: '16:9', grad: 2,
+    scenes: [
+      { dur: 3, grade: 'Vivid', motion: 'kbin', trans: 'circleclose', texts: [{ text: 'UNBOXING TIME', size: 84, effect: 'pop' }] },
+      { dur: 3, grade: 'Vivid', motion: 'pulse', texts: [{ text: 'is it worth it?', size: 52, effect: 'fade', weight: 500 }] },
+    ],
+    gfx: [{ preset: 'sticker', at: 0.6, dur: 2, emoji: '😱', x: 0.8, y: 0.25, scale: 1.3 }] },
+
+  { id: 'realty', name: 'Property Tour', icon: '🏡', tag: 'Realty · 9s', aspect: '16:9', grad: 3,
+    scenes: [
+      { dur: 3, grade: 'Cinematic', effect: 'cinebars', motion: 'panleft', trans: 'fade', texts: [{ text: 'JUST LISTED', size: 76, effect: 'fade', y: 0.7 }] },
+      { dur: 3, grade: 'Cinematic', effect: 'cinebars', motion: 'panright', trans: 'fade', texts: [{ text: '3 BED · 2 BATH · CITY VIEWS', size: 44, effect: 'slide', y: 0.7, font: 'JetBrains Mono', weight: 400 }] },
+      { dur: 3, grade: 'Warm', motion: 'kbout', texts: [{ text: 'book a viewing today', size: 50, effect: 'fade', y: 0.7, weight: 500 }] },
+    ],
+    gfx: [{ preset: 'lowerthird', at: 6, dur: 3, text: 'Your Name', text2: 'Licensed Realtor' }] },
+
+  { id: 'wedding', name: 'Wedding Memories', icon: '💍', tag: 'Love · 9s', aspect: '16:9', grad: 4,
+    scenes: [
+      { dur: 3, grade: 'Faded', motion: 'kbout', trans: 'fadewhite', texts: [{ text: 'Forever starts here', size: 72, effect: 'glow', font: 'Georgia', weight: 400 }] },
+      { dur: 3, grade: 'Faded', motion: 'kbin', trans: 'fadewhite', texts: [{ text: 'Alex & Sam', size: 88, effect: 'fade', font: 'Georgia', weight: 400 }] },
+      { dur: 3, grade: 'Warm', motion: 'kbout', texts: [{ text: '14 · 02 · 2026', size: 44, effect: 'fade', font: 'JetBrains Mono', weight: 400 }] },
+    ],
+    gfx: [{ preset: 'bokeh', at: 0, dur: 9, color: '#FFB6C1' }] },
+
+  { id: 'birthday', name: 'Birthday Party', icon: '🎂', tag: 'Party · 7s', aspect: '16:9', grad: 2,
+    scenes: [
+      { dur: 2.4, grade: 'Vivid', motion: 'zoomfast', trans: 'circleopen', texts: [{ text: 'HAPPY', size: 120, effect: 'bounce', color: '#FFB800' }] },
+      { dur: 2.4, grade: 'Vivid', motion: 'pulse', trans: 'circleopen', texts: [{ text: 'BIRTHDAY!', size: 120, effect: 'bounce', color: '#FF006E' }] },
+      { dur: 2.4, grade: 'Warm', motion: 'kbin', texts: [{ text: 'make a wish 🎉', size: 60, effect: 'wave' }] },
+    ],
+    gfx: [{ preset: 'confetti', at: 0, dur: 7.2, density: 70 }] },
+
+  { id: 'motivation', name: 'Motivation Quote', icon: '🔥', tag: 'Quote · 8s', aspect: '16:9', grad: 5,
+    scenes: [
+      { dur: 4, grade: 'Noir', effect: 'cinebars', motion: 'kbin', trans: 'fadeblack', texts: [{ text: 'DISCIPLINE', size: 100, effect: 'pop' }] },
+      { dur: 4, grade: 'Noir', effect: 'grain', motion: 'kbin', texts: [{ text: 'beats motivation. every time.', size: 54, effect: 'typewriter', font: 'Georgia', weight: 400 }] },
+    ] },
+
+  { id: 'music-drop', name: 'Music Drop', icon: '🎧', tag: 'Music · 6s', aspect: '16:9', grad: 0,
+    scenes: [
+      { dur: 3, grade: 'Cyberpunk', effect: 'rgbwave', motion: 'pulse', trans: 'blurwarp', texts: [{ text: 'NEW TRACK', size: 96, effect: 'neon', color: '#00D4FF' }] },
+      { dur: 3, grade: 'Cyberpunk', effect: 'chromatic', motion: 'zoomfast', texts: [{ text: 'OUT NOW', size: 110, effect: 'glow', color: '#FF006E' }] },
+    ],
+    gfx: [{ preset: 'ring', at: 0, dur: 6, color: '#FF006E' }] },
+
+  { id: 'sale', name: 'Mega Sale Promo', icon: '🏷️', tag: 'Sale · 6s', aspect: '16:9', grad: 2,
+    scenes: [
+      { dur: 2, grade: 'Vivid', motion: 'zoomfast', trans: 'wipeleft', texts: [{ text: 'MEGA SALE', size: 110, effect: 'shake', color: '#FFB800' }] },
+      { dur: 2, grade: 'Vivid', motion: 'pulse', trans: 'wiperight', texts: [{ text: 'UP TO 50% OFF', size: 84, effect: 'pop', bg: true }] },
+      { dur: 2, grade: 'Vivid', motion: 'zoomfast', texts: [{ text: 'ENDS SUNDAY', size: 76, effect: 'bounce', color: '#FF4444' }] },
+    ],
+    gfx: [{ preset: 'confetti', at: 0, dur: 6, density: 50 }, { preset: 'sweep', at: 2, dur: 2 }] },
+
+  { id: 'before-after', name: 'Before / After', icon: '🔄', tag: 'Compare · 6s', aspect: '16:9', grad: 3,
+    scenes: [
+      { dur: 3, grade: 'Noir', motion: 'kbin', trans: 'wipeleft', transDur: 1, texts: [{ text: 'BEFORE', size: 72, effect: 'fade', bg: true, y: 0.14 }] },
+      { dur: 3, grade: 'Vivid', motion: 'kbin', texts: [{ text: 'AFTER', size: 72, effect: 'pop', bg: true, y: 0.14, color: '#00C896' }] },
+    ] },
+
+  { id: 'outro-sub', name: 'Outro + Subscribe', icon: '🔔', tag: 'Outro · 8s', aspect: '16:9', grad: 0,
+    scenes: [
+      { dur: 4, grade: 'Cinematic', motion: 'kbout', trans: 'fade', texts: [{ text: 'THANKS FOR WATCHING', size: 72, effect: 'fade', y: 0.32 }] },
+      { dur: 4, grade: 'Cinematic', motion: 'none', texts: [{ text: 'see you next week', size: 44, effect: 'fade', y: 0.3, weight: 500 }] },
+    ],
+    gfx: [{ preset: 'subscribe', at: 1, dur: 7, y: 0.62 }, { preset: 'frame', at: 0, dur: 8, color: '#FF006E' }] },
+
+  { id: 'qa-intro', name: 'Q&A Intro', icon: '❓', tag: 'Q&A · 6s', aspect: '16:9', grad: 1,
+    scenes: [
+      { dur: 3, grade: 'Cool', motion: 'driftup', trans: 'wipeup', texts: [{ text: 'YOU ASKED…', size: 84, effect: 'slide' }] },
+      { dur: 3, grade: 'Cool', motion: 'kbin', texts: [{ text: 'we answer. honestly.', size: 52, effect: 'typewriter', weight: 500 }] },
+    ],
+    gfx: [{ preset: 'lowerthird', at: 3, dur: 3, text: 'Q&A · Episode 5', text2: 'send questions in the comments' }] },
+
+  { id: 'movie-title', name: 'Movie Title', icon: '🎥', tag: 'Film · 9s', aspect: '16:9', grad: 5,
+    scenes: [
+      { dur: 3, grade: 'Noir', effect: 'cinebars', motion: 'kbin', trans: 'fadeblack', transDur: 1.2, texts: [{ text: 'A FILM BY', size: 44, effect: 'fade', font: 'Georgia', weight: 400 }] },
+      { dur: 3, grade: 'Noir', effect: 'cinebars', motion: 'kbin', trans: 'fadeblack', transDur: 1.2, texts: [{ text: 'YOU', size: 130, effect: 'fade', font: 'Georgia', weight: 400 }] },
+      { dur: 3, grade: 'Cinematic', effect: 'cinebars', motion: 'kbout', texts: [{ text: 'coming soon', size: 40, effect: 'fade', font: 'JetBrains Mono', weight: 400 }] },
+    ] },
+
+  { id: 'retro-vhs', name: 'Retro VHS', icon: '📼', tag: 'Retro · 7s', aspect: '16:9', grad: 2,
+    scenes: [
+      { dur: 2.4, grade: 'Vintage', effect: 'vhs', motion: 'handheld', trans: 'fade', texts: [{ text: '◄◄ REWIND', size: 76, effect: 'shake', font: 'JetBrains Mono', weight: 400, color: '#FFB800' }] },
+      { dur: 2.4, grade: 'Vintage', effect: 'vhs', motion: 'kbin', trans: 'fade', texts: [{ text: 'PLAY ►', size: 76, effect: 'fade', font: 'JetBrains Mono', weight: 400 }] },
+      { dur: 2.4, grade: 'Vintage', effect: 'retrowave', motion: 'pulse', texts: [{ text: 'EST. 1994', size: 60, effect: 'gradient' }] },
+    ] },
+
+  { id: 'slideshow', name: 'Photo Slideshow', icon: '🖼️', tag: 'Photos · 12s', aspect: '16:9', grad: 3,
+    scenes: [
+      { dur: 3, grade: 'Faded', motion: 'kbin', trans: 'fade', transDur: 1, texts: [{ text: 'MEMORIES', size: 80, effect: 'glow', y: 0.75 }] },
+      { dur: 3, grade: 'Faded', motion: 'kbout', trans: 'fade', transDur: 1 },
+      { dur: 3, grade: 'Warm', motion: 'kbin', trans: 'fade', transDur: 1 },
+      { dur: 3, grade: 'Faded', motion: 'kbout', texts: [{ text: 'the end ♡', size: 56, effect: 'fade', font: 'Georgia', weight: 400, y: 0.75 }] },
+    ],
+    gfx: [{ preset: 'bokeh', at: 0, dur: 12, color: '#FFFFFF' }] },
+
+  { id: 'memories', name: 'Old Memories', icon: '🕰️', tag: 'Nostalgia · 8s', aspect: '16:9', grad: 4,
+    scenes: [
+      { dur: 4, grade: 'Faded', effect: 'oldfilm', motion: 'kbout', trans: 'fadewhite', texts: [{ text: 'remember when…', size: 60, effect: 'typewriter', font: 'Georgia', weight: 400 }] },
+      { dur: 4, grade: 'Vintage', effect: 'oldfilm', motion: 'kbin', texts: [{ text: 'some days never fade', size: 48, effect: 'fade', font: 'Georgia', weight: 400, y: 0.7 }] },
+    ],
+    gfx: [{ preset: 'lightleak', at: 0, dur: 8, color: '#FFD9A0' }] },
+
+  /* ---- Shorts / Reels (9:16) ---- */
+  { id: 'shorts-hook', name: 'Shorts Hook', icon: '⚡', tag: 'Shorts 9:16 · 5s', aspect: '9:16', grad: 0,
+    scenes: [
+      { dur: 1.6, grade: 'Vivid', effect: 'strobe', motion: 'zoomfast', trans: 'fadeblack', texts: [{ text: 'WAIT FOR IT…', size: 84, effect: 'shake' }] },
+      { dur: 1.8, grade: 'Vivid', motion: 'pulse', trans: 'blurwarp', texts: [{ text: 'YOU WON\'T BELIEVE THIS', size: 64, effect: 'pop' }] },
+      { dur: 1.8, grade: 'Cyberpunk', motion: 'zoomfast', texts: [{ text: '🤯', size: 160, effect: 'zoom' }] },
+    ],
+    gfx: [{ preset: 'sweep', at: 0, dur: 1.6 }] },
+
+  { id: 'reel-fashion', name: 'Fashion Reel', icon: '👗', tag: 'Reels 9:16 · 7s', aspect: '9:16', grad: 0,
+    scenes: [
+      { dur: 2.4, grade: 'Vivid', effect: 'chromatic', motion: 'spinin', trans: 'wipeup', texts: [{ text: 'OOTD', size: 110, effect: 'neon', color: '#FF006E' }] },
+      { dur: 2.4, grade: 'Cinematic', motion: 'kbin', trans: 'wipeup', texts: [{ text: 'fit check ✔', size: 60, effect: 'bounce', y: 0.8 }] },
+      { dur: 2.4, grade: 'Vivid', motion: 'pulse', texts: [{ text: 'RATE IT 1-10', size: 66, effect: 'pop', y: 0.8 }] },
+    ],
+    gfx: [{ preset: 'sparkles', at: 0, dur: 7.2, color: '#FFFFFF' }] },
+
+  { id: 'countdown', name: 'Story Countdown', icon: '⏳', tag: 'Story 9:16 · 6s', aspect: '9:16', grad: 5,
+    scenes: [
+      { dur: 1.5, grade: 'Noir', motion: 'zoomfast', trans: 'fadeblack', texts: [{ text: '3', size: 220, effect: 'zoom', color: '#00D4FF' }] },
+      { dur: 1.5, grade: 'Noir', motion: 'zoomfast', trans: 'fadeblack', texts: [{ text: '2', size: 220, effect: 'zoom', color: '#FFB800' }] },
+      { dur: 1.5, grade: 'Noir', motion: 'zoomfast', trans: 'fadeblack', texts: [{ text: '1', size: 220, effect: 'zoom', color: '#FF006E' }] },
+      { dur: 1.8, grade: 'Vivid', motion: 'pulse', texts: [{ text: 'GO!', size: 160, effect: 'pop', color: '#00C896' }] },
+    ],
+    gfx: [{ preset: 'ring', at: 0, dur: 4.5, color: '#00D4FF' }, { preset: 'confetti', at: 4.5, dur: 1.8, density: 70 }] },
+
+  { id: 'viral-quote', name: 'Viral Quote', icon: '💬', tag: 'Quote 9:16 · 7s', aspect: '9:16', grad: 4,
+    scenes: [
+      { dur: 3.5, grade: 'Noir', effect: 'grain', motion: 'driftup', trans: 'fade', texts: [{ text: '“comparison is the thief of joy”', size: 58, effect: 'wave', font: 'Georgia', weight: 400 }] },
+      { dur: 3.5, grade: 'Noir', motion: 'kbin', texts: [{ text: '— follow for daily wisdom', size: 40, effect: 'fade', bg: true, y: 0.8, weight: 500 }] },
+    ] },
+
+  { id: 'mobile-promo', name: 'App Promo', icon: '📱', tag: 'Promo 9:16 · 6s', aspect: '9:16', grad: 1,
+    scenes: [
+      { dur: 3, grade: 'Cool', motion: 'kbin', trans: 'wipeup', texts: [{ text: 'YOUR NEW FAVORITE APP', size: 62, effect: 'slide' }] },
+      { dur: 3, grade: 'Cool', motion: 'pulse', texts: [{ text: 'DOWNLOAD NOW 🚀', size: 66, effect: 'bounce', color: '#00D4FF' }] },
+    ],
+    gfx: [{ preset: 'progress', at: 0, dur: 6, color: '#00D4FF' }] },
+
+  { id: 'square-social', name: 'Square Social Post', icon: '⏹️', tag: 'Feed 1:1 · 6s', aspect: '1:1', grad: 3,
+    scenes: [
+      { dur: 3, grade: 'Vivid', motion: 'kbin', trans: 'circleopen', texts: [{ text: 'BIG NEWS', size: 88, effect: 'pop' }] },
+      { dur: 3, grade: 'Vivid', motion: 'pulse', texts: [{ text: 'link in bio', size: 52, effect: 'fade', bg: true, y: 0.78, weight: 500 }] },
+    ],
+    gfx: [{ preset: 'frame', at: 0, dur: 6, color: '#00D4FF' }] },
+];
+
+function tplPlaceholderMedia(i, tpl) {
+  const cvp = document.createElement('canvas'); cvp.width = 1280; cvp.height = 720;
+  const g = cvp.getContext('2d');
+  const pal = TPL_PALETTES[(i + (tpl.grad || 0)) % TPL_PALETTES.length];
+  const gr = g.createLinearGradient(0, 0, 1280, 720);
+  gr.addColorStop(0, pal[0]); gr.addColorStop(1, pal[1]);
+  g.fillStyle = gr; g.fillRect(0, 0, 1280, 720);
+  g.fillStyle = 'rgba(255,255,255,0.08)';
+  for (let k = 0; k < 5; k++) { g.beginPath(); g.arc(200 + k * 260, 160 + (k % 2) * 400, 90 + k * 18, 0, 7); g.fill(); }
+  g.textAlign = 'center';
+  g.fillStyle = 'rgba(255,255,255,0.9)'; g.font = '600 46px Outfit, sans-serif';
+  g.fillText('Your clip ' + (i + 1), 640, 368);
+  g.fillStyle = 'rgba(255,255,255,0.55)'; g.font = '500 24px Outfit, sans-serif';
+  g.fillText('import your media, delete this slide, drag yours into place', 640, 412);
+  const url = cvp.toDataURL('image/jpeg', 0.85);
+  const img = new Image(); img.src = url;
+  const m = { id: uid(), kind: 'image', name: 'Placeholder ' + (i + 1), url, duration: 4, el: img, thumb: url };
+  media.push(m);
+  return m;
+}
+
+function applyTemplate(tpl) {
+  if ((vTrack.length || tTrack.length || gTrack.length) &&
+      !confirm('Applying a template replaces the clips on your timeline. Continue?')) return;
+  stopPlayback();
+  vTrack.length = 0; tTrack.length = 0; gTrack.length = 0;
+  if (tpl.aspect && tpl.aspect !== curAspect) {
+    curAspect = tpl.aspect;
+    $('aspectSelect').value = tpl.aspect;
+    applyResolution();
+  }
+  const userMedia = media.filter(m => (m.kind === 'video' || m.kind === 'image') && !/^Placeholder /.test(m.name));
+  let usedPlaceholders = false;
+  tpl.scenes.forEach((sc, i) => {
+    const m = userMedia.length ? userMedia[i % userMedia.length] : (usedPlaceholders = true, tplPlaceholderMedia(i, tpl));
+    const c = makeVideoClip(m, 0, sc.dur);
+    c.grade = Object.assign(defaultGrade(), GRADE_PRESETS[sc.grade || 'None'] || {}, { preset: sc.grade || 'None' });
+    c.effect = sc.effect || 'none';
+    c.motion = sc.motion || 'none';
+    c.fit = 'fill'; // templates look best edge-to-edge; switch per clip in CLIP tab
+    c.transition = { type: sc.trans || 'none', dur: sc.transDur || 0.7 };
+    vTrack.push(c);
+  });
+  layout();
+  tpl.scenes.forEach((sc, i) => {
+    (sc.texts || []).forEach(tx => {
+      tTrack.push({
+        id: uid(), text: tx.text, start: vTrack[i].start + (tx.at || 0),
+        dur: tx.dur || Math.max(0.8, sc.dur - (tx.at || 0)),
+        x: tx.x != null ? tx.x : 0.5, y: tx.y != null ? tx.y : 0.5,
+        size: tx.size || 72, color: tx.color || '#FFFFFF',
+        font: tx.font || 'Outfit', weight: tx.weight || 800,
+        effect: tx.effect || 'pop', bg: !!tx.bg, bgColor: 'rgba(0,0,0,0.55)',
+        stroke: !!tx.stroke, bbox: null,
+      });
+    });
+  });
+  (tpl.gfx || []).forEach(g => {
+    const gp = GFX_PRESETS.find(p => p.id === g.preset) || { icon: '✨', name: g.preset };
+    gTrack.push({
+      id: uid(), kind: 'gfx', preset: g.preset, name: gp.icon + ' ' + gp.name,
+      start: g.at || 0, dur: g.dur || 3,
+      x: g.x != null ? g.x : 0.5, y: g.y != null ? g.y : (g.preset === 'lowerthird' ? 0.8 : 0.5),
+      scale: g.scale || 1, speed: g.speed || 1, density: g.density || 40,
+      color: g.color || '#00D4FF',
+      text: g.text || (g.preset === 'lowerthird' ? 'Your Name' : g.preset === 'subscribe' ? 'SUBSCRIBE 🔔' : ''),
+      text2: g.text2 || 'Job title · Channel', emoji: g.emoji || '😎',
+    });
+  });
+  if (usedPlaceholders) renderMediaGrid();
+  deselect();
+  seek(0);
+  renderTimeline(); renderInspector();
+  needsRedraw = true;
+  play();
+}
+
+function renderTemplates() {
+  const wrap = $('tplGrid');
+  wrap.innerHTML = '';
+  TEMPLATES.forEach(tpl => {
+    const pal = TPL_PALETTES[tpl.grad || 0];
+    const el = document.createElement('div');
+    el.className = 'tpl-card';
+    el.innerHTML = `<div class="tpl-prev" style="background:linear-gradient(120deg,${pal[0]},${pal[1]})">${tpl.icon}</div>
+      <div class="tpl-name">${tpl.name}</div>
+      <div class="tpl-meta">${tpl.tag.toUpperCase()}</div>`;
+    el.addEventListener('click', () => applyTemplate(tpl));
     wrap.appendChild(el);
   });
 }
@@ -2117,6 +2485,7 @@ window.addEventListener('resize', () => renderTimeline());
 applyResolution();
 renderTextPresets();
 renderGfxPresets();
+renderTemplates();
 renderMediaGrid();
 renderTimeline();
 renderInspector();

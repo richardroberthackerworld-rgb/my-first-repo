@@ -44,6 +44,7 @@
     <aside class="panel panel-left">
       <div class="panel-tabs">
         <button class="ptab active" data-tab="media">Media</button>
+        <button class="ptab" data-tab="tpl">Templates</button>
         <button class="ptab" data-tab="text">Text</button>
         <button class="ptab" data-tab="gfx">FX</button>
         <button class="ptab" data-tab="audio">Audio</button>
@@ -58,6 +59,11 @@
           <input type="file" id="fileInput" multiple accept="video/*,image/*,audio/*" hidden>
         </div>
         <div class="media-grid" id="mediaGrid"></div>
+      </div>
+
+      <div class="ptab-page hidden" id="page-tpl">
+        <div class="panel-hint">One-tap styled intros, openers and outros. Uses your imported media — or stylish placeholders you can swap later.</div>
+        <div class="tpl-grid" id="tplGrid"></div>
       </div>
 
       <div class="ptab-page hidden" id="page-text">

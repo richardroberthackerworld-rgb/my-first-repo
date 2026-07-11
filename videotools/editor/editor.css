@@ -169,8 +169,8 @@ input, select { font-family: inherit; }
   border: none;
   color: var(--muted);
   font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 1.5px;
+  font-size: 10px;
+  letter-spacing: 1px;
   text-transform: uppercase;
   padding: 12px 0;
   border-bottom: 2px solid transparent;
@@ -290,6 +290,33 @@ input, select { font-family: inherit; }
 }
 .media-item:hover .media-del { opacity: 1; }
 .media-del:hover { background: #E03131; color: #fff; }
+
+/* Templates */
+.tpl-grid { display: flex; flex-direction: column; gap: 10px; }
+.tpl-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 10px;
+  cursor: pointer;
+  transition: transform 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+}
+.tpl-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255,0,110,0.4);
+  box-shadow: 0 0 0 1px rgba(255,0,110,0.3), 0 10px 24px rgba(255,0,110,0.12);
+}
+.tpl-prev {
+  height: 58px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  margin-bottom: 8px;
+}
+.tpl-name { font-weight: 600; font-size: 13px; }
+.tpl-meta { font-family: var(--mono); font-size: 10px; color: var(--dim); margin-top: 2px; letter-spacing: 0.5px; }
 
 /* Text presets */
 .text-presets { display: flex; flex-direction: column; gap: 10px; }
