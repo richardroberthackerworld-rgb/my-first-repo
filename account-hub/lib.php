@@ -155,6 +155,57 @@ function send_email($to, $subject, $html) {
 	return @mail($to, $subject, $html, $headers);
 }
 
+/**
+ * Branded, email-client-safe template (tables + inline styles so it renders
+ * correctly in Gmail, Outlook, Apple Mail…). $blocks is the inner HTML.
+ */
+function email_template($heading, $blocks) {
+	$year = date('Y');
+	return '<!doctype html><html><body style="margin:0;padding:0;background-color:#F1F2FA">'
+	. '<div style="display:none;max-height:0;overflow:hidden">' . htmlspecialchars($heading) . '</div>'
+	. '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F1F2FA;padding:32px 12px">'
+	. '<tr><td align="center">'
+	.   '<table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%">'
+
+	// Header band — brand gradient with solid fallback
+	.   '<tr><td style="background-color:#4F46E5;background-image:linear-gradient(120deg,#4F46E5,#7C3AED);border-radius:16px 16px 0 0;padding:28px 36px" align="left">'
+	.     '<table role="presentation" cellpadding="0" cellspacing="0"><tr>'
+	.       '<td style="background-color:rgba(255,255,255,0.18);border-radius:10px;width:40px;height:40px;text-align:center;vertical-align:middle;font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:bold;color:#ffffff">7</td>'
+	.       '<td style="padding-left:12px;font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:bold;color:#ffffff;letter-spacing:-0.5px">7By<span style="font-weight:normal;color:rgba(255,255,255,0.75)">.in</span></td>'
+	.     '</tr></table>'
+	.   '</td></tr>'
+
+	// Body card
+	.   '<tr><td style="background-color:#ffffff;padding:36px;border-radius:0 0 16px 16px;font-family:Arial,Helvetica,sans-serif;color:#1E1E2E">'
+	.     '<h1 style="margin:0 0 8px;font-size:22px;letter-spacing:-0.4px;color:#1E1E2E">' . $heading . '</h1>'
+	.     $blocks
+	.   '</td></tr>'
+
+	// Footer
+	.   '<tr><td style="padding:22px 12px;text-align:center;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.7;color:#9A9AB0">'
+	.     'Sent by <a href="https://7by.in" style="color:#4F46E5;text-decoration:none">7By</a> — free AI audio, image &amp; video tools'
+	.     '<br>&copy; ' . $year . ' 7By.in &middot; This is an automated message, replies aren\'t monitored.'
+	.   '</td></tr>'
+	.   '</table>'
+	. '</td></tr></table></body></html>';
+}
+
+/** The centred one-time-code block used by verification / reset emails. */
+function email_code_block($code, $lead) {
+	return '<p style="margin:0 0 24px;font-size:15px;line-height:1.65;color:#55556B">' . $lead . '</p>'
+	. '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">'
+	.   '<table role="presentation" cellpadding="0" cellspacing="0"><tr>'
+	.     '<td style="background-color:#F3F2FF;border:2px dashed #C7C4F4;border-radius:14px;padding:18px 40px;font-family:\'Courier New\',Courier,monospace;font-size:38px;font-weight:bold;letter-spacing:10px;color:#4F46E5">' . $code . '</td>'
+	.   '</tr></table>'
+	. '</td></tr></table>'
+	. '<p style="margin:24px 0 0;font-size:13px;line-height:1.7;color:#8A8AA3;text-align:center">This code expires in <b style="color:#55556B">10 minutes</b>.</p>'
+	. '<hr style="border:none;border-top:1px solid #ECECF4;margin:26px 0 18px">'
+	. '<p style="margin:0;font-size:12.5px;line-height:1.7;color:#9A9AB0">'
+	.   '&#128274; <b style="color:#55556B">Security tip:</b> 7By will never call, message or email you asking for this code. '
+	.   'If you didn\'t request it, you can safely ignore this email &mdash; nothing changes on your account.'
+	. '</p>';
+}
+
 // Create a fresh OTP for this email+purpose (replaces any previous one) and
 // email it. Returns whether the email was actually accepted for delivery.
 function issue_otp($email, $purpose, $data = null) {
@@ -162,13 +213,14 @@ function issue_otp($email, $purpose, $data = null) {
 	db()->prepare('DELETE FROM otps WHERE email = ? AND purpose = ?')->execute(array($email, $purpose));
 	db()->prepare('INSERT INTO otps (email, code, purpose, data, expires_at) VALUES (?,?,?,?, DATE_ADD(NOW(), INTERVAL 10 MINUTE))')
 		->execute(array($email, $code, $purpose, $data ? json_encode($data) : null));
-	$title = $purpose === 'reset' ? 'Reset your 7By password' : 'Verify your 7By account';
-	$html = '<div style="font-family:Arial,sans-serif;max-width:480px;margin:auto">'
-		. '<h2 style="color:#4f46e5">7By</h2>'
-		. '<p>Your ' . ($purpose === 'reset' ? 'password reset' : 'verification') . ' code is:</p>'
-		. '<p style="font-size:32px;font-weight:bold;letter-spacing:6px">' . $code . '</p>'
-		. '<p style="color:#666">This code expires in 10 minutes. If you didn\'t request it, you can ignore this email.</p>'
-		. '</div>';
+	if ($purpose === 'reset') {
+		$title = 'Reset your 7By password';
+		$lead  = 'We received a request to reset your 7By password. Enter this code on the reset page to continue:';
+	} else {
+		$title = 'Welcome to 7By — verify your email';
+		$lead  = 'You\'re one step away from your account. Enter this code on the sign-up page to verify your email:';
+	}
+	$html = email_template($title, email_code_block($code, $lead));
 	return (bool)send_email($email, $title . ' — code ' . $code, $html);
 }
 

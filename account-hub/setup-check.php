@@ -24,7 +24,8 @@ h1{font-size:26px}p{color:#555}.foot{margin-top:24px;font-size:13px;color:#888}<
 /* One-click email delivery test: /setup-check.php?testmail=you@example.com */
 if (!empty($_GET['testmail']) && filter_var($_GET['testmail'], FILTER_VALIDATE_EMAIL)) {
 	$t = $_GET['testmail'];
-	$ok = send_email($t, '7By test email', '<p>If you can read this, email sending on account.7by.in works. 🎉</p>');
+	$ok = send_email($t, '7By test email', email_template('Email delivery works 🎉',
+		'<p style="margin:0;font-size:15px;line-height:1.65;color:#55556B">If you can read this, email sending on <b>account.7by.in</b> is configured correctly. OTP codes will arrive just like this message did.</p>'));
 	echo '<p style="padding:12px 16px;border-radius:8px;background:' . ($ok ? '#e7f8ef' : '#fdeaea') . '">'
 		. ($ok ? '✅ Test email accepted for delivery to <b>' : '❌ Sending failed to <b>') . htmlspecialchars($t)
 		. '</b>.' . ($ok ? ' Check the inbox (and spam folder).' : ' Check the smtp block in config.php — host/port/user/password.') . '</p>';
