@@ -239,6 +239,33 @@ function gw_webhook($merchantKey, $event, $payment) {
 		->execute(array($merchantKey, $payment['id'], $event, $code, gw_now()));
 }
 
+/* ---------------- Automatic UPI credit detection ---------------- */
+// True when auto-detect is configured (enabled + a real token set).
+function gw_upi_auto_on() {
+	global $GW;
+	$a = isset($GW['upi_auto']) ? $GW['upi_auto'] : array();
+	return !empty($a['enabled']) && !empty($a['token']) && strpos((string)$a['token'], 'TODO') !== 0;
+}
+
+/**
+ * Pull the credited amount (minor units) and UPI reference out of a bank
+ * credit SMS/notification. Returns array($amountMinor|null, $utr).
+ * Handles the common Indian bank formats: "Rs.27.00 credited", "INR 27
+ * received", "credited with ₹27.00 ... UPI Ref 512345678901", etc.
+ */
+function gw_parse_credit_text($text) {
+	$t = ' ' . $text . ' ';
+	if (!preg_match('/credit|received|added/i', $t)) return array(null, '');
+	$amt = null;
+	if (preg_match('/(?:rs\.?|inr|₹)\s*([\d,]+(?:\.\d{1,2})?)/iu', $t, $m)) {
+		$amt = (int)round(((float)str_replace(',', '', $m[1])) * 100);
+	}
+	$utr = '';
+	if (preg_match('/(?:ref(?:erence)?(?:\s*no)?\.?\s*:?\s*)(\d{10,16})/i', $t, $m)) $utr = $m[1];
+	elseif (preg_match('/\b(\d{12})\b/', $t, $m)) $utr = $m[1]; // bare 12-digit UPI ref
+	return array($amt, $utr);
+}
+
 /* ---------------- Money formatting ---------------- */
 function gw_currencies() { return array('INR' => '₹', 'USD' => '$', 'EUR' => '€', 'GBP' => '£', 'AED' => 'AED '); }
 

@@ -26,6 +26,7 @@ $alreadyPaid = $order && $order['status'] === 'paid';
 $amountText = $order ? gw_money($order['amount'], $order['currency']) : '';
 $currency = $order ? $order['currency'] : 'INR';
 $upiOk = ($currency === 'INR'); // UPI is an INR rail
+$upiAuto = !$isTest && gw_upi_auto_on(); // bank-SMS auto-detection configured
 
 // UPI deep links — same params work for Google Pay, PhonePe, Paytm, BHIM.
 // In test mode the QR/app buttons point at a dummy VPA and are simulated.
@@ -217,6 +218,11 @@ function e($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 			<div class="field"><label for="vpa">UPI ID</label>
 				<input class="input mono" id="vpa" placeholder="yourname@upi"></div>
 			<p style="font-size:12.5px;color:var(--muted);margin-bottom:14px">Test mode: scanning and app buttons are simulated. Any valid UPI ID succeeds; one containing “fail” is declined.</p>
+			<?php elseif ($upiAuto): ?>
+			<div class="divider">after paying</div>
+			<div class="field"><label for="utr">UTR <span style="text-transform:none;letter-spacing:0;color:var(--dim)">(optional)</span></label>
+				<input class="input mono" id="utr" placeholder="Leave empty — we detect it automatically"></div>
+			<p style="font-size:12.5px;color:var(--muted);margin-bottom:14px">Pay <?php echo e($amountText); ?> by scanning the QR or tapping your UPI app, then press the button below. Your payment is detected <b>automatically</b> — this page completes on its own, usually within a minute.</p>
 			<?php else: ?>
 			<div class="divider">then confirm</div>
 			<div class="field"><label for="utr">UTR / Transaction reference</label>
@@ -270,8 +276,13 @@ function e($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 	</div>
 	<div class="state hidden" id="statePending">
 		<div class="icon icon-wait">⏳</div>
+		<?php if ($upiAuto): ?>
+		<h2>Waiting for your payment…</h2>
+		<p>Keep this window open — it completes <b>automatically</b> the moment your payment arrives (usually under a minute).</p>
+		<?php else: ?>
 		<h2>Awaiting verification</h2>
 		<p>We've recorded your payment reference. Your payment will be confirmed once it's verified — usually within a few minutes.</p>
+		<?php endif; ?>
 		<div class="mono-id" id="pendingPid"></div>
 	</div>
 
@@ -288,6 +299,7 @@ function e($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
   var ORDER = <?php echo json_encode($order['id']); ?>;
   var CALLBACK = <?php echo json_encode($order['callback_url']); ?>;
   var IS_TEST = <?php echo $isTest ? 'true' : 'false'; ?>;
+  var UPI_AUTO = <?php echo $upiAuto ? 'true' : 'false'; ?>;
   var UPI_LINK = <?php echo json_encode($upiLink); ?>;
   function $(s) { return document.querySelector(s); }
   function $$(s) { return Array.prototype.slice.call(document.querySelectorAll(s)); }
@@ -301,6 +313,12 @@ function e($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
   /* tabs */
   var method = $('#tabs .tab.active').dataset.tab;
+  var PAY_LABEL = $('#payBtn').textContent;
+  function syncPayLabel() {
+    // Auto-detected UPI: the buyer pays in their app first, then confirms here.
+    $('#payBtn').textContent = (method === 'upi' && !IS_TEST && UPI_AUTO) ? 'I’ve paid — confirm' : PAY_LABEL;
+  }
+  syncPayLabel();
   $$('#tabs .tab').forEach(function (t) {
     t.addEventListener('click', function () {
       $$('#tabs .tab').forEach(function (x) { x.classList.remove('active'); });
@@ -308,6 +326,7 @@ function e($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
       method = t.dataset.tab;
       $$('.panel').forEach(function (p) { p.classList.toggle('hidden', p.dataset.panel !== method); });
       err('');
+      syncPayLabel();
     });
   });
 
@@ -388,7 +407,8 @@ function e($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
     }
     if (method === 'upi' && !IS_TEST) {
       body.utr = $('#utr').value.trim();
-      if (!body.utr) return err('Paste the UTR from your UPI app after paying.');
+      // With auto-detect on, the UTR is optional — the bank webhook confirms.
+      if (!body.utr && !UPI_AUTO) return err('Paste the UTR from your UPI app after paying.');
     }
     if (method === 'netbanking') {
       body.bank = bank;

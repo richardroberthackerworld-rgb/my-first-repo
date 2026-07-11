@@ -127,15 +127,19 @@ switch ($action) {
 			$row['vpa'] = $vpa;
 		}
 		elseif ($method === 'upi') {
-			// LIVE UPI collect: buyer already paid the configured VPA; record the
-			// UTR and hold as "pending" until the merchant approves in the dashboard.
+			// LIVE UPI collect: buyer paid the configured VPA. With auto-detect on,
+			// no UTR is needed — the bank-SMS webhook (upi.credit) captures it.
+			// Otherwise the UTR is recorded and the merchant approves in the dashboard.
 			global $GW;
-			$utr = preg_replace('/\s/', '', (string)($in['utr'] ?? ''));
-			if (!preg_match('/^[A-Za-z0-9]{6,30}$/', $utr)) $failWith('Enter the UTR / transaction reference from your UPI app.');
-			$dup = gw_db()->prepare("SELECT id FROM gw_payments WHERE utr = ? AND status IN ('pending','captured')");
-			$dup->execute(array($utr));
-			if ($dup->fetch()) $failWith('This UTR has already been submitted.');
-			$row['vpa'] = $GW['upi']['vpa']; $row['utr'] = $utr; $row['status'] = 'pending';
+			$utr = strtoupper(preg_replace('/\s/', '', (string)($in['utr'] ?? '')));
+			if ($utr === '' && !gw_upi_auto_on()) $failWith('Enter the UTR / transaction reference from your UPI app.');
+			if ($utr !== '') {
+				if (!preg_match('/^[A-Za-z0-9]{6,30}$/', $utr)) $failWith('That UTR / transaction reference doesn\'t look right.');
+				$dup = gw_db()->prepare("SELECT id FROM gw_payments WHERE utr = ? AND status IN ('pending','captured')");
+				$dup->execute(array($utr));
+				if ($dup->fetch()) $failWith('This UTR has already been submitted.');
+			}
+			$row['vpa'] = $GW['upi']['vpa']; $row['utr'] = $utr !== '' ? $utr : null; $row['status'] = 'pending';
 			gw_insert_payment($row);
 			gw_webhook($keyId, 'payment.pending', $row);
 			gw_json(array('ok' => true, 'status' => 'pending', 'payment_id' => $payId, 'order_id' => $o['id']));
@@ -193,6 +197,44 @@ switch ($action) {
 		}
 		gw_json($out);
 		break;
+	}
+
+	/* Bank-credit webhook: your phone's SMS-forwarder posts the bank's credit
+	   SMS here; we parse amount + UPI ref, match the pending payment and
+	   capture it automatically. Accepts {text} (raw SMS) or {amount, utr}. */
+	case 'upi.credit': {
+		global $GW;
+		$cfg = isset($GW['upi_auto']) ? $GW['upi_auto'] : array();
+		$tok = (string)($_GET['token'] ?? ($in['token'] ?? ''));
+		if (!gw_upi_auto_on() || !hash_equals((string)$cfg['token'], $tok)) gw_fail('Bad token.', 401);
+
+		$amt = null; $utr = '';
+		$text = (string)($in['text'] ?? ($in['message'] ?? ($in['msg'] ?? ($in['body'] ?? ''))));
+		if ($text !== '') list($amt, $utr) = gw_parse_credit_text($text);
+		if (isset($in['amount']) && $in['amount'] !== '') $amt = (int)round(((float)$in['amount']) * 100);
+		if (!empty($in['utr'])) $utr = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string)$in['utr']));
+		if (!$amt) gw_json(array('ok' => true, 'matched' => false, 'reason' => 'no_credit_amount_found'));
+
+		// Same reference must never capture two payments.
+		if ($utr !== '') {
+			$st = gw_db()->prepare("SELECT id FROM gw_payments WHERE utr = ? AND status = 'captured'");
+			$st->execute(array($utr));
+			if ($st->fetch()) gw_json(array('ok' => true, 'matched' => false, 'reason' => 'utr_already_captured'));
+		}
+
+		// Oldest still-fresh pending live-UPI payment with this exact amount.
+		$win = max(5, (int)($cfg['window_minutes'] ?? 45));
+		$st = gw_db()->prepare("SELECT * FROM gw_payments WHERE status = 'pending' AND method = 'upi' AND amount = ? ORDER BY created_at ASC");
+		$st->execute(array($amt));
+		$match = null;
+		foreach ($st->fetchAll() as $p) {
+			if (strtotime($p['created_at']) >= time() - $win * 60) { $match = $p; break; }
+		}
+		if (!$match) gw_json(array('ok' => true, 'matched' => false, 'reason' => 'no_pending_payment_for_amount', 'amount_minor' => $amt));
+
+		if ($utr !== '') gw_db()->prepare('UPDATE gw_payments SET utr = ? WHERE id = ?')->execute(array($utr, $match['id']));
+		$p = gw_capture($match); // marks captured + order paid + fires payment.captured webhook
+		gw_json(array('ok' => true, 'matched' => true, 'payment_id' => $p['id'], 'order_id' => $p['order_id'], 'amount_minor' => $amt));
 	}
 
 	default:

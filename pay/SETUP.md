@@ -46,6 +46,39 @@ eurozone → €, everywhere else → $; `?currency=XXX` overrides) — see
 rest. Note: PayPal.me does not accept INR or AED — for live AED buyers either
 create the order in USD or take cards when you add a card processor.
 
+## Automatic UPI confirmation (no UTR, no manual approval)
+
+Your bank sends an SMS the moment money lands in your account. Forward that
+SMS to the gateway and payments confirm themselves — the buyer just pays and
+the checkout completes on its own:
+
+1. In `config.php` → `upi_auto`, set a long random `token`
+   (e.g. `openssl rand -hex 24`).
+2. On the phone that receives your bank SMS, install an SMS-forwarder app
+   (e.g. **"SMS Forwarder — Auto forward"** by frzinapps on Play Store, or
+   Macrodroid/Tasker). Create a rule:
+   - **Filter:** sender contains your bank's SMS ID (e.g. `HDFCBK`, `SBIUPI`) —
+     or simply messages containing the word `credited`
+   - **Forward to webhook / URL (POST):**
+     `https://7pay.7by.in/api.php?action=upi.credit&token=YOUR_TOKEN`
+   - **Body:** JSON `{"text":"%m"}` (the app's placeholder for the SMS text) —
+     a raw/form body with the SMS text also works
+3. Done. Flow: buyer scans the QR → pays → taps "I've paid" (UTR optional) →
+   payment sits *pending* while the page polls → your bank SMS arrives →
+   forwarded → gateway parses `Rs 27.00 credited … UPI Ref 5123…`, matches the
+   oldest pending payment with that exact amount (within `window_minutes`),
+   captures it, fires the webhook (hub grants credits) → the buyer's page
+   flips to success by itself.
+
+Safety nets: the same UPI reference can never capture two payments; credits
+with no matching pending payment are ignored; and the dashboard's manual
+Approve/Reject still works any time (e.g. if your phone was off).
+
+Limitation to know: matching is by exact amount. If two buyers pay the same
+amount within the same minute, the oldest pending payment wins and the other
+stays pending for manual approval — fine at small scale, and the dashboard
+catches it.
+
 ## Test vs live
 
 - `mode => 'test'` — everything simulated, no real money.

@@ -38,6 +38,20 @@ return array(
 		'payee' => '7By',
 	),
 
+	// ---- Automatic UPI payment detection (no UTR, no manual approval) ----
+	// Your bank texts you the moment money lands in your account. Install an
+	// SMS-forwarder app on your phone (see SETUP.md) and point it at:
+	//   https://7pay.7by.in/api.php?action=upi.credit&token=<token below>
+	// The gateway parses the credited amount + UPI ref from the SMS, matches it
+	// to the pending payment and captures it automatically — the buyer's
+	// checkout completes on its own. Manual dashboard approval stays available
+	// as a fallback. Set a long random token to enable.
+	'upi_auto' => array(
+		'enabled'        => true,
+		'token'          => 'TODO_random_token_for_sms_forwarder',
+		'window_minutes' => 45, // how long a pending payment is matchable
+	),
+
 	// ---- Live-mode international payments (PayPal) ----
 	// Non-INR buyers pay through your PayPal.me link; they paste the PayPal
 	// Transaction ID and the payment stays "pending" until you approve it in
