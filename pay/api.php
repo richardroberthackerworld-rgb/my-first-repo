@@ -132,13 +132,34 @@ switch ($action) {
 			// Otherwise the UTR is recorded and the merchant approves in the dashboard.
 			global $GW;
 			$utr = strtoupper(preg_replace('/\s/', '', (string)($in['utr'] ?? '')));
-			if ($utr === '' && !gw_upi_auto_on()) $failWith('Enter the UTR / transaction reference from your UPI app.');
+			if ($utr !== '' && !preg_match('/^[A-Za-z0-9]{6,30}$/', $utr)) gw_fail('That UTR / transaction reference doesn\'t look right.');
 			if ($utr !== '') {
-				if (!preg_match('/^[A-Za-z0-9]{6,30}$/', $utr)) $failWith('That UTR / transaction reference doesn\'t look right.');
-				$dup = gw_db()->prepare("SELECT id FROM gw_payments WHERE utr = ? AND status IN ('pending','captured')");
-				$dup->execute(array($utr));
-				if ($dup->fetch()) $failWith('This UTR has already been submitted.');
+				$dup = gw_db()->prepare("SELECT id FROM gw_payments WHERE utr = ? AND status IN ('pending','captured') AND id != ?");
+				$dup->execute(array($utr, (string)($in['payment_id'] ?? '')));
+				if ($dup->fetch()) gw_fail('This UTR has already been submitted.');
 			}
+
+			// Auto-detect reserves the payment at page load — attach to it instead
+			// of creating a duplicate (its unique paise-amount identifies the buyer).
+			$resId = (string)($in['payment_id'] ?? '');
+			if ($resId !== '') {
+				$p = gw_get_payment($resId);
+				if ($p && $p['order_id'] === $o['id'] && $p['merchant_key'] === $keyId) {
+					if ($p['status'] === 'captured') {
+						gw_json(array('ok' => true, 'status' => 'captured',
+							'sevenpay_order_id' => $o['id'], 'sevenpay_payment_id' => $p['id'],
+							'sevenpay_signature' => gw_sign($o['id'], $p['id'], $m['key_secret'])));
+					}
+					if ($p['status'] === 'pending') {
+						gw_db()->prepare('UPDATE gw_payments SET utr = COALESCE(?, utr), email = ?, contact = ?, updated_at = ? WHERE id = ?')
+							->execute(array($utr !== '' ? $utr : null, $email, $contact, gw_now(), $p['id']));
+						gw_json(array('ok' => true, 'status' => 'pending', 'payment_id' => $p['id'], 'order_id' => $o['id']));
+					}
+				}
+				// Reservation unusable (rejected/stale) — fall through to a fresh one.
+			}
+
+			if ($utr === '' && !gw_upi_auto_on()) $failWith('Enter the UTR / transaction reference from your UPI app.');
 			$row['vpa'] = $GW['upi']['vpa']; $row['utr'] = $utr !== '' ? $utr : null; $row['status'] = 'pending';
 			gw_insert_payment($row);
 			gw_webhook($keyId, 'payment.pending', $row);

@@ -28,12 +28,23 @@ $currency = $order ? $order['currency'] : 'INR';
 $upiOk = ($currency === 'INR'); // UPI is an INR rail
 $upiAuto = !$isTest && gw_upi_auto_on(); // bank-SMS auto-detection configured
 
+// Auto-detect mode: reserve this order's pending payment NOW with a unique
+// pay-amount (base + 0–99 paise) so the bank credit identifies exactly this
+// buyer — many buyers can pay in the same minute and all auto-verify. The
+// page polls it from load, so it completes even without a button tap.
+$upiPendingId = '';
+$upiPayAmount = $order ? (int)$order['amount'] : 0;
+if ($order && !$alreadyPaid && $upiOk && $upiAuto) {
+	list($upiPendingId, $upiPayAmount) = gw_upi_reserve($order);
+}
+$upiAmountText = gw_money($upiPayAmount, 'INR');
+
 // UPI deep links — same params work for Google Pay, PhonePe, Paytm, BHIM.
 // In test mode the QR/app buttons point at a dummy VPA and are simulated.
 $upiVpa = $isTest ? 'test@7pay' : $GW['upi']['vpa'];
 $upiPayee = $GW['upi']['payee'];
 $upiParams = $order ? 'pa=' . rawurlencode($upiVpa) . '&pn=' . rawurlencode($upiPayee)
-	. '&am=' . rawurlencode(number_format($order['amount'] / 100, 2, '.', ''))
+	. '&am=' . rawurlencode(number_format($upiPayAmount / 100, 2, '.', ''))
 	. '&cu=INR&tn=' . rawurlencode($order['id']) : '';
 $upiLink = 'upi://pay?' . $upiParams;
 $upiApps = array(
@@ -203,6 +214,9 @@ function e($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 			<div class="upi-live-box">
 				<div id="qrBox"><span class="mono-label">QR</span></div>
 				<div class="vpa-line"><?php echo e($upiVpa); ?></div>
+				<?php if ($upiAuto && !$isTest): ?>
+				<div style="font-family:var(--font-mono);font-size:13.5px;font-weight:600;color:var(--accent);margin:-4px 0 10px">Pay exactly <?php echo e($upiAmountText); ?></div>
+				<?php endif; ?>
 				<div class="apps">
 					<?php foreach ($upiApps as $slug => $app): ?>
 					<?php if ($isTest): ?>
@@ -222,7 +236,7 @@ function e($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 			<div class="divider">after paying</div>
 			<div class="field"><label for="utr">UTR <span style="text-transform:none;letter-spacing:0;color:var(--dim)">(optional)</span></label>
 				<input class="input mono" id="utr" placeholder="Leave empty — we detect it automatically"></div>
-			<p style="font-size:12.5px;color:var(--muted);margin-bottom:14px">Pay <?php echo e($amountText); ?> by scanning the QR or tapping your UPI app, then press the button below. Your payment is detected <b>automatically</b> — this page completes on its own, usually within a minute.</p>
+			<p style="font-size:12.5px;color:var(--muted);margin-bottom:14px">Scan the QR or tap your app — the amount <b><?php echo e($upiAmountText); ?></b> is filled in for you. Pay it <b>exactly</b> (those few paise identify <i>your</i> payment). This page completes <b>automatically</b> the moment your money arrives — usually within a minute.</p>
 			<?php else: ?>
 			<div class="divider">then confirm</div>
 			<div class="field"><label for="utr">UTR / Transaction reference</label>
@@ -300,6 +314,7 @@ function e($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
   var CALLBACK = <?php echo json_encode($order['callback_url']); ?>;
   var IS_TEST = <?php echo $isTest ? 'true' : 'false'; ?>;
   var UPI_AUTO = <?php echo $upiAuto ? 'true' : 'false'; ?>;
+  var UPI_PENDING = <?php echo json_encode($upiPendingId); ?>; // reserved payment (auto-detect)
   var UPI_LINK = <?php echo json_encode($upiLink); ?>;
   function $(s) { return document.querySelector(s); }
   function $$(s) { return Array.prototype.slice.call(document.querySelectorAll(s)); }
@@ -409,6 +424,7 @@ function e($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
       body.utr = $('#utr').value.trim();
       // With auto-detect on, the UTR is optional — the bank webhook confirms.
       if (!body.utr && !UPI_AUTO) return err('Paste the UTR from your UPI app after paying.');
+      if (UPI_PENDING) body.payment_id = UPI_PENDING; // attach to the reserved payment
     }
     if (method === 'netbanking') {
       body.bank = bank;
@@ -444,17 +460,23 @@ function e($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
     });
   });
 
-  /* live UPI: poll until the merchant approves */
+  /* live UPI: poll until captured (auto-detected or dashboard-approved) */
+  var pollTimer = null;
   function poll(pid) {
-    var timer = setInterval(function () {
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = setInterval(function () {
       fetch('api.php?action=checkout.status&key_id=' + encodeURIComponent(KEY) + '&payment_id=' + encodeURIComponent(pid))
         .then(function (r) { return r.json(); })
         .then(function (j) {
-          if (j.status === 'captured') { clearInterval(timer); succeed(j); }
-          if (j.status === 'failed') { clearInterval(timer); show('payBody'); err('Payment could not be verified.'); }
+          if (j.status === 'captured') { clearInterval(pollTimer); succeed(j); }
+          if (j.status === 'failed') { clearInterval(pollTimer); show('payBody'); err('Payment could not be verified.'); }
         }).catch(function () {});
     }, 5000);
   }
+
+  /* Auto-detect: the payment is reserved from page load, so start watching
+     immediately — the page completes even if the buyer never taps a button. */
+  if (UPI_PENDING) poll(UPI_PENDING);
 })();
 </script>
 <?php endif; ?>

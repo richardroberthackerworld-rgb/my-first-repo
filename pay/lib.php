@@ -266,6 +266,43 @@ function gw_parse_credit_text($text) {
 	return array($amt, $utr);
 }
 
+/**
+ * Reserve (or reuse) the pending live-UPI payment for an order, giving it a
+ * UNIQUE amount to pay: base + 0–99 extra paise, chosen so no other fresh
+ * pending payment shares it. Every bank credit SMS then identifies exactly
+ * one buyer — any number of people can pay in the same minute and all
+ * auto-verify. Returns array($paymentId, $amountMinor).
+ */
+function gw_upi_reserve($order) {
+	global $GW;
+	$db = gw_db();
+	$win = max(5, (int)($GW['upi_auto']['window_minutes'] ?? 45));
+	$cut = date('Y-m-d H:i:s', time() - $win * 60);
+
+	// Page reloads reuse this order's fresh reservation (same amount, same QR).
+	$st = $db->prepare("SELECT id, amount FROM gw_payments WHERE order_id = ? AND method = 'upi' AND status = 'pending' AND created_at >= ? ORDER BY id DESC LIMIT 1");
+	$st->execute(array($order['id'], $cut));
+	if ($p = $st->fetch()) return array($p['id'], (int)$p['amount']);
+
+	// Smallest free paise-delta on top of the base amount.
+	$base = (int)$order['amount'];
+	$st = $db->prepare("SELECT amount FROM gw_payments WHERE method = 'upi' AND status = 'pending' AND created_at >= ? AND amount BETWEEN ? AND ?");
+	$st->execute(array($cut, $base, $base + 99));
+	$taken = array();
+	foreach ($st->fetchAll() as $r) $taken[(int)$r['amount']] = true;
+	$amt = $base;
+	for ($d = 0; $d <= 99; $d++) { if (!isset($taken[$base + $d])) { $amt = $base + $d; break; } }
+
+	$id = gw_id('pay_');
+	$db->prepare('INSERT INTO gw_payments
+		(id, order_id, merchant_key, method, status, amount, currency, email, contact, vpa, utr, bank, card_last4, card_network, error, created_at, updated_at)
+		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
+		->execute(array($id, $order['id'], $order['merchant_key'], 'upi', 'pending', $amt, $order['currency'],
+			null, null, $GW['upi']['vpa'], null, null, null, null, null, gw_now(), gw_now()));
+	gw_webhook($order['merchant_key'], 'payment.pending', gw_get_payment($id));
+	return array($id, $amt);
+}
+
 /* ---------------- Money formatting ---------------- */
 function gw_currencies() { return array('INR' => '₹', 'USD' => '$', 'EUR' => '€', 'GBP' => '£', 'AED' => 'AED '); }
 

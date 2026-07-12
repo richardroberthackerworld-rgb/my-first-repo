@@ -63,21 +63,24 @@ the checkout completes on its own:
      `https://7pay.7by.in/api.php?action=upi.credit&token=YOUR_TOKEN`
    - **Body:** JSON `{"text":"%m"}` (the app's placeholder for the SMS text) —
      a raw/form body with the SMS text also works
-3. Done. Flow: buyer scans the QR → pays → taps "I've paid" (UTR optional) →
-   payment sits *pending* while the page polls → your bank SMS arrives →
-   forwarded → gateway parses `Rs 27.00 credited … UPI Ref 5123…`, matches the
-   oldest pending payment with that exact amount (within `window_minutes`),
-   captures it, fires the webhook (hub grants credits) → the buyer's page
-   flips to success by itself.
+3. Done. Flow: the checkout **reserves the payment the moment it opens** and
+   assigns a **unique amount** — base price + 0–99 paise (₹27.00, ₹27.01,
+   ₹27.02 …) — which is pre-filled into the QR and app links. The buyer pays,
+   your bank SMS arrives, the forwarder posts it, the gateway parses
+   `Rs 27.01 credited … UPI Ref 5123…` and the exact amount identifies exactly
+   one buyer. It captures, fires the webhook (hub grants credits), and the
+   buyer's page — which polls from the moment it opened — flips to success by
+   itself, even if they never tapped a button.
+
+Because every concurrent payment has a distinct amount, **any number of
+buyers can pay in the same minute and all auto-verify**. Up to 100 concurrent
+pending payments per price point (paise 00–99); beyond that the dashboard
+fallback catches the rest.
 
 Safety nets: the same UPI reference can never capture two payments; credits
-with no matching pending payment are ignored; and the dashboard's manual
-Approve/Reject still works any time (e.g. if your phone was off).
-
-Limitation to know: matching is by exact amount. If two buyers pay the same
-amount within the same minute, the oldest pending payment wins and the other
-stays pending for manual approval — fine at small scale, and the dashboard
-catches it.
+with no matching pending payment are ignored; reservations expire after
+`window_minutes`; and the dashboard's manual Approve/Reject still works any
+time (e.g. if your phone was off).
 
 ## Test vs live
 
