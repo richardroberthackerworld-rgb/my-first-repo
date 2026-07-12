@@ -8,7 +8,9 @@ PLAT="$SDK/platforms/android-34/android.jar"
 JBR="C:/Program Files/Android/Android Studio/jbr/bin"
 
 cd "$(dirname "$0")"
-rm -rf build && mkdir -p build/classes build/dex
+rm -rf build
+mkdir -p build/classes
+mkdir -p build/dex
 
 "$BT/aapt2.exe" link -o build/base.apk --manifest AndroidManifest.xml -I "$PLAT" \
   --min-sdk-version 26 --target-sdk-version 34
@@ -27,9 +29,14 @@ if [ ! -f 7pay-release.keystore ]; then
     -storepass sevenpay7by -keypass sevenpay7by -keyalg RSA -keysize 2048 \
     -validity 10950 -dname "CN=7By, O=7By.in, C=IN"
 fi
+# v1 (JAR) signing MUST be enabled — many Indian OEM installers (Xiaomi/Redmi,
+# Realme, Oppo, Vivo) reject v2/v3-only APKs with "App not installed".
 "$JBR/java.exe" -jar "$BT/lib/apksigner.jar" sign --ks 7pay-release.keystore \
   --ks-pass pass:sevenpay7by --key-pass pass:sevenpay7by \
+  --v1-signing-enabled true --v2-signing-enabled true --v3-signing-enabled true \
+  --min-sdk-version 21 \
   --out build/7pay-listener.apk build/aligned.apk
 
-"$JBR/java.exe" -jar "$BT/lib/apksigner.jar" verify build/7pay-listener.apk
+"$JBR/java.exe" -jar "$BT/lib/apksigner.jar" verify --min-sdk-version 19 --verbose build/7pay-listener.apk \
+  | grep -iE "v1 scheme|v2 scheme|v3 scheme"
 echo "OK -> build/7pay-listener.apk"
