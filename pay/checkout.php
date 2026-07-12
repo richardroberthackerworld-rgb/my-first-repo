@@ -186,7 +186,7 @@ function e($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 		<?php $defaultTab = $isTest ? 'card' : ($upiOk ? 'upi' : 'paypal'); ?>
 		<div class="tabs" id="tabs">
 			<?php if ($isTest): ?><button class="tab<?php if ($defaultTab === 'card') echo ' active'; ?>" data-tab="card">Card</button><?php endif; ?>
-			<?php if ($upiOk): ?><button class="tab<?php if ($defaultTab === 'upi') echo ' active'; ?>" data-tab="upi">UPI</button><?php endif; ?>
+			<?php if ($upiOk): ?><button class="tab<?php if ($defaultTab === 'upi') echo ' active'; ?>" data-tab="upi">7Pay</button><?php endif; ?>
 			<?php if ($isTest): ?><button class="tab" data-tab="netbanking">NetBank</button><?php endif; ?>
 			<button class="tab<?php if ($defaultTab === 'paypal') echo ' active'; ?>" data-tab="paypal">PayPal</button>
 		</div>
@@ -292,7 +292,7 @@ function e($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 		<div class="icon icon-wait">⏳</div>
 		<?php if ($upiAuto): ?>
 		<h2>Waiting for your payment…</h2>
-		<p>Keep this window open — it completes <b>automatically</b> the moment your payment arrives (usually under a minute).</p>
+		<p id="pendingMsg">Keep this window open — it completes <b>automatically</b> the moment your payment arrives (usually under a minute).</p>
 		<?php else: ?>
 		<h2>Awaiting verification</h2>
 		<p>We've recorded your payment reference. Your payment will be confirmed once it's verified — usually within a few minutes.</p>
@@ -477,6 +477,15 @@ function e($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
   /* Auto-detect: the payment is reserved from page load, so start watching
      immediately — the page completes even if the buyer never taps a button. */
   if (UPI_PENDING) poll(UPI_PENDING);
+
+  /* Banks sometimes confirm late — after 90s of waiting, reassure the buyer
+     that leaving is safe (capture + credits happen server-side regardless). */
+  if (UPI_AUTO) setTimeout(function () {
+    var m = $('#pendingMsg');
+    if (m) m.innerHTML = 'Your bank is taking a little longer than usual — that’s normal. ' +
+      'If you’ve paid, <b>you can safely close this page</b>: your payment confirms automatically ' +
+      'in the background and your purchase completes on its own.';
+  }, 90000);
 })();
 </script>
 <?php endif; ?>

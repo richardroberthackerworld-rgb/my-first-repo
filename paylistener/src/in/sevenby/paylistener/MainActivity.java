@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.Settings;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,6 +21,10 @@ public class MainActivity extends Activity {
     private TextView status, log;
     private EditText url;
     private SharedPreferences prefs;
+    private final Handler handler = new Handler();
+    private final Runnable ticker = new Runnable() {
+        @Override public void run() { refresh(); handler.postDelayed(this, 2000); }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,7 +112,14 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        refresh();
+        handler.removeCallbacks(ticker);
+        handler.post(ticker); // live-refresh the log every 2s while the app is open
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        handler.removeCallbacks(ticker);
     }
 
     @Override
