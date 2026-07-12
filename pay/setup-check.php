@@ -63,8 +63,8 @@ $ua = isset($GW['upi_auto']) ? $GW['upi_auto'] : array();
 $uaOn = !empty($ua['enabled']) && !empty($ua['token']) && !is_todo($ua['token']);
 $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '7pay.7by.in';
 row('Auto UPI detection (no UTR / no manual approve)', $uaOn ? true : 'warn', $uaOn
-	? 'Enabled. Point your phone\'s SMS-forwarder app at: https://' . $host . '/api.php?action=upi.credit&token=<your token from config.php>. Bank credit SMS → payment auto-captures.'
-	: 'Off (token still TODO). Buyers must enter the UTR and you approve in the dashboard. To automate: set a long random token in the upi_auto block, then install an SMS-forwarder app on your phone (see SETUP.md).');
+	? 'Enabled. On the phone that receives payments, install the companion app: https://' . $host . '/7pay-listener.apk — open it, paste https://' . $host . '/api.php?action=upi.credit&token=<your token>, grant notification + SMS access. It forwards GPay/PhonePe/Paytm/bank alerts and payments auto-capture.'
+	: 'Off (token still TODO). Buyers must enter the UTR and you approve in the dashboard. To automate: set a long random token in the upi_auto block, then install the companion app (https://' . $host . '/7pay-listener.apk — see SETUP.md).');
 
 $ppTodo = strpos($GW['paypal']['me_link'], 'TODO') !== false;
 row('PayPal.me (live international)', $ppTodo ? 'warn' : true, $ppTodo

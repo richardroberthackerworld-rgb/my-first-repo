@@ -3,3 +3,6 @@
 RewriteEngine On
 RewriteRule ^data/ - [F,L]
 </IfModule>
+
+# Serve the companion app with the correct MIME type so phones install it.
+AddType application/vnd.android.package-archive .apk
