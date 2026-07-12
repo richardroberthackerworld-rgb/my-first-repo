@@ -11,9 +11,12 @@ cd "$(dirname "$0")"
 rm -rf build
 mkdir -p build/classes
 mkdir -p build/dex
+mkdir -p build/res
 
+# Compile resources (launcher icons) then link them into the APK.
+"$BT/aapt2.exe" compile --dir res -o build/res.zip
 "$BT/aapt2.exe" link -o build/base.apk --manifest AndroidManifest.xml -I "$PLAT" \
-  --min-sdk-version 26 --target-sdk-version 34
+  build/res.zip --min-sdk-version 21 --target-sdk-version 34
 "$JBR/javac.exe" --release 11 -classpath "$PLAT" -d build/classes src/in/sevenby/paylistener/*.java
 "$JBR/jar.exe" cf build/classes.jar -C build/classes .
 "$JBR/java.exe" -cp "$BT/lib/d8.jar" com.android.tools.r8.D8 --release --lib "$PLAT" \
