@@ -50,6 +50,12 @@ return array(
 		'enabled'        => true,
 		'token'          => 'TODO_random_token_for_sms_forwarder',
 		'window_minutes' => 45, // how long a pending payment is matchable
+		// false = every buyer pays the exact flat price (e.g. ₹27), matched
+		//         oldest-pending-first. Clean amounts; a rare same-price clash
+		//         in the same window falls back to dashboard approval.
+		// true  = each open checkout gets base + 0–99 unique paise so unlimited
+		//         simultaneous buyers auto-verify with zero ambiguity.
+		'unique_paise'   => false,
 	),
 
 	// ---- Live-mode international payments (PayPal) ----

@@ -266,12 +266,21 @@ function gw_parse_credit_text($text) {
 	return array($amt, $utr);
 }
 
+// Whether to give each open checkout a unique paise-amount. On (default) =
+// unlimited simultaneous buyers auto-verify with zero ambiguity, costing the
+// buyer 0–99 extra paise. Off = every buyer pays the exact flat price, matched
+// oldest-pending-first (fine for low/moderate concurrency; a rare same-price,
+// same-window clash falls back to the dashboard).
+function gw_upi_unique() {
+	global $GW;
+	return !isset($GW['upi_auto']['unique_paise']) || !empty($GW['upi_auto']['unique_paise']);
+}
+
 /**
- * Reserve (or reuse) the pending live-UPI payment for an order, giving it a
- * UNIQUE amount to pay: base + 0–99 extra paise, chosen so no other fresh
- * pending payment shares it. Every bank credit SMS then identifies exactly
- * one buyer — any number of people can pay in the same minute and all
- * auto-verify. Returns array($paymentId, $amountMinor).
+ * Reserve (or reuse) the pending live-UPI payment for an order. With unique
+ * paise on, the amount is base + smallest free 0–99 paise so every credit SMS
+ * maps to exactly one buyer; with it off, the amount is the flat base price.
+ * Returns array($paymentId, $amountMinor).
  */
 function gw_upi_reserve($order) {
 	global $GW;
@@ -284,11 +293,23 @@ function gw_upi_reserve($order) {
 	$st->execute(array($order['id'], $cut));
 	if ($p = $st->fetch()) return array($p['id'], (int)$p['amount']);
 
-	// Smallest free paise-delta on top of the base amount. Insert, then
-	// re-check uniqueness — two simultaneous renders could race to the same
-	// slot; the loser deletes its row and takes the next free one.
 	$base = (int)$order['amount'];
 	$id = gw_id('pay_');
+
+	// Flat-price mode: reserve at the exact base amount, no paise suffix.
+	if (!gw_upi_unique()) {
+		$db->prepare('INSERT INTO gw_payments
+			(id, order_id, merchant_key, method, status, amount, currency, email, contact, vpa, utr, bank, card_last4, card_network, error, created_at, updated_at)
+			VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
+			->execute(array($id, $order['id'], $order['merchant_key'], 'upi', 'pending', $base, $order['currency'],
+				null, null, $GW['upi']['vpa'], null, null, null, null, null, gw_now(), gw_now()));
+		gw_webhook($order['merchant_key'], 'payment.pending', gw_get_payment($id));
+		return array($id, $base);
+	}
+
+	// Unique-paise mode: smallest free paise-delta on top of the base amount.
+	// Insert, then re-check uniqueness — two simultaneous renders could race to
+	// the same slot; the loser deletes its row and takes the next free one.
 	$amt = $base;
 	for ($try = 0; $try < 4; $try++) {
 		$st = $db->prepare("SELECT amount FROM gw_payments WHERE method = 'upi' AND status = 'pending' AND created_at >= ? AND amount BETWEEN ? AND ?");
