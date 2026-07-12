@@ -54,6 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $payments = array(); $stats = array('captured' => 0, 'pending' => 0, 'failed' => 0);
 $volumeText = '0';
 if ($me) {
+	gw_expire_stale_reservations(); // clear abandoned auto-detect checkouts
 	$st = gw_db()->prepare('SELECT * FROM gw_payments WHERE merchant_key = ? ORDER BY created_at DESC, id DESC LIMIT 100');
 	$st->execute(array($me['key_id']));
 	$payments = $st->fetchAll();

@@ -228,9 +228,17 @@ switch ($action) {
 		$cfg = isset($GW['upi_auto']) ? $GW['upi_auto'] : array();
 		$tok = (string)($_GET['token'] ?? ($in['token'] ?? ''));
 		if (!gw_upi_auto_on() || !hash_equals((string)$cfg['token'], $tok)) gw_fail('Bad token.', 401);
+		gw_expire_stale_reservations();
 
+		// Forwarder apps send the SMS in many shapes: JSON {text}, form fields,
+		// a ?text= query param, or just the raw SMS as the request body.
 		$amt = null; $utr = '';
 		$text = (string)($in['text'] ?? ($in['message'] ?? ($in['msg'] ?? ($in['body'] ?? ''))));
+		if ($text === '' && isset($_GET['text'])) $text = (string)$_GET['text'];
+		if ($text === '') {
+			$raw = trim((string)file_get_contents('php://input'));
+			if ($raw !== '' && $raw[0] !== '{' && $raw[0] !== '[') $text = $raw;
+		}
 		if ($text !== '') list($amt, $utr) = gw_parse_credit_text($text);
 		if (isset($in['amount']) && $in['amount'] !== '') $amt = (int)round(((float)$in['amount']) * 100);
 		if (!empty($in['utr'])) $utr = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string)$in['utr']));

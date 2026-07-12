@@ -284,23 +284,48 @@ function gw_upi_reserve($order) {
 	$st->execute(array($order['id'], $cut));
 	if ($p = $st->fetch()) return array($p['id'], (int)$p['amount']);
 
-	// Smallest free paise-delta on top of the base amount.
+	// Smallest free paise-delta on top of the base amount. Insert, then
+	// re-check uniqueness — two simultaneous renders could race to the same
+	// slot; the loser deletes its row and takes the next free one.
 	$base = (int)$order['amount'];
-	$st = $db->prepare("SELECT amount FROM gw_payments WHERE method = 'upi' AND status = 'pending' AND created_at >= ? AND amount BETWEEN ? AND ?");
-	$st->execute(array($cut, $base, $base + 99));
-	$taken = array();
-	foreach ($st->fetchAll() as $r) $taken[(int)$r['amount']] = true;
-	$amt = $base;
-	for ($d = 0; $d <= 99; $d++) { if (!isset($taken[$base + $d])) { $amt = $base + $d; break; } }
-
 	$id = gw_id('pay_');
-	$db->prepare('INSERT INTO gw_payments
-		(id, order_id, merchant_key, method, status, amount, currency, email, contact, vpa, utr, bank, card_last4, card_network, error, created_at, updated_at)
-		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
-		->execute(array($id, $order['id'], $order['merchant_key'], 'upi', 'pending', $amt, $order['currency'],
-			null, null, $GW['upi']['vpa'], null, null, null, null, null, gw_now(), gw_now()));
+	$amt = $base;
+	for ($try = 0; $try < 4; $try++) {
+		$st = $db->prepare("SELECT amount FROM gw_payments WHERE method = 'upi' AND status = 'pending' AND created_at >= ? AND amount BETWEEN ? AND ?");
+		$st->execute(array($cut, $base, $base + 99));
+		$taken = array();
+		foreach ($st->fetchAll() as $r) $taken[(int)$r['amount']] = true;
+		$amt = $base;
+		for ($d = 0; $d <= 99; $d++) { if (!isset($taken[$base + $d])) { $amt = $base + $d; break; } }
+
+		$db->prepare('INSERT INTO gw_payments
+			(id, order_id, merchant_key, method, status, amount, currency, email, contact, vpa, utr, bank, card_last4, card_network, error, created_at, updated_at)
+			VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
+			->execute(array($id, $order['id'], $order['merchant_key'], 'upi', 'pending', $amt, $order['currency'],
+				null, null, $GW['upi']['vpa'], null, null, null, null, null, gw_now(), gw_now()));
+
+		$st = $db->prepare("SELECT COUNT(*) FROM gw_payments WHERE method = 'upi' AND status = 'pending' AND amount = ? AND created_at >= ?");
+		$st->execute(array($amt, $cut));
+		if ((int)$st->fetchColumn() === 1) break; // we own this slot — done
+		$db->prepare('DELETE FROM gw_payments WHERE id = ?')->execute(array($id)); // raced — retry
+	}
 	gw_webhook($order['merchant_key'], 'payment.pending', gw_get_payment($id));
 	return array($id, $amt);
+}
+
+/**
+ * Lazily fail auto-detect reservations that outlived the matching window and
+ * never got a UTR — keeps the dashboard's "pending approval" list to real
+ * payments only. (UTR-carrying pendings are kept for manual review.)
+ */
+function gw_expire_stale_reservations() {
+	global $GW;
+	if (!gw_upi_auto_on()) return;
+	$win = max(5, (int)($GW['upi_auto']['window_minutes'] ?? 45));
+	$cut = date('Y-m-d H:i:s', time() - $win * 60);
+	gw_db()->prepare("UPDATE gw_payments SET status = 'failed', error = 'Expired — no payment received in time.', updated_at = ?
+		WHERE status = 'pending' AND method = 'upi' AND (utr IS NULL OR utr = '') AND created_at < ?")
+		->execute(array(gw_now(), $cut));
 }
 
 /* ---------------- Money formatting ---------------- */
