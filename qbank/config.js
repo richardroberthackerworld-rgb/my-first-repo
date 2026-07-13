@@ -11,6 +11,8 @@
    1) GOOGLE GEMINI   →  https://aistudio.google.com/apikey
         Best for PHOTOS (reads textbook pages & handwriting in
         English/Hindi/Telugu). ~1500 requests/day free. Key starts "AIza".
+        Also unlocks Gemini 2.5 Pro (~50/day free) — the strongest free
+        model, used automatically for HARD difficulty papers.
 
    2) GROQ            →  https://console.groq.com/keys
         Fastest text generation (Llama 3.3 70B). 30 req/min free.

@@ -7,6 +7,7 @@ Pick a subject & topic — or snap photos of your textbook / notes — and gener
 - ⌨️ **Or just type a topic** — e.g. "Photosynthesis", "Quadratic Equations", "Chapter 4 — The Mughal Empire". You can combine topic + photos.
 - 📝 **6 question types, mix freely** — MCQ (4 options), Very Short (1–2 lines), Short (3–5 lines), Long Answer / Essay, Fill in the Blanks, True/False — each with its own count (1–25).
 - 🎚️ **Difficulty** — Easy, Medium, Hard, or Mixed (easy → hard within each section).
+- 🧠 **Hard mode = strongest AI** — Hard difficulty automatically routes through the most powerful free reasoning models: Gemini 2.5 Pro (~50 req/day free, also reads photos), then OpenRouter's free heavyweights (NVIDIA Nemotron 3 Ultra 555B, Tencent Hy3 295B, OpenAI gpt-oss-120b), falling back to the normal chain if they're busy.
 - 🔑 **Answer key toggle** — generate with answers + explanations, but they stay hidden until you press "Show answer key". Practice first, check later.
 - 🖨️ **Print / Save PDF** — prints only the question paper (clean, no site chrome). Answer key prints only if revealed.
 - ➕ **More questions** — one click generates a fresh set on the same topic, telling the AI not to repeat questions it already asked.
@@ -33,6 +34,7 @@ Open **`config.js`** and paste your free keys between the quotes. If you already
 The top-right ⚙️ badge shows which engines are active. All keys stay in `config.js` on your own site — the app calls the providers directly from the browser.
 
 ## How the app chooses a model (automatic)
+- **Hard difficulty** → Gemini 2.5 Pro → Nemotron 3 Ultra 555B → Hy3 295B → gpt-oss-120b → then the normal chain below
 - **Photos attached** → Gemini (best vision) → OpenRouter Gemma 4 → Mistral Pixtral
 - **Coding / programming subjects** → OpenRouter Qwen3 Coder → Gemini → Groq → Cerebras
 - **Maths / Physics / Accounts (reasoning)** → Gemini → Cerebras → Groq → OpenRouter

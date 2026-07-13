@@ -504,7 +504,7 @@ const I18N = {
     camera:'Camera', gallery:'Gallery',
     ch3:'Chapter III — Set your question paper',
     ch3hint:'Tick the kinds of questions you want and how many of each. Mix as many types as you like.',
-    lblDifficulty:'Difficulty', diffEasy:'Easy', diffMedium:'Medium', diffHard:'Hard', diffMixed:'Mixed (easy → hard)',
+    lblDifficulty:'Difficulty', diffEasy:'Easy', diffMedium:'Medium', diffHard:'Hard 🧠 (strongest AI)', diffMixed:'Mixed (easy → hard)',
     withAnswers:'Include answer key (answers + explanations)',
     generate:'Generate question bank', thinking:'Your examiner is setting the paper…',
     ch4:'Chapter IV — Your Question Bank',
@@ -532,7 +532,7 @@ const I18N = {
     camera:'कैमरा', gallery:'गैलरी',
     ch3:'अध्याय III — अपना प्रश्न पत्र सेट करें',
     ch3hint:'जिस प्रकार के प्रश्न चाहिए उन्हें टिक करें और संख्या चुनें। जितने चाहें उतने प्रकार मिलाएँ।',
-    lblDifficulty:'कठिनाई', diffEasy:'आसान', diffMedium:'मध्यम', diffHard:'कठिन', diffMixed:'मिश्रित (आसान → कठिन)',
+    lblDifficulty:'कठिनाई', diffEasy:'आसान', diffMedium:'मध्यम', diffHard:'कठिन 🧠 (सबसे शक्तिशाली AI)', diffMixed:'मिश्रित (आसान → कठिन)',
     withAnswers:'उत्तर कुंजी शामिल करें (उत्तर + व्याख्या)',
     generate:'प्रश्न बैंक बनाएँ', thinking:'आपके परीक्षक प्रश्न पत्र सेट कर रहे हैं…',
     ch4:'अध्याय IV — आपका प्रश्न बैंक',
@@ -560,7 +560,7 @@ const I18N = {
     camera:'కెమెరా', gallery:'గ్యాలరీ',
     ch3:'అధ్యాయం III — మీ ప్రశ్నాపత్రం సెట్ చేయండి',
     ch3hint:'కావలసిన ప్రశ్న రకాలను టిక్ చేసి, ఎన్ని కావాలో ఎంచుకోండి. ఎన్ని రకాలైనా కలపవచ్చు.',
-    lblDifficulty:'కఠినత', diffEasy:'సులభం', diffMedium:'మధ్యస్థం', diffHard:'కఠినం', diffMixed:'మిశ్రమం (సులభం → కఠినం)',
+    lblDifficulty:'కఠినత', diffEasy:'సులభం', diffMedium:'మధ్యస్థం', diffHard:'కఠినం 🧠 (అత్యంత శక్తివంతమైన AI)', diffMixed:'మిశ్రమం (సులభం → కఠినం)',
     withAnswers:'ఆన్సర్ కీ చేర్చండి (సమాధానాలు + వివరణ)',
     generate:'క్వశ్చన్ బ్యాంక్ తయారు చేయండి', thinking:'మీ ఎగ్జామినర్ పేపర్ సెట్ చేస్తున్నారు…',
     ch4:'అధ్యాయం IV — మీ క్వశ్చన్ బ్యాంక్',
@@ -742,12 +742,14 @@ const OA_BASE = {
 };
 const MODEL_MAP = {
   gemini:     { text:['gemini-2.5-flash','gemini-2.0-flash','gemini-1.5-flash'],
-                vision:['gemini-2.5-flash','gemini-2.0-flash','gemini-1.5-flash'] },
+                vision:['gemini-2.5-flash','gemini-2.0-flash','gemini-1.5-flash'],
+                deep:['gemini-2.5-pro'] },                                    // strongest free model (~50 req/day), also reads photos
   groq:       { text:['llama-3.3-70b-versatile','llama-3.1-8b-instant'] },
   cerebras:   { text:['llama-3.3-70b'] },
   openrouter: { text:['nvidia/nemotron-3-super-120b-a12b:free','meta-llama/llama-3.3-70b-instruct:free'],
                 coding:['qwen/qwen3-coder:free'],
-                vision:['google/gemma-4-31b-it:free','nvidia/nemotron-nano-12b-v2-vl:free'] },
+                vision:['google/gemma-4-31b-it:free','nvidia/nemotron-nano-12b-v2-vl:free'],
+                deep:['nvidia/nemotron-3-ultra-550b-a55b:free','tencent/hy3:free','openai/gpt-oss-120b:free'] }, // big free reasoning MoEs (text only)
   mistral:    { text:['mistral-large-latest'], vision:['pixtral-12b-2409'] }
 };
 
@@ -762,6 +764,10 @@ function planRoute(hasImage){
   const cat = categorize();
   const out = [];
   const add = (id, models) => { if(active(id) && models) models.forEach(m=>out.push({id, model:m})); };
+  if($('diffSel').value === 'hard'){  // Hard papers → strongest reasoning models first, normal chain as fallback
+    add('gemini', MODEL_MAP.gemini.deep);                    // 2.5 Pro handles text AND photos
+    if(!hasImage) add('openrouter', MODEL_MAP.openrouter.deep); // big reasoning MoEs are text-only
+  }
   if(hasImage){                       // photos of material → needs a VISION model
     add('gemini', MODEL_MAP.gemini.vision);
     add('openrouter', MODEL_MAP.openrouter.vision);
@@ -798,6 +804,8 @@ function updateEngineBadge(){
 /* ---- provider callers (multi-image capable) ---- */
 const errText = (e, status) => e?.message || (typeof e === 'string' ? e : e ? JSON.stringify(e) : '') || ('HTTP ' + status);
 const truncNote = () => '\n\n---\n\n> ⚠️ ' + t('truncated');
+// reasoning models may leak their chain-of-thought as <think>…</think> — show only the final paper
+const stripThink = s => s.replace(/<think>[\s\S]*?<\/think>/gi,'').replace(/<\/?think>/gi,'').trim();
 async function callGeminiModel(model, sysText, userText, imgs){
   const parts = [];
   (imgs||[]).forEach(img=> parts.push({ inline_data:{ mime_type:img.mime, data:img.b64 } }));
@@ -808,7 +816,7 @@ async function callGeminiModel(model, sysText, userText, imgs){
   });
   const data = await res.json();
   if(!res.ok) throw new Error(errText(data.error, res.status));
-  let txt = data.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('') || '';
+  let txt = stripThink(data.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('') || '');
   if(!txt) throw new Error('Empty response');
   if(data.candidates?.[0]?.finishReason === 'MAX_TOKENS') txt += truncNote();
   return txt;
@@ -825,7 +833,7 @@ async function callOpenAICompat(id, model, sysText, userText, imgs){
   });
   const data = await res.json();
   if(!res.ok) throw new Error(errText(data.error, res.status));
-  let txt = data.choices?.[0]?.message?.content || '';
+  let txt = stripThink(data.choices?.[0]?.message?.content || '');
   if(!txt) throw new Error('Empty response');
   if(data.choices?.[0]?.finish_reason === 'length') txt += truncNote();
   return txt;
