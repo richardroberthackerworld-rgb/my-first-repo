@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Q Bank 🏛️ — Generate question papers from any subject or photo</title>
+<meta name="description" content="Q Bank — select a subject & topic or upload photos of your textbook/notes, and generate a full question bank: long answers, short answers, MCQs, fill in the blanks, true/false — with answer key — for Class 1 to 10, Inter, Degree, CA/CMA, Jobs & Current Affairs, in English, Hindi or Telugu.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700;900&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Serif+Devanagari:wght@400;600&family=Noto+Serif+Telugu:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* ============ BOOK THEME (shared with Doubt Snap) ============ */
+:root{
+  --paper:#f7f1e3;          /* main page paper */
+  --paper-2:#fdf9ee;        /* lighter sheet */
+  --paper-aged:#efe6cf;     /* aged edge */
+  --ink:#2c2418;            /* main text ink */
+  --ink-soft:#5a4c38;       /* secondary ink */
+  --ink-faint:#8a7a60;      /* placeholder / meta */
+  --leather:#5d3220;        /* book cover leather */
+  --leather-2:#7a4530;      /* leather highlight */
+  --maroon:#7b2d26;         /* ribbon / accents */
+  --gold:#b8860b;           /* gilded accents */
+  --gold-soft:#d4af6a;
+  --rule:#d9cbaa;           /* ruled lines / borders */
+  --ok:#3d6b35;
+  --err:#93312b;
+  --shadow-page:0 1px 3px rgba(60,40,10,.15), 0 10px 30px rgba(60,40,10,.12);
+  --serif:'Lora','Noto Serif Devanagari','Noto Serif Telugu',Georgia,serif;
+  --display:'Playfair Display','Noto Serif Devanagari','Noto Serif Telugu',Georgia,serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--serif);
+  color:var(--ink);
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(184,134,11,.06), transparent 50%),
+    repeating-linear-gradient(0deg, transparent 0 3px, rgba(120,90,40,.012) 3px 4px),
+    linear-gradient(160deg,#3a2417 0%, #4a2e1c 45%, #3a2417 100%);
+  min-height:100vh;
+  line-height:1.65;
+}
+/* ---------- Book cover header ---------- */
+header.cover{
+  background:
+    radial-gradient(ellipse at 50% -20%, rgba(212,175,106,.25), transparent 60%),
+    repeating-linear-gradient(90deg, rgba(0,0,0,.06) 0 2px, transparent 2px 90px),
+    linear-gradient(180deg,var(--leather-2),var(--leather));
+  border-bottom:6px double var(--gold-soft);
+  padding:34px 20px 26px;
+  text-align:center;
+  position:relative;
+}
+header.cover::before, header.cover::after{
+  content:'';position:absolute;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--gold-soft),transparent);
+}
+header.cover::before{top:8px} header.cover::after{bottom:12px}
+.brand{
+  font-family:var(--display);font-weight:900;font-size:clamp(34px,6vw,54px);
+  color:#f3e6c8;letter-spacing:1px;text-shadow:0 2px 0 rgba(0,0,0,.35);
+}
+.brand .bank{color:var(--gold-soft)}
+.tagline{color:#e4d1a8;font-style:italic;font-size:15px;margin-top:6px}
+.tagline-sub{color:#c9b183;font-size:12.5px;margin-top:4px;letter-spacing:.5px}
+
+/* ---------- Toolbar (language + engines) ---------- */
+.toolbar{
+  max-width:980px;margin:-1px auto 0;display:flex;justify-content:space-between;
+  align-items:center;gap:10px;padding:10px 16px;flex-wrap:wrap;
+}
+.lang-tabs{display:flex;gap:6px}
+.lang-tab{
+  font-family:var(--serif);font-size:13.5px;cursor:pointer;
+  background:rgba(247,241,227,.12);color:#e8d9b5;border:1px solid rgba(212,175,106,.4);
+  border-radius:4px 4px 0 0;padding:7px 14px;transition:all .2s ease;
+}
+.lang-tab:hover{background:rgba(247,241,227,.22)}
+.lang-tab.active{background:var(--paper);color:var(--ink);border-color:var(--paper);font-weight:600}
+.key-btn{
+  font-family:var(--serif);font-size:13px;cursor:pointer;
+  background:transparent;color:#d4bd8d;border:1px dashed rgba(212,175,106,.55);
+  border-radius:4px;padding:7px 12px;transition:all .2s ease;
+}
+.key-btn.ok{color:#a8d49a;border-color:rgba(120,180,100,.55)}
+.engine-badge{cursor:default;border-style:solid;max-width:60vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.engine-badge.warn{color:#e6b877;border-color:rgba(212,175,106,.6);border-style:dashed}
+.paper-meta .via{color:var(--ok);font-weight:600}
+
+/* ---------- The open book ---------- */
+main.book{
+  max-width:980px;margin:0 auto 60px;background:var(--paper);
+  box-shadow:var(--shadow-page), inset 0 0 60px rgba(140,110,60,.09);
+  border-radius:3px 3px 8px 8px;position:relative;overflow:hidden;
+}
+main.book::before{ /* page edge stack on the right */
+  content:'';position:absolute;top:0;bottom:0;right:0;width:10px;
+  background:repeating-linear-gradient(90deg,var(--paper-aged) 0 2px,var(--paper-2) 2px 4px);
+  border-left:1px solid var(--rule);
+}
+.page{padding:36px clamp(20px,5vw,64px) 44px;position:relative}
+.page + .page{border-top:1px solid var(--rule)}
+.chapter{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.chapter .orn{color:var(--gold);font-size:18px;letter-spacing:2px;white-space:nowrap}
+.chapter h2{
+  font-family:var(--display);font-size:clamp(19px,3vw,26px);font-weight:700;
+  color:var(--maroon);min-width:0;
+}
+.chapter .line{flex:1;height:1px;background:linear-gradient(90deg,var(--rule),transparent)}
+.hint{font-style:italic;color:var(--ink-faint);font-size:13.5px;margin:-12px 0 18px}
+
+/* ---------- Chapter I : choose study level & subject ---------- */
+.level-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:18px}
+.level-card{
+  background:var(--paper-2);border:1px solid var(--rule);border-radius:5px;
+  padding:12px 10px;text-align:center;cursor:pointer;transition:all .2s ease;
+  font-size:14px;position:relative;
+}
+.level-card .em{display:block;font-size:22px;margin-bottom:4px}
+.level-card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(90,60,20,.15)}
+.level-card.active{
+  border-color:var(--gold);background:#fbf3dd;
+  box-shadow:inset 0 0 0 1px var(--gold), 0 4px 12px rgba(184,134,11,.18);
+}
+.level-card.active::after{content:'✦';position:absolute;top:5px;right:8px;color:var(--gold);font-size:11px}
+.sub-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:640px){.sub-row{grid-template-columns:1fr}}
+.field label{
+  display:block;font-size:11.5px;text-transform:uppercase;letter-spacing:2px;
+  color:var(--ink-soft);margin-bottom:6px;font-weight:600;
+}
+.field select, .field input[type=text]{
+  width:100%;font-family:var(--serif);font-size:15px;color:var(--ink);
+  background:var(--paper-2);border:1px solid var(--rule);border-radius:5px;
+  padding:10px 12px;
+}
+.field select{
+  cursor:pointer;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235a4c38' stroke-width='1.6' fill='none'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;
+}
+.field select:focus, .field input[type=text]:focus{outline:none;border-color:var(--gold)}
+.field input[type=text]::placeholder{color:var(--ink-faint);font-style:italic}
+
+/* ---------- Chapter II : topic or photos ---------- */
+.ask-wrap{display:grid;grid-template-columns:1fr 300px;gap:22px}
+@media(max-width:760px){.ask-wrap{grid-template-columns:1fr}}
+textarea#topicText{
+  width:100%;min-height:170px;resize:vertical;
+  font-family:var(--serif);font-size:16px;color:var(--ink);line-height:32px;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 31px, var(--rule) 31px 32px);
+  background-color:var(--paper-2);
+  border:1px solid var(--rule);border-radius:5px;padding:6px 14px 10px;
+}
+textarea#topicText:focus{outline:none;border-color:var(--gold)}
+textarea#topicText::placeholder{color:var(--ink-faint);font-style:italic}
+.photo-box{
+  border:2px dashed var(--gold-soft);border-radius:6px;background:var(--paper-2);
+  min-height:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:8px;padding:16px;text-align:center;cursor:pointer;transition:all .2s ease;position:relative;
+}
+.photo-box:hover,.photo-box.drag{background:#fbf3dd;border-color:var(--gold)}
+.photo-box .cam{font-size:34px}
+.photo-box .pb-title{font-weight:600;font-size:14.5px}
+.photo-box .pb-sub{font-size:12px;color:var(--ink-faint);font-style:italic}
+.photo-btns{display:flex;gap:8px;margin-top:4px}
+.mini-btn{
+  font-family:var(--serif);font-size:12.5px;cursor:pointer;
+  background:var(--paper);border:1px solid var(--rule);border-radius:4px;padding:6px 12px;
+  color:var(--ink-soft);transition:all .2s ease;
+}
+.mini-btn:hover{border-color:var(--gold);color:var(--ink)}
+.thumb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px;width:100%}
+.thumb{position:relative}
+.thumb img{width:100%;height:80px;object-fit:cover;border-radius:4px;border:1px solid var(--rule);display:block;background:#fff}
+.thumb .remove-img{
+  position:absolute;top:3px;right:3px;background:var(--maroon);color:#f7f1e3;border:none;
+  width:20px;height:20px;border-radius:50%;cursor:pointer;font-size:11px;line-height:1;
+}
+.thumb.add-more{
+  border:1.5px dashed var(--gold-soft);border-radius:4px;height:80px;display:flex;
+  align-items:center;justify-content:center;font-size:22px;color:var(--gold);cursor:pointer;
+}
+.thumb.add-more:hover{background:#fbf3dd}
+
+/* ---------- Chapter III : paper settings ---------- */
+.type-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin-bottom:18px}
+.type-card{
+  background:var(--paper-2);border:1px solid var(--rule);border-radius:5px;
+  padding:11px 12px;cursor:pointer;transition:all .2s ease;position:relative;
+  display:flex;align-items:center;gap:10px;font-size:14px;
+}
+.type-card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(90,60,20,.15)}
+.type-card.active{
+  border-color:var(--gold);background:#fbf3dd;
+  box-shadow:inset 0 0 0 1px var(--gold), 0 4px 12px rgba(184,134,11,.18);
+}
+.type-card.active::after{content:'✦';position:absolute;top:4px;right:7px;color:var(--gold);font-size:11px}
+.type-card .em{font-size:20px}
+.type-card .tn{flex:1;line-height:1.35}
+.type-card .cnt{
+  width:52px;font-family:var(--serif);font-size:14px;text-align:center;color:var(--ink);
+  background:var(--paper);border:1px solid var(--rule);border-radius:4px;padding:5px 4px;
+}
+.type-card .cnt:focus{outline:none;border-color:var(--gold)}
+.type-card:not(.active) .cnt{opacity:.4}
+.opt-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:end}
+@media(max-width:640px){.opt-row{grid-template-columns:1fr}}
+.check-line{
+  display:flex;align-items:center;gap:10px;background:var(--paper-2);
+  border:1px solid var(--rule);border-radius:5px;padding:10px 12px;cursor:pointer;
+  font-size:14.5px;user-select:none;
+}
+.check-line input{accent-color:var(--gold);width:16px;height:16px;cursor:pointer}
+.gen-actions{display:flex;align-items:center;gap:14px;margin-top:22px;flex-wrap:wrap}
+.solve-btn{
+  font-family:var(--display);font-weight:700;font-size:17px;letter-spacing:.5px;cursor:pointer;
+  background:linear-gradient(180deg,var(--leather-2),var(--leather));color:#f3e6c8;
+  border:1px solid var(--gold-soft);border-radius:6px;padding:13px 34px;
+  box-shadow:0 3px 0 #2e1a0e, 0 8px 18px rgba(60,35,15,.35);transition:all .15s ease;
+}
+.solve-btn:hover{transform:translateY(-1px);box-shadow:0 4px 0 #2e1a0e, 0 10px 22px rgba(60,35,15,.4)}
+.solve-btn:active{transform:translateY(2px);box-shadow:0 1px 0 #2e1a0e}
+.solve-btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
+.status{font-style:italic;font-size:14px;color:var(--ink-soft)}
+.status.err{color:var(--err)}
+.quill{display:none;align-items:center;gap:10px}
+.quill.on{display:inline-flex}
+.quill .nib{font-size:20px;animation:write 1s ease-in-out infinite}
+@keyframes write{0%,100%{transform:translateX(0) rotate(0)}50%{transform:translateX(10px) rotate(-8deg)}}
+
+/* ---------- Chapter IV : the question paper ---------- */
+#paperPage{display:none}
+.paper-sheet{
+  background:var(--paper-2);border:1px solid var(--rule);border-radius:6px;
+  padding:26px clamp(18px,4vw,40px);box-shadow:inset 0 0 40px rgba(150,120,60,.06);
+  position:relative;
+}
+.paper-sheet::before{ /* red margin line like a notebook */
+  content:'';position:absolute;top:0;bottom:0;left:34px;width:1px;background:rgba(147,49,43,.25);
+}
+@media(max-width:640px){.paper-sheet::before{display:none}}
+.paper-meta{
+  font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-faint);
+  border-bottom:1px solid var(--rule);padding-bottom:10px;margin-bottom:16px;
+  display:flex;gap:14px;flex-wrap:wrap;
+}
+.paper-body{font-size:16px}
+.paper-body h1,.paper-body h2,.paper-body h3{
+  font-family:var(--display);color:var(--maroon);margin:22px 0 8px;line-height:1.3;
+}
+.paper-body h1{font-size:24px}.paper-body h2{font-size:20px}.paper-body h3{font-size:17px}
+.paper-body p{margin:10px 0}
+.paper-body strong{color:var(--leather)}
+.paper-body ul,.paper-body ol{margin:10px 0 10px 26px}
+.paper-body li{margin:5px 0}
+.paper-body code{
+  font-family:Consolas,monospace;font-size:14px;background:#efe6cf;
+  border:1px solid var(--rule);border-radius:3px;padding:1px 6px;
+}
+.paper-body pre{
+  background:#efe6cf;border:1px solid var(--rule);border-radius:5px;
+  padding:14px;overflow-x:auto;margin:12px 0;
+}
+.paper-body pre code{border:none;background:none;padding:0}
+.paper-body blockquote{
+  border-left:3px solid var(--gold);background:#fbf3dd;padding:10px 16px;margin:12px 0;
+  font-style:italic;border-radius:0 5px 5px 0;
+}
+.paper-body hr{border:none;border-top:1px dashed var(--rule);margin:18px 0}
+.paper-body table{border-collapse:collapse;margin:12px 0;width:100%}
+.paper-body th,.paper-body td{border:1px solid var(--rule);padding:7px 10px;text-align:left;font-size:14.5px}
+.paper-body th{background:#efe6cf;font-weight:600}
+#answerKey{display:none;border-top:2px dashed var(--gold-soft);margin-top:22px;padding-top:6px}
+#answerKey.on{display:block}
+.paper-actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+
+/* ---------- Chapter V : shelf (history) ---------- */
+.notebook-list{display:flex;flex-direction:column;gap:8px}
+.note-item{
+  background:var(--paper-2);border:1px solid var(--rule);border-radius:5px;
+  padding:11px 14px;cursor:pointer;display:flex;justify-content:space-between;gap:12px;
+  align-items:center;transition:all .15s ease;
+}
+.note-item:hover{border-color:var(--gold);transform:translateX(3px)}
+.note-item .nq{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.note-item .nm{font-size:11px;color:var(--ink-faint);white-space:nowrap;letter-spacing:.5px}
+.empty-note{font-style:italic;color:var(--ink-faint);font-size:14px}
+
+/* ---------- footer ---------- */
+footer{
+  text-align:center;color:#c9b183;font-size:12.5px;font-style:italic;
+  padding:0 20px 40px;
+}
+footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-bottom:6px}
+
+/* ---------- print: only the question paper ---------- */
+@media print{
+  body{background:#fff}
+  header.cover,.toolbar,footer,.paper-actions,.page:not(#paperPage){display:none !important}
+  main.book{box-shadow:none;max-width:100%;background:#fff}
+  main.book::before{display:none}
+  #paperPage{display:block !important;padding:0}
+  .chapter{display:none}
+  .paper-sheet{border:none;box-shadow:none;padding:0}
+  .paper-sheet::before{display:none}
+}
+</style>
+</head>
+<body>
+
+<header class="cover">
+  <div class="brand">Q <span class="bank">Bank</span> <span style="font-size:.7em">🏛️</span></div>
+  <div class="tagline" data-i18n="tagline">Pick a subject & topic — or snap your textbook — and get a full question bank with answers.</div>
+  <div class="tagline-sub" data-i18n="taglineSub">Class 1–10 · Intermediate (MPC · BiPC · CEC · MEC) · Degree · CA · CMA · US CMA · Jobs & Current Affairs</div>
+</header>
+
+<div class="toolbar">
+  <div class="lang-tabs" id="langTabs">
+    <button class="lang-tab active" data-lang="en">English</button>
+    <button class="lang-tab" data-lang="hi">हिंदी</button>
+    <button class="lang-tab" data-lang="te">తెలుగు</button>
+  </div>
+  <div class="key-btn engine-badge" id="engineBadge" title="Keys are set in config.js">⚙️ …</div>
+</div>
+
+<main class="book">
+
+  <!-- CHAPTER I -->
+  <section class="page">
+    <div class="chapter">
+      <span class="orn">❧</span>
+      <h2><span data-i18n="ch1">Chapter I — What are you studying?</span></h2>
+      <span class="line"></span>
+    </div>
+    <div class="level-grid" id="levelGrid"></div>
+    <div class="sub-row">
+      <div class="field">
+        <label data-i18n="lblCourse">Class / Course</label>
+        <select id="courseSel"></select>
+      </div>
+      <div class="field">
+        <label data-i18n="lblSubject">Subject</label>
+        <select id="subjectSel"></select>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHAPTER II -->
+  <section class="page">
+    <div class="chapter">
+      <span class="orn">❧</span>
+      <h2><span data-i18n="ch2">Chapter II — Choose the topic (or snap it)</span></h2>
+      <span class="line"></span>
+    </div>
+    <p class="hint" data-i18n="ch2hint">Type the chapter or topic name — or upload photos of your textbook pages / class notes, and questions will be made only from that material. You can do both.</p>
+
+    <div class="ask-wrap">
+      <div>
+        <textarea id="topicText" data-i18n-ph="topicPlaceholder" placeholder="Write the topic or chapter here… e.g. “Photosynthesis”, “Quadratic Equations”, or “Chapter 4 — The Mughal Empire”"></textarea>
+      </div>
+      <div>
+        <div class="photo-box" id="photoBox">
+          <div id="photoEmpty">
+            <div class="cam">📷</div>
+            <div class="pb-title" data-i18n="pbTitle">Snap or upload textbook / notes</div>
+            <div class="pb-sub" data-i18n="pbSub">up to 5 photos · tap here · drag & drop · or paste (Ctrl+V)</div>
+            <div class="photo-btns">
+              <button class="mini-btn" id="camBtn" type="button">📸 <span data-i18n="camera">Camera</span></button>
+              <button class="mini-btn" id="galBtn" type="button">🖼️ <span data-i18n="gallery">Gallery</span></button>
+            </div>
+          </div>
+          <div class="thumb-grid" id="thumbGrid" style="display:none"></div>
+        </div>
+        <input type="file" id="fileCam" accept="image/*" capture="environment" hidden>
+        <input type="file" id="fileGal" accept="image/*" multiple hidden>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHAPTER III -->
+  <section class="page">
+    <div class="chapter">
+      <span class="orn">❧</span>
+      <h2><span data-i18n="ch3">Chapter III — Set your question paper</span></h2>
+      <span class="line"></span>
+    </div>
+    <p class="hint" data-i18n="ch3hint">Tick the kinds of questions you want and how many of each. Mix as many types as you like.</p>
+
+    <div class="type-grid" id="typeGrid"></div>
+
+    <div class="opt-row">
+      <div class="field">
+        <label data-i18n="lblDifficulty">Difficulty</label>
+        <select id="diffSel"></select>
+      </div>
+      <label class="check-line" for="withAnswers">
+        <input type="checkbox" id="withAnswers" checked>
+        <span data-i18n="withAnswers">Include answer key (answers + explanations)</span>
+      </label>
+    </div>
+
+    <div class="gen-actions">
+      <button class="solve-btn" id="genBtn">🏛️ <span data-i18n="generate">Generate question bank</span></button>
+      <span class="quill" id="quill"><span class="nib">🖋️</span><span class="status" data-i18n="thinking">Your examiner is setting the paper…</span></span>
+      <span class="status err" id="errMsg"></span>
+    </div>
+  </section>
+
+  <!-- CHAPTER IV -->
+  <section class="page" id="paperPage">
+    <div class="chapter">
+      <span class="orn">❧</span>
+      <h2><span data-i18n="ch4">Chapter IV — Your Question Bank</span></h2>
+      <span class="line"></span>
+    </div>
+    <div class="paper-sheet">
+      <div class="paper-meta" id="paperMeta"></div>
+      <div class="paper-body" id="paperBody"></div>
+      <div class="paper-body" id="answerKey"></div>
+    </div>
+    <div class="paper-actions">
+      <button class="mini-btn" id="toggleKeyBtn" onclick="toggleAnswers()" style="display:none">🔑 <span id="toggleKeyLabel"></span></button>
+      <button class="mini-btn" onclick="copyPaper()">📋 <span data-i18n="copy">Copy paper</span></button>
+      <button class="mini-btn" onclick="printPaper()">🖨️ <span data-i18n="print">Print / Save PDF</span></button>
+      <button class="mini-btn" onclick="morePaper()">➕ <span data-i18n="more">More questions (same topic)</span></button>
+      <button class="mini-btn" onclick="newPaper()">📄 <span data-i18n="newPaper">New paper</span></button>
+    </div>
+  </section>
+
+  <!-- CHAPTER V -->
+  <section class="page">
+    <div class="chapter">
+      <span class="orn">❧</span>
+      <h2><span data-i18n="ch5">Chapter V — My Paper Shelf</span></h2>
+      <span class="line"></span>
+    </div>
+    <p class="hint" data-i18n="ch5hint">Your last 20 generated question papers, saved on this device.</p>
+    <div class="notebook-list" id="shelfList"></div>
+  </section>
+
+</main>
+
+<footer>
+  <span class="fleuron">❦</span>
+  <span data-i18n="footer">Q Bank — practice makes rank. Free forever, powered by free AI models.</span>
+</footer>
+
+<script src="config.js"></script>
+<script>
+/* ================= DATA: levels, courses, subjects (same as Doubt Snap) ================= */
+const LEVELS = [
+  { id:'school',  em:'🏫', name:{en:'School (1st–10th)', hi:'स्कूल (कक्षा 1–10)', te:'స్కూల్ (1–10 తరగతి)'},
+    courses:['Class 1','Class 2','Class 3','Class 4','Class 5','Class 6','Class 7','Class 8','Class 9','Class 10'],
+    subjects:['Mathematics','Science','Physics','Chemistry','Biology','Social Studies','English','Hindi','Telugu','EVS','Computer Science','General Knowledge'] },
+  { id:'inter', em:'🎓', name:{en:'Intermediate (11th–12th)', hi:'इंटरमीडिएट (11वीं–12वीं)', te:'ఇంటర్మీడియట్ (11–12)'},
+    courses:['MPC (Maths, Physics, Chemistry)','BiPC (Biology, Physics, Chemistry)','CEC (Civics, Economics, Commerce)','MEC (Maths, Economics, Commerce)','HEC (History, Economics, Civics)','MBiPC','Vocational'],
+    subjects:['Mathematics','Physics','Chemistry','Botany','Zoology','Commerce','Accountancy','Economics','Civics','History','English','Sanskrit','Computer Science'] },
+  { id:'degree', em:'🏛️', name:{en:'Degree / UG & PG', hi:'डिग्री / यूजी–पीजी', te:'డిగ్రీ / యూజీ–పీజీ'},
+    courses:['B.Sc','B.Com','B.A','B.Tech / B.E','BBA','BCA','B.Pharmacy','LLB','MBBS / BDS','Nursing / Paramedical','M.Sc','M.Com','M.A','MBA','MCA','M.Tech','Ph.D / Research'],
+    subjects:['Mathematics','Physics','Chemistry','Biology / Life Sciences','Computer Science / Programming','Electronics','Mechanical','Civil','Electrical','Accountancy','Business & Management','Economics','Statistics','Law','Medicine / Anatomy','Pharmacy','English Literature','Psychology','Political Science','History'] },
+  { id:'prof', em:'💼', name:{en:'CA · CMA · Professional', hi:'सीए · सीएमए · प्रोफेशनल', te:'సీఏ · సీఎంఏ · ప్రొఫెషనల్'},
+    courses:['CA Foundation','CA Intermediate','CA Final','CMA (India) Foundation','CMA (India) Inter','CMA (India) Final','US CMA Part 1','US CMA Part 2','CS Executive','CS Professional','ACCA','CFA','CPA'],
+    subjects:['Accounting','Advanced Accounting','Cost & Management Accounting','Financial Management','Taxation (Direct)','Taxation (Indirect / GST)','Auditing','Corporate & Business Law','Economics','Strategic Management','Financial Reporting','Business Mathematics & Statistics'] },
+  { id:'jobs', em:'📋', name:{en:'Jobs & Competitive Exams', hi:'नौकरी और प्रतियोगी परीक्षा', te:'ఉద్యోగాలు & పోటీ పరీక్షలు'},
+    courses:['UPSC Civil Services','APPSC / TSPSC Groups','SSC (CGL / CHSL / MTS)','Banking (IBPS / SBI / RBI)','Railways (RRB)','Police / SI / Constable','Defence (NDA / CDS / Agniveer)','Teaching (TET / DSC / CTET)','JEE / NEET / EAMCET','GATE','CUET','Other Govt Exams'],
+    subjects:['Quantitative Aptitude','Reasoning','General Studies','Indian Polity','Indian Economy','Geography','History','Science & Technology','English Language','Current Affairs','Computer Awareness','Interview / Descriptive'] },
+  { id:'current', em:'📰', name:{en:'Current Affairs & GK', hi:'करेंट अफेयर्स और जीके', te:'కరెంట్ అఫైర్స్ & జీకే'},
+    courses:['Daily Current Affairs','Monthly Current Affairs','Static GK','Sports','Awards & Honours','Government Schemes','International Affairs','Economy & Budget'],
+    subjects:['National','International','Economy','Science & Tech','Sports','Awards','Appointments','Schemes & Policies','Environment','Defence'] },
+  { id:'other', em:'🌍', name:{en:'Other / Anything else', hi:'अन्य / कुछ भी', te:'ఇతర / ఏదైనా'},
+    courses:['General Question','Languages','Coding & Technology','Health & Science','Essay / Letter Writing','Career Guidance','Life Skills'],
+    subjects:['General','English Grammar','Hindi Grammar','Telugu Grammar','Coding','Technology','Essay Writing','Career','Other'] },
+];
+
+/* ================= Question types ================= */
+const QTYPES = [
+  { id:'mcq',    em:'🔘', def:10, name:{en:'Multiple Choice (MCQ)',        hi:'बहुविकल्पीय प्रश्न (MCQ)',        te:'బహుళైచ్ఛిక ప్రశ్నలు (MCQ)'},
+    instr:'Multiple choice questions with exactly 4 options labelled A), B), C), D). Only ONE option is correct.' },
+  { id:'vshort', em:'⚡', def:5,  name:{en:'Very Short Answer (1–2 lines)', hi:'अति लघु उत्तर (1–2 पंक्ति)',       te:'అతి చిన్న సమాధానం (1–2 లైన్లు)'},
+    instr:'Very short answer questions answerable in 1–2 lines (definitions, one-word answers, formulas).' },
+  { id:'short',  em:'✏️', def:5,  name:{en:'Short Answer (3–5 lines)',      hi:'लघु उत्तर (3–5 पंक्ति)',           te:'చిన్న సమాధానం (3–5 లైన్లు)'},
+    instr:'Short answer questions answerable in 3–5 lines or 2–3 marks worth of working.' },
+  { id:'long',   em:'📝', def:3,  name:{en:'Long Answer / Essay',           hi:'दीर्घ उत्तर / निबंध',              te:'దీర్ఘ సమాధానం / వ్యాసం'},
+    instr:'Long answer / essay questions requiring detailed explanation, derivation, or full worked solutions (5–10 marks style).' },
+  { id:'fill',   em:'🖊️', def:5,  name:{en:'Fill in the Blanks',            hi:'रिक्त स्थान भरें',                 te:'ఖాళీలు పూరించండి'},
+    instr:'Fill-in-the-blank questions. Show the blank as "______" inside the sentence.' },
+  { id:'tf',     em:'⚖️', def:5,  name:{en:'True / False',                  hi:'सही / गलत',                        te:'నిజం / తప్పు'},
+    instr:'True or False statements. Some should be true and some false.' },
+];
+const DEFAULT_TYPES = ['mcq','short','long'];
+
+/* ================= I18N ================= */
+const I18N = {
+  en:{ tagline:'Pick a subject & topic — or snap your textbook — and get a full question bank with answers.',
+    taglineSub:'Class 1–10 · Intermediate (MPC · BiPC · CEC · MEC) · Degree · CA · CMA · US CMA · Jobs & Current Affairs',
+    ch1:'Chapter I — What are you studying?', lblCourse:'Class / Course', lblSubject:'Subject',
+    ch2:'Chapter II — Choose the topic (or snap it)',
+    ch2hint:'Type the chapter or topic name — or upload photos of your textbook pages / class notes, and questions will be made only from that material. You can do both.',
+    topicPlaceholder:'Write the topic or chapter here… e.g. “Photosynthesis”, “Quadratic Equations”, or “Chapter 4 — The Mughal Empire”',
+    pbTitle:'Snap or upload textbook / notes', pbSub:'up to 5 photos · tap here · drag & drop · or paste (Ctrl+V)',
+    camera:'Camera', gallery:'Gallery',
+    ch3:'Chapter III — Set your question paper',
+    ch3hint:'Tick the kinds of questions you want and how many of each. Mix as many types as you like.',
+    lblDifficulty:'Difficulty', diffEasy:'Easy', diffMedium:'Medium', diffHard:'Hard', diffMixed:'Mixed (easy → hard)',
+    withAnswers:'Include answer key (answers + explanations)',
+    generate:'Generate question bank', thinking:'Your examiner is setting the paper…',
+    ch4:'Chapter IV — Your Question Bank',
+    showKey:'Show answer key', hideKey:'Hide answer key',
+    copy:'Copy paper', print:'Print / Save PDF', more:'More questions (same topic)', newPaper:'New paper',
+    ch5:'Chapter V — My Paper Shelf', ch5hint:'Your last 20 generated question papers, saved on this device.',
+    emptyNote:'No papers generated yet. Your question banks will be saved here like papers on a shelf.',
+    footer:'Q Bank — practice makes rank. Free forever, powered by free AI models.',
+    noEngine:'No AI key set — add one in config.js', engines:'Engines',
+    errNoEngine:'No AI key found. Please add at least one free key in config.js (e.g. Gemini).',
+    errNoVision:'Photo material needs a vision key. Add a Gemini or OpenRouter key in config.js.',
+    errNoTopic:'Please type a topic or upload photos of your textbook / notes.',
+    errNoType:'Please select at least one question type.',
+    errApi:'The AI could not generate the paper. Check your keys / internet and try again.',
+    copied:'Question paper copied!',
+    truncated:'The paper was cut off by the AI model’s length limit. Reduce the question counts and generate again for a complete paper.',
+    metaGenerated:'Generated', imgAttached:'photos attached', generatedBy:'Set by', photoTopic:'(from photos)' },
+  hi:{ tagline:'विषय और टॉपिक चुनें — या किताब की फोटो खींचें — और उत्तरों के साथ पूरा प्रश्न बैंक पाएँ।',
+    taglineSub:'कक्षा 1–10 · इंटर (MPC · BiPC · CEC · MEC) · डिग्री · CA · CMA · US CMA · नौकरी और करेंट अफेयर्स',
+    ch1:'अध्याय I — आप क्या पढ़ रहे हैं?', lblCourse:'कक्षा / कोर्स', lblSubject:'विषय',
+    ch2:'अध्याय II — टॉपिक चुनें (या फोटो खींचें)',
+    ch2hint:'अध्याय या टॉपिक का नाम लिखें — या किताब के पन्नों / नोट्स की फोटो अपलोड करें, प्रश्न उसी सामग्री से बनेंगे। दोनों भी कर सकते हैं।',
+    topicPlaceholder:'टॉपिक या अध्याय यहाँ लिखें… जैसे “प्रकाश संश्लेषण”, “द्विघात समीकरण”, या “अध्याय 4 — मुगल साम्राज्य”',
+    pbTitle:'किताब / नोट्स की फोटो खींचें या अपलोड करें', pbSub:'अधिकतम 5 फोटो · यहाँ टैप करें · ड्रैग-ड्रॉप · या पेस्ट (Ctrl+V)',
+    camera:'कैमरा', gallery:'गैलरी',
+    ch3:'अध्याय III — अपना प्रश्न पत्र सेट करें',
+    ch3hint:'जिस प्रकार के प्रश्न चाहिए उन्हें टिक करें और संख्या चुनें। जितने चाहें उतने प्रकार मिलाएँ।',
+    lblDifficulty:'कठिनाई', diffEasy:'आसान', diffMedium:'मध्यम', diffHard:'कठिन', diffMixed:'मिश्रित (आसान → कठिन)',
+    withAnswers:'उत्तर कुंजी शामिल करें (उत्तर + व्याख्या)',
+    generate:'प्रश्न बैंक बनाएँ', thinking:'आपके परीक्षक प्रश्न पत्र सेट कर रहे हैं…',
+    ch4:'अध्याय IV — आपका प्रश्न बैंक',
+    showKey:'उत्तर कुंजी दिखाएँ', hideKey:'उत्तर कुंजी छिपाएँ',
+    copy:'पेपर कॉपी करें', print:'प्रिंट / PDF सेव करें', more:'और प्रश्न (इसी टॉपिक पर)', newPaper:'नया पेपर',
+    ch5:'अध्याय V — मेरी पेपर शेल्फ', ch5hint:'आपके पिछले 20 प्रश्न पत्र, इसी डिवाइस पर सेव।',
+    emptyNote:'अभी तक कोई पेपर नहीं बना। आपके प्रश्न बैंक यहाँ शेल्फ पर पेपर की तरह सेव होंगे।',
+    footer:'Q Bank — अभ्यास से ही रैंक बनती है। हमेशा फ्री, फ्री AI मॉडल द्वारा संचालित।',
+    noEngine:'कोई AI कुंजी सेट नहीं — config.js में जोड़ें', engines:'इंजन',
+    errNoEngine:'कोई AI कुंजी नहीं मिली। कृपया config.js में कम से कम एक फ्री कुंजी जोड़ें (जैसे Gemini)।',
+    errNoVision:'फोटो सामग्री के लिए विज़न कुंजी चाहिए। config.js में Gemini या OpenRouter कुंजी जोड़ें।',
+    errNoTopic:'कृपया टॉपिक लिखें या किताब / नोट्स की फोटो अपलोड करें।',
+    errNoType:'कृपया कम से कम एक प्रश्न प्रकार चुनें।',
+    errApi:'AI पेपर नहीं बना सका। कुंजियाँ / इंटरनेट जाँचें और फिर कोशिश करें।',
+    copied:'प्रश्न पत्र कॉपी हो गया!',
+    truncated:'AI मॉडल की लंबाई सीमा के कारण पेपर अधूरा रह गया। प्रश्नों की संख्या कम करके फिर से बनाएँ।',
+    metaGenerated:'बनाया गया', imgAttached:'फोटो संलग्न', generatedBy:'सेट किया', photoTopic:'(फोटो से)' },
+  te:{ tagline:'సబ్జెక్టు & టాపిక్ ఎంచుకోండి — లేదా పుస్తకం ఫోటో తీయండి — సమాధానాలతో పూర్తి క్వశ్చన్ బ్యాంక్ పొందండి.',
+    taglineSub:'1–10 తరగతి · ఇంటర్ (MPC · BiPC · CEC · MEC) · డిగ్రీ · CA · CMA · US CMA · ఉద్యోగాలు & కరెంట్ అఫైర్స్',
+    ch1:'అధ్యాయం I — మీరు ఏమి చదువుతున్నారు?', lblCourse:'తరగతి / కోర్సు', lblSubject:'సబ్జెక్టు',
+    ch2:'అధ్యాయం II — టాపిక్ ఎంచుకోండి (లేదా ఫోటో తీయండి)',
+    ch2hint:'చాప్టర్ లేదా టాపిక్ పేరు టైప్ చేయండి — లేదా పుస్తకం పేజీలు / నోట్స్ ఫోటోలు అప్‌లోడ్ చేయండి, ప్రశ్నలు ఆ మెటీరియల్ నుండే వస్తాయి. రెండూ చేయవచ్చు.',
+    topicPlaceholder:'టాపిక్ లేదా చాప్టర్ ఇక్కడ రాయండి… ఉదా. “కిరణజన్య సంయోగక్రియ”, “వర్గ సమీకరణాలు”, లేదా “చాప్టర్ 4 — మొఘల్ సామ్రాజ్యం”',
+    pbTitle:'పుస్తకం / నోట్స్ ఫోటో తీయండి లేదా అప్‌లోడ్ చేయండి', pbSub:'గరిష్టంగా 5 ఫోటోలు · ఇక్కడ నొక్కండి · డ్రాగ్-డ్రాప్ · లేదా పేస్ట్ (Ctrl+V)',
+    camera:'కెమెరా', gallery:'గ్యాలరీ',
+    ch3:'అధ్యాయం III — మీ ప్రశ్నాపత్రం సెట్ చేయండి',
+    ch3hint:'కావలసిన ప్రశ్న రకాలను టిక్ చేసి, ఎన్ని కావాలో ఎంచుకోండి. ఎన్ని రకాలైనా కలపవచ్చు.',
+    lblDifficulty:'కఠినత', diffEasy:'సులభం', diffMedium:'మధ్యస్థం', diffHard:'కఠినం', diffMixed:'మిశ్రమం (సులభం → కఠినం)',
+    withAnswers:'ఆన్సర్ కీ చేర్చండి (సమాధానాలు + వివరణ)',
+    generate:'క్వశ్చన్ బ్యాంక్ తయారు చేయండి', thinking:'మీ ఎగ్జామినర్ పేపర్ సెట్ చేస్తున్నారు…',
+    ch4:'అధ్యాయం IV — మీ క్వశ్చన్ బ్యాంక్',
+    showKey:'ఆన్సర్ కీ చూపించండి', hideKey:'ఆన్సర్ కీ దాచండి',
+    copy:'పేపర్ కాపీ', print:'ప్రింట్ / PDF సేవ్', more:'ఇంకా ప్రశ్నలు (ఇదే టాపిక్)', newPaper:'కొత్త పేపర్',
+    ch5:'అధ్యాయం V — నా పేపర్ షెల్ఫ్', ch5hint:'మీ చివరి 20 ప్రశ్నాపత్రాలు, ఈ డివైస్‌లో సేవ్ అవుతాయి.',
+    emptyNote:'ఇంకా పేపర్లు తయారు చేయలేదు. మీ క్వశ్చన్ బ్యాంకులు షెల్ఫ్‌లో పేపర్లలా ఇక్కడ సేవ్ అవుతాయి.',
+    footer:'Q Bank — ప్రాక్టీస్ చేస్తేనే ర్యాంక్. ఎప్పటికీ ఫ్రీ, ఫ్రీ AI మోడల్స్ తో నడుస్తుంది.',
+    noEngine:'AI కీ సెట్ చేయలేదు — config.js లో జోడించండి', engines:'ఇంజన్లు',
+    errNoEngine:'AI కీ కనబడలేదు. దయచేసి config.js లో కనీసం ఒక ఫ్రీ కీ జోడించండి (ఉదా. Gemini).',
+    errNoVision:'ఫోటో మెటీరియల్ కు విజన్ కీ అవసరం. config.js లో Gemini లేదా OpenRouter కీ జోడించండి.',
+    errNoTopic:'దయచేసి టాపిక్ టైప్ చేయండి లేదా పుస్తకం / నోట్స్ ఫోటోలు అప్‌లోడ్ చేయండి.',
+    errNoType:'దయచేసి కనీసం ఒక ప్రశ్న రకం ఎంచుకోండి.',
+    errApi:'AI పేపర్ తయారు చేయలేకపోయింది. కీలు / ఇంటర్నెట్ చెక్ చేసి మళ్లీ ప్రయత్నించండి.',
+    copied:'ప్రశ్నాపత్రం కాపీ అయింది!',
+    truncated:'AI మోడల్ పొడవు పరిమితి వల్ల పేపర్ మధ్యలో ఆగిపోయింది. ప్రశ్నల సంఖ్య తగ్గించి మళ్లీ తయారు చేయండి.',
+    metaGenerated:'తయారైనది', imgAttached:'ఫోటోలు జత చేయబడ్డాయి', generatedBy:'సెట్ చేసినది', photoTopic:'(ఫోటోల నుండి)' }
+};
+const LANG_NAME = {en:'English', hi:'Hindi (हिंदी)', te:'Telugu (తెలుగు)'};
+const DIFFS = ['mixed','easy','medium','hard'];
+const DIFF_LABEL = {easy:'diffEasy', medium:'diffMedium', hard:'diffHard', mixed:'diffMixed'};
+const MAX_IMAGES = 5;
+
+/* ================= STATE ================= */
+let state = {
+  lang: localStorage.getItem('qb_lang') || 'en',
+  level: localStorage.getItem('qb_level') || 'school',
+  types: (function(){ try{ return JSON.parse(localStorage.getItem('qb_types')) || {}; }catch{ return {}; } })(),   // {id:{on,count}}
+  images: [],        // [{mime, b64, dataUrl}]
+  lastMd: '',        // full markdown of last paper
+  lastTopic: null,   // for "more questions"
+  lastTopicIsPhoto: false,
+  lastVia: '',
+  seenQuestions: '', // first lines of last paper, to avoid repeats on "more"
+  busy: false,       // one generation at a time
+};
+QTYPES.forEach(qt=>{
+  // normalize stored shape — stale/tampered localStorage must never render "undefined" counts
+  const st = state.types[qt.id];
+  const valid = st && typeof st === 'object' && typeof st.on === 'boolean';
+  const count = st && Number.isFinite(+st.count) ? Math.min(25, Math.max(1, Math.round(+st.count))) : qt.def;
+  state.types[qt.id] = { on: valid ? st.on : DEFAULT_TYPES.includes(qt.id), count };
+});
+const $ = id => document.getElementById(id);
+const t = k => (I18N[state.lang] && I18N[state.lang][k]) || I18N.en[k] || k;
+
+/* ================= UI: i18n apply ================= */
+function applyLang(){
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{ el.placeholder = t(el.dataset.i18nPh); });
+  document.querySelectorAll('.lang-tab').forEach(b=>b.classList.toggle('active', b.dataset.lang===state.lang));
+  document.documentElement.lang = state.lang;
+  renderLevels(); renderTypes(); renderDiff(); renderShelf(); updateEngineBadge(); updateKeyToggleLabel();
+}
+$('langTabs').addEventListener('click', e=>{
+  const b = e.target.closest('.lang-tab'); if(!b) return;
+  state.lang = b.dataset.lang; localStorage.setItem('qb_lang', state.lang); applyLang();
+});
+
+/* ================= UI: levels / courses / subjects ================= */
+function renderLevels(){
+  const g = $('levelGrid'); g.innerHTML='';
+  LEVELS.forEach(lv=>{
+    const d = document.createElement('div');
+    d.className = 'level-card' + (lv.id===state.level ? ' active':'');
+    d.innerHTML = `<span class="em">${lv.em}</span>${lv.name[state.lang]||lv.name.en}`;
+    d.onclick = ()=>{ state.level = lv.id; localStorage.setItem('qb_level', lv.id); renderLevels(); };
+    g.appendChild(d);
+  });
+  fillSelects();
+}
+function fillSelects(){
+  const lv = LEVELS.find(l=>l.id===state.level);
+  const cs = $('courseSel'), ss = $('subjectSel');
+  const prevC = cs.value, prevS = ss.value;
+  cs.innerHTML = lv.courses.map(c=>`<option>${c}</option>`).join('');
+  ss.innerHTML = lv.subjects.map(s=>`<option>${s}</option>`).join('');
+  if(lv.courses.includes(prevC)) cs.value = prevC;
+  if(lv.subjects.includes(prevS)) ss.value = prevS;
+}
+
+/* ================= UI: question types & difficulty ================= */
+function saveTypes(){ localStorage.setItem('qb_types', JSON.stringify(state.types)); }
+function renderTypes(){
+  const g = $('typeGrid'); g.innerHTML='';
+  QTYPES.forEach(qt=>{
+    const st = state.types[qt.id];
+    const d = document.createElement('div');
+    d.className = 'type-card' + (st.on ? ' active':'');
+    d.innerHTML = `<span class="em">${qt.em}</span><span class="tn">${qt.name[state.lang]||qt.name.en}</span>` +
+      `<input class="cnt" type="number" min="1" max="25" value="${st.count}" title="How many">`;
+    d.onclick = e=>{
+      if(e.target.classList.contains('cnt')) return;      // count clicks don't toggle
+      st.on = !st.on; saveTypes(); renderTypes();
+    };
+    const cnt = d.querySelector('.cnt');
+    cnt.onchange = ()=>{
+      let v = parseInt(cnt.value,10); if(isNaN(v)||v<1) v=1; if(v>25) v=25;
+      cnt.value = v; st.count = v; if(!st.on){ st.on = true; }
+      saveTypes(); renderTypes();
+    };
+    g.appendChild(d);
+  });
+}
+function renderDiff(){
+  const sel = $('diffSel'); const prev = sel.value || localStorage.getItem('qb_diff') || 'mixed';
+  sel.innerHTML = DIFFS.map(d=>`<option value="${d}">${t(DIFF_LABEL[d])}</option>`).join('');
+  sel.value = DIFFS.includes(prev) ? prev : 'mixed';
+  sel.onchange = ()=> localStorage.setItem('qb_diff', sel.value);
+}
+
+/* ================= Photo handling (multiple) ================= */
+function addImage(file){
+  if(!file || !file.type.startsWith('image/') || state.images.length >= MAX_IMAGES) return;
+  const img = new Image();
+  const url = URL.createObjectURL(file);
+  img.onerror = ()=>{ URL.revokeObjectURL(url); };   // HEIC/corrupt file: don't leak the blob URL
+  img.onload = ()=>{
+    if(state.images.length >= MAX_IMAGES){ URL.revokeObjectURL(url); return; }  // re-check: onload is async, a big multi-select passes the sync gate
+    // downscale to max 1400px & recompress -> smaller payload, faster generation
+    const max = 1400, scale = Math.min(1, max/Math.max(img.width, img.height));
+    const cv = document.createElement('canvas');
+    cv.width = Math.round(img.width*scale); cv.height = Math.round(img.height*scale);
+    cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+    const dataUrl = cv.toDataURL('image/jpeg', .88);
+    state.images.push({ mime:'image/jpeg', b64:dataUrl.split(',')[1], dataUrl });
+    URL.revokeObjectURL(url);
+    renderThumbs();
+  };
+  img.src = url;
+}
+function addImages(fileList){ [...(fileList||[])].forEach(addImage); }
+function removeImage(i){ state.images.splice(i,1); renderThumbs(); }
+function renderThumbs(){
+  const grid = $('thumbGrid');
+  if(!state.images.length){
+    grid.style.display='none'; $('photoEmpty').style.display='block';
+    $('fileCam').value=''; $('fileGal').value='';
+    return;
+  }
+  $('photoEmpty').style.display='none'; grid.style.display='grid';
+  grid.innerHTML = '';
+  state.images.forEach((im,i)=>{
+    const d = document.createElement('div'); d.className='thumb';
+    d.innerHTML = `<img src="${im.dataUrl}" alt="material photo ${i+1}"><button class="remove-img" title="Remove">✕</button>`;
+    d.querySelector('.remove-img').onclick = e=>{ e.stopPropagation(); removeImage(i); };
+    grid.appendChild(d);
+  });
+  if(state.images.length < MAX_IMAGES){
+    const add = document.createElement('div'); add.className='thumb add-more'; add.textContent='＋';
+    add.onclick = e=>{ e.stopPropagation(); $('fileGal').click(); };
+    grid.appendChild(add);
+  }
+}
+$('camBtn').onclick = e=>{ e.stopPropagation(); $('fileCam').click(); };
+$('galBtn').onclick = e=>{ e.stopPropagation(); $('fileGal').click(); };
+$('photoBox').onclick = e=>{ if(!state.images.length && !e.target.closest('button')) $('fileGal').click(); };
+$('fileCam').onchange = e=>{ addImages(e.target.files); e.target.value=''; };
+$('fileGal').onchange = e=>{ addImages(e.target.files); e.target.value=''; };
+['dragover','dragenter'].forEach(ev=> $('photoBox').addEventListener(ev, e=>{ e.preventDefault(); $('photoBox').classList.add('drag'); }));
+['dragleave','drop'].forEach(ev=> $('photoBox').addEventListener(ev, e=>{ e.preventDefault(); $('photoBox').classList.remove('drag'); }));
+$('photoBox').addEventListener('drop', e=> addImages(e.dataTransfer.files));
+document.addEventListener('paste', e=>{
+  const items = [...(e.clipboardData?.items||[])].filter(i=>i.type.startsWith('image/'));
+  items.forEach(it=> addImage(it.getAsFile()));
+});
+
+/* ================= AI ENGINES (multi-provider, same as Doubt Snap) ================= */
+const CFG = (window.QB_CONFIG && window.QB_CONFIG.keys) || {gemini:'',groq:'',cerebras:'',openrouter:'',mistral:''};
+const key = id => (CFG[id]||'').trim();
+const active = id => !!key(id);
+const anyEngine = () => Object.keys(CFG).some(active);
+const PROV_NAME = { gemini:'Google Gemini', groq:'Groq', cerebras:'Cerebras', openrouter:'OpenRouter', mistral:'Mistral' };
+const OA_BASE = {
+  groq:'https://api.groq.com/openai/v1/chat/completions',
+  cerebras:'https://api.cerebras.ai/v1/chat/completions',
+  openrouter:'https://openrouter.ai/api/v1/chat/completions',
+  mistral:'https://api.mistral.ai/v1/chat/completions'
+};
+const MODEL_MAP = {
+  gemini:     { text:['gemini-2.5-flash','gemini-2.0-flash','gemini-1.5-flash'],
+                vision:['gemini-2.5-flash','gemini-2.0-flash','gemini-1.5-flash'] },
+  groq:       { text:['llama-3.3-70b-versatile','llama-3.1-8b-instant'] },
+  cerebras:   { text:['llama-3.3-70b'] },
+  openrouter: { text:['nvidia/nemotron-3-super-120b-a12b:free','meta-llama/llama-3.3-70b-instruct:free'],
+                coding:['qwen/qwen3-coder:free'],
+                vision:['google/gemma-4-31b-it:free','nvidia/nemotron-nano-12b-v2-vl:free'] },
+  mistral:    { text:['mistral-large-latest'], vision:['pixtral-12b-2409'] }
+};
+
+function categorize(){
+  const s = ($('subjectSel').value||'').toLowerCase();
+  if(/cod|program|computer science|software|technology|electronic/.test(s)) return 'coding';
+  if(state.level==='current' || /current affairs|general knowledge|\bgk\b|award|appointment|scheme|polity|geography|\bhistory\b|national|international|environment|defence|sports/.test(s)) return 'current';
+  if(/math|physic|quantit|reasoning|account|cost|financial|statistic|econom|taxation|audit|chemis/.test(s)) return 'reasoning';
+  return 'general';
+}
+function planRoute(hasImage){
+  const cat = categorize();
+  const out = [];
+  const add = (id, models) => { if(active(id) && models) models.forEach(m=>out.push({id, model:m})); };
+  if(hasImage){                       // photos of material → needs a VISION model
+    add('gemini', MODEL_MAP.gemini.vision);
+    add('openrouter', MODEL_MAP.openrouter.vision);
+    add('mistral', MODEL_MAP.mistral.vision);
+  } else if(cat==='coding'){
+    add('openrouter', MODEL_MAP.openrouter.coding);
+    add('gemini', MODEL_MAP.gemini.text);
+    add('groq', MODEL_MAP.groq.text);
+    add('cerebras', MODEL_MAP.cerebras.text);
+  } else if(cat==='current'){
+    add('gemini', MODEL_MAP.gemini.text);
+    add('openrouter', MODEL_MAP.openrouter.text);
+    add('groq', MODEL_MAP.groq.text);
+  } else if(cat==='reasoning'){
+    add('gemini', MODEL_MAP.gemini.text);
+    add('cerebras', MODEL_MAP.cerebras.text);
+    add('groq', MODEL_MAP.groq.text);
+    add('openrouter', MODEL_MAP.openrouter.text);
+  } else {
+    add('gemini', MODEL_MAP.gemini.text);
+    add('groq', MODEL_MAP.groq.text);
+    add('cerebras', MODEL_MAP.cerebras.text);
+    add('openrouter', MODEL_MAP.openrouter.text);
+  }
+  return out;
+}
+function updateEngineBadge(){
+  const on = Object.keys(CFG).filter(active);
+  const el = $('engineBadge');
+  if(!on.length){ el.textContent = '⚙️ ' + t('noEngine'); el.classList.add('warn'); el.classList.remove('ok'); }
+  else { el.textContent = '⚙️ ' + t('engines') + ': ' + on.map(id=>PROV_NAME[id]).join(' · '); el.classList.add('ok'); el.classList.remove('warn'); }
+}
+
+/* ---- provider callers (multi-image capable) ---- */
+const errText = (e, status) => e?.message || (typeof e === 'string' ? e : e ? JSON.stringify(e) : '') || ('HTTP ' + status);
+const truncNote = () => '\n\n---\n\n> ⚠️ ' + t('truncated');
+async function callGeminiModel(model, sysText, userText, imgs){
+  const parts = [];
+  (imgs||[]).forEach(img=> parts.push({ inline_data:{ mime_type:img.mime, data:img.b64 } }));
+  parts.push({ text:userText });
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,{
+    method:'POST', headers:{'Content-Type':'application/json','x-goog-api-key':key('gemini')},
+    body: JSON.stringify({ system_instruction:{parts:[{text:sysText}]}, contents:[{role:'user', parts}], generationConfig:{temperature:.5, maxOutputTokens:8192} })
+  });
+  const data = await res.json();
+  if(!res.ok) throw new Error(errText(data.error, res.status));
+  let txt = data.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('') || '';
+  if(!txt) throw new Error('Empty response');
+  if(data.candidates?.[0]?.finishReason === 'MAX_TOKENS') txt += truncNote();
+  return txt;
+}
+async function callOpenAICompat(id, model, sysText, userText, imgs){
+  const userContent = (imgs && imgs.length)
+    ? [ {type:'text', text:userText}, ...imgs.map(img=>({type:'image_url', image_url:{url:`data:${img.mime};base64,${img.b64}`}})) ]
+    : userText;
+  const headers = {'Content-Type':'application/json','Authorization':'Bearer '+key(id)};
+  if(id==='openrouter') headers['X-Title'] = 'Q Bank';
+  const res = await fetch(OA_BASE[id],{
+    method:'POST', headers,
+    body: JSON.stringify({ model, messages:[{role:'system',content:sysText},{role:'user',content:userContent}], temperature:.5, max_tokens:8192 })
+  });
+  const data = await res.json();
+  if(!res.ok) throw new Error(errText(data.error, res.status));
+  let txt = data.choices?.[0]?.message?.content || '';
+  if(!txt) throw new Error('Empty response');
+  if(data.choices?.[0]?.finish_reason === 'length') txt += truncNote();
+  return txt;
+}
+function runAttempt(a, sysText, userText, imgs){
+  return a.id==='gemini'
+    ? callGeminiModel(a.model, sysText, userText, imgs)
+    : callOpenAICompat(a.id, a.model, sysText, userText, imgs);
+}
+async function getPaper(userText, imgs){
+  const attempts = planRoute(!!(imgs && imgs.length));
+  if(!attempts.length) throw new Error((imgs && imgs.length) ? 'NO_VISION' : 'NO_ENGINE');
+  let lastErr = null;
+  for(const a of attempts){
+    try{ const txt = await runAttempt(a, buildSystemPrompt(), userText, imgs); return {text:txt, via:a}; }
+    catch(e){ lastErr = e; }
+  }
+  throw lastErr || new Error('All engines failed');
+}
+
+/* ================= Prompt building ================= */
+function selectedTypes(){ return QTYPES.filter(qt=> state.types[qt.id].on); }
+function buildSystemPrompt(){
+  const lv = LEVELS.find(l=>l.id===state.level);
+  const withKey = $('withAnswers').checked;
+  const diff = $('diffSel').value;
+  const diffText = {
+    easy:'EASY — direct, single-concept questions a average student can answer.',
+    medium:'MEDIUM — standard exam-level questions requiring understanding.',
+    hard:'HARD — challenging questions requiring deep understanding, multi-step reasoning, or application.',
+    mixed:'MIXED — start easy and get progressively harder within each section.'
+  }[diff];
+  const sections = selectedTypes().map((qt,i)=>
+    `   ${i+1}. "## ${qt.em} <${qt.name.en} heading in the student's language>" — EXACTLY ${state.types[qt.id].count} questions, numbered 1., 2., 3.… ${qt.instr}`
+  ).join('\n');
+  return `You are "Q Bank", a strict but fair Indian examiner and expert question-paper setter.
+
+STUDENT PROFILE:
+- Level: ${lv.name.en}
+- Class/Course: ${$('courseSel').value}
+- Subject: ${$('subjectSel').value}
+
+STRICT RULES:
+1. Write the ENTIRE paper in ${LANG_NAME[state.lang]}. Every heading, question, option and answer must be in ${LANG_NAME[state.lang]}. (Keep universal symbols, formulas, numbers and technical terms like H2O, GDP as-is.)
+2. If photos of textbook pages or notes are attached, READ them carefully (handwritten or printed) and generate questions ONLY from that material — do not add outside topics. If a topic is also typed, use it to focus which part of the photos to use.
+3. Every question must be at the level of a ${$('courseSel').value} student and syllabus-appropriate. Difficulty: ${diffText}
+4. Structure the paper in Markdown EXACTLY like this:
+   - Start with "# 📋 <a short paper title: subject — topic>"
+   - Then one section per requested type, in this order:
+${sections}
+5. MCQ options go on separate lines as "A) …", "B) …", "C) …", "D) …". Fill-in-the-blank questions show the blank as "______".
+${withKey
+? `6. After ALL question sections, add "## 🔑 <Answer Key heading in the student's language>". Under it, repeat each section name as "### <section name>" and give the answer to every question by number: for MCQs the correct option letter + the answer, for fill/true-false the answer with one line of reason, for very short/short a model answer, for long answers the key points as a compact bullet list. Be 100% accurate — never give an answer you are unsure of without noting it.`
+: `6. Do NOT include any answers, answer key, hints or solutions — questions only.`}
+7. Math: use plain text notation (×, ÷, √, ², ³, fractions like 3/4). NEVER use LaTeX like \\frac or $...$.
+8. No two questions may repeat the same point. Cover the whole topic broadly. No padding or commentary outside the paper itself.`;
+}
+
+/* ================= Generate flow ================= */
+async function generate(more){
+  if(state.busy) return;                                 // no concurrent generations (double-click, shelf + more)
+  $('errMsg').textContent='';
+  let topic = $('topicText').value.trim();
+  if(more && state.lastTopic && !state.lastTopicIsPhoto) topic = state.lastTopic;  // "more questions" follows the LAST paper's topic, not whatever is typed now
+  if(!topic && !state.images.length){ $('errMsg').textContent = t('errNoTopic'); return; }
+  if(!selectedTypes().length){ $('errMsg').textContent = t('errNoType'); return; }
+  if(!anyEngine()){ $('errMsg').textContent = t('errNoEngine'); updateEngineBadge(); return; }
+
+  let userText = topic
+    ? `Generate the question bank on this topic: "${topic}"`
+    : 'Generate the question bank from the material in the attached photos.';
+  if(topic && state.images.length) userText += '\nPhotos of the study material are attached — use them as the source.';
+  if(more && state.seenQuestions){
+    userText += `\n\nIMPORTANT: This is a request for MORE questions on the same topic. Do NOT repeat any of these already-asked questions:\n${state.seenQuestions}`;
+  }
+
+  state.busy = true; $('genBtn').disabled = true; $('quill').classList.add('on');
+  try{
+    const { text, via } = await getPaper(userText, state.images);
+    state.lastMd = text;
+    state.lastTopicIsPhoto = !topic;
+    state.lastTopic = topic || t('photoTopic');
+    state.lastVia = PROV_NAME[via.id] + ' · ' + via.model;
+    // remember question lines so "more questions" can avoid repeats
+    state.seenQuestions = text.split('\n').filter(l=>/^\s*\d+[.)]/.test(l)).slice(0,80).join('\n');
+    showPaper(text);
+    saveToShelf(state.lastTopic, text, state.lastVia);
+  }catch(err){
+    const m = err.message;
+    const msg = m==='NO_VISION' ? t('errNoVision') : m==='NO_ENGINE' ? t('errNoEngine') : t('errApi') + '  [' + m + ']';
+    $('errMsg').textContent = msg;
+  }finally{
+    state.busy = false; $('genBtn').disabled = false; $('quill').classList.remove('on');
+  }
+}
+$('genBtn').onclick = ()=> generate(false);
+
+/* Split the markdown at the "## 🔑" answer-key heading so the key can be toggled */
+function splitPaper(md){
+  const lines = md.split('\n');
+  // primary: the 🔑 marker; fallback: localized "answer key" heading text (models sometimes drop the emoji)
+  const isKeyHeading = l => /^##[^#]/.test(l.trim()) && (l.includes('🔑') || /answer\s*key|उत्तर\s*कुंजी|उत्तरमाला|ఆన్సర్\s*కీ|జవాబుల/i.test(l));
+  const i = lines.findIndex(isKeyHeading);
+  if(i === -1) return { q: md, key: '' };
+  return { q: lines.slice(0,i).join('\n'), key: lines.slice(i).join('\n') };
+}
+function updateKeyToggleLabel(){
+  $('toggleKeyLabel').textContent = $('answerKey').classList.contains('on') ? t('hideKey') : t('showKey');
+}
+function showPaper(md, meta){
+  const lv = LEVELS.find(l=>l.id===state.level);
+  $('paperMeta').innerHTML = meta ||
+    `<span>📚 ${(lv.name[state.lang]||lv.name.en)}</span>` +
+    `<span>✒️ ${$('courseSel').value} · ${$('subjectSel').value}</span>` +
+    (state.images.length?`<span>📷 ${state.images.length} ${t('imgAttached')}</span>`:'') +
+    (state.lastVia?`<span class="via">🤖 ${t('generatedBy')}: ${state.lastVia}</span>`:'') +
+    `<span>🕰️ ${new Date().toLocaleString()}</span>`;
+  const { q, key: keyMd } = splitPaper(md);
+  $('paperBody').innerHTML = mdToHtml(q);
+  $('answerKey').innerHTML = keyMd ? mdToHtml(keyMd) : '';
+  $('answerKey').classList.remove('on');
+  $('toggleKeyBtn').style.display = keyMd ? '' : 'none';
+  updateKeyToggleLabel();
+  $('paperPage').style.display='block';
+  $('paperPage').scrollIntoView({behavior:'smooth', block:'start'});
+}
+function toggleAnswers(){
+  $('answerKey').classList.toggle('on');
+  updateKeyToggleLabel();
+}
+function copyPaper(){
+  const txt = state.lastMd||'';
+  const done = ()=>{ $('errMsg').textContent=''; alert(t('copied')); };
+  const fallback = ()=>{   // file:// and plain-http have no navigator.clipboard
+    const ta = document.createElement('textarea');
+    ta.value = txt; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try{ if(document.execCommand('copy')) done(); }catch{}
+    ta.remove();
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done).catch(fallback);
+  else fallback();
+}
+function printPaper(){
+  // show the answer key in print only if the student has revealed it
+  window.print();
+}
+function morePaper(){ generate(true); }
+function newPaper(){
+  $('topicText').value=''; state.images=[]; renderThumbs();
+  state.lastTopic=null; state.seenQuestions='';
+  $('paperPage').style.display='none';
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+/* ================= Paper shelf (history) ================= */
+function getShelf(){ try{ return JSON.parse(localStorage.getItem('qb_papers')||'[]'); }catch{ return []; } }
+function saveToShelf(topic, md, via){
+  const papers = getShelf();
+  papers.unshift({ q:topic, a:md, via:via||'', when: Date.now(), meta:`${$('courseSel').value} · ${$('subjectSel').value}` });
+  localStorage.setItem('qb_papers', JSON.stringify(papers.slice(0,20)));
+  renderShelf();
+}
+function renderShelf(){
+  const list = $('shelfList'); const papers = getShelf();
+  if(!papers.length){ list.innerHTML = `<div class="empty-note">${t('emptyNote')}</div>`; return; }
+  list.innerHTML = '';
+  papers.forEach((n)=>{
+    const d = document.createElement('div');
+    d.className='note-item';
+    // localStorage is a trust boundary — escape everything on render, slice BEFORE escaping so entities can't be bisected
+    d.innerHTML = `<span class="nq">📄 ${escapeHtml(String(n.q||'').slice(0,90))}</span><span class="nm">${escapeHtml(String(n.meta||''))} · ${new Date(n.when).toLocaleDateString()}</span>`;
+    d.onclick = ()=>{
+      state.lastMd = n.a; state.lastTopic = n.q;
+      state.lastTopicIsPhoto = Object.values(I18N).some(l=>l.photoTopic===n.q);
+      state.seenQuestions = n.a.split('\n').filter(l=>/^\s*\d+[.)]/.test(l)).slice(0,80).join('\n');
+      const meta = `<span>📚 ${escapeHtml(String(n.meta||''))}</span>` +
+        (n.via?`<span class="via">🤖 ${t('generatedBy')}: ${escapeHtml(String(n.via))}</span>`:'') +
+        `<span>🕰️ ${new Date(n.when).toLocaleString()}</span>`;
+      showPaper(n.a, meta);
+    };
+    list.appendChild(d);
+  });
+}
+
+/* ================= Tiny Markdown renderer (same as Doubt Snap) ================= */
+function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function mdToHtml(md){
+  const lines = escapeHtml(md).split('\n');
+  let html='', inUl=false, inOl=false, inCode=false, codeBuf=[], inTable=false, tableBuf=[];
+  const closeLists=()=>{ if(inUl){html+='</ul>';inUl=false;} if(inOl){html+='</ol>';inOl=false;} };
+  const flushTable=()=>{
+    if(!inTable) return;
+    const rows = tableBuf.filter(r=>!/^\s*\|?[\s:|-]+\|?\s*$/.test(r));
+    html += '<table>' + rows.map((r,i)=>{
+      const cells = r.replace(/^\||\|$/g,'').split('|').map(c=>inline(c.trim()));
+      const tag = i===0?'th':'td';
+      return '<tr>'+cells.map(c=>`<${tag}>${c}</${tag}>`).join('')+'</tr>';
+    }).join('') + '</table>';
+    inTable=false; tableBuf=[];
+  };
+  const inline = s => s
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/(^|[^*])\*([^*\n]+)\*/g,'$1<em>$2</em>')
+    .replace(/`([^`]+)`/g,'<code>$1</code>');
+  for(const raw of lines){
+    if(raw.trim().startsWith('```')){
+      if(inCode){ html+='<pre><code>'+codeBuf.join('\n')+'</code></pre>'; codeBuf=[]; inCode=false; }
+      else { closeLists(); flushTable(); inCode=true; }
+      continue;
+    }
+    if(inCode){ codeBuf.push(raw); continue; }
+    if(/^\s*\|.*\|/.test(raw)){ closeLists(); inTable=true; tableBuf.push(raw); continue; }
+    else flushTable();
+    let m;
+    if(m=raw.match(/^\s*(#{1,3})\s+(.*)/)){ closeLists(); html+=`<h${m[1].length+0}>${inline(m[2])}</h${m[1].length}>`; }
+    else if(/^\s*([-*_]){3,}\s*$/.test(raw)){ closeLists(); html+='<hr>'; }
+    else if(m=raw.match(/^\s*&gt;\s?(.*)/)){ closeLists(); html+=`<blockquote>${inline(m[1])}</blockquote>`; }
+    else if(m=raw.match(/^\s*[-*]\s+(.*)/)){ if(inOl){html+='</ol>';inOl=false;} if(!inUl){html+='<ul>';inUl=true;} html+=`<li>${inline(m[1])}</li>`; }
+    else if(m=raw.match(/^\s*(\d+)[.)]\s+(.*)/)){ if(inUl){html+='</ul>';inUl=false;} if(!inOl){html+=`<ol start="${m[1]}">`;inOl=true;} html+=`<li>${inline(m[2])}</li>`; }
+    else if(raw.trim()===''){ closeLists(); }
+    else { closeLists(); html+=`<p>${inline(raw)}</p>`; }
+  }
+  if(inCode) html+='<pre><code>'+codeBuf.join('\n')+'</code></pre>';
+  closeLists(); flushTable();
+  return html;
+}
+
+/* ================= init ================= */
+applyLang();
+</script>
+</body>
+</html>

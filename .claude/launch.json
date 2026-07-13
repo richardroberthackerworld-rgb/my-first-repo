@@ -1,0 +1,89 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "vocal-remover",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-p", "3000", "."],
+      "port": 3000
+    },
+    {
+      "name": "vocal-remover-2",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-p", "3020", "."],
+      "port": 3020
+    },
+    {
+      "name": "resume-builder",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-p", "3030", "."],
+      "port": 3030
+    },
+    {
+      "name": "spektr",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-p", "3010", "."],
+      "port": 3010
+    },
+    {
+      "name": "doubtsnap",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-p", "3040", "."],
+      "port": 3040
+    },
+    {
+      "name": "qbank",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-p", "3050", "."],
+      "port": 3050
+    },
+    {
+      "name": "removebg",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["-y", "http-server", ".", "-p", "3061", "-c-1", "--silent"],
+      "port": 3061
+    },
+    {
+      "name": "videotools",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-p", "3070", "."],
+      "port": 3070
+    },
+    {
+      "name": "video-editor",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-p", "3080", "."],
+      "port": 3080
+    },
+    {
+      "name": "drum-pads",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-p", "3090", "."],
+      "port": 3090
+    },
+    {
+      "name": "ride",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["ride/server/dev.mjs"],
+      "port": 7412
+    },
+    {
+      "name": "pricehunt",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["pricehunt/server/engine.mjs"],
+      "port": 3100
+    },
+    {
+      "name": "sevenpay",
+      "runtimeExecutable": "C:\\Users\\chint\\.claude\\tools\\php\\php.exe",
+      "runtimeArgs": ["-c", "C:\\Users\\chint\\.claude\\tools\\php\\php.ini", "-S", "localhost:7521", "-t", "U:\\New folder\\pay"],
+      "port": 7521
+    },
+    {
+      "name": "voxtwin",
+      "runtimeExecutable": "U:\\New folder\\voiceclone\\server\\.venv\\Scripts\\python.exe",
+      "runtimeArgs": ["-m", "uvicorn", "app:app", "--app-dir", "U:\\New folder\\voiceclone\\server", "--host", "127.0.0.1", "--port", "7807"],
+      "port": 7807
+    }
+  ]
+}

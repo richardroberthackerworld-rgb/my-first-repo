@@ -1,0 +1,66 @@
+# Q Bank 🏛️
+
+Pick a subject & topic — or snap photos of your textbook / notes — and generate a full **question bank**: long answer, short answer, very short answer, MCQs, fill in the blanks, and true/false — with an optional answer key. The sister app of [Doubt Snap](../doubtsnap/) (Doubt Snap answers *your* questions; Q Bank *asks you* questions).
+
+## Features
+- 📷 **Photo material** — upload up to **5 photos** of textbook pages or class notes (camera, gallery, drag & drop, paste Ctrl+V). Questions are generated **only from that material**. Handwritten and printed pages both work.
+- ⌨️ **Or just type a topic** — e.g. "Photosynthesis", "Quadratic Equations", "Chapter 4 — The Mughal Empire". You can combine topic + photos.
+- 📝 **6 question types, mix freely** — MCQ (4 options), Very Short (1–2 lines), Short (3–5 lines), Long Answer / Essay, Fill in the Blanks, True/False — each with its own count (1–25).
+- 🎚️ **Difficulty** — Easy, Medium, Hard, or Mixed (easy → hard within each section).
+- 🔑 **Answer key toggle** — generate with answers + explanations, but they stay hidden until you press "Show answer key". Practice first, check later.
+- 🖨️ **Print / Save PDF** — prints only the question paper (clean, no site chrome). Answer key prints only if revealed.
+- ➕ **More questions** — one click generates a fresh set on the same topic, telling the AI not to repeat questions it already asked.
+- 🌐 **3 languages, fully translated UI + papers** — English, हिंदी, తెలుగు.
+- 🎓 **Every level** — Class 1–10, Intermediate (MPC / BiPC / CEC / MEC / HEC), Degree & PG, CA / CMA (India) / US CMA / CS / ACCA / CFA, Jobs & competitive exams (UPSC, Groups, SSC, Banking, JEE/NEET…), Current Affairs & GK.
+- 🤖 **Smart model routing** — auto-picks the best free AI model per subject and falls back if one is busy or rate-limited (same engine system as Doubt Snap).
+- 🗂️ **My Paper Shelf** — last 20 generated papers saved on the device (localStorage).
+- 📖 **Book theme** — same leather-and-paper look as Doubt Snap.
+
+## Setup — add your free API keys
+
+Open **`config.js`** and paste your free keys between the quotes. If you already set up Doubt Snap, **copy the same keys** — both apps share the same providers.
+
+| # | Provider | Get a free key at | Key looks like | Best for |
+|---|----------|-------------------|----------------|----------|
+| 1 | **Google Gemini** | https://aistudio.google.com/apikey | `AIza…` | **Photos** (textbook pages, handwriting, Telugu/Hindi). ~1500/day. |
+| 2 | **Groq** | https://console.groq.com/keys | `gsk_…` | Fastest text papers (Llama 3.3 70B). |
+| 3 | **Cerebras** | https://cloud.cerebras.ai → API Keys | `csk-…` | Very fast, high daily volume. |
+| 4 | **OpenRouter** | https://openrouter.ai/keys | `sk-or-…` | Coding subjects (Qwen3 Coder) + photo fallback (Gemma 4). |
+| 5 | **Mistral** (optional) | https://console.mistral.ai/api-keys | — | Text + Pixtral vision; doesn't log prompts. |
+
+**Minimum recommended:** add **Gemini** (for photos) + **Groq** (for fast text).
+
+The top-right ⚙️ badge shows which engines are active. All keys stay in `config.js` on your own site — the app calls the providers directly from the browser.
+
+## How the app chooses a model (automatic)
+- **Photos attached** → Gemini (best vision) → OpenRouter Gemma 4 → Mistral Pixtral
+- **Coding / programming subjects** → OpenRouter Qwen3 Coder → Gemini → Groq → Cerebras
+- **Maths / Physics / Accounts (reasoning)** → Gemini → Cerebras → Groq → OpenRouter
+- **Current affairs / GK** → Gemini → OpenRouter → Groq
+- **General / language subjects** → Gemini → Groq → Cerebras → OpenRouter
+
+If the first choice is missing a key or hits its limit, it automatically tries the next one.
+
+## Run
+Static files — open `index.html` directly, or serve the folder:
+
+```
+npx serve qbank
+```
+
+No build step, no dependencies.
+
+## Deploy — launch on `qbank.7by.in` (cPanel)
+
+The homepage tool card and footer already link to `https://qbank.7by.in`, so going live is just:
+
+1. **Add your API keys first**: edit `config.js` (copy the keys from your live Doubt Snap `config.js`), then rebuild the zip with `.\make-zips.ps1` — or edit `config.js` directly on the server after upload.
+2. cPanel → **Domains → Create A New Domain** → `qbank.7by.in`. Uncheck "share document root"; let it create `/home/USER/qbank.7by.in` as the document root.
+3. **File Manager** → open that folder → upload **`qbank-site.zip`** (from the repo root) → **Extract**. The files (`index.html`, `config.js`, `README.md`) must sit directly in the document root.
+4. cPanel → **SSL/TLS Status → Run AutoSSL** so `https://qbank.7by.in` is secure.
+5. Also re-upload the updated main-site `index.html` (or `vocalremover-app.zip`) so the homepage QBank card shows the new description.
+
+Visit `https://qbank.7by.in` — the ⚙️ badge at the top-right should show your active engines. If it says "No AI key set", `config.js` on the server still has empty keys.
+
+## ⚠️ Note on key privacy
+Because this is a static site, any key you put in `config.js` is visible to anyone who can open the page's source. That's fine for personal use or a private/local deployment. If you ever put this on a **public** website, move the keys behind a tiny backend proxy so visitors can't read them.
