@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7By.in — AI-Powered Tools Platform</title>
+<meta name="description" content="AI-powered audio, image, productivity, and creative tools. Vocal remover, noise cleaner, background remover, temp mail, resume builder, and much more.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%23ffffff'/%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%234F46E5'/%3E%3Cstop offset='100%25' stop-color='%237C3AED'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ctext x='5' y='82' font-family='Arial Black%2CArial' font-weight='900' font-size='88' fill='url(%23g)'%3E7%3C/text%3E%3Ctext x='52' y='82' font-family='Arial%2Csans-serif' font-weight='700' font-size='34' fill='%23111111'%3Eby%3C/text%3E%3Ccircle cx='88' cy='18' r='8' fill='%234F46E5'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8250159057339426" crossorigin="anonymous"></script>
+<style>
+:root {
+  --bg:#09090F; --surface:#0F0F1A; --surface2:#141428;
+  --cyan:#00D4FF; --magenta:#FF006E; --amber:#FFB800;
+  --violet:#8B5CF6; --green:#00C896; --emerald:#10B981;
+  --indigo:#4F46E5; --sky:#0EA5E9;
+  --text:#F0F0F8; --muted:rgba(240,240,248,0.5); --dim:rgba(240,240,248,0.3);
+  --border:rgba(255,255,255,0.08); --border-bright:rgba(255,255,255,0.15);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;font-size:16px;line-height:1.6;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;opacity:0.4;}
+#cursor-orb{position:fixed;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle,rgba(79,70,229,0.09) 0%,rgba(139,92,246,0.04) 50%,transparent 70%);pointer-events:none;transform:translate(-50%,-50%);transition:all 0.1s ease;z-index:9998;}
+/* Animated star particles canvas */
+#starfield{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:0.5;}
+/* Typing cursor */
+.typing-cursor{display:inline-block;width:3px;height:0.85em;background:var(--cyan);border-radius:2px;margin-left:4px;vertical-align:middle;animation:blink 1s step-end infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+/* Glowing ecosystem cards */
+.eco-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;}
+.eco-card{background:var(--surface);border-radius:22px;padding:28px;position:relative;overflow:hidden;transition:all 0.35s cubic-bezier(.22,.68,0,1.2);}
+.eco-card::before{content:'';position:absolute;inset:-1px;border-radius:23px;padding:1px;background:linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02));-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;}
+.eco-card:hover{transform:translateY(-6px) scale(1.01);}
+.eco-card.eco-holytech:hover{box-shadow:0 24px 60px rgba(255,0,110,0.18),0 0 0 1px rgba(255,0,110,0.25);}
+.eco-card.eco-doubtsnap:hover{box-shadow:0 24px 60px rgba(139,92,246,0.18),0 0 0 1px rgba(139,92,246,0.25);}
+.eco-card.eco-labs:hover{box-shadow:0 24px 60px rgba(0,212,255,0.15),0 0 0 1px rgba(0,212,255,0.2);}
+/* Section glow divider */
+.glow-divider{height:1px;background:linear-gradient(90deg,transparent,rgba(79,70,229,0.5),rgba(139,92,246,0.4),rgba(0,212,255,0.3),transparent);margin:0 0 64px;border:none;}
+/* Hero badge shimmer */
+.hero-badge{position:relative;overflow:hidden;}
+.hero-badge::after{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);animation:badgeShine 3s ease infinite 1s;}
+@keyframes badgeShine{0%{left:-100%;}40%,100%{left:150%;}}
+/* Stat card hover */
+.stat-item{cursor:default;padding:12px 16px;border-radius:14px;border:1px solid transparent;transition:all 0.3s;}
+.stat-item:hover{background:rgba(255,255,255,0.04);border-color:var(--border);}
+/* Tool action button glow */
+.tc-action{display:inline-flex;align-items:center;justify-content:center;gap:6px;margin-top:auto;padding:10px 18px;border-radius:9999px;font-size:13px;font-weight:700;text-decoration:none;border:1px solid var(--border-bright);color:var(--text);transition:all 0.25s;background:rgba(255,255,255,0.04);}
+.tc-action:hover{background:linear-gradient(135deg,var(--indigo),#7C3AED);border-color:transparent;color:#fff;transform:translateX(2px);box-shadow:0 4px 20px rgba(79,70,229,0.4);}
+/* Blog card creative */
+.blog-card{border-radius:20px;overflow:hidden;background:var(--surface);border:1px solid var(--border);transition:all 0.35s cubic-bezier(.22,.68,0,1.2);cursor:pointer;}
+.blog-card:hover{transform:translateY(-6px);border-color:var(--border-bright);box-shadow:0 20px 50px rgba(0,0,0,0.4);}
+.blog-img{height:180px;display:flex;align-items:center;justify-content:center;font-size:52px;position:relative;overflow:hidden;}
+.blog-img::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,var(--surface));}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:64px;display:flex;align-items:center;padding:0 24px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);background:rgba(9,9,15,0.92);border-bottom:1px solid var(--border);transition:background 0.3s;gap:8px;}
+.nav-logo{display:flex;align-items:center;background:#fff;border-radius:10px;padding:4px 10px 4px 6px;text-decoration:none;cursor:pointer;flex-shrink:0;gap:0;}
+.nav-logo svg{height:32px;width:auto;}
+.nav-links{display:flex;align-items:center;gap:2px;margin-left:auto;list-style:none;}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:13px;font-weight:500;padding:6px 11px;border-radius:9999px;transition:all 0.2s;cursor:pointer;white-space:nowrap;}
+.nav-links a:hover{color:var(--text);background:rgba(255,255,255,0.07);}
+.nav-cta{background:linear-gradient(135deg,var(--indigo),#7C3AED)!important;color:#fff!important;font-weight:700!important;margin-left:6px;}
+.nav-cta:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(79,70,229,0.4)!important;}
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:8px;margin-left:auto;background:rgba(255,255,255,0.06);border-radius:8px;border:1px solid var(--border);}
+.hamburger span{width:20px;height:2px;background:var(--text);border-radius:2px;transition:all 0.3s;}
+.hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+.hamburger.open span:nth-child(2){opacity:0;}
+.hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+/* Drawer / slide-in side menu */
+.mobile-menu{display:none;position:fixed;top:0;right:0;bottom:0;width:min(280px,80vw);background:rgba(9,9,15,0.99);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-left:1px solid var(--border);padding:80px 20px 32px;z-index:98;flex-direction:column;gap:4px;transform:translateX(100%);transition:transform 0.3s ease;}
+.mobile-menu.open{display:flex;transform:translateX(0);}
+.mobile-menu-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:97;}
+.mobile-menu-overlay.open{display:block;}
+.mobile-menu a{color:var(--muted);text-decoration:none;font-size:15px;font-weight:500;padding:13px 16px;border-radius:10px;transition:all 0.2s;cursor:pointer;border-bottom:1px solid var(--border);}
+.mobile-menu a:last-child{border-bottom:none;}
+.mobile-menu a:hover{color:var(--text);background:rgba(255,255,255,0.07);}
+.menu-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.08);border:1px solid var(--border);color:var(--text);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
+
+/* TICKER */
+.ticker-wrap{background:var(--surface);border-bottom:1px solid var(--border);overflow:hidden;padding:10px 0;margin-top:64px;}
+.ticker{display:flex;animation:ticker 40s linear infinite;width:max-content;}
+.ticker span{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:0 24px;}
+.ticker .tc{color:var(--cyan);}.ticker .tm{color:var(--magenta);}.ticker .ta{color:var(--amber);}.ticker .tv{color:var(--violet);}.ticker .te{color:var(--emerald);}
+@keyframes ticker{0%{transform:translateX(0);}100%{transform:translateX(-50%);}}
+
+/* PAGE SYSTEM */
+.page{display:none;}.page.active{display:block;}
+
+/* HERO */
+.hero-wrap{position:relative;overflow:hidden;}
+.hero-wrap::before{content:'';position:absolute;top:-120px;left:-80px;width:600px;height:600px;background:radial-gradient(ellipse,rgba(79,70,229,0.13) 0%,transparent 70%);pointer-events:none;animation:heroBlob1 8s ease-in-out infinite alternate;}
+.hero-wrap::after{content:'';position:absolute;top:60px;right:-60px;width:480px;height:480px;background:radial-gradient(ellipse,rgba(139,92,246,0.09) 0%,transparent 70%);pointer-events:none;animation:heroBlob2 10s ease-in-out infinite alternate;}
+@keyframes heroBlob1{0%{transform:translate(0,0) scale(1);}100%{transform:translate(40px,30px) scale(1.1);}}
+@keyframes heroBlob2{0%{transform:translate(0,0) scale(1);}100%{transform:translate(-30px,20px) scale(1.08);}}
+.hero{min-height:88vh;display:grid;grid-template-columns:1fr 1fr;align-items:center;padding:80px 80px 60px;max-width:1280px;margin:0 auto;gap:60px;position:relative;z-index:1;}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--cyan);border:1px solid rgba(0,212,255,0.3);border-radius:9999px;padding:7px 16px;margin-bottom:28px;background:rgba(0,212,255,0.05);}
+.hero-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--cyan);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.4;transform:scale(0.8);}}
+.hero h1{font-size:clamp(38px,5vw,74px);font-weight:800;letter-spacing:-3px;line-height:1.0;margin-bottom:20px;}
+.hero h1 span.line{display:block;}
+.gradient-text{background:linear-gradient(135deg,var(--indigo) 0%,var(--violet) 40%,var(--cyan) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;background-size:200% 200%;animation:gradShift 5s ease infinite;}
+@keyframes gradShift{0%,100%{background-position:0% 50%;}50%{background-position:100% 50%;}}
+.hero-desc{color:var(--muted);font-size:17px;line-height:1.7;margin-bottom:32px;max-width:480px;}
+.hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:48px;}
+.btn-primary{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--indigo),#7C3AED);color:#fff;font-weight:700;font-size:15px;padding:14px 28px;border-radius:9999px;text-decoration:none;border:none;cursor:pointer;transition:all 0.25s;position:relative;overflow:hidden;}
+.btn-primary::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,0.15),transparent);opacity:0;transition:opacity 0.2s;}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 36px rgba(79,70,229,0.5);}
+.btn-primary:hover::after{opacity:1;}
+.btn-ghost{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.04);color:var(--text);font-weight:600;font-size:15px;padding:14px 28px;border-radius:9999px;text-decoration:none;border:1px solid var(--border-bright);cursor:pointer;transition:all 0.2s;}
+.btn-ghost:hover{background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.25);}
+.hero-stats{display:flex;gap:32px;flex-wrap:wrap;}
+.stat-item{display:flex;flex-direction:column;}
+.stat-num{font-size:28px;font-weight:800;letter-spacing:-1px;background:linear-gradient(135deg,var(--text),var(--muted));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.stat-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin-top:2px;}
+
+/* HERO RIGHT */
+.hero-right{display:flex;flex-direction:column;gap:10px;}
+.hero-panel-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin-bottom:4px;padding-left:4px;}
+.htc{background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:12px 16px;display:flex;align-items:center;gap:12px;transition:all 0.3s;cursor:pointer;text-decoration:none;color:inherit;}
+.htc:hover{transform:translateX(-4px);border-color:var(--border-bright);}
+.htc.cy:hover{box-shadow:0 0 0 1px rgba(0,212,255,0.25),0 8px 20px rgba(0,212,255,0.12);}
+.htc.mg:hover{box-shadow:0 0 0 1px rgba(255,0,110,0.25),0 8px 20px rgba(255,0,110,0.12);}
+.htc.ab:hover{box-shadow:0 0 0 1px rgba(255,184,0,0.25),0 8px 20px rgba(255,184,0,0.12);}
+.htc.vi:hover{box-shadow:0 0 0 1px rgba(139,92,246,0.25),0 8px 20px rgba(139,92,246,0.12);}
+.htc.em:hover{box-shadow:0 0 0 1px rgba(16,185,129,0.25),0 8px 20px rgba(16,185,129,0.12);}
+.htc.nc{cursor:default;}
+.hti{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.hti.cy{background:rgba(0,212,255,0.15);}.hti.mg{background:rgba(255,0,110,0.15);}.hti.ab{background:rgba(255,184,0,0.15);}.hti.vi{background:rgba(139,92,246,0.15);}.hti.em{background:rgba(16,185,129,0.15);}
+.htn{font-size:13px;font-weight:700;margin-bottom:1px;}
+.htd{font-size:11px;color:var(--muted);}
+.htbadge{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;padding:3px 7px;border-radius:9999px;flex-shrink:0;}
+.blv{background:rgba(0,200,150,0.15);color:var(--green);border:1px solid rgba(0,200,150,0.25);}
+.bsn{background:rgba(139,92,246,0.15);color:var(--violet);border:1px solid rgba(139,92,246,0.25);}
+
+/* SECTIONS */
+section{padding:80px 32px;}
+.section-inner{max-width:1280px;margin:0 auto;}
+.section-eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:3.5px;text-transform:uppercase;color:var(--cyan);margin-bottom:14px;display:inline-flex;align-items:center;gap:8px;}
+.section-eyebrow::before{content:'';display:block;width:20px;height:1px;background:var(--cyan);opacity:0.6;}
+.section-title{font-size:clamp(26px,3.5vw,42px);font-weight:800;letter-spacing:-1.5px;line-height:1.1;margin-bottom:12px;}
+.section-sub{color:var(--muted);font-size:16px;max-width:540px;margin-bottom:48px;}
+
+/* TOOL CARDS */
+.tools-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px;}
+.tc-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:22px;transition:all 0.35s cubic-bezier(.22,.68,0,1.2);text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:10px;position:relative;overflow:hidden;}
+.tc-card::before{content:'';position:absolute;inset:0;border-radius:20px;opacity:0;transition:opacity 0.3s;pointer-events:none;}
+.tc-card::after{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.04),transparent);transition:left 0.5s ease;pointer-events:none;}
+.tc-card:hover::after{left:150%;}
+.tc-card:hover::before{opacity:1;}
+.tc-card:hover{transform:translateY(-6px) scale(1.01);border-color:var(--border-bright);box-shadow:0 20px 60px rgba(0,0,0,0.35);}
+.tc-card.cc:hover{box-shadow:0 20px 60px rgba(0,0,0,0.35),0 0 0 1px rgba(0,212,255,0.2);}
+.tc-card.cm:hover{box-shadow:0 20px 60px rgba(0,0,0,0.35),0 0 0 1px rgba(255,0,110,0.2);}
+.tc-card.ca:hover{box-shadow:0 20px 60px rgba(0,0,0,0.35),0 0 0 1px rgba(255,184,0,0.2);}
+.tc-card.cv:hover{box-shadow:0 20px 60px rgba(0,0,0,0.35),0 0 0 1px rgba(139,92,246,0.2);}
+.tc-card.ce:hover{box-shadow:0 20px 60px rgba(0,0,0,0.35),0 0 0 1px rgba(16,185,129,0.2);}
+/* Color variants */
+.cc::before{background:radial-gradient(ellipse at top right,rgba(0,212,255,0.1) 0%,transparent 65%);}
+.cm::before{background:radial-gradient(ellipse at top right,rgba(255,0,110,0.1) 0%,transparent 65%);}
+.ca::before{background:radial-gradient(ellipse at top right,rgba(255,184,0,0.1) 0%,transparent 65%);}
+.cv::before{background:radial-gradient(ellipse at top right,rgba(139,92,246,0.1) 0%,transparent 65%);}
+.ce::before{background:radial-gradient(ellipse at top right,rgba(16,185,129,0.1) 0%,transparent 65%);}
+.cg::before{background:radial-gradient(ellipse at top right,rgba(0,200,150,0.1) 0%,transparent 65%);}
+.cc:hover{box-shadow:0 0 0 1px rgba(0,212,255,0.3),0 16px 40px rgba(0,212,255,0.1);}
+.cm:hover{box-shadow:0 0 0 1px rgba(255,0,110,0.3),0 16px 40px rgba(255,0,110,0.1);}
+.ca:hover{box-shadow:0 0 0 1px rgba(255,184,0,0.3),0 16px 40px rgba(255,184,0,0.1);}
+.cv:hover{box-shadow:0 0 0 1px rgba(139,92,246,0.3),0 16px 40px rgba(139,92,246,0.1);}
+.ce:hover{box-shadow:0 0 0 1px rgba(16,185,129,0.3),0 16px 40px rgba(16,185,129,0.1);}
+.cg:hover{box-shadow:0 0 0 1px rgba(0,200,150,0.3),0 16px 40px rgba(0,200,150,0.1);}
+.tc-card.upcoming{opacity:0.6;cursor:default;}.tc-card.upcoming:hover{transform:none;box-shadow:none;}
+.tc-top{display:flex;align-items:flex-start;justify-content:space-between;}
+.tc-icon{width:48px;height:48px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.ic{background:rgba(0,212,255,0.15);}.im{background:rgba(255,0,110,0.15);}.ia{background:rgba(255,184,0,0.15);}.iv{background:rgba(139,92,246,0.15);}.ie{background:rgba(16,185,129,0.15);}.ig{background:rgba(0,200,150,0.15);}
+.up-badge{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;padding:4px 9px;border-radius:9999px;background:rgba(139,92,246,0.15);color:var(--violet);border:1px solid rgba(139,92,246,0.3);}
+.tc-cat{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;}
+.cat-c{color:var(--cyan);}.cat-m{color:var(--magenta);}.cat-a{color:var(--amber);}.cat-v{color:var(--violet);}.cat-e{color:var(--emerald);}.cat-g{color:var(--green);}
+.tc-name{font-size:17px;font-weight:700;letter-spacing:-0.5px;margin:3px 0;}
+.tc-desc{font-size:13px;color:var(--muted);line-height:1.55;}
+.tc-formats{display:flex;gap:5px;flex-wrap:wrap;margin-top:auto;}
+.ftag{font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 7px;border-radius:4px;background:var(--surface2);color:var(--dim);border:1px solid var(--border);}
+.tc-action{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--text);background:rgba(255,255,255,0.07);border:1px solid var(--border-bright);padding:7px 15px;border-radius:9999px;text-decoration:none;width:fit-content;transition:all 0.2s;margin-top:4px;}
+.tc-action:hover{background:rgba(255,255,255,0.12);}
+
+/* CATEGORY DIVIDER */
+.cat-header{display:flex;align-items:center;gap:16px;margin-bottom:28px;margin-top:8px;}
+.cat-header-line{flex:1;height:1px;background:linear-gradient(90deg,var(--border-bright),transparent);}
+.cat-header-label{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;white-space:nowrap;padding:5px 14px;border-radius:9999px;background:rgba(255,255,255,0.05);border:1px solid var(--border);}
+
+/* ECOSYSTEM */
+.eco-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;}
+.eco-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;transition:all 0.3s;text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:14px;position:relative;overflow:hidden;}
+.eco-card::before{content:'';position:absolute;top:0;right:0;width:180px;height:180px;border-radius:50%;opacity:0.06;transition:opacity 0.3s;}
+.eco-card:hover::before{opacity:0.12;}
+.eco-card:hover{transform:translateY(-4px);border-color:var(--border-bright);}
+.eco-logo{font-size:36px;margin-bottom:4px;}
+.eco-name{font-size:20px;font-weight:800;letter-spacing:-0.5px;}
+.eco-tag{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;}
+.eco-desc{font-size:14px;color:var(--muted);line-height:1.6;}
+.eco-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--text);background:rgba(255,255,255,0.07);border:1px solid var(--border-bright);padding:8px 16px;border-radius:9999px;text-decoration:none;width:fit-content;transition:all 0.2s;margin-top:auto;}
+.eco-link:hover{background:rgba(255,255,255,0.12);}
+
+/* BLOG */
+.blog-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:18px;}
+.blog-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:all 0.3s;cursor:pointer;text-decoration:none;color:inherit;}
+.blog-card:hover{transform:translateY(-3px);border-color:var(--border-bright);box-shadow:0 8px 30px rgba(0,0,0,0.25);}
+.blog-thumb{height:180px;display:flex;align-items:center;justify-content:center;font-size:48px;}
+.blog-thumb.featured{height:220px;}
+.t1{background:linear-gradient(135deg,rgba(0,212,255,0.15),rgba(0,212,255,0.03));}
+.t2{background:linear-gradient(135deg,rgba(255,0,110,0.15),rgba(255,0,110,0.03));}
+.t3{background:linear-gradient(135deg,rgba(255,184,0,0.15),rgba(255,184,0,0.03));}
+.t4{background:linear-gradient(135deg,rgba(139,92,246,0.15),rgba(139,92,246,0.03));}
+.t5{background:linear-gradient(135deg,rgba(16,185,129,0.15),rgba(16,185,129,0.03));}
+.blog-body{padding:18px;}
+.blog-meta{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.blog-cat{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--cyan);}
+.blog-date{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim);}
+.blog-title{font-size:15px;font-weight:700;letter-spacing:-0.3px;line-height:1.3;margin-bottom:6px;}
+.blog-card.featured .blog-title{font-size:19px;}
+.blog-excerpt{font-size:13px;color:var(--muted);line-height:1.55;}
+.blog-author{display:flex;align-items:center;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+.author-avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--indigo),var(--violet));display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;}
+.author-name{font-size:12px;font-weight:600;}
+.author-role{font-size:11px;color:var(--dim);}
+
+/* ABOUT */
+.about-section{background:var(--surface);}
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;}
+.founder-card{background:var(--bg);border:1px solid var(--border);border-radius:24px;padding:32px;text-align:center;width:280px;}
+.founder-avatar{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--indigo),var(--violet));display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#fff;margin:0 auto 16px;box-shadow:0 0 0 4px rgba(79,70,229,0.2);}
+.founder-name{font-size:18px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px;}
+.founder-title{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--indigo);margin-bottom:16px;}
+.founder-bio{font-size:13px;color:var(--muted);line-height:1.6;}
+.about-values{display:flex;flex-direction:column;gap:14px;}
+.value-item{display:flex;gap:14px;align-items:flex-start;}
+.value-icon{width:34px;height:34px;border-radius:9px;background:rgba(79,70,229,0.12);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.value-title{font-size:14px;font-weight:700;margin-bottom:2px;}
+.value-desc{font-size:13px;color:var(--muted);}
+
+/* FOOTER */
+footer{background:var(--surface);border-top:none;padding:60px 32px 32px;position:relative;}
+footer::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--indigo),var(--violet),var(--cyan),transparent);}
+.footer-inner{max-width:1280px;margin:0 auto;}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:40px;margin-bottom:48px;}
+.footer-brand-desc{font-size:14px;color:var(--muted);line-height:1.7;margin:12px 0 16px;}
+.footer-col-title{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin-bottom:14px;}
+.footer-links{list-style:none;display:flex;flex-direction:column;gap:9px;}
+.footer-links a{color:var(--muted);text-decoration:none;font-size:13px;transition:color 0.2s;cursor:pointer;}
+.footer-links a:hover{color:var(--text);}
+.footer-bottom{padding-top:28px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.footer-copy{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--dim);}
+.footer-legal{display:flex;gap:16px;}
+.footer-legal a{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--dim);text-decoration:none;cursor:pointer;transition:color 0.2s;}
+.footer-legal a:hover{color:var(--muted);}
+
+/* INNER PAGES */
+.inner-page{max-width:860px;margin:0 auto;padding:100px 32px 80px;}
+.inner-page h1{font-size:42px;font-weight:800;letter-spacing:-2px;margin-bottom:8px;}
+.page-subtitle{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1px;color:var(--dim);margin-bottom:48px;}
+.inner-page h2{font-size:22px;font-weight:700;letter-spacing:-0.5px;margin:40px 0 12px;color:var(--text);}
+.inner-page p{color:var(--muted);line-height:1.8;margin-bottom:16px;}
+.inner-page ul,.inner-page ol{color:var(--muted);line-height:1.8;margin:0 0 16px 24px;}
+.inner-page li{margin-bottom:8px;}
+.inner-page a{color:var(--indigo);text-decoration:underline;cursor:pointer;}
+.highlight-box{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--indigo);border-radius:8px;padding:18px 22px;margin:24px 0;color:var(--muted);}
+/* Contact page */
+.contact-hero{text-align:center;padding:48px 24px 40px;position:relative;}
+.contact-hero-badge{display:inline-flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--cyan);border:1px solid rgba(0,212,255,0.3);border-radius:9999px;padding:6px 16px;margin-bottom:16px;background:rgba(0,212,255,0.06);}
+.contact-services{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:0 0 48px;}
+.cs-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px 16px;text-align:center;transition:all 0.3s;}
+.cs-card:hover{border-color:var(--border-bright);transform:translateY(-4px);box-shadow:0 12px 40px rgba(79,70,229,0.15);}
+.cs-icon{font-size:28px;margin-bottom:8px;}
+.cs-label{font-weight:700;font-size:14px;margin-bottom:3px;}
+.cs-sub{font-size:12px;color:var(--dim);}
+.contact-grid{display:grid;grid-template-columns:1fr 1.4fr;gap:48px;align-items:start;}
+.contact-left{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;}
+.contact-info{display:flex;flex-direction:column;gap:14px;}
+.contact-item{display:flex;gap:12px;align-items:flex-start;}
+.contact-item-icon{font-size:20px;}
+.contact-item-text strong{display:block;font-size:14px;font-weight:700;margin-bottom:2px;}
+.contact-item-text span{font-size:14px;color:var(--muted);}
+/* WhatsApp button */
+.wa-btn{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;font-weight:700;font-size:15px;padding:14px 22px;border-radius:14px;text-decoration:none;transition:all 0.25s;box-shadow:0 4px 24px rgba(37,211,102,0.3);}
+.wa-btn:hover{transform:translateY(-2px);box-shadow:0 8px 36px rgba(37,211,102,0.45);}
+.wa-num{font-family:'JetBrains Mono',monospace;font-size:12px;margin-left:auto;opacity:0.85;}
+/* Form */
+.contact-form{display:flex;flex-direction:column;gap:14px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-label{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);}
+.form-input,.form-textarea{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:'Outfit',sans-serif;font-size:15px;transition:all 0.2s;outline:none;width:100%;}
+.form-input:focus,.form-textarea:focus{border-color:var(--indigo);box-shadow:0 0 0 3px rgba(79,70,229,0.12);background:var(--surface);}
+.form-textarea{min-height:130px;resize:vertical;}
+.contact-submit{width:100%;justify-content:center;font-size:16px;padding:15px;}
+.cf-success{background:rgba(0,200,150,0.12);border:1px solid rgba(0,200,150,0.3);border-radius:10px;padding:14px 18px;color:var(--green);font-weight:600;font-size:14px;}
+.cf-error{background:rgba(255,0,110,0.1);border:1px solid rgba(255,0,110,0.3);border-radius:10px;padding:14px 18px;color:var(--magenta);font-weight:600;font-size:14px;}
+
+/* BLOG POST */
+.blog-post-wrap{display:grid;grid-template-columns:1fr 300px;gap:40px;max-width:1100px;margin:0 auto;padding:100px 32px 80px;}
+.blog-post-category{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--indigo);margin-bottom:16px;}
+.blog-post-title{font-size:34px;font-weight:800;letter-spacing:-1.5px;line-height:1.1;margin-bottom:20px;}
+.blog-post-meta{display:flex;align-items:center;gap:10px;color:var(--dim);font-size:13px;margin-bottom:32px;}
+.blog-post-content{color:var(--muted);line-height:1.9;font-size:16px;}
+.blog-post-content h2{color:var(--text);font-size:22px;font-weight:700;letter-spacing:-0.5px;margin:32px 0 12px;}
+.blog-post-content p{margin-bottom:16px;}
+.blog-post-content ul,.blog-post-content ol{margin:0 0 16px 24px;}
+.blog-post-content li{margin-bottom:7px;}
+.blog-post-content strong{color:var(--text);}
+.blog-post-content a{color:var(--indigo);text-decoration:underline;cursor:pointer;}
+.blog-post-content blockquote{border-left:3px solid var(--indigo);padding:12px 18px;background:var(--surface);border-radius:0 8px 8px 0;margin:20px 0;font-style:italic;}
+.blog-sidebar{display:flex;flex-direction:column;gap:20px;position:sticky;top:84px;align-self:start;}
+.sidebar-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;}
+.sidebar-links{display:flex;flex-direction:column;gap:10px;}
+.sidebar-links a{font-size:13px;color:var(--muted);cursor:pointer;text-decoration:none;line-height:1.4;transition:color 0.2s;}
+.sidebar-links a:hover{color:var(--text);}
+
+/* REVEAL */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity 0.5s ease,transform 0.5s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+
+/* ADMIN */
+#scroll-top{position:fixed;bottom:28px;right:28px;width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--indigo),#7C3AED);border:none;cursor:pointer;z-index:200;display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;box-shadow:0 4px 24px rgba(79,70,229,0.45);transition:all 0.2s;opacity:0;pointer-events:none;}
+#scroll-top.visible{opacity:1;pointer-events:all;}
+#scroll-top:hover{transform:translateY(-3px) scale(1.08);box-shadow:0 8px 32px rgba(79,70,229,0.6);}
+
+/* RESPONSIVE */
+@media(max-width:1100px){
+  .footer-grid{grid-template-columns:1fr 1fr 1fr;}
+}
+@media(max-width:1024px){
+  .hero{grid-template-columns:1fr;padding:60px 32px 40px;gap:40px;}
+  .hero-right{max-width:500px;}
+  .blog-grid{grid-template-columns:1fr 1fr;}
+  .blog-card:first-child{grid-column:span 2;}
+  .about-grid{grid-template-columns:1fr;gap:48px;}
+  .contact-grid{grid-template-columns:1fr;}
+  .blog-post-wrap{grid-template-columns:1fr;padding:80px 24px 60px;}
+  .blog-sidebar{position:static;}
+}
+@media(max-width:1024px){
+  .nav-links{display:none;}.hamburger{display:flex;}
+}
+@media(max-width:768px){
+  .hamburger{display:flex;}
+  .hero{padding:40px 20px;}
+  .hero h1{font-size:36px;letter-spacing:-2px;}
+  .blog-grid{grid-template-columns:1fr;}
+  .blog-card:first-child{grid-column:span 1;}
+  .tools-grid{grid-template-columns:1fr;}
+  .footer-grid{grid-template-columns:1fr 1fr;gap:28px;}
+  section{padding:60px 20px;}
+  .inner-page{padding:80px 20px 60px;}
+  .inner-page h1{font-size:28px;}
+  .blog-post-title{font-size:24px;}
+  .footer-bottom{flex-direction:column;align-items:flex-start;}
+  .contact-services{grid-template-columns:1fr 1fr;}
+  .wa-num{display:none;}
+  .contact-left{padding:20px;}
+  .contact-form{padding:20px;}
+}
+@media(max-width:480px){
+  .hero h1{font-size:30px;}
+  .hero-stats{flex-direction:column;gap:14px;}
+  .contact-services{grid-template-columns:1fr 1fr;}
+  .cs-card{padding:14px 10px;}
+  .hero-actions{flex-direction:column;}
+  .btn-primary,.btn-ghost{width:100%;justify-content:center;}
+  .footer-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<canvas id="starfield"></canvas>
+<div id="cursor-orb"></div>
+
+<!-- NAV -->
+<nav id="nav">
+  <a class="nav-logo" onclick="navigate('home')">
+    <svg viewBox="0 0 100 44" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="lg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#4F46E5"/>
+          <stop offset="100%" stop-color="#7C3AED"/>
+        </linearGradient>
+      </defs>
+      <text x="0" y="38" font-family="Arial Black,Arial" font-weight="900" font-size="44" fill="url(#lg)">7</text>
+      <text x="29" y="38" font-family="Arial,sans-serif" font-weight="700" font-size="26" fill="#111111">by</text>
+      <text x="62" y="38" font-family="Arial,sans-serif" font-weight="700" font-size="26" fill="#555555">.in</text>
+      <circle cx="57" cy="8" r="5" fill="#4F46E5"/>
+    </svg>
+  </a>
+  <ul class="nav-links">
+    <li><a onclick="navigate('home')">Home</a></li>
+    <li><a onclick="scrollToSection('tools')">Tools</a></li>
+    <li><a onclick="scrollToSection('ecosystem')">Products</a></li>
+    <li><a onclick="scrollToSection('blog')">Blog</a></li>
+    <li><a onclick="navigate('about')">About</a></li>
+    <li><a onclick="navigate('contact')">Contact</a></li>
+    <li><a class="nav-cta" onclick="navigate('contact')">Get Started &rarr;</a></li>
+  </ul>
+  <div class="hamburger" id="hamburger" onclick="toggleMenu()"><span></span><span></span><span></span></div>
+</nav>
+
+<div class="mobile-menu-overlay" id="menu-overlay" onclick="closeMenu()"></div>
+<div class="mobile-menu" id="mobile-menu">
+  <button class="menu-close" onclick="closeMenu()">&#10005;</button>
+  <a onclick="navigate('home');closeMenu()">&#127968; Home</a>
+  <a onclick="scrollToSection('tools');closeMenu()">&#128295; Tools</a>
+  <a onclick="scrollToSection('ecosystem');closeMenu()">&#128300; Products</a>
+  <a onclick="scrollToSection('blog');closeMenu()">&#128221; Blog</a>
+  <a onclick="navigate('about');closeMenu()">&#128100; About</a>
+  <a onclick="navigate('contact');closeMenu()">&#128231; Contact</a>
+  <a onclick="navigate('privacy');closeMenu()">&#128274; Privacy Policy</a>
+  <a onclick="navigate('disclaimer');closeMenu()">&#128203; Disclaimer</a>
+</div>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker" id="ticker">
+    <span class="tc">&#127925; Vocal Remover</span><span>&nbsp;&middot;&nbsp;</span>
+    <span class="tm">&#127897; Noise Remover</span><span>&nbsp;&middot;&nbsp;</span>
+    <span class="ta">&#128444; BG Remover</span><span>&nbsp;&middot;&nbsp;</span>
+    <span class="tc">&#127898; Pitch Shifter</span><span>&nbsp;&middot;&nbsp;</span>
+    <span class="tc">&#9986; Audio Cutter</span><span>&nbsp;&middot;&nbsp;</span>
+    <span class="tc">&#128279; Song Joiner</span><span>&nbsp;&middot;&nbsp;</span>
+    <span>&#128260; Audio Converter</span><span>&nbsp;&middot;&nbsp;</span>
+    <span class="te">&#127968; Interior Design</span><span>&nbsp;&middot;&nbsp;</span>
+    <span class="tv">&#129345; Online Drums</span><span>&nbsp;&middot;&nbsp;</span>
+    <span class="tc">&#127926; Spectrum Viz</span><span>&nbsp;&middot;&nbsp;</span>
+    <span class="tg">&#128231; Temp Mail</span><span>&nbsp;&middot;&nbsp;</span>
+    <span class="ta">&#128196; Resume Builder</span><span>&nbsp;&middot;&nbsp;</span>
+    <span class="tv">&#128218; QBank</span><span>&nbsp;&middot;&nbsp;</span>
+    <span class="tc">&#127925; Vocal Remover</span><span>&nbsp;&middot;&nbsp;</span>
+    <span class="tm">&#127897; Noise Remover</span><span>&nbsp;&middot;&nbsp;</span>
+    <span class="ta">&#128444; BG Remover</span><span>&nbsp;&middot;&nbsp;</span>
+    <span class="tc">&#127898; Pitch Shifter</span><span>&nbsp;&middot;&nbsp;</span>
+    <span class="tc">&#9986; Audio Cutter</span><span>&nbsp;&middot;&nbsp;</span>
+    <span class="tc">&#128279; Song Joiner</span><span>&nbsp;&middot;&nbsp;</span>
+    <span>&#128260; Audio Converter</span><span>&nbsp;&middot;&nbsp;</span>
+    <span class="te">&#127968; Interior Design</span><span>&nbsp;&middot;&nbsp;</span>
+    <span class="tv">&#129345; Online Drums</span><span>&nbsp;&middot;&nbsp;</span>
+    <span class="tc">&#127926; Spectrum Viz</span><span>&nbsp;&middot;&nbsp;</span>
+    <span class="tg">&#128231; Temp Mail</span><span>&nbsp;&middot;&nbsp;</span>
+    <span class="ta">&#128196; Resume Builder</span><span>&nbsp;&middot;&nbsp;</span>
+    <span class="tv">&#128218; QBank</span><span>&nbsp;&middot;&nbsp;</span>
+  </div>
+</div>
+
+<!-- ===== HOME ===== -->
+<div class="page active" id="page-home">
+  <div class="hero-wrap">
+    <section class="hero" style="padding-top:60px;">
+      <div>
+        <div class="hero-badge">AI-Powered Tools Platform</div>
+        <h1>
+          <span class="line" id="hero-line1">Everything You Need,</span>
+          <span class="line gradient-text" id="hero-line2">One Platform.<span class="typing-cursor"></span></span>
+        </h1>
+        <p class="hero-desc" id="hero-desc">Audio tools, image tools, interior design, productivity utilities, creative tools — all AI-powered, all in your browser. Built for creators by creators.</p>
+        <div class="hero-actions">
+          <a class="btn-primary" onclick="scrollToSection('tools')">Explore All Tools &rarr;</a>
+          <a class="btn-ghost" onclick="navigate('about')">Our Story</a>
+        </div>
+        <div class="hero-stats">
+          <div class="stat-item"><div class="stat-num" data-count="50000">0</div><div class="stat-label">Files Processed</div></div>
+          <div class="stat-item"><div class="stat-num" data-count="15">0</div><div class="stat-label">AI Tools</div></div>
+          <div class="stat-item"><div class="stat-num" data-count="10000">0</div><div class="stat-label">Happy Users</div></div>
+        </div>
+      </div>
+      <div class="hero-right">
+        <div class="hero-panel-label">Live Tools</div>
+        <a class="htc cy" href="https://vocalremover.7by.in" target="_blank">
+          <div class="hti cy">&#127925;</div><div><div class="htn">Vocal Remover</div><div class="htd">AI stem separation</div></div><span class="htbadge blv">LIVE</span>
+        </a>
+        <a class="htc mg" href="https://vocalremover.7by.in/tools/noise-remover" target="_blank">
+          <div class="hti mg">&#127897;</div><div><div class="htn">Noise Remover</div><div class="htd">Clean background noise</div></div><span class="htbadge blv">LIVE</span>
+        </a>
+        <a class="htc ab" href="https://bg.7by.in" target="_blank">
+          <div class="hti ab">&#128444;</div><div><div class="htn">BG Remover</div><div class="htd">AI background eraser</div></div><span class="htbadge blv">LIVE</span>
+        </a>
+        <a class="htc em" href="https://interior.7by.in" target="_blank">
+          <div class="hti em">&#127968;</div><div><div class="htn">Interior Design</div><div class="htd">AI room visualizer</div></div><span class="htbadge blv">LIVE</span>
+        </a>
+        <div class="htc vi nc">
+          <div class="hti vi">&#129345;</div><div><div class="htn">Online Drums</div><div class="htd">Browser drum machine</div></div><span class="htbadge bsn">SOON</span>
+        </div>
+        <div class="htc nc" style="border-color:rgba(0,200,150,0.2);">
+          <div class="hti ig">&#128231;</div><div><div class="htn">Temp Mail</div><div class="htd">Disposable inbox</div></div><span class="htbadge blv">LIVE</span>
+        </div>
+      </div>
+    </section>
+  </div><!-- /hero-wrap -->
+
+  <!-- TOOLS SECTION -->
+  <section id="tools">
+    <div class="section-inner">
+      <div class="section-eyebrow reveal">All Tools</div>
+      <h2 class="section-title reveal">Every Tool You Need,<br>Right in Your Browser</h2>
+      <p class="section-sub reveal">No installs, no heavy software. Just open and use.</p>
+
+      <!-- AUDIO TOOLS -->
+      <div class="cat-header reveal">
+        <div class="cat-header-label cat-c">&#127925; Audio Tools</div>
+        <div class="cat-header-line"></div>
+      </div>
+      <div class="tools-grid" style="margin-bottom:48px;">
+        <div class="tc-card cc reveal">
+          <div class="tc-top"><div class="tc-icon ic">&#127932;</div></div>
+          <div class="tc-cat cat-c">Audio &middot; AI Create</div>
+          <div class="tc-name">AI Music Generator</div>
+          <div class="tc-desc">Turn a text prompt into a full song — or sing your own and AI composes the backing music around your voice. Free, on-device.</div>
+          <div class="tc-formats"><span class="ftag">Text &rarr; Song</span><span class="ftag">Sing &rarr; Song</span><span class="ftag">WAV</span></div>
+          <a class="tc-action" href="https://vocalremover.7by.in/tools/music-generator" target="_blank">Open Tool &rarr;</a>
+        </div>
+        <div class="tc-card cc reveal">
+          <div class="tc-top"><div class="tc-icon ic">&#127925;</div></div>
+          <div class="tc-cat cat-c">Audio &middot; AI Stem</div>
+          <div class="tc-name">Vocal Remover</div>
+          <div class="tc-desc">Extract clean instrumentals or isolate vocals from any song using AI. Perfect for karaoke, remixes, and music production.</div>
+          <div class="tc-formats"><span class="ftag">MP3</span><span class="ftag">WAV</span><span class="ftag">FLAC</span><span class="ftag">AAC</span></div>
+          <a class="tc-action" href="https://vocalremover.7by.in" target="_blank">Open Tool &rarr;</a>
+        </div>
+        <div class="tc-card cm reveal">
+          <div class="tc-top"><div class="tc-icon im">&#127897;</div></div>
+          <div class="tc-cat cat-m">Audio &middot; AI Denoise</div>
+          <div class="tc-name">Noise Remover</div>
+          <div class="tc-desc">Remove background hiss, hum, fan noise, and room reverb from voice recordings. Ideal for podcasters and YouTubers.</div>
+          <div class="tc-formats"><span class="ftag">MP3</span><span class="ftag">WAV</span><span class="ftag">OGG</span></div>
+          <a class="tc-action" href="https://vocalremover.7by.in/tools/noise-remover" target="_blank">Open Tool &rarr;</a>
+        </div>
+        <div class="tc-card cc reveal">
+          <div class="tc-top"><div class="tc-icon ic">&#127898;</div></div>
+          <div class="tc-cat cat-c">Audio &middot; AI Pitch</div>
+          <div class="tc-name">Pitch Shifter</div>
+          <div class="tc-desc">Change the pitch of any audio by semitones without affecting playback speed. Great for key transposition and vocal tuning.</div>
+          <div class="tc-formats"><span class="ftag">MP3</span><span class="ftag">WAV</span><span class="ftag">FLAC</span></div>
+          <a class="tc-action" href="https://vocalremover.7by.in/tools/pitch-shifter" target="_blank">Open Tool &rarr;</a>
+        </div>
+        <div class="tc-card cc reveal">
+          <div class="tc-top"><div class="tc-icon ic">&#9986;</div></div>
+          <div class="tc-cat cat-c">Audio &middot; Edit</div>
+          <div class="tc-name">Audio Cutter</div>
+          <div class="tc-desc">Trim, cut, and crop audio files right in your browser. Set precise start and end points to extract any segment from your audio.</div>
+          <div class="tc-formats"><span class="ftag">MP3</span><span class="ftag">WAV</span><span class="ftag">OGG</span><span class="ftag">FLAC</span></div>
+          <a class="tc-action" href="https://vocalremover.7by.in/tools/audio-cutter" target="_blank">Open Tool &rarr;</a>
+        </div>
+        <div class="tc-card cc reveal">
+          <div class="tc-top"><div class="tc-icon ic">&#128279;</div></div>
+          <div class="tc-cat cat-c">Audio &middot; Edit</div>
+          <div class="tc-name">Song Joiner</div>
+          <div class="tc-desc">Merge and join multiple audio files into one seamless track. Perfect for creating mashups, podcasts, and continuous mixes.</div>
+          <div class="tc-formats"><span class="ftag">MP3</span><span class="ftag">WAV</span><span class="ftag">OGG</span></div>
+          <a class="tc-action" href="https://vocalremover.7by.in/tools/song-joiner" target="_blank">Open Tool &rarr;</a>
+        </div>
+        <div class="tc-card cc reveal">
+          <div class="tc-top"><div class="tc-icon ic">&#128260;</div></div>
+          <div class="tc-cat cat-c">Audio &middot; Convert</div>
+          <div class="tc-name">Audio Converter</div>
+          <div class="tc-desc">Convert audio between any format — MP3, WAV, FLAC, OGG, AAC, M4A. Control bitrate, sample rate, and channels.</div>
+          <div class="tc-formats"><span class="ftag">MP3</span><span class="ftag">WAV</span><span class="ftag">FLAC</span><span class="ftag">OGG</span></div>
+          <a class="tc-action" href="https://vocalremover.7by.in/tools/audio-converter" target="_blank">Open Tool &rarr;</a>
+        </div>
+        <div class="tc-card cc reveal">
+          <div class="tc-top"><div class="tc-icon ic">&#127926;</div></div>
+          <div class="tc-cat cat-c">Audio &middot; Visualizer</div>
+          <div class="tc-name">Spectrum Visualizer</div>
+          <div class="tc-desc">Real-time audio spectrum analyzer and visualizer. Upload a track or use your microphone to see beautiful frequency visualizations.</div>
+          <div class="tc-formats"><span class="ftag">MP3</span><span class="ftag">WAV</span><span class="ftag">MIC</span></div>
+          <a class="tc-action" href="https://spectrum.7by.in" target="_blank">Open Tool &rarr;</a>
+        </div>
+        <div class="tc-card cv reveal">
+          <div class="tc-top"><div class="tc-icon iv">&#129345;</div><div class="up-badge">Upcoming</div></div>
+          <div class="tc-cat cat-v">Audio &middot; Creative</div>
+          <div class="tc-name">Online Drums</div>
+          <div class="tc-desc">A full browser-based drum machine and beat sequencer. Create beats, loops, and rhythms with realistic drum samples — no plugins needed.</div>
+          <div class="tc-formats"><span class="ftag">Export MP3</span><span class="ftag">Export WAV</span></div>
+        </div>
+      </div>
+
+      <!-- IMAGE TOOLS -->
+      <div class="cat-header reveal">
+        <div class="cat-header-label cat-a">&#128444; Image Tools</div>
+        <div class="cat-header-line"></div>
+      </div>
+      <div class="tools-grid" style="margin-bottom:48px;">
+        <div class="tc-card ca reveal">
+          <div class="tc-top"><div class="tc-icon ia">&#128444;</div></div>
+          <div class="tc-cat cat-a">Image &middot; AI Segment</div>
+          <div class="tc-name">Background Remover</div>
+          <div class="tc-desc">Remove image backgrounds automatically with pixel-perfect AI segmentation. Download as transparent PNG for products, social media, and design.</div>
+          <div class="tc-formats"><span class="ftag">JPG</span><span class="ftag">PNG</span><span class="ftag">WEBP</span></div>
+          <a class="tc-action" href="https://bg.7by.in" target="_blank">Open Tool &rarr;</a>
+        </div>
+        <div class="tc-card ca reveal">
+          <div class="tc-top"><div class="tc-icon ia">&#10024;</div></div>
+          <div class="tc-cat cat-a">Image &middot; AI Enhance</div>
+          <div class="tc-name">Image Enhancer</div>
+          <div class="tc-desc">Upscale and sharpen low-resolution images up to 4x using AI super-resolution. Restore old photos and enlarge product images without artifacts.</div>
+          <div class="tc-formats"><span class="ftag">JPG</span><span class="ftag">PNG</span><span class="ftag">WEBP</span></div>
+          <a class="tc-action" href="https://enhance.7by.in" target="_blank">Open Tool &rarr;</a>
+        </div>
+        <div class="tc-card ca reveal">
+          <div class="tc-top"><div class="tc-icon ia">&#9874;&#65039;</div></div>
+          <div class="tc-cat cat-a">Image &middot; Editor</div>
+          <div class="tc-name">PixelForge Photo Editor</div>
+          <div class="tc-desc">Photoshop-style editor with layers, blend modes, brushes, text, shapes, filters and crop. Runs 100% in your browser — your images never upload.</div>
+          <div class="tc-formats"><span class="ftag">JPG</span><span class="ftag">PNG</span><span class="ftag">WEBP</span></div>
+          <a class="tc-action" href="pixelforge/index.html" target="_blank">Open Tool &rarr;</a>
+        </div>
+        <div class="tc-card ca reveal">
+          <div class="tc-top"><div class="tc-icon ia">&#129529;</div></div>
+          <div class="tc-cat cat-a">Image &middot; Inpainting</div>
+          <div class="tc-name">Image Watermark Remover</div>
+          <div class="tc-desc">Brush over a watermark, logo, or unwanted text and smart inpainting reconstructs the area underneath. Runs fully in your browser.</div>
+          <div class="tc-formats"><span class="ftag">JPG</span><span class="ftag">PNG</span><span class="ftag">WEBP</span></div>
+          <a class="tc-action" href="videotools/image-watermark.html" target="_blank">Open Tool &rarr;</a>
+        </div>
+      </div>
+
+      <!-- VIDEO TOOLS (VidLab) -->
+      <div class="cat-header reveal">
+        <div class="cat-header-label cat-m">&#127916; Video Tools</div>
+        <div class="cat-header-line"></div>
+      </div>
+      <div class="tools-grid" style="margin-bottom:48px;">
+        <div class="tc-card cm reveal">
+          <div class="tc-top"><div class="tc-icon im">&#129534;</div></div>
+          <div class="tc-cat cat-m">Video &middot; AI Blend</div>
+          <div class="tc-name">Video Watermark Remover</div>
+          <div class="tc-desc">Draw a box over any logo or watermark and it gets blended seamlessly into the surrounding video on every frame. No upload — runs on your device.</div>
+          <div class="tc-formats"><span class="ftag">MP4</span><span class="ftag">MOV</span><span class="ftag">WEBM</span><span class="ftag">MKV</span></div>
+          <a class="tc-action" href="videotools/watermark-remover.html" target="_blank">Open Tool &rarr;</a>
+        </div>
+        <div class="tc-card cm reveal">
+          <div class="tc-top"><div class="tc-icon im">&#128476;</div></div>
+          <div class="tc-cat cat-m">Video &middot; Compress</div>
+          <div class="tc-name">Video Compressor</div>
+          <div class="tc-desc">Shrink video file size with smart H.264 encoding. Pick quality and resolution, see exactly how much space you saved — all in your browser.</div>
+          <div class="tc-formats"><span class="ftag">MP4</span><span class="ftag">MOV</span><span class="ftag">WEBM</span></div>
+          <a class="tc-action" href="videotools/compressor.html" target="_blank">Open Tool &rarr;</a>
+        </div>
+        <div class="tc-card cm reveal">
+          <div class="tc-top"><div class="tc-icon im">&#128100;</div></div>
+          <div class="tc-cat cat-m">Video &middot; AI Segment</div>
+          <div class="tc-name">Video Background Remover</div>
+          <div class="tc-desc">AI removes the background from person videos in real time — no green screen needed. Replace it with a color, blur, or your own image.</div>
+          <div class="tc-formats"><span class="ftag">MP4</span><span class="ftag">MOV</span><span class="ftag">WEBM</span></div>
+          <a class="tc-action" href="videotools/bg-remover.html" target="_blank">Open Tool &rarr;</a>
+        </div>
+        <div class="tc-card cm reveal">
+          <div class="tc-top"><div class="tc-icon im">&#129520;</div></div>
+          <div class="tc-cat cat-m">Video &middot; Edit</div>
+          <div class="tc-name">Video Toolkit</div>
+          <div class="tc-desc">Trim and cut videos, convert to MP4, WebM or GIF, mute audio, or extract the soundtrack as MP3 — five tools in one.</div>
+          <div class="tc-formats"><span class="ftag">MP4</span><span class="ftag">GIF</span><span class="ftag">WEBM</span><span class="ftag">MP3</span></div>
+          <a class="tc-action" href="videotools/toolkit.html" target="_blank">Open Tool &rarr;</a>
+        </div>
+      </div>
+
+      <!-- INTERIOR DESIGN TOOLS -->
+      <div class="cat-header reveal">
+        <div class="cat-header-label cat-e">&#127968; Interior Design</div>
+        <div class="cat-header-line"></div>
+      </div>
+      <div class="tools-grid" style="margin-bottom:48px;">
+        <div class="tc-card ce reveal">
+          <div class="tc-top"><div class="tc-icon ie">&#127968;</div></div>
+          <div class="tc-cat cat-e">Interior &middot; AI Visualizer</div>
+          <div class="tc-name">Room Visualizer</div>
+          <div class="tc-desc">Upload a photo of any room and let AI redesign it in seconds. Switch styles — modern, Scandinavian, bohemian, industrial — and see a real preview instantly.</div>
+          <div class="tc-formats"><span class="ftag">JPG</span><span class="ftag">PNG</span><span class="ftag">WEBP</span></div>
+          <a class="tc-action" href="https://interior.7by.in" target="_blank">Open Tool &rarr;</a>
+        </div>
+        <div class="tc-card ce reveal">
+          <div class="tc-top"><div class="tc-icon ie">&#127775;</div></div>
+          <div class="tc-cat cat-e">Interior &middot; AI Color</div>
+          <div class="tc-name">Room Color Planner</div>
+          <div class="tc-desc">Generate AI-powered color palettes for any room based on your furniture, lighting, and style preference. Preview wall colors in your actual space.</div>
+          <div class="tc-formats"><span class="ftag">JPG</span><span class="ftag">PNG</span></div>
+          <a class="tc-action" href="https://color.7by.in" target="_blank">Open Tool &rarr;</a>
+        </div>
+        <div class="tc-card ce upcoming reveal">
+          <div class="tc-top"><div class="tc-icon ie">&#128208;</div><div class="up-badge">Upcoming</div></div>
+          <div class="tc-cat cat-e">Interior &middot; AI Planner</div>
+          <div class="tc-name">Floor Plan Generator</div>
+          <div class="tc-desc">Describe your room dimensions and requirements — get AI-generated floor plan layouts optimized for traffic flow and furniture placement.</div>
+          <div class="tc-formats"><span class="ftag">PDF</span><span class="ftag">PNG</span></div>
+        </div>
+        <div class="tc-card ce upcoming reveal">
+          <div class="tc-top"><div class="tc-icon ie">&#128247;</div><div class="up-badge">Upcoming</div></div>
+          <div class="tc-cat cat-e">Interior &middot; AR</div>
+          <div class="tc-name">Furniture Placer AR</div>
+          <div class="tc-desc">Place virtual furniture in your room using your phone camera. See how sofas, tables, and shelves look before buying — browser-based AR, no app needed.</div>
+          <div class="tc-formats"><span class="ftag">Mobile AR</span></div>
+        </div>
+      </div>
+
+      <!-- PRODUCTIVITY TOOLS -->
+      <div class="cat-header reveal">
+        <div class="cat-header-label cat-g">&#9889; Productivity Tools</div>
+        <div class="cat-header-line"></div>
+      </div>
+      <div class="tools-grid" style="margin-bottom:16px;">
+        <div class="tc-card cg reveal">
+          <div class="tc-top"><div class="tc-icon ig">&#128231;</div></div>
+          <div class="tc-cat cat-g">Utility &middot; Privacy</div>
+          <div class="tc-name">Temp Mail</div>
+          <div class="tc-desc">Generate a disposable, anonymous email address instantly. Receive emails without exposing your real inbox — no signup, no tracking, self-destructs after use.</div>
+          <div class="tc-formats"><span class="ftag">No signup</span><span class="ftag">Private</span></div>
+          <a class="tc-action" href="https://mail.7by.in" target="_blank">Open Tool &rarr;</a>
+        </div>
+        <div class="tc-card ca reveal">
+          <div class="tc-top"><div class="tc-icon ia">&#128196;</div></div>
+          <div class="tc-cat cat-a">Utility &middot; AI Resume</div>
+          <div class="tc-name">Resume Builder</div>
+          <div class="tc-desc">Build a professional, ATS-friendly resume in minutes with AI assistance. Choose from modern templates, auto-generate bullet points, and export as PDF.</div>
+          <div class="tc-formats"><span class="ftag">PDF</span><span class="ftag">DOCX</span></div>
+          <a class="tc-action" href="https://resume.7by.in" target="_blank">Open Tool &rarr;</a>
+        </div>
+        <div class="tc-card cv reveal">
+          <div class="tc-top"><div class="tc-icon iv">&#128218;</div></div>
+          <div class="tc-cat cat-v">Utility &middot; Education</div>
+          <div class="tc-name">QBank</div>
+          <div class="tc-desc">AI-powered question bank for students and educators. Pick a subject &amp; topic or upload photos of your textbook, and generate full question papers — MCQs, short &amp; long answers, fill in the blanks — with a hidden answer key.</div>
+          <div class="tc-formats"><span class="ftag">MCQ</span><span class="ftag">Answer Key</span><span class="ftag">PDF Export</span></div>
+          <a class="tc-action" href="https://qbank.7by.in" target="_blank">Open Tool &rarr;</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ECOSYSTEM -->
+  <section id="ecosystem" style="background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
+    <div class="section-inner">
+      <div class="section-eyebrow reveal">7By Ecosystem</div>
+      <h2 class="section-title reveal">Our Flagship Products</h2>
+      <p class="section-sub reveal">Beyond tools — full-scale platforms built by the 7By team.</p>
+      <div class="eco-grid">
+        <!-- HolyTech Studio -->
+        <div class="eco-card reveal" style="border-color:rgba(255,0,110,0.2);">
+          <div class="eco-logo">&#127911;</div>
+          <div>
+            <div class="eco-tag cat-m">HolyTech Studio</div>
+            <div class="eco-name">HolyTech Studio</div>
+          </div>
+          <div class="eco-desc">A full-featured online music production studio. Multi-track recording, AI mixing, sample library, and real-time collaboration — all in the browser. Built for serious creators who want power without the price.</div>
+          <a class="eco-link" href="https://holytechstudio.7by.in" target="_blank">Open Studio &rarr;</a>
+        </div>
+        <!-- DoubtSnap -->
+        <div class="eco-card reveal" style="border-color:rgba(139,92,246,0.2);">
+          <div class="eco-logo">&#128064;</div>
+          <div>
+            <div class="eco-tag cat-v">DoubtSnap</div>
+            <div class="eco-name">DoubtSnap</div>
+          </div>
+          <div class="eco-desc">Snap a photo of any question — homework, textbook, exam paper — and get an instant AI explanation with step-by-step solutions. Works for math, science, history, and more. Your AI study buddy.</div>
+          <a class="eco-link" href="https://doubtsnap.7by.in" target="_blank">Try DoubtSnap &rarr;</a>
+        </div>
+        <!-- 7By Labs -->
+        <div class="eco-card reveal" style="border-color:rgba(79,70,229,0.3);">
+          <div class="eco-logo">&#128300;</div>
+          <div>
+            <div class="eco-tag" style="color:var(--indigo);">Research & Innovation</div>
+            <div class="eco-name">7By Labs</div>
+          </div>
+          <div class="eco-desc">Our experimental research wing. 7By Labs is where we prototype next-generation AI tools before they become products. Follow our research, try early demos, and shape what we build next.</div>
+          <a class="eco-link" href="https://labs.7by.in" target="_blank">Visit Labs &rarr;</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BLOG -->
+  <section id="blog">
+    <div class="section-inner">
+      <div class="section-eyebrow reveal">Blog</div>
+      <h2 class="section-title reveal">Insights, Tutorials &amp;<br>Tips From Our Team</h2>
+      <p class="section-sub reveal">Written by Shirandasu Sandeep — founder, audio engineer, and AI enthusiast.</p>
+      <div class="blog-grid">
+        <div class="blog-card featured reveal" onclick="navigate('blog-vocal-remover')">
+          <div class="blog-thumb t1 featured">&#127925;</div>
+          <div class="blog-body">
+            <div class="blog-meta"><span class="blog-cat">Tutorial</span><span class="blog-date">&middot; Jun 2026</span></div>
+            <div class="blog-title">How AI Vocal Removers Actually Work: The Science of Stem Separation</div>
+            <div class="blog-excerpt">A deep dive into how modern AI models separate vocals from instrumentals — from spectral masking to deep learning source separation.</div>
+            <div class="blog-author"><div class="author-avatar">SS</div><div><div class="author-name">Shirandasu Sandeep</div><div class="author-role">Founder &amp; CEO &middot; 7By.in</div></div></div>
+          </div>
+        </div>
+        <div class="blog-card reveal" onclick="navigate('blog-noise-removal')">
+          <div class="blog-thumb t2">&#127897;</div>
+          <div class="blog-body">
+            <div class="blog-meta"><span class="blog-cat">Guide</span><span class="blog-date">&middot; Jun 2026</span></div>
+            <div class="blog-title">Noise Removal for Podcasters: Complete 2026 Guide</div>
+            <div class="blog-excerpt">Everything you need to know about removing background noise from podcast recordings.</div>
+            <div class="blog-author"><div class="author-avatar">SS</div><div><div class="author-name">Shirandasu Sandeep</div><div class="author-role">Founder &amp; CEO</div></div></div>
+          </div>
+        </div>
+        <div class="blog-card reveal" onclick="navigate('blog-interior-ai')">
+          <div class="blog-thumb t5">&#127968;</div>
+          <div class="blog-body">
+            <div class="blog-meta"><span class="blog-cat">Interior</span><span class="blog-date">&middot; Jun 2026</span></div>
+            <div class="blog-title">How AI is Transforming Interior Design in 2026</div>
+            <div class="blog-excerpt">From AI room visualizers to automated floor planners — how technology is making great interior design accessible to everyone.</div>
+            <div class="blog-author"><div class="author-avatar">SS</div><div><div class="author-name">Shirandasu Sandeep</div><div class="author-role">Founder &amp; CEO</div></div></div>
+          </div>
+        </div>
+        <div class="blog-card reveal" onclick="navigate('blog-audio-formats')">
+          <div class="blog-thumb t3">&#128260;</div>
+          <div class="blog-body">
+            <div class="blog-meta"><span class="blog-cat">Explainer</span><span class="blog-date">&middot; May 2026</span></div>
+            <div class="blog-title">MP3 vs WAV vs FLAC: Which Audio Format Should You Use?</div>
+            <div class="blog-excerpt">A practical comparison — when lossy compression is fine and when you must stay lossless.</div>
+            <div class="blog-author"><div class="author-avatar">SS</div><div><div class="author-name">Shirandasu Sandeep</div><div class="author-role">Founder &amp; CEO</div></div></div>
+          </div>
+        </div>
+        <div class="blog-card reveal" onclick="navigate('blog-temp-mail')">
+          <div class="blog-thumb t5">&#128231;</div>
+          <div class="blog-body">
+            <div class="blog-meta"><span class="blog-cat">Privacy</span><span class="blog-date">&middot; May 2026</span></div>
+            <div class="blog-title">Why Everyone Should Use a Temp Email for Sign-Ups</div>
+            <div class="blog-excerpt">Protect your real inbox from spam, trackers, and data leaks — with a disposable email address that self-destructs.</div>
+            <div class="blog-author"><div class="author-avatar">SS</div><div><div class="author-name">Shirandasu Sandeep</div><div class="author-role">Founder &amp; CEO</div></div></div>
+          </div>
+        </div>
+        <div class="blog-card reveal" onclick="navigate('blog-ai-tools')">
+          <div class="blog-thumb t4">&#129302;</div>
+          <div class="blog-body">
+            <div class="blog-meta"><span class="blog-cat">Industry</span><span class="blog-date">&middot; Apr 2026</span></div>
+            <div class="blog-title">The Rise of Browser-Based AI Media Tools in 2026</div>
+            <div class="blog-excerpt">Why the next wave of AI creative tools runs entirely in the browser.</div>
+            <div class="blog-author"><div class="author-avatar">SS</div><div><div class="author-name">Shirandasu Sandeep</div><div class="author-role">Founder &amp; CEO</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div><!-- /page-home -->
+
+<!-- ABOUT -->
+<div class="page" id="page-about">
+  <div style="padding-top:64px;">
+    <section class="about-section" style="padding-top:80px;">
+      <div class="section-inner">
+        <div class="about-grid">
+          <div style="display:flex;justify-content:center;">
+            <div class="founder-card">
+              <div style="display:flex;justify-content:center;margin-bottom:20px;">
+                <div style="background:#fff;border-radius:16px;padding:14px 22px;display:inline-flex;align-items:center;box-shadow:0 0 0 1px rgba(79,70,229,0.2),0 8px 32px rgba(79,70,229,0.15);">
+                  <svg viewBox="0 0 100 44" xmlns="http://www.w3.org/2000/svg" style="height:40px;width:auto;">
+                    <defs><linearGradient id="lg-a" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#4F46E5"/><stop offset="100%" stop-color="#7C3AED"/></linearGradient></defs>
+                    <text x="0" y="38" font-family="Arial Black,Arial" font-weight="900" font-size="44" fill="url(#lg-a)">7</text>
+                    <text x="29" y="38" font-family="Arial,sans-serif" font-weight="700" font-size="26" fill="#111111">by</text>
+                    <text x="62" y="38" font-family="Arial,sans-serif" font-weight="700" font-size="26" fill="#555555">.in</text>
+                    <circle cx="57" cy="8" r="5" fill="#4F46E5"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="founder-name">Shirandasu Sandeep</div>
+              <div class="founder-title">Founder &amp; CEO</div>
+              <div class="founder-bio">Building AI-powered tools that are accessible to everyone — from home studios to professional creators and students.</div>
+            </div>
+          </div>
+          <div>
+            <div class="section-eyebrow">Our Story</div>
+            <h2 class="section-title">We Built the Platform<br>We Wished Existed</h2>
+            <p style="color:var(--muted);margin-bottom:32px;">7By.in started with one frustration: great AI tools were scattered across expensive subscriptions. We built one platform with everything — audio, image, design, productivity, and education.</p>
+            <div class="about-values">
+              <div class="value-item"><div class="value-icon">&#9889;</div><div><div class="value-title">Browser-First</div><div class="value-desc">All processing happens in your browser. Nothing is uploaded to our servers — privacy is technical, not a promise.</div></div></div>
+              <div class="value-item"><div class="value-icon">&#127775;</div><div><div class="value-title">Studio Quality</div><div class="value-desc">Our AI models are trained on millions of samples to deliver professional-grade results every time.</div></div></div>
+              <div class="value-item"><div class="value-icon">&#128200;</div><div><div class="value-title">Always Growing</div><div class="value-desc">New tools launch regularly through 7By Labs. Follow our roadmap at labs.7by.in.</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- CONTACT -->
+<div class="page" id="page-contact">
+  <div class="inner-page">
+
+    <!-- Hero banner -->
+    <div class="contact-hero">
+      <div class="contact-hero-badge">&#128172; Let's Build Something Great</div>
+      <h1 style="font-size:clamp(32px,4vw,58px);font-weight:800;letter-spacing:-2px;margin:16px 0 12px;">Get in Touch</h1>
+      <p style="color:var(--muted);font-size:17px;max-width:540px;margin:0 auto;">We build apps, websites, games &amp; tools at a <strong style="color:var(--cyan);">reasonable budget</strong>. Have an idea? Let's make it real.</p>
+    </div>
+
+    <!-- Service highlight cards -->
+    <div class="contact-services">
+      <div class="cs-card"><div class="cs-icon">&#128241;</div><div class="cs-label">Mobile Apps</div><div class="cs-sub">Android &amp; iOS</div></div>
+      <div class="cs-card"><div class="cs-icon">&#127760;</div><div class="cs-label">Websites</div><div class="cs-sub">Landing to full platforms</div></div>
+      <div class="cs-card"><div class="cs-icon">&#127918;</div><div class="cs-label">Mini Games</div><div class="cs-sub">Browser &amp; mobile games</div></div>
+      <div class="cs-card"><div class="cs-icon">&#128295;</div><div class="cs-label">Web Tools</div><div class="cs-sub">AI-powered utilities</div></div>
+    </div>
+
+    <div class="contact-grid">
+      <!-- Left: info -->
+      <div class="contact-left">
+        <h2 style="font-size:22px;font-weight:800;margin-bottom:8px;">Reach us directly</h2>
+        <p style="color:var(--muted);margin-bottom:28px;line-height:1.7;">Questions, project ideas, bug reports, or just want to say hi — we respond within 24–48 hours.</p>
+
+        <!-- WhatsApp CTA -->
+        <a class="wa-btn" href="https://wa.me/919494318772" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Chat on WhatsApp
+        </a>
+
+        <div class="contact-info" style="margin-top:24px;">
+          <div class="contact-item">
+            <span class="contact-item-icon">&#128231;</span>
+            <div class="contact-item-text"><strong>Email</strong><a href="mailto:contact@7by.in" style="color:var(--muted);text-decoration:none;">contact@7by.in</a></div>
+          </div>
+          <div class="contact-item">
+            <span class="contact-item-icon">&#127760;</span>
+            <div class="contact-item-text"><strong>Website</strong><span>7by.in</span></div>
+          </div>
+          <div class="contact-item">
+            <span class="contact-item-icon">&#128100;</span>
+            <div class="contact-item-text"><strong>Founder</strong><span>Shirandasu Sandeep</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: working form via Web3Forms -->
+      <div>
+        <form class="contact-form" id="contact-form" onsubmit="handleContact(event)">
+          <input type="hidden" name="access_key" value="14ae88fd-3fa8-4213-8518-5fbed9386f29">
+          <input type="hidden" name="to" value="7by7solutions7@gmail.com">
+          <input type="hidden" name="subject" id="cf-subject-hidden" value="New contact from 7By.in">
+          <input type="hidden" name="from_name" value="7By.in Contact Form">
+          <input type="checkbox" name="botcheck" style="display:none;">
+
+          <div class="form-group">
+            <label class="form-label">Your Name</label>
+            <input class="form-input" type="text" name="name" placeholder="Your name" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email Address</label>
+            <input class="form-input" type="email" name="email" placeholder="you@example.com" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">I need help with</label>
+            <select class="form-input" name="subject" onchange="document.getElementById('cf-subject-hidden').value=this.value">
+              <option value="General Inquiry">General Inquiry</option>
+              <option value="Build a Website">Build a Website</option>
+              <option value="Mobile App Development">Mobile App Development</option>
+              <option value="Web Tool / AI Tool">Web Tool / AI Tool</option>
+              <option value="Mini Game Development">Mini Game Development</option>
+              <option value="Bug Report">Bug Report</option>
+              <option value="Feature Request">Feature Request</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Message</label>
+            <textarea class="form-textarea" name="message" placeholder="Tell us about your project or question..." required></textarea>
+          </div>
+          <button class="btn-primary contact-submit" type="submit">
+            <span id="cf-btn-text">Send Message &#8594;</span>
+            <span id="cf-btn-loading" style="display:none;">Sending...</span>
+          </button>
+          <div id="cf-success" class="cf-success" style="display:none;">&#10003; Message sent! We'll reply within 24–48 hours.</div>
+          <div id="cf-error" class="cf-error" style="display:none;">&#10005; Something went wrong. Please WhatsApp or email us directly.</div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PRIVACY -->
+<div class="page" id="page-privacy">
+  <div class="inner-page">
+    <h1>Privacy Policy</h1>
+    <p class="page-subtitle">Last updated: June 29, 2026 &middot; Effective immediately</p>
+    <div class="highlight-box"><strong>Short version:</strong> We process your files locally in your browser. We don't store your audio, images, or data on our servers.</div>
+    <h2>1. Who We Are</h2><p>7By.in is an AI-powered tools platform operated by Shirandasu Sandeep. Our services are accessible at 7by.in and its subdomains.</p>
+    <h2>2. Information We Collect</h2><ul><li><strong>Usage data:</strong> Pages visited, tools used, browser type, and anonymized geographic region via analytics.</li><li><strong>Contact information:</strong> Name and email when you contact us.</li><li><strong>Cookies:</strong> Session management, analytics, and advertising cookies.</li></ul><p>We do <strong>not</strong> collect or store files you process with our tools.</p>
+    <h2>3. File Processing &amp; Privacy</h2><p>All audio and image processing occurs client-side in your browser. Your files are <strong>never uploaded to our servers</strong>.</p>
+    <h2>4. Google AdSense</h2><p>7By.in uses Google AdSense (ca-pub-8250159057339426) to display advertisements. Google uses cookies to serve personalized ads. You can opt out at google.com/settings/ads.</p>
+    <h2>5. Cookies</h2><ul><li><strong>Essential:</strong> Required for the website to function.</li><li><strong>Analytics:</strong> Google Analytics with IP anonymization.</li><li><strong>Advertising:</strong> Google AdSense cookies for relevant ads.</li></ul>
+    <h2>6. Terms of Service</h2><p>By using 7By.in you agree to use our services only for lawful purposes. You may not process content you do not have rights to process. You may not reverse engineer or misuse our systems.</p>
+    <h2>7. Your Rights</h2><p>You may request access to or deletion of your personal information by contacting <strong>contact@7by.in</strong>.</p>
+    <h2>8. Children's Privacy</h2><p>7By.in is not directed at children under 13. We do not knowingly collect personal information from children.</p>
+    <h2>9. Contact</h2><p>For privacy questions: <strong>contact@7by.in</strong></p>
+  </div>
+</div>
+
+<!-- DISCLAIMER -->
+<div class="page" id="page-disclaimer">
+  <div class="inner-page">
+    <h1>Disclaimer</h1>
+    <p class="page-subtitle">Last updated: June 29, 2026</p>
+    <div class="highlight-box">7By.in provides AI-powered tools. Please read this disclaimer carefully.</div>
+    <h2>1. No Warranty</h2><p>All tools are offered "as is" without warranties of any kind. AI outputs can vary and may not always be perfect.</p>
+    <h2>2. Accuracy of AI Outputs</h2><p>Vocal removal may retain trace amounts of original vocals in complex mixes. Noise removal may slightly affect audio quality. Background removal may have imperfect edges. Interior design renders are visualizations, not architectural advice. We recommend reviewing all AI outputs before final use.</p>
+    <h2>3. Copyright</h2><p>You are responsible for ensuring any files you process are your own or you have rights to process them. Do not process copyrighted material without authorization.</p>
+    <h2>4. Limitation of Liability</h2><p>To the maximum extent permitted by law, 7By.in shall not be liable for any damages arising from your use of our services.</p>
+    <h2>5. Advertisement Disclosure</h2><p>7By.in uses Google AdSense to display advertisements. Ads are delivered by Google and are clearly separate from our content.</p>
+    <h2>6. Contact</h2><p><strong>contact@7by.in</strong></p>
+  </div>
+</div>
+
+<!-- BLOG POSTS -->
+<div class="page" id="page-blog-vocal-remover">
+  <div class="blog-post-wrap">
+    <div>
+      <div class="blog-post-category">Tutorial &middot; Audio Processing</div>
+      <h1 class="blog-post-title">How AI Vocal Removers Actually Work: The Science of Stem Separation</h1>
+      <div class="blog-post-meta"><div class="author-avatar" style="width:32px;height:32px;font-size:12px;">SS</div><span>Shirandasu Sandeep</span><span>&middot;</span><span>June 2026</span><span>&middot;</span><span>8 min read</span></div>
+      <div class="blog-post-content">
+        <p>If you've ever used a vocal remover tool, you might have wondered: how does the AI actually know which part of the audio is the voice and which part is the instrument? It sounds almost magical — and honestly, just a few years ago, it was considered nearly impossible to do well.</p>
+        <h2>The Old Way: Spectral Subtraction</h2>
+        <p>The original approach exploited the fact that in stereo recordings, vocals are often centered in the stereo field. By subtracting the left channel from the right, you could theoretically cancel out centered vocals. The problems were obvious: mono recordings gave no separation. Modern songs with stereo-enhanced vocals produced terrible artifacts. The results sounded hollow and filtered.</p>
+        <h2>Enter Deep Learning: Source Separation</h2>
+        <p>Modern AI vocal removers use a U-Net deep neural network originally developed for biomedical image segmentation, repurposed for audio. The pipeline: audio is converted to a spectrogram, the network predicts a mask representing vocal content in each frequency bin, the mask is applied to isolate vocals, then an inverse STFT reconstructs the audio signal.</p>
+        <h2>The Role of Training Data</h2>
+        <p>Quality comes down to training data. The best models are trained on hundreds of thousands of tracks where individual stems are available from studio recordings. Meta AI's <strong>Demucs v4</strong> now operates in both time and frequency domains simultaneously — exceptional performance even on edge cases.</p>
+        <h2>Tips for Best Results</h2>
+        <ul>
+          <li><strong>Use high-quality source files</strong> — FLAC or WAV produce better results than compressed MP3s.</li>
+          <li><strong>Avoid heavy reverb</strong> — Reverb bleeds between frequency bins that the model uses to distinguish vocals from instruments.</li>
+          <li><strong>Post-process with EQ</strong> — A notch at obvious bleed frequencies can clean up the output significantly.</li>
+        </ul>
+        <blockquote>Vocal removal went from a parlor trick to professional-grade in five years. The next five years will be even more dramatic.</blockquote>
+        <p>Try our <a onclick="navigate('home');scrollToSection('tools')">Vocal Remover</a> at <a href="https://vocalremover.7by.in" target="_blank">vocalremover.7by.in</a></p>
+      </div>
+    </div>
+    <div class="blog-sidebar">
+      <div class="sidebar-box">
+        <div class="footer-col-title">More Articles</div>
+        <div class="sidebar-links">
+          <a onclick="navigate('blog-noise-removal')">Noise Removal for Podcasters: 2026 Guide</a>
+          <a onclick="navigate('blog-audio-formats')">MP3 vs WAV vs FLAC: Which Format?</a>
+          <a onclick="navigate('blog-interior-ai')">How AI is Transforming Interior Design</a>
+          <a onclick="navigate('blog-ai-tools')">Rise of Browser-Based AI Tools</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-blog-noise-removal">
+  <div class="blog-post-wrap">
+    <div>
+      <div class="blog-post-category">Guide &middot; Podcasting</div>
+      <h1 class="blog-post-title">Noise Removal for Podcasters: Complete 2026 Guide</h1>
+      <div class="blog-post-meta"><div class="author-avatar" style="width:32px;height:32px;font-size:12px;">SS</div><span>Shirandasu Sandeep &middot; June 2026 &middot; 7 min read</span></div>
+      <div class="blog-post-content">
+        <p>Background noise is the number one quality complaint that new podcast listeners have about indie shows. Air conditioning, keyboard clicks, street traffic, and room reverb all add up to an unprofessional sound. The good news: AI noise removal has never been more capable.</p>
+        <h2>Types of Background Noise</h2>
+        <ul>
+          <li><strong>Broadband noise (hiss):</strong> Consistent across all frequencies. From electrical equipment or HVAC. AI handles this extremely well.</li>
+          <li><strong>Tonal noise (hum):</strong> 50Hz or 60Hz electrical interference. A notch EQ can solve this; AI catches harmonics too.</li>
+          <li><strong>Intermittent noise:</strong> Dog barking, phone buzz — AI noise removal trained specifically for this is the most reliable solution.</li>
+          <li><strong>Room reverb:</strong> Current AI handles mild reverb well; heavy reverb remains challenging.</li>
+        </ul>
+        <h2>Step-by-Step Workflow</h2>
+        <ol>
+          <li>Record as usual — WAV at 44.1kHz or 48kHz, 16-bit minimum</li>
+          <li>Do a rough edit to remove long silences</li>
+          <li>Export the rough cut as WAV</li>
+          <li>Open <a href="https://vocalremover.7by.in/tools/noise-remover" target="_blank">noise.7by.in</a> and drop in your file</li>
+          <li>Download cleaned audio and continue editing in your DAW</li>
+        </ol>
+        <h2>Common Mistakes to Avoid</h2>
+        <ul>
+          <li><strong>Over-denoising:</strong> Creates "underwater" artifacts. Use the minimum setting needed.</li>
+          <li><strong>Denoising a lossy file:</strong> Always process the original WAV, not an MP3 export.</li>
+          <li><strong>Skipping mic technique:</strong> Get within 15&ndash;20cm of your mic — less post-processing needed.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="blog-sidebar">
+      <div class="sidebar-box">
+        <div class="footer-col-title">Related Tools</div>
+        <div class="sidebar-links">
+          <a href="https://vocalremover.7by.in/tools/noise-remover" target="_blank">Try Noise Remover &rarr;</a>
+          <a href="https://vocalremover.7by.in" target="_blank">Try Vocal Remover &rarr;</a>
+          <a onclick="navigate('blog-vocal-remover')">How AI Vocal Removers Work</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-blog-interior-ai">
+  <div class="blog-post-wrap">
+    <div>
+      <div class="blog-post-category">Interior Design &middot; AI</div>
+      <h1 class="blog-post-title">How AI is Transforming Interior Design in 2026</h1>
+      <div class="blog-post-meta"><div class="author-avatar" style="width:32px;height:32px;font-size:12px;">SS</div><span>Shirandasu Sandeep &middot; June 2026 &middot; 6 min read</span></div>
+      <div class="blog-post-content">
+        <p>Interior design used to require either expensive professionals or hours of trial and error with furniture you'd already bought. AI is changing that completely — and the tools are now good enough to use for real decisions.</p>
+        <h2>AI Room Visualizers</h2>
+        <p>Upload a photo of your room, choose a style (Scandinavian, industrial, bohemian, modern minimalist), and the AI generates a photorealistic render of your space redesigned in that aesthetic. What used to take a designer hours now happens in seconds. 7By.in's Room Visualizer does exactly this — try it at <a href="https://interior.7by.in" target="_blank">interior.7by.in</a>.</p>
+        <h2>AI Color Planning</h2>
+        <p>Choosing wall colors is notoriously difficult because paint chips in a store look nothing like they do on a 12-foot wall in your lighting conditions. AI color planning tools analyze your existing furniture, floors, and natural light to generate palettes that will actually work in your space — and let you preview them realistically before you buy a drop of paint.</p>
+        <h2>What's Coming Next</h2>
+        <p>The near-term future includes real-time AR furniture placement (see how a sofa looks in your room through your phone camera before buying), AI floor plan optimization (describe your lifestyle and get layouts that match how you actually live), and even AI procurement — where the system recommends specific purchasable items that match your aesthetic and budget.</p>
+        <blockquote>In two years, hiring an interior designer for a single room makeover will feel as outdated as hiring a travel agent to book a flight.</blockquote>
+        <p>Try <a href="https://interior.7by.in" target="_blank">7By.in Room Visualizer</a> and see your room transformed in seconds.</p>
+      </div>
+    </div>
+    <div class="blog-sidebar">
+      <div class="sidebar-box">
+        <div class="footer-col-title">Interior Tools</div>
+        <div class="sidebar-links">
+          <a href="https://interior.7by.in" target="_blank">Room Visualizer</a>
+          <a href="https://color.7by.in" target="_blank">Room Color Planner</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-blog-audio-formats">
+  <div class="blog-post-wrap">
+    <div>
+      <div class="blog-post-category">Explainer &middot; Audio</div>
+      <h1 class="blog-post-title">MP3 vs WAV vs FLAC: Which Audio Format Should You Use?</h1>
+      <div class="blog-post-meta"><div class="author-avatar" style="width:32px;height:32px;font-size:12px;">SS</div><span>Shirandasu Sandeep &middot; May 2026 &middot; 5 min read</span></div>
+      <div class="blog-post-content">
+        <p>Every time you save or export audio, you're making a format decision that affects both quality and file size. The wrong choice can mean bloated files or irreversible quality loss.</p>
+        <h2>MP3: The Universal Format</h2><p>MP3 achieves small file sizes through <strong>lossy compression</strong> — discarding audio data human hearing is least sensitive to. Use for streaming, podcast distribution, final consumer delivery. Best bitrate: 320kbps for highest quality, 128kbps for voice.</p>
+        <h2>WAV: The Production Standard</h2><p>WAV is uncompressed — stores raw audio samples with no quality reduction. File sizes are large (~10MB/minute stereo 44.1kHz 16-bit) but quality is perfect. Use for recording, editing, and mastering.</p>
+        <h2>FLAC: The Archival Sweet Spot</h2><p>FLAC achieves 40&ndash;60% smaller files than WAV with zero quality loss. Completely lossless. Use for archiving music collections and sharing high-quality audio.</p>
+        <blockquote>Record and edit in WAV or FLAC. Deliver to consumers as MP3. Never re-export a lossy file to another lossy format.</blockquote>
+        <p>Need to convert? Try our <a href="https://vocalremover.7by.in/tools/audio-converter" target="_blank">Audio Converter tool</a>.</p>
+      </div>
+    </div>
+    <div class="blog-sidebar">
+      <div class="sidebar-box">
+        <div class="footer-col-title">Related Tools</div>
+        <div class="sidebar-links">
+          <a href="https://vocalremover.7by.in/tools/audio-converter" target="_blank">Audio Converter</a>
+          <a href="https://vocalremover.7by.in" target="_blank">Vocal Remover</a>
+          <a onclick="navigate('blog-vocal-remover')">How AI Vocal Removers Work</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-blog-temp-mail">
+  <div class="blog-post-wrap">
+    <div>
+      <div class="blog-post-category">Privacy &middot; Productivity</div>
+      <h1 class="blog-post-title">Why Everyone Should Use a Temp Email for Sign-Ups</h1>
+      <div class="blog-post-meta"><div class="author-avatar" style="width:32px;height:32px;font-size:12px;">SS</div><span>Shirandasu Sandeep &middot; May 2026 &middot; 4 min read</span></div>
+      <div class="blog-post-content">
+        <p>Every time you sign up for a new service, you hand over your email address. Some services are responsible with it. Most aren't. Your inbox fills with newsletters, promotional spam, and worse — your email gets sold to data brokers and ends up in leak databases. A temporary email address solves all of this instantly.</p>
+        <h2>What Is a Temp Email?</h2>
+        <p>A temporary email (also called disposable email or throwaway email) is a randomly generated inbox that you can use to receive emails for a short period — usually minutes to hours — and then discard. It works exactly like a real email address for verification purposes, but it's completely anonymous and leaves no trace back to you.</p>
+        <h2>When to Use Temp Mail</h2>
+        <ul>
+          <li>Signing up for a free trial you're not sure you'll keep</li>
+          <li>Downloading a PDF or resource that requires your email</li>
+          <li>Participating in a survey or giveaway</li>
+          <li>Testing a website or app that requires registration</li>
+          <li>Accessing public WiFi that needs email verification</li>
+        </ul>
+        <h2>When NOT to Use Temp Mail</h2>
+        <ul>
+          <li>For accounts you'll need long-term (banking, government, main social accounts)</li>
+          <li>For anything requiring 2FA by email as a permanent security measure</li>
+        </ul>
+        <p>Try <a href="https://mail.7by.in" target="_blank">7By.in Temp Mail</a> — generate a disposable inbox in one click, no signup needed.</p>
+      </div>
+    </div>
+    <div class="blog-sidebar">
+      <div class="sidebar-box">
+        <div class="footer-col-title">Try It Now</div>
+        <div class="sidebar-links">
+          <a href="https://mail.7by.in" target="_blank">Open Temp Mail &rarr;</a>
+          <a href="https://resume.7by.in" target="_blank">Resume Builder</a>
+          <a href="https://qbank.7by.in" target="_blank">QBank</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-blog-ai-tools">
+  <div class="blog-post-wrap">
+    <div>
+      <div class="blog-post-category">Industry &middot; AI Trends</div>
+      <h1 class="blog-post-title">The Rise of Browser-Based AI Media Tools in 2026</h1>
+      <div class="blog-post-meta"><div class="author-avatar" style="width:32px;height:32px;font-size:12px;">SS</div><span>Shirandasu Sandeep &middot; April 2026 &middot; 7 min read</span></div>
+      <div class="blog-post-content">
+        <p>Two years ago, running a serious AI model in a browser was a novelty. In 2026, browser-based AI processing is fast enough for professional workflows — reshaping the creative tools industry entirely.</p>
+        <h2>What Changed: WebAssembly + ONNX Runtime</h2>
+        <ul>
+          <li><strong>WebAssembly:</strong> Near-native execution for C/C++ and Rust code in the browser. Modern AI inference libraries compile directly to WASM.</li>
+          <li><strong>ONNX Runtime Web:</strong> Microsoft's runtime with WebAssembly and WebGPU backends that run quantized AI models at near-server performance.</li>
+          <li><strong>WebGPU:</strong> Direct GPU compute access from the browser — same hardware that makes AI inference fast on desktop apps.</li>
+        </ul>
+        <h2>Privacy as a Feature</h2><p>When processing happens in the browser, your files never leave your device. Privacy isn't a policy promise; it's a technical reality built into the architecture.</p>
+        <h2>The Cost Equation</h2><p>Traditional SaaS AI tools pay for GPU server time for every file processed. Browser-based tools shift that cost to the user's own device — making accessible pricing viable without sacrificing quality.</p>
+        <p><a onclick="navigate('home');scrollToSection('tools')">Try all 7By.in tools here</a> — everything runs in your browser.</p>
+      </div>
+    </div>
+    <div class="blog-sidebar">
+      <div class="sidebar-box">
+        <div class="footer-col-title">Related</div>
+        <div class="sidebar-links">
+          <a onclick="navigate('blog-vocal-remover')">How AI Vocal Removers Work</a>
+          <a onclick="navigate('blog-interior-ai')">AI in Interior Design</a>
+          <a onclick="navigate('blog-temp-mail')">Why Use Temp Email?</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer id="site-footer">
+  <div class="footer-inner">
+    <div class="footer-grid">
+      <div>
+        <div onclick="navigate('home')" style="cursor:pointer;margin-bottom:8px;">
+          <svg viewBox="0 0 160 50" xmlns="http://www.w3.org/2000/svg" style="height:32px;width:auto;">
+            <defs><linearGradient id="lg2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#4F46E5"/><stop offset="100%" stop-color="#7C3AED"/></linearGradient></defs>
+            <text x="0" y="42" font-family="Arial Black,Arial" font-weight="900" font-size="48" fill="url(#lg2)">7</text>
+            <text x="32" y="42" font-family="Arial,sans-serif" font-weight="700" font-size="28" fill="#F0F0F8">by</text>
+            <text x="78" y="42" font-family="Arial,sans-serif" font-weight="700" font-size="28" fill="rgba(240,240,248,0.4)">.in</text>
+            <circle cx="74" cy="10" r="6" fill="#4F46E5"/>
+          </svg>
+        </div>
+        <p class="footer-brand-desc">AI-powered audio, image, interior design, and productivity tools for creators, musicians, students, and developers. Built by Shirandasu Sandeep.</p>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--dim);">contact@7by.in</div>
+      </div>
+      <div>
+        <div class="footer-col-title">Audio Tools</div>
+        <ul class="footer-links">
+          <li><a href="https://vocalremover.7by.in" target="_blank">Vocal Remover</a></li>
+          <li><a href="https://vocalremover.7by.in/tools/noise-remover" target="_blank">Noise Remover</a></li>
+          <li><a href="https://vocalremover.7by.in/tools/pitch-shifter" target="_blank">Pitch Shifter</a></li>
+          <li><a href="https://vocalremover.7by.in/tools/audio-cutter" target="_blank">Audio Cutter</a></li>
+          <li><a href="https://vocalremover.7by.in/tools/song-joiner" target="_blank">Song Joiner</a></li>
+          <li><a href="https://vocalremover.7by.in/tools/audio-converter" target="_blank">Audio Converter</a></li>
+          <li><a href="https://spectrum.7by.in" target="_blank">Spectrum Visualizer</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-col-title">More Tools</div>
+        <ul class="footer-links">
+          <li><a href="videotools/index.html" target="_blank">VidLab Video Tools</a></li>
+          <li><a href="videotools/watermark-remover.html" target="_blank">Video Watermark Remover</a></li>
+          <li><a href="videotools/compressor.html" target="_blank">Video Compressor</a></li>
+          <li><a href="https://bg.7by.in" target="_blank">BG Remover</a></li>
+          <li><a href="https://enhance.7by.in" target="_blank">Image Enhancer</a></li>
+          <li><a href="https://interior.7by.in" target="_blank">Room Visualizer</a></li>
+          <li><a href="https://mail.7by.in" target="_blank">Temp Mail</a></li>
+          <li><a href="https://resume.7by.in" target="_blank">Resume Builder</a></li>
+          <li><a href="https://qbank.7by.in" target="_blank">QBank</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-col-title">Products</div>
+        <ul class="footer-links">
+          <li><a href="https://holytechstudio.7by.in" target="_blank">HolyTech Studio</a></li>
+          <li><a href="https://doubtsnap.7by.in" target="_blank">DoubtSnap</a></li>
+          <li><a href="https://labs.7by.in" target="_blank">7By Labs</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-col-title">Company</div>
+        <ul class="footer-links">
+          <li><a onclick="navigate('about')">About Us</a></li>
+          <li><a onclick="navigate('contact')">Contact</a></li>
+          <li><a onclick="navigate('home');setTimeout(()=>scrollToSection('blog'),60)">Blog</a></li>
+          <li><a onclick="navigate('privacy')">Privacy Policy</a></li>
+          <li><a onclick="navigate('disclaimer')">Disclaimer</a></li>
+          <li><a onclick="navigate('privacy')">Terms of Service</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-copy">&copy; 2026 7By.in &middot; Shirandasu Sandeep &middot; All rights reserved</div>
+      <div class="footer-legal">
+        <a onclick="navigate('privacy')">Privacy</a>
+        <a onclick="navigate('disclaimer')">Disclaimer</a>
+        <a onclick="navigate('contact')">Contact</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- SCROLL TO TOP -->
+<button id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Back to top">&#8679;</button>
+
+
+<script>
+// Cursor orb
+const orb = document.getElementById('cursor-orb');
+document.addEventListener('mousemove', e => { orb.style.left = e.clientX + 'px'; orb.style.top = e.clientY + 'px'; });
+
+// Navigation
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const t = document.getElementById('page-' + page) || document.getElementById('page-home');
+  t.classList.add('active');
+  window.scrollTo(0, 0);
+  if (page === 'home') {
+    history.pushState(null, '', window.location.pathname);
+  } else {
+    history.pushState(null, '', '#' + page);
+  }
+}
+function scrollToSection(id) {
+  navigate('home');
+  setTimeout(() => { const el = document.getElementById(id); if (el) el.scrollIntoView({ behavior: 'smooth' }); }, 60);
+}
+function toggleMenu() {
+  const menu = document.getElementById('mobile-menu');
+  const overlay = document.getElementById('menu-overlay');
+  const ham = document.getElementById('hamburger');
+  const isOpen = menu.classList.contains('open');
+  menu.classList.toggle('open');
+  overlay.classList.toggle('open');
+  ham.classList.toggle('open');
+  document.body.style.overflow = isOpen ? '' : 'hidden';
+}
+function closeMenu() {
+  document.getElementById('mobile-menu').classList.remove('open');
+  document.getElementById('menu-overlay').classList.remove('open');
+  document.getElementById('hamburger').classList.remove('open');
+  document.body.style.overflow = '';
+}
+async function handleContact(e) {
+  e.preventDefault();
+  const form = document.getElementById('contact-form');
+  const btnText = document.getElementById('cf-btn-text');
+  const btnLoad = document.getElementById('cf-btn-loading');
+  const successMsg = document.getElementById('cf-success');
+  const errorMsg = document.getElementById('cf-error');
+  const submitBtn = form.querySelector('button[type="submit"]');
+
+  // Reset state
+  successMsg.style.display = 'none';
+  errorMsg.style.display = 'none';
+  btnText.style.display = 'none';
+  btnLoad.style.display = 'inline';
+  submitBtn.disabled = true;
+
+  try {
+    const data = new FormData(form);
+    const res = await fetch('https://api.web3forms.com/submit', {
+      method: 'POST',
+      body: data
+    });
+    const json = await res.json();
+    if (json.success) {
+      successMsg.style.display = 'flex';
+      form.reset();
+    } else {
+      throw new Error('Failed');
+    }
+  } catch {
+    errorMsg.style.display = 'flex';
+  } finally {
+    btnText.style.display = 'inline';
+    btnLoad.style.display = 'none';
+    submitBtn.disabled = false;
+  }
+}
+
+// Reveal
+const revObs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08, rootMargin: '0px 0px -30px 0px' });
+document.querySelectorAll('.reveal').forEach(el => revObs.observe(el));
+
+// Counters
+const statObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    const target = parseInt(e.target.dataset.count);
+    let v = 0; const step = target / (1400 / 16);
+    const t = setInterval(() => {
+      v += step; if (v >= target) { v = target; clearInterval(t); }
+      const n = Math.round(v);
+      e.target.textContent = (n >= 1000 ? Math.round(n/1000) + 'K' : n) + (target >= 1000 ? '+' : '');
+    }, 16);
+    statObs.unobserve(e.target);
+  });
+}, { threshold: 0.5 });
+document.querySelectorAll('[data-count]').forEach(el => statObs.observe(el));
+
+// Nav scroll
+window.addEventListener('scroll', () => {
+  document.getElementById('nav').style.background = window.scrollY > 40 ? 'rgba(9,9,15,0.97)' : 'rgba(9,9,15,0.85)';
+});
+
+// Hash routing on load
+const hash = window.location.hash.replace('#', '');
+if (hash && document.getElementById('page-' + hash)) navigate(hash);
+
+// Scroll-to-top visibility
+const scrollTopBtn = document.getElementById('scroll-top');
+window.addEventListener('scroll', () => {
+  scrollTopBtn.classList.toggle('visible', window.scrollY > 400);
+}, { passive: true });
+
+// Starfield canvas
+(function(){
+  const c = document.getElementById('starfield');
+  if(!c) return;
+  const ctx = c.getContext('2d');
+  let W, H, stars = [];
+  function resize(){ W = c.width = window.innerWidth; H = c.height = window.innerHeight; }
+  resize();
+  window.addEventListener('resize', resize);
+  const COLORS = ['rgba(79,70,229,', 'rgba(139,92,246,', 'rgba(0,212,255,', 'rgba(255,255,255,'];
+  for(let i = 0; i < 120; i++){
+    stars.push({
+      x: Math.random()*1920, y: Math.random()*1080,
+      r: Math.random()*1.4 + 0.2,
+      o: Math.random()*0.5 + 0.1,
+      speed: Math.random()*0.015 + 0.003,
+      dir: Math.random()*Math.PI*2,
+      color: COLORS[Math.floor(Math.random()*COLORS.length)],
+      twinkle: Math.random()*Math.PI*2
+    });
+  }
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    const now = Date.now()/1000;
+    stars.forEach(s => {
+      s.twinkle += 0.02;
+      const opacity = s.o * (0.6 + 0.4*Math.sin(s.twinkle));
+      ctx.beginPath();
+      ctx.arc(s.x % W, s.y % H, s.r, 0, Math.PI*2);
+      ctx.fillStyle = s.color + opacity + ')';
+      ctx.fill();
+      s.x += Math.cos(s.dir) * s.speed;
+      s.y += Math.sin(s.dir) * s.speed;
+      if(s.x < 0) s.x += W; if(s.x > W) s.x -= W;
+      if(s.y < 0) s.y += H; if(s.y > H) s.y -= H;
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>
+</body>
+</html>
