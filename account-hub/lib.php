@@ -61,6 +61,16 @@ function db() {
 		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 	try { $pdo->exec("ALTER TABLE transactions ADD COLUMN credits INT NULL, ADD COLUMN currency VARCHAR(8) NULL"); } catch (Exception $e) { /* columns already exist */ }
+	try { $pdo->exec("ALTER TABLE transactions ADD COLUMN tool VARCHAR(40) NULL"); } catch (Exception $e) { /* already exists */ }
+	// Per-tool unlocks (entitlements). One row per (user, tool); NULL expiry = lifetime.
+	$pdo->exec("CREATE TABLE IF NOT EXISTS entitlements (
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		user_id INT NOT NULL,
+		tool VARCHAR(40) NOT NULL,
+		expires_at DATETIME NULL,
+		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		UNIQUE KEY uq_user_tool (user_id, tool)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 	$pdo->exec("CREATE TABLE IF NOT EXISTS otps (
 		id INT AUTO_INCREMENT PRIMARY KEY,
 		email VARCHAR(190) NOT NULL,
@@ -322,6 +332,77 @@ function grant_plan($userId, $planKey, $credits = null, $days = null) {
 	// Add credits (stack if they buy again) and set the new expiry.
 	db()->prepare("UPDATE users SET credits = credits + ?, plan = ?, plan_expires = ? WHERE id = ?")
 		->execute(array((int)$credits, $planKey, $expires, $userId));
+}
+
+/* ---------------- Per-tool unlocks (entitlements) ---------------- */
+/**
+ * Price + terms to unlock ONE tool, in the visitor's currency. Reads the
+ * 'unlock' block from products.php. Returns null if the tool has no unlock.
+ */
+function tool_unlock_details($toolKey) {
+	$prods = hub_products();
+	if (empty($prods[$toolKey]['unlock'])) return null;
+	$un  = $prods[$toolKey]['unlock'];
+	$cur = user_currency();
+	$prices = $un['prices'];
+	$price = isset($prices[$cur]) ? $prices[$cur] : (isset($prices['USD']) ? $prices['USD'] : reset($prices));
+	$P = hub_pricing();
+	$sym = isset($P['currencies'][$cur]) ? $P['currencies'][$cur]['symbol'] : '';
+	$days = isset($un['days']) ? (int)$un['days'] : 0;
+	return array(
+		'tool'    => $toolKey,
+		'label'   => isset($un['label']) ? $un['label'] : ($prods[$toolKey]['brand'] ?? $toolKey),
+		'days'    => $days,
+		'currency'=> $cur, 'symbol' => $sym, 'price' => $price,
+		'price_text'   => $sym . (($price == (int)$price) ? (string)(int)$price : rtrim(number_format($price, 2, '.', ''), '0')),
+		'amount_minor' => (int)round($price * 100),
+	);
+}
+
+/** Grant (or extend) a user's unlock for one tool. days<=0 => lifetime. */
+function grant_tool($userId, $toolKey, $days = null) {
+	$prods = hub_products();
+	if ($days === null) $days = isset($prods[$toolKey]['unlock']['days']) ? (int)$prods[$toolKey]['unlock']['days'] : 0;
+	if ($days <= 0) {
+		db()->prepare("INSERT INTO entitlements (user_id, tool, expires_at) VALUES (?,?,NULL)
+			ON DUPLICATE KEY UPDATE expires_at = NULL")->execute(array($userId, $toolKey));
+		return;
+	}
+	// Re-buying extends from the later of now / current expiry (no lost days).
+	$st = db()->prepare("SELECT expires_at FROM entitlements WHERE user_id=? AND tool=?");
+	$st->execute(array($userId, $toolKey));
+	$row = $st->fetch();
+	$base = time();
+	if ($row && $row['expires_at'] && strtotime($row['expires_at']) > $base) $base = strtotime($row['expires_at']);
+	$expires = date('Y-m-d H:i:s', $base + $days * 86400);
+	db()->prepare("INSERT INTO entitlements (user_id, tool, expires_at) VALUES (?,?,?)
+		ON DUPLICATE KEY UPDATE expires_at = VALUES(expires_at)")->execute(array($userId, $toolKey, $expires));
+}
+
+/** Does this user currently own (unlocked, unexpired) the given tool? */
+function user_owns_tool($userId, $toolKey) {
+	$st = db()->prepare("SELECT expires_at FROM entitlements WHERE user_id=? AND tool=?");
+	$st->execute(array($userId, $toolKey));
+	$row = $st->fetch();
+	if (!$row) return array('owned' => false, 'expires' => null);
+	if ($row['expires_at'] === null) return array('owned' => true, 'expires' => null); // lifetime
+	$live = strtotime($row['expires_at']) >= time();
+	return array('owned' => $live, 'expires' => $row['expires_at']);
+}
+
+/** Map of {tool => expiry} for every tool the user currently owns. */
+function user_tools($userId) {
+	$st = db()->prepare("SELECT tool, expires_at FROM entitlements WHERE user_id=? AND (expires_at IS NULL OR expires_at > NOW())");
+	$st->execute(array($userId));
+	$out = array();
+	foreach ($st->fetchAll() as $r) $out[$r['tool']] = $r['expires_at'];
+	return $out;
+}
+
+/** Grant whatever a paid transaction promised — a tool unlock or a credit plan. */
+function grant_from_tx($tx) {
+	if (!empty($tx['tool'])) grant_tool($tx['user_id'], $tx['tool']);
+	else grant_plan($tx['user_id'], $tx['plan'], isset($tx['credits']) ? (int)$tx['credits'] : null);
 }
 
 /* ---------------- Pricing / currency / products ---------------- */

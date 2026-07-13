@@ -211,6 +211,63 @@
       });
     });
   });
+  /* ---- unlock ONE tool (its own price — separate payment per tool) ---- */
+  function afterUnlock(o) {
+    return function (v) {
+      if (v.body.ok) {
+        if (v.body.user) renderUser(v.body.user);
+        if (v.body.tools) markOwned(v.body.tools);
+        dmsg('🎉 ' + (o.label || 'Tool') + ' unlocked!', true);
+      } else dmsg(v.body.error || 'Payment verification failed.');
+    };
+  }
+  function payUnlock(o) {
+    if (o.gateway === 'sevenpay') {
+      withSevenPay(o.sevenpay_base, function () {
+        var sp = new SevenPay({
+          key: o.key_id, order_id: o.order_id,
+          description: (o.label || 'Tool') + ' — unlock',
+          prefill: { email: o.email },
+          handler: function (resp) {
+            post('verify', { sevenpay_order_id: resp.sevenpay_order_id, sevenpay_payment_id: resp.sevenpay_payment_id, sevenpay_signature: resp.sevenpay_signature }).then(afterUnlock(o));
+          },
+          modal: { ondismiss: function () { dmsg('Payment cancelled.'); } },
+        });
+        sp.on('payment.failed', function () { dmsg('Payment failed. Please try again.'); });
+        sp.open(); dmsg('');
+      });
+    } else {
+      var rzp = new Razorpay({
+        key: o.key_id, amount: o.amount, currency: o.currency || 'INR', name: '7By',
+        description: (o.label || 'Tool') + ' — unlock', order_id: o.order_id,
+        prefill: { name: o.name, email: o.email }, theme: { color: '#4f46e5' },
+        handler: function (resp) {
+          post('verify', { razorpay_order_id: resp.razorpay_order_id, razorpay_payment_id: resp.razorpay_payment_id, razorpay_signature: resp.razorpay_signature }).then(afterUnlock(o));
+        },
+      });
+      rzp.on('payment.failed', function () { dmsg('Payment failed or cancelled.'); });
+      rzp.open(); dmsg('');
+    }
+  }
+  // Reflect owned tools on any [data-unlock] button (label → "✓ Unlocked").
+  function markOwned(tools) {
+    $$('[data-unlock]').forEach(function (b) {
+      if (tools && Object.prototype.hasOwnProperty.call(tools, b.dataset.unlock)) {
+        b.textContent = '✓ Unlocked'; b.disabled = true; b.classList.add('owned');
+      }
+    });
+  }
+  $$('[data-unlock]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (btn.disabled) return;
+      dmsg('Starting secure checkout…', true);
+      post('tool_order', { tool: btn.dataset.unlock }).then(function (r) {
+        if (!r.body.ok) { dmsg(r.body.error || 'Could not start payment.'); return; }
+        payUnlock(r.body);
+      });
+    });
+  });
+
   function dmsg(text, ok) { var el = $('#dashMsg'); el.textContent = text || ''; el.className = 'msg ' + (text ? (ok ? 'ok' : 'err') : ''); }
 
   /* ---- init: if the page loaded already logged in (session), wire up the
@@ -221,7 +278,7 @@
       wireBack();
       fetch(API + 'me', { credentials: 'include' })
         .then(function (r) { return r.json(); })
-        .then(function (j) { if (j && j.user) renderUser(j.user); })
+        .then(function (j) { if (j && j.user) renderUser(j.user); if (j && j.tools) markOwned(j.tools); })
         .catch(function () {});
     }
   })();

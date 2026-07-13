@@ -32,6 +32,15 @@ return array(
 		'card'       => 'REMOVEBG · CREDITS',
 		'unit_note'  => '10 credits = 1 image export.',
 		'plan_notes' => array('monthly' => '≈ 100 exports', 'yearly' => '≈ 2,000 exports'),
+
+		// ---- Per-tool unlock (one price, unlocks ONLY this tool) ----
+		// 'days' => 30 for a monthly pass; 0 = lifetime (never expires).
+		// Add per-currency prices; the visitor is charged in their own currency.
+		'unlock' => array(
+			'label'  => 'RemoveBG Premium',
+			'days'   => 30,
+			'prices' => array('INR' => 49, 'USD' => 1.5),
+		),
 	),
 
 	'vocalremover' => array(
@@ -50,6 +59,12 @@ return array(
 		'card'       => 'VOCALREMOVER · CREDITS',
 		'unit_note'  => '10 credits = 1 song split.',
 		'plan_notes' => array('monthly' => '≈ 100 songs', 'yearly' => '≈ 2,000 songs'),
+
+		'unlock' => array(
+			'label'  => 'VocalRemover Premium',
+			'days'   => 30,
+			'prices' => array('INR' => 99, 'USD' => 2.5),
+		),
 	),
 
 );

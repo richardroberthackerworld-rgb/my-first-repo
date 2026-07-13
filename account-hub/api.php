@@ -14,10 +14,23 @@ $in = body();
 
 switch ($action) {
 
-	/* ---- who am I ---- */
-	case 'me':
-		json_out(array('ok' => true, 'authed' => (bool)current_user(), 'user' => public_user(current_user())));
+	/* ---- who am I (includes the tools this account has unlocked) ---- */
+	case 'me': {
+		$u = current_user();
+		json_out(array('ok' => true, 'authed' => (bool)$u, 'user' => public_user($u),
+			'tools' => $u ? user_tools($u['id']) : array()));
 		break;
+	}
+
+	/* ---- does the current user own a given tool? (tools call this) ---- */
+	case 'access': {
+		$u = current_user();
+		$tool = preg_replace('/[^a-z0-9]/', '', strtolower((string)($_GET['tool'] ?? ($in['tool'] ?? ''))));
+		if (!$u) json_out(array('ok' => true, 'authed' => false, 'owned' => false));
+		$r = user_owns_tool($u['id'], $tool);
+		json_out(array('ok' => true, 'authed' => true, 'owned' => $r['owned'], 'expires' => $r['expires']));
+		break;
+	}
 
 	/* ---- signup step 1: validate + email an OTP (no account yet) ---- */
 	case 'signup_start': {
@@ -156,6 +169,37 @@ switch ($action) {
 		break;
 	}
 
+	/* ---- create a payment order to UNLOCK ONE TOOL (its own price). Grants
+	        access to only that tool for this account. ---- */
+	case 'tool_order': {
+		global $CFG;
+		$u = current_user();
+		if (!$u) fail('Please log in first.', 401);
+		$tool = preg_replace('/[^a-z0-9]/', '', strtolower((string)($in['tool'] ?? '')));
+		$d = tool_unlock_details($tool);
+		if (!$d) fail('Unknown tool.');
+		$gateway = ($CFG['gateway'] ?? 'razorpay');
+		$payload = array(
+			'amount' => $d['amount_minor'], 'currency' => $d['currency'],
+			'receipt' => 'u' . $u['id'] . '-' . $tool . '-' . time(),
+			'notes' => array('user_id' => (string)$u['id'], 'tool' => $tool),
+		);
+		if ($gateway === 'sevenpay') {
+			list($code, $order) = sevenpay_api('order.create', $payload);
+		} else {
+			list($code, $order) = rzp_request('POST', '/orders', $payload);
+		}
+		if ($code >= 300 || empty($order['id'])) fail('Could not start payment. Please try again.', 502);
+		db()->prepare('INSERT INTO transactions (user_id, order_id, tool, amount, currency, status) VALUES (?,?,?,?,?,?)')
+			->execute(array($u['id'], $order['id'], $tool, $d['amount_minor'], $d['currency'], 'created'));
+		json_out(array('ok' => true, 'gateway' => $gateway, 'order_id' => $order['id'], 'amount' => $d['amount_minor'],
+			'currency' => $d['currency'], 'tool' => $tool, 'label' => $d['label'],
+			'key_id' => $gateway === 'sevenpay' ? $CFG['sevenpay']['key_id'] : $CFG['razorpay']['key_id'],
+			'sevenpay_base' => $CFG['sevenpay']['base_url'] ?? '',
+			'name' => $u['name'], 'email' => $u['email']));
+		break;
+	}
+
 	/* ---- verify payment signature and grant credits (7Pay or Razorpay) ---- */
 	case 'verify': {
 		$u = current_user();
@@ -181,9 +225,10 @@ switch ($action) {
 		if ($tx['status'] === 'paid') json_out(array('ok' => true, 'user' => public_user(current_user())));
 		db()->prepare('UPDATE transactions SET payment_id = ?, status = ? WHERE id = ?')
 			->execute(array($payId, 'paid', $tx['id']));
-		// Grant exactly what this order promised (per-product credit amounts).
-		grant_plan($u['id'], $tx['plan'], isset($tx['credits']) ? (int)$tx['credits'] : null);
-		json_out(array('ok' => true, 'user' => public_user(current_user())));
+		// Grant exactly what this order promised — a tool unlock or a credit plan.
+		grant_from_tx($tx);
+		json_out(array('ok' => true, 'user' => public_user(current_user()),
+			'tools' => user_tools($u['id'])));
 		break;
 	}
 
@@ -222,7 +267,7 @@ switch ($action) {
 				if ($tx) {
 					db()->prepare('UPDATE transactions SET status = "paid", payment_id = ? WHERE id = ?')
 						->execute(array($p['id'] ?? '', $tx['id']));
-					grant_plan($tx['user_id'], $tx['plan'], isset($tx['credits']) ? (int)$tx['credits'] : null);
+					grant_from_tx($tx);
 				}
 			}
 		}
@@ -246,7 +291,7 @@ switch ($action) {
 			if ($tx) {
 				db()->prepare('UPDATE transactions SET status = "paid", payment_id = ? WHERE id = ?')
 					->execute(array($evt['payload']['payment']['entity']['id'] ?? '', $tx['id']));
-				grant_plan($tx['user_id'], $tx['plan'], isset($tx['credits']) ? (int)$tx['credits'] : null);
+				grant_from_tx($tx);
 			}
 		}
 		json_out(array('ok' => true));

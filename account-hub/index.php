@@ -14,6 +14,11 @@ $PLANS = array(
 	'yearly'  => plan_details('yearly', $pkey),
 );
 
+// Per-tool unlock: when this product defines an 'unlock' price, the page sells
+// a one-tool unlock instead of shared credits.
+$UNLOCK = $pkey ? tool_unlock_details($pkey) : null;
+$OWNS   = ($me && $pkey) ? user_owns_tool($me['id'], $pkey) : array('owned' => false, 'expires' => null);
+
 $GENERIC = array(
 	'brand'    => '7By',
 	'title'    => '7By Account — Sign in',
@@ -166,6 +171,24 @@ $UNIT = !empty($P['unit_note']) ? $P['unit_note'] : 'Each tool shows how many cr
 					</div>
 					<button class="btn btn-ghost" id="logoutBtn">Log out</button>
 				</div>
+<?php if ($UNLOCK): // ---- Per-tool unlock (one price, this tool only) ---- ?>
+				<div class="credit-box">
+					<div class="plan-line" id="dPlan" style="font-size:15px"><?php
+						echo !empty($OWNS['owned'])
+							? '✓ ' . htmlspecialchars($P['brand']) . ' is unlocked' . (!empty($OWNS['expires']) ? ' · until ' . date('d M Y', strtotime($OWNS['expires'])) : ' · lifetime')
+							: htmlspecialchars($P['brand']) . ' is locked — unlock it below'; ?></div>
+				</div>
+				<h3>Unlock <?php echo htmlspecialchars($P['brand']); ?></h3>
+				<div class="plans">
+					<div class="plan plan-best">
+						<div class="plan-name"><?php echo htmlspecialchars($UNLOCK['label']); ?></div>
+						<div class="plan-price"><?php echo htmlspecialchars($UNLOCK['price_text']); ?></div>
+						<div class="plan-desc">Full access to <?php echo htmlspecialchars($P['brand']); ?> · <?php echo $UNLOCK['days'] > 0 ? 'valid ' . (int)$UNLOCK['days'] . ' days' : 'lifetime'; ?></div>
+						<button class="btn btn-primary<?php echo !empty($OWNS['owned']) ? ' owned' : ''; ?>" data-unlock="<?php echo htmlspecialchars($pkey); ?>"<?php echo !empty($OWNS['owned']) ? ' disabled' : ''; ?>><?php echo !empty($OWNS['owned']) ? '✓ Unlocked' : 'Unlock — ' . htmlspecialchars($UNLOCK['price_text']); ?></button>
+					</div>
+				</div>
+				<p class="fineprint">One payment unlocks <b><?php echo htmlspecialchars($P['brand']); ?></b> for your account — each tool is purchased separately. Prices in <?php echo htmlspecialchars($UNLOCK['currency']); ?> · 100% safe &amp; secure payments.</p>
+<?php else: // ---- Shared credits (generic / no per-tool price) ---- ?>
 				<div class="credit-box">
 					<div class="credit-num" id="dCredits"><?php echo $me ? (int)$me['credits'] : 0; ?></div>
 					<div class="credit-label">credits available</div>
@@ -189,12 +212,13 @@ $UNIT = !empty($P['unit_note']) ? $P['unit_note'] : 'Each tool shows how many cr
 					</div>
 				</div>
 				<p class="fineprint"><?php echo htmlspecialchars($UNIT); ?> Credits work across every 7By tool. Prices in <?php echo htmlspecialchars($m['currency']); ?> · 100% safe &amp; secure payments.</p>
+<?php endif; ?>
 				<p class="msg" id="dashMsg"></p>
 				<a class="back-link" id="backLink" hidden>← Back to the tool</a>
 			</section>
 		</main>
 	</div>
 
-	<script src="/assets/account.js?v=8"></script>
+	<script src="/assets/account.js?v=9"></script>
 </body>
 </html>
