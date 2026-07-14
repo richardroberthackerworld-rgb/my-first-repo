@@ -1,5 +1,5 @@
 /* ============================================================
-   Q BANK — API KEYS
+   7MARKS — API KEYS
    ------------------------------------------------------------
    Paste your FREE API keys between the quotes below.
    You do NOT need all of them — add the ones you have.
