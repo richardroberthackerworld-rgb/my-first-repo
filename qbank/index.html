@@ -265,6 +265,11 @@ textarea#topicText::placeholder{color:var(--ink-faint);font-style:italic}
   padding:14px;overflow-x:auto;margin:12px 0;
 }
 .paper-body pre code{border:none;background:none;padding:0}
+.paper-body .diagram{
+  background:#fff;border:1px solid var(--rule);border-radius:6px;
+  padding:12px;margin:12px 0;text-align:center;
+}
+.paper-body .diagram svg{max-width:100%;height:auto;max-height:340px}
 .paper-body blockquote{
   border-left:3px solid var(--gold);background:#fbf3dd;padding:10px 16px;margin:12px 0;
   font-style:italic;border-radius:0 5px 5px 0;
@@ -994,7 +999,16 @@ ${withKey
 ? `6. After ALL question sections, add "## 🔑 <Answer Key heading in the student's language>". Under it, repeat each section name as "### <section name>" and give the answer to every question by number: for MCQs the correct option letter + the answer, for fill/true-false the answer with one line of reason, for very short/short a model answer, for long answers the key points as a compact bullet list. Be 100% accurate — never give an answer you are unsure of without noting it.`
 : `6. Do NOT include any answers, answer key, hints or solutions — questions only.`}
 7. Math: use plain text notation (×, ÷, √, ², ³, fractions like 3/4). NEVER use LaTeX like \\frac or $...$.
-8. No two questions may repeat the same point. Cover the whole topic broadly. No padding or commentary outside the paper itself.`;
+8. No two questions may repeat the same point. Cover the whole topic broadly. No padding or commentary outside the paper itself.${diagramRule()}`;
+}
+/* Diagram subjects get "Draw and label" questions, and the paper SHOWS the figure as an inline SVG */
+const DIAGRAM_RX = /biolog|botany|zoolog|anatom|physiolog|\bscience\b|physic|chemis|geograph|geometr|math|econom|microbiolog|biochem|patholog|dental|pharmac|engineering|electronic|electrical|mechanical|civil|architect|nursing|obstetric|surgery|medicine|ophthalmolog|\bent\b|histolog|forensic/i;
+function diagramRule(){
+  if(!DIAGRAM_RX.test($('subjectSel').value + ' ' + $('topicText').value)) return '';
+  const withKey = $('withAnswers').checked;
+  return `
+9. DIAGRAMS: This subject uses figures. Include 1–2 "Draw and label the diagram of …" questions in the most suitable section (only where a figure genuinely belongs to the topic).${withKey ? `
+   In the ANSWER KEY, SHOW each such figure yourself: right after the answer text, output the labelled diagram as simple, clean SVG inside a fenced code block that starts with a line containing exactly \`\`\`svg and ends with \`\`\`. Rules for the SVG: viewBox="0 0 400 300", only basic shapes (rect, circle, ellipse, line, path, polygon, text), stroke "#2c2418", fill "none" or soft colours, clear readable <text> labels with connecting lines, NO scripts, NO images, NO external references. Draw it like a neat textbook figure.` : ''}`;
 }
 
 /* ================= Generate flow ================= */
@@ -1126,9 +1140,38 @@ function renderShelf(){
 
 /* ================= Tiny Markdown renderer (same as Doubt Snap) ================= */
 function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function unescapeHtml(s){ return s.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&'); }
+/* AI-drawn diagrams arrive as ```svg fenced blocks. SVG is an XSS vector, so
+   sanitize hard: parse, drop script-capable elements, strip event handlers and
+   any URL-bearing attributes. Render only what survives; else show as code. */
+function sanitizeSvg(src){
+  try{
+    const doc = new DOMParser().parseFromString(src.trim(), 'image/svg+xml');
+    const svg = doc.documentElement;
+    if(!svg || svg.nodeName.toLowerCase()!=='svg' || doc.querySelector('parsererror')) return null;
+    ['script','foreignObject','iframe','embed','object','image','animate','animateMotion','animateTransform','set','use'].forEach(t=>
+      svg.querySelectorAll(t).forEach(n=>n.remove()));
+    [svg, ...svg.querySelectorAll('*')].forEach(el=>{
+      [...el.attributes].forEach(a=>{
+        const n = a.name.toLowerCase(), v = (a.value||'').toLowerCase();
+        if(n.startsWith('on') || n==='href' || n==='xlink:href' || v.includes('javascript:') || v.includes('data:')) el.removeAttribute(a.name);
+      });
+    });
+    svg.removeAttribute('width'); svg.removeAttribute('height');
+    if(!svg.getAttribute('viewBox')) svg.setAttribute('viewBox','0 0 400 300');
+    return new XMLSerializer().serializeToString(svg);
+  }catch(e){ return null; }
+}
+function renderFence(lang, buf){
+  if(lang==='svg'){
+    const svg = sanitizeSvg(unescapeHtml(buf.join('\n')));
+    if(svg) return '<div class="diagram">'+svg+'</div>';
+  }
+  return '<pre><code>'+buf.join('\n')+'</code></pre>';
+}
 function mdToHtml(md){
   const lines = escapeHtml(md).split('\n');
-  let html='', inUl=false, inOl=false, inCode=false, codeBuf=[], inTable=false, tableBuf=[];
+  let html='', inUl=false, inOl=false, inCode=false, codeLang='', codeBuf=[], inTable=false, tableBuf=[];
   const closeLists=()=>{ if(inUl){html+='</ul>';inUl=false;} if(inOl){html+='</ol>';inOl=false;} };
   const flushTable=()=>{
     if(!inTable) return;
@@ -1146,8 +1189,8 @@ function mdToHtml(md){
     .replace(/`([^`]+)`/g,'<code>$1</code>');
   for(const raw of lines){
     if(raw.trim().startsWith('```')){
-      if(inCode){ html+='<pre><code>'+codeBuf.join('\n')+'</code></pre>'; codeBuf=[]; inCode=false; }
-      else { closeLists(); flushTable(); inCode=true; }
+      if(inCode){ html+=renderFence(codeLang, codeBuf); codeBuf=[]; inCode=false; codeLang=''; }
+      else { closeLists(); flushTable(); inCode=true; codeLang=raw.trim().slice(3).trim().toLowerCase(); }
       continue;
     }
     if(inCode){ codeBuf.push(raw); continue; }
@@ -1162,7 +1205,7 @@ function mdToHtml(md){
     else if(raw.trim()===''){ closeLists(); }
     else { closeLists(); html+=`<p>${inline(raw)}</p>`; }
   }
-  if(inCode) html+='<pre><code>'+codeBuf.join('\n')+'</code></pre>';
+  if(inCode) html+=renderFence(codeLang, codeBuf);
   closeLists(); flushTable();
   return html;
 }
