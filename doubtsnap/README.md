@@ -8,7 +8,7 @@ Snap a photo of any doubt (or type it) and get the exact answer with a step-by-s
 - 🌐 **3 languages, fully translated UI + answers** — English, हिंदी, తెలుగు.
 - 🎓 **Every level** — Class 1–10, Intermediate (MPC / BiPC / CEC / MEC / HEC), Degree & PG (B.Sc, B.Com, B.Tech, MBBS, MBA…), CA / CMA (India) / US CMA / CS / ACCA / CFA, Jobs & competitive exams (UPSC, Groups, SSC, Banking, JEE/NEET…), Current Affairs & GK.
 - 🤖 **Smart model routing** — the app automatically picks the best free AI model for each question (see below) and falls back to another if one is busy or rate-limited.
-- 🧠 **Deep Think toggle** — for tough problems (competition math, CA numericals, tricky physics), tick "Deep Think" to route the doubt through the most powerful free reasoning models first: Gemini 2.5 Pro (~50 req/day free, also reads photos), then OpenRouter's free heavyweights (NVIDIA Nemotron 3 Ultra 555B, Tencent Hy3 295B, OpenAI gpt-oss-120b). Falls back to the normal chain automatically.
+- 🧠 **Automatic Deep Think** — the app reads your question and picks the right AI tier by itself (a live pill under the Solve button shows which): ⚡ simple definition-type doubts go to the fastest models (instant answers, saves the big-model quotas), 📖 normal doubts use the standard smart chain, and 🧠 big problems (calculations, proofs, multi-part numericals, anything at CA · CMA · Professional level) go to the strongest free reasoning models first — Gemini 2.5 Pro, DeepSeek-R1, Phi-4-Reasoning, Nemotron 3 Ultra 555B, Hy3 295B, gpt-oss-120b — with automatic fallback down the chain.
 - ✅ **Answer format** — exact answer first, then step-by-step explanation at the student's level, then **"✏️ Draw this diagram"** instructions when a figure helps, then a memory tip. Each answer shows which model solved it.
 - 📓 **My Notebook** — last 20 solved doubts saved on the device (localStorage).
 - 📖 **Book theme** — leather cover, paper pages, ruled answer sheet, chapter headings.
@@ -30,10 +30,10 @@ Open **`config.js`** and paste your free keys between the quotes. Add as many as
 
 The top-right ⚙️ badge shows which engines are active. All keys stay in `config.js` on your own site — the app calls the providers directly from the browser.
 
-## How the app chooses a model (automatic)
-- **🧠 Deep Think on, or CA · CMA · Professional level (automatic)** → Gemini 2.5 Pro → DeepSeek-R1 + Phi-4-Reasoning (GitHub Models) → Nemotron 3 Ultra 555B → Hy3 295B → gpt-oss-120b → then the normal chain below
+## How the app chooses a model (fully automatic)
+- **🧠 Big question detected** (calculations, proofs, multi-part numericals, journal entries, or CA · CMA · Professional level) → Gemini 2.5 Pro → DeepSeek-R1 + Phi-4-Reasoning (GitHub Models) → Nemotron 3 Ultra 555B → Hy3 295B → gpt-oss-120b → then the normal chain below
+- **⚡ Simple question detected** ("what is…", "define…", short one-liners) → Groq → Cerebras → Gemini Flash — instant answers that don't burn the big-model daily quotas
 - **Maths / Accounts (reasoning)** also tries GPT-4o via GitHub Models right after Gemini.
-- Want a model on your own computer instead? See [LOCAL-MODELS.md](../LOCAL-MODELS.md) — honest guide to small local models (and why sub-250 MB ones can't do CA/CMA numericals).
 - **Photo attached** → Gemini (best vision) → OpenRouter Gemma 4 → Mistral Pixtral
 - **Coding / programming** → OpenRouter Qwen3 Coder → Gemini → Groq → Cerebras
 - **Maths / Physics / Accounts (reasoning)** → Gemini → Cerebras → Groq → OpenRouter

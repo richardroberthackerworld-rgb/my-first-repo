@@ -12,7 +12,7 @@
         Best for PHOTOS (reads handwriting in English/Hindi/Telugu)
         and current affairs. ~1500 requests/day free. Key starts "AIza".
         Also unlocks Gemini 2.5 Pro (~50/day free) — the strongest free
-        model, used when the 🧠 Deep Think toggle is on.
+        model, used automatically when a big/complex question is detected.
 
    2) GROQ            →  https://console.groq.com/keys
         Fastest text answers (Llama 3.3 70B). 30 req/min free.

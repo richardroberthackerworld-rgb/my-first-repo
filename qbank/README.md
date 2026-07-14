@@ -37,7 +37,6 @@ The top-right ⚙️ badge shows which engines are active. All keys stay in `con
 ## How the app chooses a model (automatic)
 - **Hard difficulty, or CA · CMA · Professional level (automatic)** → Gemini 2.5 Pro → DeepSeek-R1 + Phi-4-Reasoning (GitHub Models) → Nemotron 3 Ultra 555B → Hy3 295B → gpt-oss-120b → then the normal chain below
 - **Maths / Accounts (reasoning)** also tries GPT-4o via GitHub Models right after Gemini.
-- Want a model on your own computer instead? See [LOCAL-MODELS.md](../LOCAL-MODELS.md) — honest guide to small local models (and why sub-250 MB ones can't do CA/CMA numericals).
 - **Photos attached** → Gemini (best vision) → OpenRouter Gemma 4 → Mistral Pixtral
 - **Coding / programming subjects** → OpenRouter Qwen3 Coder → Gemini → Groq → Cerebras
 - **Maths / Physics / Accounts (reasoning)** → Gemini → Cerebras → Groq → OpenRouter
