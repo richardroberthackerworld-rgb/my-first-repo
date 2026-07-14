@@ -1,4 +1,4 @@
-# Q Bank 🏛️
+# 7Q Bank 🏛️
 
 Pick a subject & topic — or snap photos of your textbook / notes — and generate a full **question bank**: long answer, short answer, very short answer, MCQs, fill in the blanks, and true/false — with an optional answer key. The sister app of [Doubt Snap](../doubtsnap/) (Doubt Snap answers *your* questions; Q Bank *asks you* questions).
 
