@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Q Bank 🏛️ — Generate question papers from any subject or photo</title>
-<meta name="description" content="Q Bank — select a subject & topic or upload photos of your textbook/notes, and generate a full question bank: long answers, short answers, MCQs, fill in the blanks, true/false — with answer key — for Class 1 to 10, Inter, Degree, CA/CMA, Jobs & Current Affairs, in English, Hindi or Telugu.">
+<title>7Q Bank 🏛️ — Generate question papers from any subject or photo</title>
+<meta name="description" content="7Q Bank — select a subject & topic or upload photos of your textbook/notes, and generate a full question bank: theory or practical, long answers, short answers, MCQs, fill in the blanks, true/false — with answer key — for Class 1 to 10, Inter, Degree, CA/CMA, Jobs & Current Affairs, in English, Hindi or Telugu.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700;900&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Serif+Devanagari:wght@400;600&family=Noto+Serif+Telugu:wght@400;600&display=swap" rel="stylesheet">
@@ -206,7 +206,7 @@ textarea#topicText::placeholder{color:var(--ink-faint);font-style:italic}
 }
 .type-card .cnt:focus{outline:none;border-color:var(--gold)}
 .type-card:not(.active) .cnt{opacity:.4}
-.opt-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:end}
+.opt-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;align-items:end}
 @media(max-width:640px){.opt-row{grid-template-columns:1fr}}
 .check-line{
   display:flex;align-items:center;gap:10px;background:var(--paper-2);
@@ -312,7 +312,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
 <body>
 
 <header class="cover">
-  <div class="brand">Q <span class="bank">Bank</span> <span style="font-size:.7em">🏛️</span></div>
+  <div class="brand">7Q <span class="bank">Bank</span> <span style="font-size:.7em">🏛️</span></div>
   <div class="tagline" data-i18n="tagline">Pick a subject & topic — or snap your textbook — and get a full question bank with answers.</div>
   <div class="tagline-sub" data-i18n="taglineSub">Class 1–10 · Intermediate (MPC · BiPC · CEC · MEC) · Degree · CA · CMA · US CMA · Jobs & Current Affairs</div>
 </header>
@@ -323,7 +323,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
     <button class="lang-tab" data-lang="hi">हिंदी</button>
     <button class="lang-tab" data-lang="te">తెలుగు</button>
   </div>
-  <div class="key-btn engine-badge" id="engineBadge" title="Keys are set in config.js">⚙️ …</div>
+  <div class="key-btn engine-badge" id="engineBadge">…</div>
 </div>
 
 <main class="book">
@@ -332,7 +332,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   <section class="page">
     <div class="chapter">
       <span class="orn">❧</span>
-      <h2><span data-i18n="ch1">Chapter I — What are you studying?</span></h2>
+      <h2><span data-i18n="ch1">What are you studying?</span></h2>
       <span class="line"></span>
     </div>
     <div class="level-grid" id="levelGrid"></div>
@@ -352,7 +352,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   <section class="page">
     <div class="chapter">
       <span class="orn">❧</span>
-      <h2><span data-i18n="ch2">Chapter II — Choose the topic (or snap it)</span></h2>
+      <h2><span data-i18n="ch2">Pick your topic — or snap your book</span></h2>
       <span class="line"></span>
     </div>
     <p class="hint" data-i18n="ch2hint">Type the chapter or topic name — or upload photos of your textbook pages / class notes, and questions will be made only from that material. You can do both.</p>
@@ -384,7 +384,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   <section class="page">
     <div class="chapter">
       <span class="orn">❧</span>
-      <h2><span data-i18n="ch3">Chapter III — Set your question paper</span></h2>
+      <h2><span data-i18n="ch3">Set your question paper</span></h2>
       <span class="line"></span>
     </div>
     <p class="hint" data-i18n="ch3hint">Tick the kinds of questions you want and how many of each. Mix as many types as you like.</p>
@@ -392,6 +392,10 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
     <div class="type-grid" id="typeGrid"></div>
 
     <div class="opt-row">
+      <div class="field" id="kindField">
+        <label data-i18n="lblQKind">Theory or Practical</label>
+        <select id="kindSel"></select>
+      </div>
       <div class="field">
         <label data-i18n="lblDifficulty">Difficulty</label>
         <select id="diffSel"></select>
@@ -413,7 +417,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   <section class="page" id="paperPage">
     <div class="chapter">
       <span class="orn">❧</span>
-      <h2><span data-i18n="ch4">Chapter IV — Your Question Bank</span></h2>
+      <h2><span data-i18n="ch4">Your Question Bank</span></h2>
       <span class="line"></span>
     </div>
     <div class="paper-sheet">
@@ -434,7 +438,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   <section class="page">
     <div class="chapter">
       <span class="orn">❧</span>
-      <h2><span data-i18n="ch5">Chapter V — My Paper Shelf</span></h2>
+      <h2><span data-i18n="ch5">My Paper Shelf</span></h2>
       <span class="line"></span>
     </div>
     <p class="hint" data-i18n="ch5hint">Your last 20 generated question papers, saved on this device.</p>
@@ -445,7 +449,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
 
 <footer>
   <span class="fleuron">❦</span>
-  <span data-i18n="footer">Q Bank — practice makes rank. Free forever, powered by free AI models.</span>
+  <span data-i18n="footer">Q Bank — practice makes rank. Free forever, from 7By.in.</span>
 </footer>
 
 <script src="config.js"></script>
@@ -454,19 +458,28 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
 const LEVELS = [
   { id:'school',  em:'🏫', name:{en:'School (1st–10th)', hi:'स्कूल (कक्षा 1–10)', te:'స్కూల్ (1–10 తరగతి)'},
     courses:['Class 1','Class 2','Class 3','Class 4','Class 5','Class 6','Class 7','Class 8','Class 9','Class 10'],
-    subjects:['Mathematics','Science','Physics','Chemistry','Biology','Social Studies','English','Hindi','Telugu','EVS','Computer Science','General Knowledge'] },
+    subjects:['Mathematics','Science','Physics','Chemistry','Biology','Social Studies','English','Hindi','Telugu','Sanskrit','Urdu','EVS','Computer Science','General Knowledge','Moral Science','Physical Education'] },
   { id:'inter', em:'🎓', name:{en:'Intermediate (11th–12th)', hi:'इंटरमीडिएट (11वीं–12वीं)', te:'ఇంటర్మీడియట్ (11–12)'},
-    courses:['MPC (Maths, Physics, Chemistry)','BiPC (Biology, Physics, Chemistry)','CEC (Civics, Economics, Commerce)','MEC (Maths, Economics, Commerce)','HEC (History, Economics, Civics)','MBiPC','Vocational'],
-    subjects:['Mathematics','Physics','Chemistry','Botany','Zoology','Commerce','Accountancy','Economics','Civics','History','English','Sanskrit','Computer Science'] },
+    courses:['MPC (Maths, Physics, Chemistry)','BiPC (Biology, Physics, Chemistry)','CEC (Civics, Economics, Commerce)','MEC (Maths, Economics, Commerce)','HEC (History, Economics, Civics)','MBiPC','Vocational (M&AT / CET / Others)'],
+    subjects:['Mathematics','Physics','Chemistry','Botany','Zoology','Commerce','Accountancy','Economics','Civics','History','Geography','Statistics','English','Sanskrit','Telugu','Hindi','Computer Science'] },
   { id:'degree', em:'🏛️', name:{en:'Degree / UG & PG', hi:'डिग्री / यूजी–पीजी', te:'డిగ్రీ / యూజీ–పీజీ'},
-    courses:['B.Sc','B.Com','B.A','B.Tech / B.E','BBA','BCA','B.Pharmacy','LLB','MBBS / BDS','Nursing / Paramedical','M.Sc','M.Com','M.A','MBA','MCA','M.Tech','Ph.D / Research'],
-    subjects:['Mathematics','Physics','Chemistry','Biology / Life Sciences','Computer Science / Programming','Electronics','Mechanical','Civil','Electrical','Accountancy','Business & Management','Economics','Statistics','Law','Medicine / Anatomy','Pharmacy','English Literature','Psychology','Political Science','History'] },
+    courses:['B.Com (General)','B.Com (Computers)','B.Com (Taxation)','B.Com (Honours)','B.Com (Banking & Insurance)',
+      'B.Sc (MPC)','B.Sc (MPCs — Computer Science)','B.Sc (MSCs — Statistics)','B.Sc (BZC — Life Sciences)','B.Sc (Biotechnology)','B.Sc (Microbiology)','B.Sc (Agriculture)','B.Sc (Nursing)',
+      'B.A (HEP)','B.A (Economics)','B.A (Psychology)','B.A (Journalism)','B.A (Languages / Literature)',
+      'B.Tech (CSE)','B.Tech (IT / AI & ML / Data Science)','B.Tech (ECE)','B.Tech (EEE)','B.Tech (Mechanical)','B.Tech (Civil)',
+      'BBA','BBA (Business Analytics)','BCA','B.Pharmacy','LLB / BA LLB','MBBS','BDS','BHMS / BAMS','BPT (Physiotherapy)','B.Ed','B.Arch','Hotel Management (BHM)',
+      'M.Sc','M.Com','M.A','MBA (Finance)','MBA (Marketing)','MBA (HR)','MBA (Business Analytics)','MCA','M.Tech','LLM','MD / MS','Ph.D / Research'],
+    subjects:['Mathematics','Physics','Chemistry','Statistics','Biology / Life Sciences','Microbiology','Biochemistry','Biotechnology','Agriculture','Nursing','Anatomy / Physiology','Pharmacy','Physiotherapy',
+      'Financial Accounting','Corporate Accounting','Cost Accounting','Management Accounting','Auditing','Income Tax','GST','Banking & Insurance','Business Law','Business Statistics','Business Management','Marketing','Human Resource Management','Financial Management','Entrepreneurship',
+      'Economics','Econometrics','Computer Science / Programming','C / C++ / Java / Python','Data Structures & Algorithms','DBMS','Operating Systems','Computer Networks','Web Technologies','Software Engineering','AI & Machine Learning','Data Science','Cloud Computing','Cyber Security',
+      'Electronics','Electrical','Mechanical','Civil','Architecture',
+      'Law','Medicine','Psychology','Sociology','Political Science','Public Administration','History','Geography','Journalism','English Literature','Telugu / Hindi Literature','Education / Pedagogy','Philosophy','Fine Arts','Hotel Management','Physical Education'] },
   { id:'prof', em:'💼', name:{en:'CA · CMA · Professional', hi:'सीए · सीएमए · प्रोफेशनल', te:'సీఏ · సీఎంఏ · ప్రొఫెషనల్'},
-    courses:['CA Foundation','CA Intermediate','CA Final','CMA (India) Foundation','CMA (India) Inter','CMA (India) Final','US CMA Part 1','US CMA Part 2','CS Executive','CS Professional','ACCA','CFA','CPA'],
-    subjects:['Accounting','Advanced Accounting','Cost & Management Accounting','Financial Management','Taxation (Direct)','Taxation (Indirect / GST)','Auditing','Corporate & Business Law','Economics','Strategic Management','Financial Reporting','Business Mathematics & Statistics'] },
+    courses:['CA Foundation','CA Intermediate','CA Final','CMA (India) Foundation','CMA (India) Intermediate','CMA (India) Final','US CMA Part 1','US CMA Part 2','US CPA','CS Executive','CS Professional','ACCA','CFA Level I','CFA Level II','CFA Level III','FRM Part I','FRM Part II','EA (Enrolled Agent)','CIA (Internal Auditor)'],
+    subjects:['Accounting','Advanced Accounting','Financial Reporting','Cost & Management Accounting','Financial Management','Strategic Financial Management','Taxation (Direct)','Taxation (Indirect / GST)','International Taxation','Auditing & Assurance','Internal Audit & Controls','Corporate & Business Law','Economics','Strategic Management','Business Mathematics & Statistics','Financial Planning & Analysis','Performance Management','Investment & Portfolio Management','Risk Management','Ethics & Professional Standards','Information Systems & Technology'] },
   { id:'jobs', em:'📋', name:{en:'Jobs & Competitive Exams', hi:'नौकरी और प्रतियोगी परीक्षा', te:'ఉద్యోగాలు & పోటీ పరీక్షలు'},
-    courses:['UPSC Civil Services','APPSC / TSPSC Groups','SSC (CGL / CHSL / MTS)','Banking (IBPS / SBI / RBI)','Railways (RRB)','Police / SI / Constable','Defence (NDA / CDS / Agniveer)','Teaching (TET / DSC / CTET)','JEE / NEET / EAMCET','GATE','CUET','Other Govt Exams'],
-    subjects:['Quantitative Aptitude','Reasoning','General Studies','Indian Polity','Indian Economy','Geography','History','Science & Technology','English Language','Current Affairs','Computer Awareness','Interview / Descriptive'] },
+    courses:['UPSC Civil Services','APPSC / TSPSC Groups','Other State PSCs','SSC (CGL / CHSL / MTS / GD)','Banking (IBPS / SBI / RBI)','Insurance (LIC / NIACL)','Railways (RRB NTPC / ALP / Group D)','Police / SI / Constable','Defence (NDA / CDS / AFCAT / Agniveer)','Teaching (TET / DSC / CTET)','UGC NET / SET','Judiciary / CLAT','CAT / MAT (MBA Entrance)','JEE / NEET / EAMCET','GATE','CUET','Other Govt Exams'],
+    subjects:['Quantitative Aptitude','Reasoning','Data Interpretation','General Studies','Indian Polity','Indian Economy','Geography','History','Science & Technology','Static GK','Banking Awareness','Insurance Awareness','Teaching Aptitude','Legal Aptitude','English Language','Telugu / Regional Language','Current Affairs','Computer Awareness','Interview / Descriptive'] },
   { id:'current', em:'📰', name:{en:'Current Affairs & GK', hi:'करेंट अफेयर्स और जीके', te:'కరెంట్ అఫైర్స్ & జీకే'},
     courses:['Daily Current Affairs','Monthly Current Affairs','Static GK','Sports','Awards & Honours','Government Schemes','International Affairs','Economy & Budget'],
     subjects:['National','International','Economy','Science & Tech','Sports','Awards','Appointments','Schemes & Policies','Environment','Defence'] },
@@ -496,23 +509,25 @@ const DEFAULT_TYPES = ['mcq','short','long'];
 const I18N = {
   en:{ tagline:'Pick a subject & topic — or snap your textbook — and get a full question bank with answers.',
     taglineSub:'Class 1–10 · Intermediate (MPC · BiPC · CEC · MEC) · Degree · CA · CMA · US CMA · Jobs & Current Affairs',
-    ch1:'Chapter I — What are you studying?', lblCourse:'Class / Course', lblSubject:'Subject',
-    ch2:'Chapter II — Choose the topic (or snap it)',
+    ch1:'What are you studying?', lblCourse:'Class / Course', lblSubject:'Subject',
+    ch2:'Pick your topic — or snap your book',
     ch2hint:'Type the chapter or topic name — or upload photos of your textbook pages / class notes, and questions will be made only from that material. You can do both.',
     topicPlaceholder:'Write the topic or chapter here… e.g. “Photosynthesis”, “Quadratic Equations”, or “Chapter 4 — The Mughal Empire”',
     pbTitle:'Snap or upload textbook / notes', pbSub:'up to 5 photos · tap here · drag & drop · or paste (Ctrl+V)',
     camera:'Camera', gallery:'Gallery',
-    ch3:'Chapter III — Set your question paper',
+    ch3:'Set your question paper',
     ch3hint:'Tick the kinds of questions you want and how many of each. Mix as many types as you like.',
-    lblDifficulty:'Difficulty', diffEasy:'Easy', diffMedium:'Medium', diffHard:'Hard 🧠 (strongest AI)', diffMixed:'Mixed (easy → hard)',
+    lblQKind:'Theory or Practical', kindMixed:'Mixed — theory + practical', kindTheory:'Theory (definitions, explanations)', kindPractical:'Practical (numericals, problems, sums)',
+    lblDifficulty:'Difficulty', diffEasy:'Easy', diffMedium:'Medium', diffHard:'Hard (extra tough)', diffMixed:'Mixed (easy → hard)',
     withAnswers:'Include answer key (answers + explanations)',
     generate:'Generate question bank', thinking:'Your examiner is setting the paper…',
-    ch4:'Chapter IV — Your Question Bank',
+    ch4:'Your Question Bank',
     showKey:'Show answer key', hideKey:'Hide answer key',
     copy:'Copy paper', print:'Print / Save PDF', more:'More questions (same topic)', newPaper:'New paper',
-    ch5:'Chapter V — My Paper Shelf', ch5hint:'Your last 20 generated question papers, saved on this device.',
+    ch5:'My Paper Shelf', ch5hint:'Your last 20 generated question papers, saved on this device.',
     emptyNote:'No papers generated yet. Your question banks will be saved here like papers on a shelf.',
-    footer:'Q Bank — practice makes rank. Free forever, powered by free AI models.',
+    footer:'7Q Bank — practice makes rank. Free forever, from 7By.in.',
+    siteChip:'Free question papers for every exam',
     noEngine:'No AI key set — add one in config.js', engines:'Engines',
     errNoEngine:'No AI key found. Please add at least one free key in config.js (e.g. Gemini).',
     errNoVision:'Photo material needs a vision key. Add a Gemini or OpenRouter key in config.js.',
@@ -524,23 +539,25 @@ const I18N = {
     metaGenerated:'Generated', imgAttached:'photos attached', generatedBy:'Set by', photoTopic:'(from photos)' },
   hi:{ tagline:'विषय और टॉपिक चुनें — या किताब की फोटो खींचें — और उत्तरों के साथ पूरा प्रश्न बैंक पाएँ।',
     taglineSub:'कक्षा 1–10 · इंटर (MPC · BiPC · CEC · MEC) · डिग्री · CA · CMA · US CMA · नौकरी और करेंट अफेयर्स',
-    ch1:'अध्याय I — आप क्या पढ़ रहे हैं?', lblCourse:'कक्षा / कोर्स', lblSubject:'विषय',
-    ch2:'अध्याय II — टॉपिक चुनें (या फोटो खींचें)',
+    ch1:'आप क्या पढ़ रहे हैं?', lblCourse:'कक्षा / कोर्स', lblSubject:'विषय',
+    ch2:'टॉपिक चुनें — या किताब की फोटो लें',
     ch2hint:'अध्याय या टॉपिक का नाम लिखें — या किताब के पन्नों / नोट्स की फोटो अपलोड करें, प्रश्न उसी सामग्री से बनेंगे। दोनों भी कर सकते हैं।',
     topicPlaceholder:'टॉपिक या अध्याय यहाँ लिखें… जैसे “प्रकाश संश्लेषण”, “द्विघात समीकरण”, या “अध्याय 4 — मुगल साम्राज्य”',
     pbTitle:'किताब / नोट्स की फोटो खींचें या अपलोड करें', pbSub:'अधिकतम 5 फोटो · यहाँ टैप करें · ड्रैग-ड्रॉप · या पेस्ट (Ctrl+V)',
     camera:'कैमरा', gallery:'गैलरी',
-    ch3:'अध्याय III — अपना प्रश्न पत्र सेट करें',
+    ch3:'अपना प्रश्न पत्र सेट करें',
     ch3hint:'जिस प्रकार के प्रश्न चाहिए उन्हें टिक करें और संख्या चुनें। जितने चाहें उतने प्रकार मिलाएँ।',
-    lblDifficulty:'कठिनाई', diffEasy:'आसान', diffMedium:'मध्यम', diffHard:'कठिन 🧠 (सबसे शक्तिशाली AI)', diffMixed:'मिश्रित (आसान → कठिन)',
+    lblQKind:'थ्योरी या प्रैक्टिकल', kindMixed:'मिश्रित — थ्योरी + प्रैक्टिकल', kindTheory:'थ्योरी (परिभाषाएँ, व्याख्याएँ)', kindPractical:'प्रैक्टिकल (न्यूमेरिकल, समस्याएँ)',
+    lblDifficulty:'कठिनाई', diffEasy:'आसान', diffMedium:'मध्यम', diffHard:'कठिन (अतिरिक्त कठिन)', diffMixed:'मिश्रित (आसान → कठिन)',
     withAnswers:'उत्तर कुंजी शामिल करें (उत्तर + व्याख्या)',
     generate:'प्रश्न बैंक बनाएँ', thinking:'आपके परीक्षक प्रश्न पत्र सेट कर रहे हैं…',
-    ch4:'अध्याय IV — आपका प्रश्न बैंक',
+    ch4:'आपका प्रश्न बैंक',
     showKey:'उत्तर कुंजी दिखाएँ', hideKey:'उत्तर कुंजी छिपाएँ',
     copy:'पेपर कॉपी करें', print:'प्रिंट / PDF सेव करें', more:'और प्रश्न (इसी टॉपिक पर)', newPaper:'नया पेपर',
-    ch5:'अध्याय V — मेरी पेपर शेल्फ', ch5hint:'आपके पिछले 20 प्रश्न पत्र, इसी डिवाइस पर सेव।',
+    ch5:'मेरी पेपर शेल्फ', ch5hint:'आपके पिछले 20 प्रश्न पत्र, इसी डिवाइस पर सेव।',
     emptyNote:'अभी तक कोई पेपर नहीं बना। आपके प्रश्न बैंक यहाँ शेल्फ पर पेपर की तरह सेव होंगे।',
-    footer:'Q Bank — अभ्यास से ही रैंक बनती है। हमेशा फ्री, फ्री AI मॉडल द्वारा संचालित।',
+    footer:'7Q Bank — अभ्यास से ही रैंक बनती है। हमेशा फ्री, 7By.in की ओर से।',
+    siteChip:'हर परीक्षा के लिए फ्री प्रश्न पत्र',
     noEngine:'कोई AI कुंजी सेट नहीं — config.js में जोड़ें', engines:'इंजन',
     errNoEngine:'कोई AI कुंजी नहीं मिली। कृपया config.js में कम से कम एक फ्री कुंजी जोड़ें (जैसे Gemini)।',
     errNoVision:'फोटो सामग्री के लिए विज़न कुंजी चाहिए। config.js में Gemini या OpenRouter कुंजी जोड़ें।',
@@ -552,23 +569,25 @@ const I18N = {
     metaGenerated:'बनाया गया', imgAttached:'फोटो संलग्न', generatedBy:'सेट किया', photoTopic:'(फोटो से)' },
   te:{ tagline:'సబ్జెక్టు & టాపిక్ ఎంచుకోండి — లేదా పుస్తకం ఫోటో తీయండి — సమాధానాలతో పూర్తి క్వశ్చన్ బ్యాంక్ పొందండి.',
     taglineSub:'1–10 తరగతి · ఇంటర్ (MPC · BiPC · CEC · MEC) · డిగ్రీ · CA · CMA · US CMA · ఉద్యోగాలు & కరెంట్ అఫైర్స్',
-    ch1:'అధ్యాయం I — మీరు ఏమి చదువుతున్నారు?', lblCourse:'తరగతి / కోర్సు', lblSubject:'సబ్జెక్టు',
-    ch2:'అధ్యాయం II — టాపిక్ ఎంచుకోండి (లేదా ఫోటో తీయండి)',
+    ch1:'మీరు ఏమి చదువుతున్నారు?', lblCourse:'తరగతి / కోర్సు', lblSubject:'సబ్జెక్టు',
+    ch2:'టాపిక్ ఎంచుకోండి — లేదా పుస్తకం ఫోటో తీయండి',
     ch2hint:'చాప్టర్ లేదా టాపిక్ పేరు టైప్ చేయండి — లేదా పుస్తకం పేజీలు / నోట్స్ ఫోటోలు అప్‌లోడ్ చేయండి, ప్రశ్నలు ఆ మెటీరియల్ నుండే వస్తాయి. రెండూ చేయవచ్చు.',
     topicPlaceholder:'టాపిక్ లేదా చాప్టర్ ఇక్కడ రాయండి… ఉదా. “కిరణజన్య సంయోగక్రియ”, “వర్గ సమీకరణాలు”, లేదా “చాప్టర్ 4 — మొఘల్ సామ్రాజ్యం”',
     pbTitle:'పుస్తకం / నోట్స్ ఫోటో తీయండి లేదా అప్‌లోడ్ చేయండి', pbSub:'గరిష్టంగా 5 ఫోటోలు · ఇక్కడ నొక్కండి · డ్రాగ్-డ్రాప్ · లేదా పేస్ట్ (Ctrl+V)',
     camera:'కెమెరా', gallery:'గ్యాలరీ',
-    ch3:'అధ్యాయం III — మీ ప్రశ్నాపత్రం సెట్ చేయండి',
+    ch3:'మీ ప్రశ్నాపత్రం సెట్ చేయండి',
     ch3hint:'కావలసిన ప్రశ్న రకాలను టిక్ చేసి, ఎన్ని కావాలో ఎంచుకోండి. ఎన్ని రకాలైనా కలపవచ్చు.',
-    lblDifficulty:'కఠినత', diffEasy:'సులభం', diffMedium:'మధ్యస్థం', diffHard:'కఠినం 🧠 (అత్యంత శక్తివంతమైన AI)', diffMixed:'మిశ్రమం (సులభం → కఠినం)',
+    lblQKind:'థియరీ లేదా ప్రాక్టికల్', kindMixed:'మిశ్రమం — థియరీ + ప్రాక్టికల్', kindTheory:'థియరీ (నిర్వచనాలు, వివరణలు)', kindPractical:'ప్రాక్టికల్ (లెక్కలు, సమస్యలు)',
+    lblDifficulty:'కఠినత', diffEasy:'సులభం', diffMedium:'మధ్యస్థం', diffHard:'కఠినం (చాలా కష్టం)', diffMixed:'మిశ్రమం (సులభం → కఠినం)',
     withAnswers:'ఆన్సర్ కీ చేర్చండి (సమాధానాలు + వివరణ)',
     generate:'క్వశ్చన్ బ్యాంక్ తయారు చేయండి', thinking:'మీ ఎగ్జామినర్ పేపర్ సెట్ చేస్తున్నారు…',
-    ch4:'అధ్యాయం IV — మీ క్వశ్చన్ బ్యాంక్',
+    ch4:'మీ క్వశ్చన్ బ్యాంక్',
     showKey:'ఆన్సర్ కీ చూపించండి', hideKey:'ఆన్సర్ కీ దాచండి',
     copy:'పేపర్ కాపీ', print:'ప్రింట్ / PDF సేవ్', more:'ఇంకా ప్రశ్నలు (ఇదే టాపిక్)', newPaper:'కొత్త పేపర్',
-    ch5:'అధ్యాయం V — నా పేపర్ షెల్ఫ్', ch5hint:'మీ చివరి 20 ప్రశ్నాపత్రాలు, ఈ డివైస్‌లో సేవ్ అవుతాయి.',
+    ch5:'నా పేపర్ షెల్ఫ్', ch5hint:'మీ చివరి 20 ప్రశ్నాపత్రాలు, ఈ డివైస్‌లో సేవ్ అవుతాయి.',
     emptyNote:'ఇంకా పేపర్లు తయారు చేయలేదు. మీ క్వశ్చన్ బ్యాంకులు షెల్ఫ్‌లో పేపర్లలా ఇక్కడ సేవ్ అవుతాయి.',
-    footer:'Q Bank — ప్రాక్టీస్ చేస్తేనే ర్యాంక్. ఎప్పటికీ ఫ్రీ, ఫ్రీ AI మోడల్స్ తో నడుస్తుంది.',
+    footer:'7Q Bank — ప్రాక్టీస్ చేస్తేనే ర్యాంక్. ఎప్పటికీ ఫ్రీ, 7By.in నుండి.',
+    siteChip:'ప్రతి పరీక్షకూ ఫ్రీ ప్రశ్నాపత్రాలు',
     noEngine:'AI కీ సెట్ చేయలేదు — config.js లో జోడించండి', engines:'ఇంజన్లు',
     errNoEngine:'AI కీ కనబడలేదు. దయచేసి config.js లో కనీసం ఒక ఫ్రీ కీ జోడించండి (ఉదా. Gemini).',
     errNoVision:'ఫోటో మెటీరియల్ కు విజన్ కీ అవసరం. config.js లో Gemini లేదా OpenRouter కీ జోడించండి.',
@@ -613,7 +632,7 @@ function applyLang(){
   document.querySelectorAll('[data-i18n-ph]').forEach(el=>{ el.placeholder = t(el.dataset.i18nPh); });
   document.querySelectorAll('.lang-tab').forEach(b=>b.classList.toggle('active', b.dataset.lang===state.lang));
   document.documentElement.lang = state.lang;
-  renderLevels(); renderTypes(); renderDiff(); renderShelf(); updateEngineBadge(); updateKeyToggleLabel();
+  renderLevels(); renderTypes(); renderDiff(); renderKind(); renderShelf(); updateEngineBadge(); updateKeyToggleLabel();
 }
 $('langTabs').addEventListener('click', e=>{
   const b = e.target.closest('.lang-tab'); if(!b) return;
@@ -640,6 +659,8 @@ function fillSelects(){
   ss.innerHTML = lv.subjects.map(s=>`<option>${s}</option>`).join('');
   if(lv.courses.includes(prevC)) cs.value = prevC;
   if(lv.subjects.includes(prevS)) ss.value = prevS;
+  ss.onchange = renderKind;   // theory-only subjects hide the Theory/Practical picker
+  renderKind();
 }
 
 /* ================= UI: question types & difficulty ================= */
@@ -670,6 +691,26 @@ function renderDiff(){
   sel.innerHTML = DIFFS.map(d=>`<option value="${d}">${t(DIFF_LABEL[d])}</option>`).join('');
   sel.value = DIFFS.includes(prev) ? prev : 'mixed';
   sel.onchange = ()=> localStorage.setItem('qb_diff', sel.value);
+}
+const KINDS = ['mixed','theory','practical'];
+const KIND_LABEL = {mixed:'kindMixed', theory:'kindTheory', practical:'kindPractical'};
+// Subjects where practical/numerical questions make sense. Theory-only subjects
+// (History, English, Civics…) hide the selector entirely and always get theory papers.
+const PRACTICAL_RX = /math|statist|econometr|physic|chemis|\bscience\b|account|financ|cost|tax|gst|audit|econom|quantit|reasoning|data interpretation|comput|program|coding|c \/|java|python|data structure|dbms|operating|network|web|software|machine|data science|cloud|cyber|electronic|electrical|mechanical|civil|architect|banking|insurance|risk|invest|portfolio|performance|planning|pharma|statistics/i;
+const practicalOk = () => PRACTICAL_RX.test($('subjectSel').value||'');
+function renderKind(){
+  const sel = $('kindSel');
+  if(!practicalOk()){
+    $('kindField').style.display = 'none';
+    sel.innerHTML = `<option value="theory">${t(KIND_LABEL.theory)}</option>`;
+    sel.value = 'theory';                       // theory-only subject → always a theory paper
+    return;
+  }
+  $('kindField').style.display = '';
+  const prev = localStorage.getItem('qb_kind') || 'mixed';
+  sel.innerHTML = KINDS.map(k=>`<option value="${k}">${t(KIND_LABEL[k])}</option>`).join('');
+  sel.value = KINDS.includes(prev) ? prev : 'mixed';
+  sel.onchange = ()=> localStorage.setItem('qb_kind', sel.value);
 }
 
 /* ================= Photo handling (multiple) ================= */
@@ -767,9 +808,10 @@ function planRoute(hasImage){
   const cat = categorize();
   const out = [];
   const add = (id, models) => { if(active(id) && models) models.forEach(m=>out.push({id, model:m})); };
-  // Hard papers OR CA · CMA · Professional level → strongest reasoning models first, normal chain as fallback.
-  // Typical CA/CMA numericals need real step-by-step reasoning even at easy/medium difficulty.
-  if($('diffSel').value === 'hard' || state.level === 'prof'){
+  // Hard papers, PRACTICAL (numerical) papers, or CA · CMA · Professional level →
+  // strongest reasoning models first, normal chain as fallback. Numericals need
+  // real step-by-step reasoning so the answer key is actually correct.
+  if($('diffSel').value === 'hard' || $('kindSel').value === 'practical' || state.level === 'prof'){
     add('gemini', MODEL_MAP.gemini.deep);                    // 2.5 Pro handles text AND photos
     if(!hasImage){
       add('github', MODEL_MAP.github.deep);                  // DeepSeek-R1: strongest free step-by-step numericals solver
@@ -803,9 +845,12 @@ function planRoute(hasImage){
   }
   return out;
 }
+// Engine details are owner-only: add ?owner=1 (or #owner) to the URL to see real engine status.
+const isOwnerView = () => /[?#&](owner|admin)\b/.test(location.search + location.hash);
 function updateEngineBadge(){
   const on = Object.keys(CFG).filter(active);
   const el = $('engineBadge');
+  if(!isOwnerView()){ el.textContent = '✨ ' + t('siteChip'); el.classList.remove('warn'); el.classList.add('ok'); return; }
   if(!on.length){ el.textContent = '⚙️ ' + t('noEngine'); el.classList.add('warn'); el.classList.remove('ok'); }
   else { el.textContent = '⚙️ ' + t('engines') + ': ' + on.map(id=>PROV_NAME[id]).join(' · '); el.classList.add('ok'); el.classList.remove('warn'); }
 }
@@ -875,6 +920,11 @@ function buildSystemPrompt(){
     hard:'HARD — challenging questions requiring deep understanding, multi-step reasoning, or application.',
     mixed:'MIXED — start easy and get progressively harder within each section.'
   }[diff];
+  const kindText = {
+    theory:'THEORY questions ONLY — definitions, explanations, distinctions ("differentiate between"), reasons, features, advantages/disadvantages, short notes. Do NOT include numerical problems or calculations.',
+    practical:'PRACTICAL questions ONLY — numerical problems, calculations, sums and worked problems with realistic figures (amounts, quantities, rates, dates). Every question must require working/computation. For MCQs, make them calculation-based with numeric options. Do NOT include pure theory questions.',
+    mixed:'A healthy MIX of theory and practical/numerical questions, in whatever proportion suits the subject and topic.'
+  }[$('kindSel').value] || '';
   const sections = selectedTypes().map((qt,i)=>
     `   ${i+1}. "## ${qt.em} <${qt.name.en} heading in the student's language>" — EXACTLY ${state.types[qt.id].count} questions, numbered 1., 2., 3.… ${qt.instr}`
   ).join('\n');
@@ -889,6 +939,7 @@ STRICT RULES:
 1. Write the ENTIRE paper in ${LANG_NAME[state.lang]}. Every heading, question, option and answer must be in ${LANG_NAME[state.lang]}. (Keep universal symbols, formulas, numbers and technical terms like H2O, GDP as-is.)
 2. If photos of textbook pages or notes are attached, READ them carefully (handwritten or printed) and generate questions ONLY from that material — do not add outside topics. If a topic is also typed, use it to focus which part of the photos to use.
 3. Every question must be at the level of a ${$('courseSel').value} student and syllabus-appropriate. Difficulty: ${diffText}
+   Question nature: ${kindText}
 4. Structure the paper in Markdown EXACTLY like this:
    - Start with "# 📋 <a short paper title: subject — topic>"
    - Then one section per requested type, in this order:
@@ -958,7 +1009,7 @@ function showPaper(md, meta){
     `<span>📚 ${(lv.name[state.lang]||lv.name.en)}</span>` +
     `<span>✒️ ${$('courseSel').value} · ${$('subjectSel').value}</span>` +
     (state.images.length?`<span>📷 ${state.images.length} ${t('imgAttached')}</span>`:'') +
-    (state.lastVia?`<span class="via">🤖 ${t('generatedBy')}: ${state.lastVia}</span>`:'') +
+    (isOwnerView() && state.lastVia?`<span class="via">🤖 ${escapeHtml(state.lastVia)}</span>`:'') +
     `<span>🕰️ ${new Date().toLocaleString()}</span>`;
   const { q, key: keyMd } = splitPaper(md);
   $('paperBody').innerHTML = mdToHtml(q);
@@ -1020,7 +1071,7 @@ function renderShelf(){
       state.lastTopicIsPhoto = Object.values(I18N).some(l=>l.photoTopic===n.q);
       state.seenQuestions = n.a.split('\n').filter(l=>/^\s*\d+[.)]/.test(l)).slice(0,80).join('\n');
       const meta = `<span>📚 ${escapeHtml(String(n.meta||''))}</span>` +
-        (n.via?`<span class="via">🤖 ${t('generatedBy')}: ${escapeHtml(String(n.via))}</span>`:'') +
+        (isOwnerView() && n.via?`<span class="via">🤖 ${escapeHtml(String(n.via))}</span>`:'') +
         `<span>🕰️ ${new Date(n.when).toLocaleString()}</span>`;
       showPaper(n.a, meta);
     };

@@ -1,4 +1,4 @@
-# Q Bank 🏛️
+# 7Q Bank 🏛️
 
 Pick a subject & topic — or snap photos of your textbook / notes — and generate a full **question bank**: long answer, short answer, very short answer, MCQs, fill in the blanks, and true/false — with an optional answer key. The sister app of [Doubt Snap](../doubtsnap/) (Doubt Snap answers *your* questions; Q Bank *asks you* questions).
 
@@ -6,6 +6,7 @@ Pick a subject & topic — or snap photos of your textbook / notes — and gener
 - 📷 **Photo material** — upload up to **5 photos** of textbook pages or class notes (camera, gallery, drag & drop, paste Ctrl+V). Questions are generated **only from that material**. Handwritten and printed pages both work.
 - ⌨️ **Or just type a topic** — e.g. "Photosynthesis", "Quadratic Equations", "Chapter 4 — The Mughal Empire". You can combine topic + photos.
 - 📝 **6 question types, mix freely** — MCQ (4 options), Very Short (1–2 lines), Short (3–5 lines), Long Answer / Essay, Fill in the Blanks, True/False — each with its own count (1–25).
+- 📐 **Theory or Practical** — choose Theory (definitions, explanations, distinctions), Practical (numericals, sums, worked problems — automatically uses the strongest reasoning models so the answer key is correct), or Mixed.
 - 🎚️ **Difficulty** — Easy, Medium, Hard, or Mixed (easy → hard within each section).
 - 🧠 **Hard mode = strongest AI** — Hard difficulty automatically routes through the most powerful free reasoning models: Gemini 2.5 Pro (~50 req/day free, also reads photos), then OpenRouter's free heavyweights (NVIDIA Nemotron 3 Ultra 555B, Tencent Hy3 295B, OpenAI gpt-oss-120b), falling back to the normal chain if they're busy.
 - 🔑 **Answer key toggle** — generate with answers + explanations, but they stay hidden until you press "Show answer key". Practice first, check later.
@@ -32,7 +33,7 @@ Open **`config.js`** and paste your free keys between the quotes. If you already
 
 **Minimum recommended:** add **Gemini** (for photos) + **Groq** (for fast text).
 
-The top-right ⚙️ badge shows which engines are active. All keys stay in `config.js` on your own site — the app calls the providers directly from the browser.
+Visitors see a site tagline in the top-right. **Owner view:** open the site with `?owner=1` (e.g. `https://qbank.7by.in/?owner=1`) to see the real engine status badge and which model generated each paper. All keys stay in `config.js` on your own site — the app calls the providers directly from the browser.
 
 ## How the app chooses a model (automatic)
 - **Hard difficulty, or CA · CMA · Professional level (automatic)** → Gemini 2.5 Pro → DeepSeek-R1 + Phi-4-Reasoning (GitHub Models) → Nemotron 3 Ultra 555B → Hy3 295B → gpt-oss-120b → then the normal chain below

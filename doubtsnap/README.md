@@ -28,7 +28,7 @@ Open **`config.js`** and paste your free keys between the quotes. Add as many as
 
 **Minimum recommended:** add **Gemini** (for photos) + **Groq** (for fast text).
 
-The top-right ⚙️ badge shows which engines are active. All keys stay in `config.js` on your own site — the app calls the providers directly from the browser.
+Visitors see a site tagline in the top-right. **Owner view:** open the site with `?owner=1` to see the real engine status badge and which model answered each doubt. All keys stay in `config.js` on your own site — the app calls the providers directly from the browser.
 
 ## How the app chooses a model (fully automatic)
 - **🧠 Big question detected** (calculations, proofs, multi-part numericals, journal entries, or CA · CMA · Professional level) → Gemini 2.5 Pro → DeepSeek-R1 + Phi-4-Reasoning (GitHub Models) → Nemotron 3 Ultra 555B → Hy3 295B → gpt-oss-120b → then the normal chain below

@@ -308,7 +308,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
     <button class="lang-tab" data-lang="hi">हिंदी</button>
     <button class="lang-tab" data-lang="te">తెలుగు</button>
   </div>
-  <div class="key-btn engine-badge" id="engineBadge" title="Keys are set in config.js">⚙️ …</div>
+  <div class="key-btn engine-badge" id="engineBadge">…</div>
 </div>
 
 <main class="book">
@@ -317,7 +317,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   <section class="page">
     <div class="chapter">
       <span class="orn">❧</span>
-      <h2><span data-i18n="ch1">Chapter I — What are you studying?</span></h2>
+      <h2><span data-i18n="ch1">What are you studying?</span></h2>
       <span class="line"></span>
     </div>
     <div class="level-grid" id="levelGrid"></div>
@@ -337,7 +337,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   <section class="page">
     <div class="chapter">
       <span class="orn">❧</span>
-      <h2><span data-i18n="ch2">Chapter II — Ask your doubt</span></h2>
+      <h2><span data-i18n="ch2">Ask your doubt</span></h2>
       <span class="line"></span>
     </div>
     <p class="hint" data-i18n="ch2hint">Type your question, snap a photo of it, or do both. Handwritten and printed questions both work.</p>
@@ -379,7 +379,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   <section class="page" id="answerPage">
     <div class="chapter">
       <span class="orn">❧</span>
-      <h2><span data-i18n="ch3">Chapter III — The Answer</span></h2>
+      <h2><span data-i18n="ch3">The Answer</span></h2>
       <span class="line"></span>
     </div>
     <div class="answer-sheet">
@@ -397,7 +397,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   <section class="page">
     <div class="chapter">
       <span class="orn">❧</span>
-      <h2><span data-i18n="ch4">Chapter IV — My Notebook</span></h2>
+      <h2><span data-i18n="ch4">My Notebook</span></h2>
       <span class="line"></span>
     </div>
     <p class="hint" data-i18n="ch4hint">Your last 20 solved doubts, saved on this device.</p>
@@ -408,7 +408,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
 
 <footer>
   <span class="fleuron">❦</span>
-  <span data-i18n="footer">Doubt Snap — every doubt deserves a good answer. Free forever, powered by Google Gemini.</span>
+  <span data-i18n="footer">Doubt Snap — every doubt deserves a good answer. Free forever, from 7By.in.</span>
 </footer>
 
 <script src="config.js"></script>
@@ -417,19 +417,28 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
 const LEVELS = [
   { id:'school',  em:'🏫', name:{en:'School (1st–10th)', hi:'स्कूल (कक्षा 1–10)', te:'స్కూల్ (1–10 తరగతి)'},
     courses:['Class 1','Class 2','Class 3','Class 4','Class 5','Class 6','Class 7','Class 8','Class 9','Class 10'],
-    subjects:['Mathematics','Science','Physics','Chemistry','Biology','Social Studies','English','Hindi','Telugu','EVS','Computer Science','General Knowledge'] },
+    subjects:['Mathematics','Science','Physics','Chemistry','Biology','Social Studies','English','Hindi','Telugu','Sanskrit','Urdu','EVS','Computer Science','General Knowledge','Moral Science','Physical Education'] },
   { id:'inter', em:'🎓', name:{en:'Intermediate (11th–12th)', hi:'इंटरमीडिएट (11वीं–12वीं)', te:'ఇంటర్మీడియట్ (11–12)'},
-    courses:['MPC (Maths, Physics, Chemistry)','BiPC (Biology, Physics, Chemistry)','CEC (Civics, Economics, Commerce)','MEC (Maths, Economics, Commerce)','HEC (History, Economics, Civics)','MBiPC','Vocational'],
-    subjects:['Mathematics','Physics','Chemistry','Botany','Zoology','Commerce','Accountancy','Economics','Civics','History','English','Sanskrit','Computer Science'] },
+    courses:['MPC (Maths, Physics, Chemistry)','BiPC (Biology, Physics, Chemistry)','CEC (Civics, Economics, Commerce)','MEC (Maths, Economics, Commerce)','HEC (History, Economics, Civics)','MBiPC','Vocational (M&AT / CET / Others)'],
+    subjects:['Mathematics','Physics','Chemistry','Botany','Zoology','Commerce','Accountancy','Economics','Civics','History','Geography','Statistics','English','Sanskrit','Telugu','Hindi','Computer Science'] },
   { id:'degree', em:'🏛️', name:{en:'Degree / UG & PG', hi:'डिग्री / यूजी–पीजी', te:'డిగ్రీ / యూజీ–పీజీ'},
-    courses:['B.Sc','B.Com','B.A','B.Tech / B.E','BBA','BCA','B.Pharmacy','LLB','MBBS / BDS','Nursing / Paramedical','M.Sc','M.Com','M.A','MBA','MCA','M.Tech','Ph.D / Research'],
-    subjects:['Mathematics','Physics','Chemistry','Biology / Life Sciences','Computer Science / Programming','Electronics','Mechanical','Civil','Electrical','Accountancy','Business & Management','Economics','Statistics','Law','Medicine / Anatomy','Pharmacy','English Literature','Psychology','Political Science','History'] },
+    courses:['B.Com (General)','B.Com (Computers)','B.Com (Taxation)','B.Com (Honours)','B.Com (Banking & Insurance)',
+      'B.Sc (MPC)','B.Sc (MPCs — Computer Science)','B.Sc (MSCs — Statistics)','B.Sc (BZC — Life Sciences)','B.Sc (Biotechnology)','B.Sc (Microbiology)','B.Sc (Agriculture)','B.Sc (Nursing)',
+      'B.A (HEP)','B.A (Economics)','B.A (Psychology)','B.A (Journalism)','B.A (Languages / Literature)',
+      'B.Tech (CSE)','B.Tech (IT / AI & ML / Data Science)','B.Tech (ECE)','B.Tech (EEE)','B.Tech (Mechanical)','B.Tech (Civil)',
+      'BBA','BBA (Business Analytics)','BCA','B.Pharmacy','LLB / BA LLB','MBBS','BDS','BHMS / BAMS','BPT (Physiotherapy)','B.Ed','B.Arch','Hotel Management (BHM)',
+      'M.Sc','M.Com','M.A','MBA (Finance)','MBA (Marketing)','MBA (HR)','MBA (Business Analytics)','MCA','M.Tech','LLM','MD / MS','Ph.D / Research'],
+    subjects:['Mathematics','Physics','Chemistry','Statistics','Biology / Life Sciences','Microbiology','Biochemistry','Biotechnology','Agriculture','Nursing','Anatomy / Physiology','Pharmacy','Physiotherapy',
+      'Financial Accounting','Corporate Accounting','Cost Accounting','Management Accounting','Auditing','Income Tax','GST','Banking & Insurance','Business Law','Business Statistics','Business Management','Marketing','Human Resource Management','Financial Management','Entrepreneurship',
+      'Economics','Econometrics','Computer Science / Programming','C / C++ / Java / Python','Data Structures & Algorithms','DBMS','Operating Systems','Computer Networks','Web Technologies','Software Engineering','AI & Machine Learning','Data Science','Cloud Computing','Cyber Security',
+      'Electronics','Electrical','Mechanical','Civil','Architecture',
+      'Law','Medicine','Psychology','Sociology','Political Science','Public Administration','History','Geography','Journalism','English Literature','Telugu / Hindi Literature','Education / Pedagogy','Philosophy','Fine Arts','Hotel Management','Physical Education'] },
   { id:'prof', em:'💼', name:{en:'CA · CMA · Professional', hi:'सीए · सीएमए · प्रोफेशनल', te:'సీఏ · సీఎంఏ · ప్రొఫెషనల్'},
-    courses:['CA Foundation','CA Intermediate','CA Final','CMA (India) Foundation','CMA (India) Inter','CMA (India) Final','US CMA Part 1','US CMA Part 2','CS Executive','CS Professional','ACCA','CFA','CPA'],
-    subjects:['Accounting','Advanced Accounting','Cost & Management Accounting','Financial Management','Taxation (Direct)','Taxation (Indirect / GST)','Auditing','Corporate & Business Law','Economics','Strategic Management','Financial Reporting','Business Mathematics & Statistics'] },
+    courses:['CA Foundation','CA Intermediate','CA Final','CMA (India) Foundation','CMA (India) Intermediate','CMA (India) Final','US CMA Part 1','US CMA Part 2','US CPA','CS Executive','CS Professional','ACCA','CFA Level I','CFA Level II','CFA Level III','FRM Part I','FRM Part II','EA (Enrolled Agent)','CIA (Internal Auditor)'],
+    subjects:['Accounting','Advanced Accounting','Financial Reporting','Cost & Management Accounting','Financial Management','Strategic Financial Management','Taxation (Direct)','Taxation (Indirect / GST)','International Taxation','Auditing & Assurance','Internal Audit & Controls','Corporate & Business Law','Economics','Strategic Management','Business Mathematics & Statistics','Financial Planning & Analysis','Performance Management','Investment & Portfolio Management','Risk Management','Ethics & Professional Standards','Information Systems & Technology'] },
   { id:'jobs', em:'📋', name:{en:'Jobs & Competitive Exams', hi:'नौकरी और प्रतियोगी परीक्षा', te:'ఉద్యోగాలు & పోటీ పరీక్షలు'},
-    courses:['UPSC Civil Services','APPSC / TSPSC Groups','SSC (CGL / CHSL / MTS)','Banking (IBPS / SBI / RBI)','Railways (RRB)','Police / SI / Constable','Defence (NDA / CDS / Agniveer)','Teaching (TET / DSC / CTET)','JEE / NEET / EAMCET','GATE','CUET','Other Govt Exams'],
-    subjects:['Quantitative Aptitude','Reasoning','General Studies','Indian Polity','Indian Economy','Geography','History','Science & Technology','English Language','Current Affairs','Computer Awareness','Interview / Descriptive'] },
+    courses:['UPSC Civil Services','APPSC / TSPSC Groups','Other State PSCs','SSC (CGL / CHSL / MTS / GD)','Banking (IBPS / SBI / RBI)','Insurance (LIC / NIACL)','Railways (RRB NTPC / ALP / Group D)','Police / SI / Constable','Defence (NDA / CDS / AFCAT / Agniveer)','Teaching (TET / DSC / CTET)','UGC NET / SET','Judiciary / CLAT','CAT / MAT (MBA Entrance)','JEE / NEET / EAMCET','GATE','CUET','Other Govt Exams'],
+    subjects:['Quantitative Aptitude','Reasoning','Data Interpretation','General Studies','Indian Polity','Indian Economy','Geography','History','Science & Technology','Static GK','Banking Awareness','Insurance Awareness','Teaching Aptitude','Legal Aptitude','English Language','Telugu / Regional Language','Current Affairs','Computer Awareness','Interview / Descriptive'] },
   { id:'current', em:'📰', name:{en:'Current Affairs & GK', hi:'करेंट अफेयर्स और जीके', te:'కరెంట్ అఫైర్స్ & జీకే'},
     courses:['Daily Current Affairs','Monthly Current Affairs','Static GK','Sports','Awards & Honours','Government Schemes','International Affairs','Economy & Budget'],
     subjects:['National','International','Economy','Science & Tech','Sports','Awards','Appointments','Schemes & Policies','Environment','Defence'] },
@@ -442,63 +451,66 @@ const LEVELS = [
 const I18N = {
   en:{ tagline:'Snap a photo of any doubt — get the exact answer, explained like a good teacher.',
     taglineSub:'Class 1–10 · Intermediate (MPC · BiPC · CEC · MEC) · Degree · CA · CMA · US CMA · Jobs & Current Affairs',
-    setKey:'Set free AI key', keySet:'AI key connected', ch1:'Chapter I — What are you studying?',
-    lblCourse:'Class / Course', lblSubject:'Subject', ch2:'Chapter II — Ask your doubt',
+    setKey:'Set free AI key', keySet:'AI key connected', ch1:'What are you studying?',
+    lblCourse:'Class / Course', lblSubject:'Subject', ch2:'Ask your doubt',
     ch2hint:'Type your question, snap a photo of it, or do both. Handwritten and printed questions both work.',
     qPlaceholder:'Write your doubt here… e.g. “Solve x² − 5x + 6 = 0” or “Explain photosynthesis”',
     pbTitle:'Snap or upload the question', pbSub:'tap here · drag & drop · or paste (Ctrl+V)',
     camera:'Camera', gallery:'Gallery', solve:'Solve my doubt', thinking:'Your teacher is writing the answer…',
-    ch3:'Chapter III — The Answer', copy:'Copy answer', followup:'Ask a follow-up', newDoubt:'New doubt',
-    ch4:'Chapter IV — My Notebook', ch4hint:'Your last 20 solved doubts, saved on this device.',
+    ch3:'The Answer', copy:'Copy answer', followup:'Ask a follow-up', newDoubt:'New doubt',
+    ch4:'My Notebook', ch4hint:'Your last 20 solved doubts, saved on this device.',
     emptyNote:'No doubts solved yet. Your answers will be saved here like notes in a notebook.',
-    footer:'Doubt Snap — every doubt deserves a good answer. Free forever, powered by free AI models.',
+    footer:'Doubt Snap — every doubt deserves a good answer. Free forever, from 7By.in.',
+    siteChip:'Every doubt deserves a good answer',
     noEngine:'No AI key set — add one in config.js', engines:'Engines',
     errNoEngine:'No AI key found. Please add at least one free key in config.js (e.g. Gemini).',
     errNoVision:'Photo questions need a vision key. Add a Gemini or OpenRouter key in config.js.',
     errNoQ:'Please type your doubt or upload a photo of it.',
     errApi:'The AI could not answer. Check your keys / internet and try again.',
     copied:'Answer copied!', followPrompt:'Type your follow-up question about the same doubt:',
-    modeQuick:'Quick answer — fast AI (auto)', modeStd:'Standard — smart AI (auto)', modeDeep:'Deep Think — strongest AI (auto)',
+    modeQuick:'Quick answer mode', modeStd:'Standard mode', modeDeep:'Deep Think mode — for tough problems',
     metaAnswered:'Answered', imgAttached:'photo attached', answeredBy:'Answered by' },
   hi:{ tagline:'किसी भी डाउट की फोटो खींचो — सटीक उत्तर पाओ, एक अच्छे शिक्षक की तरह समझाया हुआ।',
     taglineSub:'कक्षा 1–10 · इंटर (MPC · BiPC · CEC · MEC) · डिग्री · CA · CMA · US CMA · नौकरी और करेंट अफेयर्स',
-    setKey:'फ्री AI कुंजी सेट करें', keySet:'AI कुंजी जुड़ गई', ch1:'अध्याय I — आप क्या पढ़ रहे हैं?',
-    lblCourse:'कक्षा / कोर्स', lblSubject:'विषय', ch2:'अध्याय II — अपना डाउट पूछें',
+    setKey:'फ्री AI कुंजी सेट करें', keySet:'AI कुंजी जुड़ गई', ch1:'आप क्या पढ़ रहे हैं?',
+    lblCourse:'कक्षा / कोर्स', lblSubject:'विषय', ch2:'अपना डाउट पूछें',
     ch2hint:'अपना प्रश्न लिखें, उसकी फोटो खींचें, या दोनों करें। हस्तलिखित और छपे प्रश्न दोनों चलते हैं।',
     qPlaceholder:'अपना डाउट यहाँ लिखें… जैसे “x² − 5x + 6 = 0 हल करें” या “प्रकाश संश्लेषण समझाएँ”',
     pbTitle:'प्रश्न की फोटो खींचें या अपलोड करें', pbSub:'यहाँ टैप करें · ड्रैग-ड्रॉप · या पेस्ट (Ctrl+V)',
     camera:'कैमरा', gallery:'गैलरी', solve:'मेरा डाउट हल करें', thinking:'आपके शिक्षक उत्तर लिख रहे हैं…',
-    ch3:'अध्याय III — उत्तर', copy:'उत्तर कॉपी करें', followup:'आगे पूछें', newDoubt:'नया डाउट',
-    ch4:'अध्याय IV — मेरी नोटबुक', ch4hint:'आपके पिछले 20 हल किए डाउट, इसी डिवाइस पर सेव।',
+    ch3:'उत्तर', copy:'उत्तर कॉपी करें', followup:'आगे पूछें', newDoubt:'नया डाउट',
+    ch4:'मेरी नोटबुक', ch4hint:'आपके पिछले 20 हल किए डाउट, इसी डिवाइस पर सेव।',
     emptyNote:'अभी तक कोई डाउट हल नहीं हुआ। आपके उत्तर यहाँ नोटबुक की तरह सेव होंगे।',
-    footer:'Doubt Snap — हर डाउट एक अच्छे उत्तर का हकदार है। हमेशा फ्री, फ्री AI मॉडल द्वारा संचालित।',
+    footer:'Doubt Snap — हर डाउट एक अच्छे उत्तर का हकदार है। हमेशा फ्री, 7By.in की ओर से।',
+    siteChip:'हर डाउट एक अच्छे उत्तर का हकदार है',
     noEngine:'कोई AI कुंजी सेट नहीं — config.js में जोड़ें', engines:'इंजन',
     errNoEngine:'कोई AI कुंजी नहीं मिली। कृपया config.js में कम से कम एक फ्री कुंजी जोड़ें (जैसे Gemini)।',
     errNoVision:'फोटो प्रश्नों के लिए विज़न कुंजी चाहिए। config.js में Gemini या OpenRouter कुंजी जोड़ें।',
     errNoQ:'कृपया अपना डाउट लिखें या उसकी फोटो अपलोड करें।',
     errApi:'AI उत्तर नहीं दे सका। कुंजियाँ / इंटरनेट जाँचें और फिर कोशिश करें।',
     copied:'उत्तर कॉपी हो गया!', followPrompt:'इसी डाउट पर अपना अगला प्रश्न लिखें:',
-    modeQuick:'तुरंत उत्तर — तेज़ AI (ऑटो)', modeStd:'स्टैंडर्ड — स्मार्ट AI (ऑटो)', modeDeep:'डीप थिंक — सबसे शक्तिशाली AI (ऑटो)',
+    modeQuick:'तुरंत उत्तर मोड', modeStd:'स्टैंडर्ड मोड', modeDeep:'डीप थिंक मोड — कठिन सवालों के लिए',
     metaAnswered:'उत्तर दिया गया', imgAttached:'फोटो संलग्न', answeredBy:'उत्तर दिया' },
   te:{ tagline:'ఏ డౌట్ అయినా ఫోటో తీయండి — ఖచ్చితమైన సమాధానం, మంచి టీచర్ లా వివరణతో.',
     taglineSub:'1–10 తరగతి · ఇంటర్ (MPC · BiPC · CEC · MEC) · డిగ్రీ · CA · CMA · US CMA · ఉద్యోగాలు & కరెంట్ అఫైర్స్',
-    setKey:'ఫ్రీ AI కీ సెట్ చేయండి', keySet:'AI కీ కనెక్ట్ అయింది', ch1:'అధ్యాయం I — మీరు ఏమి చదువుతున్నారు?',
-    lblCourse:'తరగతి / కోర్సు', lblSubject:'సబ్జెక్టు', ch2:'అధ్యాయం II — మీ డౌట్ అడగండి',
+    setKey:'ఫ్రీ AI కీ సెట్ చేయండి', keySet:'AI కీ కనెక్ట్ అయింది', ch1:'మీరు ఏమి చదువుతున్నారు?',
+    lblCourse:'తరగతి / కోర్సు', lblSubject:'సబ్జెక్టు', ch2:'మీ డౌట్ అడగండి',
     ch2hint:'మీ ప్రశ్న టైప్ చేయండి, దాని ఫోటో తీయండి, లేదా రెండూ చేయండి. చేతిరాత, ప్రింటెడ్ ప్రశ్నలు రెండూ పనిచేస్తాయి.',
     qPlaceholder:'మీ డౌట్ ఇక్కడ రాయండి… ఉదా. “x² − 5x + 6 = 0 సాధించండి” లేదా “కిరణజన్య సంయోగక్రియ వివరించండి”',
     pbTitle:'ప్రశ్న ఫోటో తీయండి లేదా అప్‌లోడ్ చేయండి', pbSub:'ఇక్కడ నొక్కండి · డ్రాగ్-డ్రాప్ · లేదా పేస్ట్ (Ctrl+V)',
     camera:'కెమెరా', gallery:'గ్యాలరీ', solve:'నా డౌట్ సాల్వ్ చేయండి', thinking:'మీ టీచర్ సమాధానం రాస్తున్నారు…',
-    ch3:'అధ్యాయం III — సమాధానం', copy:'సమాధానం కాపీ', followup:'ఇంకా అడగండి', newDoubt:'కొత్త డౌట్',
-    ch4:'అధ్యాయం IV — నా నోట్‌బుక్', ch4hint:'మీ చివరి 20 సాల్వ్ చేసిన డౌట్లు, ఈ డివైస్‌లో సేవ్ అవుతాయి.',
+    ch3:'సమాధానం', copy:'సమాధానం కాపీ', followup:'ఇంకా అడగండి', newDoubt:'కొత్త డౌట్',
+    ch4:'నా నోట్‌బుక్', ch4hint:'మీ చివరి 20 సాల్వ్ చేసిన డౌట్లు, ఈ డివైస్‌లో సేవ్ అవుతాయి.',
     emptyNote:'ఇంకా డౌట్లు సాల్వ్ చేయలేదు. మీ సమాధానాలు నోట్‌బుక్ లా ఇక్కడ సేవ్ అవుతాయి.',
-    footer:'Doubt Snap — ప్రతి డౌట్ కు మంచి సమాధానం దక్కాలి. ఎప్పటికీ ఫ్రీ, ఫ్రీ AI మోడల్స్ తో నడుస్తుంది.',
+    footer:'Doubt Snap — ప్రతి డౌట్ కు మంచి సమాధానం దక్కాలి. ఎప్పటికీ ఫ్రీ, 7By.in నుండి.',
+    siteChip:'ప్రతి డౌట్ కు మంచి సమాధానం దక్కాలి',
     noEngine:'AI కీ సెట్ చేయలేదు — config.js లో జోడించండి', engines:'ఇంజన్లు',
     errNoEngine:'AI కీ కనబడలేదు. దయచేసి config.js లో కనీసం ఒక ఫ్రీ కీ జోడించండి (ఉదా. Gemini).',
     errNoVision:'ఫోటో ప్రశ్నలకు విజన్ కీ అవసరం. config.js లో Gemini లేదా OpenRouter కీ జోడించండి.',
     errNoQ:'దయచేసి మీ డౌట్ టైప్ చేయండి లేదా దాని ఫోటో అప్‌లోడ్ చేయండి.',
     errApi:'AI సమాధానం ఇవ్వలేకపోయింది. కీలు / ఇంటర్నెట్ చెక్ చేసి మళ్లీ ప్రయత్నించండి.',
     copied:'సమాధానం కాపీ అయింది!', followPrompt:'ఇదే డౌట్ పై మీ తదుపరి ప్రశ్న రాయండి:',
-    modeQuick:'త్వరిత సమాధానం — వేగవంతమైన AI (ఆటో)', modeStd:'స్టాండర్డ్ — స్మార్ట్ AI (ఆటో)', modeDeep:'డీప్ థింక్ — అత్యంత శక్తివంతమైన AI (ఆటో)',
+    modeQuick:'త్వరిత సమాధాన మోడ్', modeStd:'స్టాండర్డ్ మోడ్', modeDeep:'డీప్ థింక్ మోడ్ — కఠిన సమస్యలకు',
     metaAnswered:'సమాధానం ఇచ్చినది', imgAttached:'ఫోటో జత చేయబడింది', answeredBy:'సమాధానం ఇచ్చినది' }
 };
 const LANG_NAME = {en:'English', hi:'Hindi (हिंदी)', te:'Telugu (తెలుగు)'};
@@ -698,9 +710,12 @@ function planRoute(hasImage, qText){
   return out;
 }
 
+// Engine details are owner-only: add ?owner=1 (or #owner) to the URL to see real engine status.
+const isOwnerView = () => /[?#&](owner|admin)\b/.test(location.search + location.hash);
 function updateEngineBadge(){
   const on = Object.keys(CFG).filter(active);
   const el = $('engineBadge');
+  if(!isOwnerView()){ el.textContent = '✨ ' + t('siteChip'); el.classList.remove('warn'); el.classList.add('ok'); return; }
   if(!on.length){ el.textContent = '⚙️ ' + t('noEngine'); el.classList.add('warn'); el.classList.remove('ok'); }
   else { el.textContent = '⚙️ ' + t('engines') + ': ' + on.map(id=>PROV_NAME[id]).join(' · '); el.classList.add('ok'); el.classList.remove('warn'); }
 }
@@ -827,7 +842,7 @@ function showAnswer(md){
     `<span>📚 ${(lv.name[state.lang]||lv.name.en)}</span>` +
     `<span>✒️ ${$('courseSel').value} · ${$('subjectSel').value}</span>` +
     (state.imageData?`<span>📷 ${t('imgAttached')}</span>`:'') +
-    (state.lastVia?`<span class="via">🤖 ${t('answeredBy')}: ${state.lastVia}</span>`:'') +
+    (isOwnerView() && state.lastVia?`<span class="via">🤖 ${state.lastVia}</span>`:'') +
     `<span>🕰️ ${new Date().toLocaleString()}</span>`;
   $('answerBody').innerHTML = mdToHtml(md);
   $('answerPage').style.display='block';
@@ -863,7 +878,7 @@ function renderNotebook(){
     const d = document.createElement('div');
     d.className='note-item';
     d.innerHTML = `<span class="nq">📌 ${escapeHtml(n.q).slice(0,90)}</span><span class="nm">${n.meta} · ${new Date(n.when).toLocaleDateString()}</span>`;
-    d.onclick = ()=>{ state.lastAnswer=n.a; state.lastQ=n.q; $('answerMeta').innerHTML=`<span>📚 ${n.meta}</span>`+(n.via?`<span class="via">🤖 ${t('answeredBy')}: ${n.via}</span>`:'')+`<span>🕰️ ${new Date(n.when).toLocaleString()}</span>`; $('answerBody').innerHTML=mdToHtml(n.a); $('answerPage').style.display='block'; $('answerPage').scrollIntoView({behavior:'smooth'}); };
+    d.onclick = ()=>{ state.lastAnswer=n.a; state.lastQ=n.q; $('answerMeta').innerHTML=`<span>📚 ${escapeHtml(String(n.meta||''))}</span>`+(isOwnerView() && n.via?`<span class="via">🤖 ${escapeHtml(String(n.via))}</span>`:'')+`<span>🕰️ ${new Date(n.when).toLocaleString()}</span>`; $('answerBody').innerHTML=mdToHtml(n.a); $('answerPage').style.display='block'; $('answerPage').scrollIntoView({behavior:'smooth'}); };
     list.appendChild(d);
   });
 }
