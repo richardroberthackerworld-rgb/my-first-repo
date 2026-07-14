@@ -1,6 +1,6 @@
-# 7Q Bank 🏛️
+# 7Marks 💯
 
-Pick a subject & topic — or snap photos of your textbook / notes — and generate a full **question bank**: long answer, short answer, very short answer, MCQs, fill in the blanks, and true/false — with an optional answer key. The sister app of [Doubt Snap](../doubtsnap/) (Doubt Snap answers *your* questions; Q Bank *asks you* questions).
+Pick a subject & topic — or snap photos of your textbook / notes — and generate a full **question bank**: theory or practical, long answer, short answer, very short answer, MCQs, fill in the blanks, and true/false — with an optional answer key. The sister app of [Doubt Snap](../doubtsnap/) (Doubt Snap answers *your* questions; 7Marks *asks you* questions).
 
 ## Features
 - 📷 **Photo material** — upload up to **5 photos** of textbook pages or class notes (camera, gallery, drag & drop, paste Ctrl+V). Questions are generated **only from that material**. Handwritten and printed pages both work.
@@ -63,7 +63,7 @@ The homepage tool card and footer already link to `https://qbank.7by.in`, so goi
 2. **File Manager** → open that folder → upload **`qbank-site.zip`** (from the repo root) → **Extract**. The files must sit directly in the document root.
 3. **Rename `config.js.txt` → `config.js`** (right-click → Rename), then **Edit** it and paste your API keys. *(The zip ships it as `.txt` because cPanel's virus scanner false-positives on any zip containing `.js` files — "Foxhole.JS_Zip". It's not a real virus.)*
 4. cPanel → **SSL/TLS Status → Run AutoSSL** so `https://qbank.7by.in` is secure.
-5. Also re-upload the updated main-site `index.html` (or `vocalremover-app.zip`) so the homepage QBank card shows the new description.
+5. Also re-upload the updated main-site `index.html` (or `vocalremover-app.zip`) so the homepage 7Marks card shows the new name.
 
 Visit `https://qbank.7by.in` — the ⚙️ badge at the top-right should show your active engines. If it says "No AI key set", `config.js` on the server still has empty keys.
 
