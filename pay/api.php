@@ -251,18 +251,62 @@ switch ($action) {
 			if ($st->fetch()) gw_json(array('ok' => true, 'matched' => false, 'reason' => 'utr_already_captured'));
 		}
 
-		// Oldest still-fresh pending live-UPI payment with this exact amount.
-		$win = max(5, (int)($cfg['window_minutes'] ?? 45));
-		$st = gw_db()->prepare("SELECT * FROM gw_payments WHERE status = 'pending' AND method = 'upi' AND amount = ? ORDER BY created_at ASC");
-		$st->execute(array($amt));
-		$match = null;
-		foreach ($st->fetchAll() as $p) {
-			if (strtotime($p['created_at']) >= time() - $win * 60) { $match = $p; break; }
-		}
-		if (!$match) gw_json(array('ok' => true, 'matched' => false, 'reason' => 'no_pending_payment_for_amount', 'amount_minor' => $amt));
+		// Match + capture run in one transaction: SMS forwarders retry on
+		// timeout, so duplicate and concurrent deliveries of the same credit
+		// are normal, and exactly one of them may capture a payment.
+		$db = gw_db();
+		$db->beginTransaction();
+		try {
+			// Oldest still-fresh pending live-UPI payment with this exact amount.
+			$win = max(5, (int)($cfg['window_minutes'] ?? 45));
+			$st = $db->prepare("SELECT * FROM gw_payments WHERE status = 'pending' AND method = 'upi' AND amount = ? ORDER BY created_at ASC");
+			$st->execute(array($amt));
+			$match = null;
+			foreach ($st->fetchAll() as $p) {
+				if (strtotime($p['created_at']) >= time() - $win * 60) { $match = $p; break; }
+			}
 
-		if ($utr !== '') gw_db()->prepare('UPDATE gw_payments SET utr = ? WHERE id = ?')->execute(array($utr, $match['id']));
-		$p = gw_capture($match); // marks captured + order paid + fires payment.captured webhook
+			// Banks sometimes send the SMS late. If no fresh pending matches,
+			// revive the OLDEST recently-expired reservation whose order is still
+			// unpaid — the buyer already paid; the alert just arrived late.
+			// Revival requires a UPI reference: an amount-only duplicate (or any
+			// coincidental same-amount credit) must never unlock an abandoned
+			// checkout, and the UTR dedupe above makes reference-carrying
+			// duplicates a no-op.
+			if (!$match && $utr !== '') {
+				$rw = max(1, (int)($cfg['revive_hours'] ?? 4));
+				$st = $db->prepare("SELECT * FROM gw_payments WHERE status = 'failed' AND method = 'upi' AND amount = ? AND error LIKE 'Expired%' ORDER BY created_at ASC");
+				$st->execute(array($amt));
+				foreach ($st->fetchAll() as $p) {
+					if (strtotime($p['created_at']) < time() - $rw * 3600) continue;
+					$o = gw_get_order($p['order_id']);
+					if ($o && $o['status'] !== 'paid') { $match = $p; break; }
+				}
+			}
+			if (!$match) {
+				$db->rollBack();
+				gw_json(array('ok' => true, 'matched' => false, 'reason' => 'no_pending_payment_for_amount', 'amount_minor' => $amt));
+			}
+
+			// One atomic flip: status, cleared error, UTR and updated_at move
+			// together (a crash can't leave a half-revived row), and the status
+			// guard means a concurrent delivery that lost the race updates
+			// nothing instead of double-capturing.
+			$st = $db->prepare("UPDATE gw_payments SET status = 'captured', error = NULL, utr = COALESCE(?, utr), updated_at = ? WHERE id = ? AND status IN ('pending','failed')");
+			$st->execute(array($utr !== '' ? $utr : null, gw_now(), $match['id']));
+			if ($st->rowCount() === 0) {
+				$db->rollBack();
+				gw_json(array('ok' => true, 'matched' => false, 'reason' => 'already_captured'));
+			}
+			$db->prepare("UPDATE gw_orders SET status='paid' WHERE id=?")->execute(array($match['order_id']));
+			$db->commit();
+		} catch (Exception $e) {
+			if ($db->inTransaction()) $db->rollBack();
+			throw $e;
+		}
+
+		$p = gw_get_payment($match['id']);
+		gw_webhook($p['merchant_key'], 'payment.captured', $p); // after commit — never hold the transaction over an HTTP call
 		gw_json(array('ok' => true, 'matched' => true, 'payment_id' => $p['id'], 'order_id' => $p['order_id'], 'amount_minor' => $amt));
 	}
 
