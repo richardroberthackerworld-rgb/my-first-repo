@@ -488,6 +488,43 @@ const LEVELS = [
     subjects:['General','English Grammar','Hindi Grammar','Telugu Grammar','Coding','Technology','Essay Writing','Career','Other'] },
 ];
 
+/* ===== Course-specific subject lists — real syllabus papers/sections per course.
+   When a course is listed here, the Subject dropdown shows ITS papers instead of
+   the level's generic subjects. Falls back to the level list otherwise. ===== */
+const COURSE_SUBJECTS = {
+  'US CMA Part 1':['Part 1A — External Financial Reporting Decisions','Part 1B — Planning, Budgeting & Forecasting','Part 1C — Performance Management','Part 1D — Cost Management','Part 1E — Internal Controls','Part 1F — Technology & Analytics','Full Part 1 — Mixed (All Sections)'],
+  'US CMA Part 2':['Part 2A — Financial Statement Analysis','Part 2B — Corporate Finance','Part 2C — Decision Analysis','Part 2D — Risk Management','Part 2E — Investment Decisions','Part 2F — Professional Ethics','Full Part 2 — Mixed (All Sections)'],
+  'CA Foundation':['Paper 1 — Accounting','Paper 2 — Business Laws','Paper 3 — Quantitative Aptitude (Maths, LR, Stats)','Paper 4 — Business Economics'],
+  'CA Intermediate':['Paper 1 — Advanced Accounting','Paper 2 — Corporate & Other Laws','Paper 3 — Taxation (Income Tax & GST)','Paper 4 — Cost & Management Accounting','Paper 5 — Auditing & Ethics','Paper 6 — Financial Management & Strategic Management'],
+  'CA Final':['Paper 1 — Financial Reporting','Paper 2 — Advanced Financial Management','Paper 3 — Advanced Auditing, Assurance & Professional Ethics','Paper 4 — Direct Tax Laws & International Taxation','Paper 5 — Indirect Tax Laws','Paper 6 — Integrated Business Solutions (Case Study)'],
+  'CMA (India) Foundation':['Paper 1 — Fundamentals of Business Laws & Communication','Paper 2 — Fundamentals of Financial & Cost Accounting','Paper 3 — Fundamentals of Business Mathematics & Statistics','Paper 4 — Fundamentals of Business Economics & Management'],
+  'CMA (India) Intermediate':['Paper 5 — Business Laws & Ethics','Paper 6 — Financial Accounting','Paper 7 — Direct & Indirect Taxation','Paper 8 — Cost Accounting','Paper 9 — Operations & Strategic Management','Paper 10 — Corporate Accounting & Auditing','Paper 11 — Financial Management & Business Data Analytics','Paper 12 — Management Accounting'],
+  'CMA (India) Final':['Paper 13 — Corporate & Economic Laws','Paper 14 — Strategic Financial Management','Paper 15 — Direct Tax Laws & International Taxation','Paper 16 — Strategic Cost Management','Paper 17 — Cost & Management Audit','Paper 18 — Corporate Financial Reporting','Paper 19 — Indirect Tax Laws & Practice','Paper 20 — Elective (Performance Mgmt / Risk / Entrepreneurship)'],
+  'US CPA':['AUD — Auditing & Attestation','FAR — Financial Accounting & Reporting','REG — Regulation (Tax & Law)','BAR — Business Analysis & Reporting','ISC — Information Systems & Controls','TCP — Tax Compliance & Planning'],
+  'CS Executive':['Jurisprudence, Interpretation & General Laws','Company Law & Practice','Setting up of Business, Industrial & Labour Laws','Corporate Accounting & Financial Management','Capital Market & Securities Laws','Economic, Commercial & Intellectual Property Laws','Tax Laws & Practice'],
+  'CS Professional':['Environmental, Social & Governance (ESG)','Drafting, Pleadings & Appearances','Compliance Management, Audit & Due Diligence','Strategic Management & Corporate Finance','Corporate Restructuring, Valuation & Insolvency','Elective (Banking / Insurance / IP / Labour Laws)'],
+  'ACCA':['BT — Business & Technology','MA — Management Accounting','FA — Financial Accounting','LW — Corporate & Business Law','PM — Performance Management','TX — Taxation','FR — Financial Reporting','AA — Audit & Assurance','FM — Financial Management','SBL — Strategic Business Leader','SBR — Strategic Business Reporting','Options (AFM / APM / ATX / AAA)'],
+  'CFA Level I':['Ethical & Professional Standards','Quantitative Methods','Economics','Financial Statement Analysis','Corporate Issuers','Equity Investments','Fixed Income','Derivatives','Alternative Investments','Portfolio Management'],
+  'CFA Level II':['Ethical & Professional Standards','Quantitative Methods','Economics','Financial Statement Analysis','Corporate Issuers','Equity Valuation','Fixed Income','Derivatives','Alternative Investments','Portfolio Management'],
+  'CFA Level III':['Asset Allocation','Portfolio Construction','Performance Measurement','Derivatives & Risk Management','Ethics & Professional Standards','Pathway (Private Wealth / Private Markets / Portfolio Mgmt)'],
+  'FRM Part I':['Foundations of Risk Management','Quantitative Analysis','Financial Markets & Products','Valuation & Risk Models'],
+  'FRM Part II':['Market Risk Measurement & Management','Credit Risk Measurement & Management','Operational Risk & Resilience','Liquidity & Treasury Risk','Risk Management & Investment Management','Current Issues in Financial Markets'],
+  'EA (Enrolled Agent)':['Part 1 — Individuals','Part 2 — Businesses','Part 3 — Representation, Practices & Procedures'],
+  'CIA (Internal Auditor)':['Part 1 — Essentials of Internal Auditing','Part 2 — Practice of Internal Auditing','Part 3 — Business Knowledge for Internal Auditing'],
+  'LLB / BA LLB':['Constitutional Law','Law of Contracts','Criminal Law (IPC / BNS)','Law of Torts','Family Law','Company Law','Property Law','Administrative Law','Labour & Industrial Law','Law of Evidence','Civil & Criminal Procedure (CPC / CrPC / BNSS)','Jurisprudence','Public International Law','Taxation Law','Intellectual Property Rights','Environmental Law','Legal Drafting & Pleading'],
+  'LLM':['Constitutional & Administrative Law','Corporate & Commercial Law','Criminal Law & Criminology','International Law','Intellectual Property Rights','Human Rights Law','Legal Research Methodology'],
+  'MBBS':['Anatomy','Physiology','Biochemistry','Pharmacology','Pathology','Microbiology','Forensic Medicine','Community Medicine (PSM)','ENT','Ophthalmology','General Medicine','General Surgery','Obstetrics & Gynaecology','Paediatrics','Orthopaedics','Dermatology','Psychiatry','Anaesthesia','Radiology'],
+  'BDS':['Dental Anatomy & Histology','Oral Pathology','Prosthodontics','Conservative Dentistry & Endodontics','Periodontics','Oral & Maxillofacial Surgery','Orthodontics','Pedodontics','Oral Medicine & Radiology','Public Health Dentistry'],
+  'B.Pharmacy':['Pharmaceutics','Pharmaceutical Chemistry','Pharmacology','Pharmacognosy','Pharmaceutical Analysis','Biopharmaceutics & Pharmacokinetics','Pharmaceutical Jurisprudence','Hospital & Clinical Pharmacy','Industrial Pharmacy','Pharmaceutical Microbiology & Biotechnology'],
+  'B.Sc (Nursing)':['Anatomy & Physiology','Nutrition & Biochemistry','Nursing Foundations','Medical-Surgical Nursing','Community Health Nursing','Child Health Nursing','Mental Health Nursing','Obstetrics & Midwifery','Pharmacology for Nurses','Nursing Research & Management'],
+  'B.Ed':['Childhood & Growing Up','Learning & Teaching','Pedagogy of School Subjects','Assessment for Learning','Educational Psychology','Inclusive Education','ICT in Education','School Organisation & Management','Gender, School & Society'],
+  'BCA':['Programming in C / C++','Java Programming','Python Programming','Data Structures','DBMS','Operating Systems','Computer Networks','Web Technologies','Software Engineering','Discrete Mathematics','Computer Organization','AI & Machine Learning','Mobile App Development','Cloud Computing','Cyber Security'],
+  'MCA':['Advanced Java / Python','Data Structures & Algorithms','Advanced DBMS','Operating Systems','Computer Networks','Web & Full-Stack Technologies','Software Engineering','AI & Machine Learning','Data Science & Big Data','Cloud Computing','Cyber Security','Mobile Computing'],
+  'UPSC Civil Services':['Prelims — GS Paper I','Prelims — CSAT (Paper II)','Mains — GS Paper I (History, Geography, Society)','Mains — GS Paper II (Polity, Governance, IR)','Mains — GS Paper III (Economy, Environment, S&T, Security)','Mains — GS Paper IV (Ethics, Integrity & Aptitude)','Essay','Optional Subject','Current Affairs'],
+  'Banking (IBPS / SBI / RBI)':['Quantitative Aptitude','Reasoning Ability','English Language','General / Banking / Economy Awareness','Computer Aptitude','Data Analysis & Interpretation','Descriptive (Letter & Essay)'],
+  'SSC (CGL / CHSL / MTS / GD)':['General Intelligence & Reasoning','Quantitative Aptitude','English Comprehension','General Awareness','Statistics (for JSO)','Computer Knowledge']
+};
+
 /* ================= Question types ================= */
 const QTYPES = [
   { id:'mcq',    em:'🔘', def:10, name:{en:'Multiple Choice (MCQ)',        hi:'बहुविकल्पीय प्रश्न (MCQ)',        te:'బహుళైచ్ఛిక ప్రశ్నలు (MCQ)'},
@@ -651,16 +688,24 @@ function renderLevels(){
   });
   fillSelects();
 }
+function refreshSubjects(lv, prev){
+  // course-specific papers/sections (US CMA 1A–1F, CA Papers, LLB subjects…) or the level's generic list
+  const ss = $('subjectSel');
+  const subs = COURSE_SUBJECTS[$('courseSel').value] || lv.subjects;
+  const keep = prev !== undefined ? prev : ss.value;
+  ss.innerHTML = subs.map(s=>`<option>${s}</option>`).join('');
+  if(subs.includes(keep)) ss.value = keep;
+  renderKind();
+}
 function fillSelects(){
   const lv = LEVELS.find(l=>l.id===state.level);
-  const cs = $('courseSel'), ss = $('subjectSel');
-  const prevC = cs.value, prevS = ss.value;
+  const cs = $('courseSel');
+  const prevC = cs.value, prevS = $('subjectSel').value;
   cs.innerHTML = lv.courses.map(c=>`<option>${c}</option>`).join('');
-  ss.innerHTML = lv.subjects.map(s=>`<option>${s}</option>`).join('');
   if(lv.courses.includes(prevC)) cs.value = prevC;
-  if(lv.subjects.includes(prevS)) ss.value = prevS;
-  ss.onchange = renderKind;   // theory-only subjects hide the Theory/Practical picker
-  renderKind();
+  cs.onchange = ()=> refreshSubjects(lv);
+  $('subjectSel').onchange = renderKind;   // theory-only subjects hide the Theory/Practical picker
+  refreshSubjects(lv, prevS);
 }
 
 /* ================= UI: question types & difficulty ================= */
@@ -696,7 +741,7 @@ const KINDS = ['mixed','theory','practical'];
 const KIND_LABEL = {mixed:'kindMixed', theory:'kindTheory', practical:'kindPractical'};
 // Subjects where practical/numerical questions make sense. Theory-only subjects
 // (History, English, Civics…) hide the selector entirely and always get theory papers.
-const PRACTICAL_RX = /math|statist|econometr|physic|chemis|\bscience\b|account|financ|cost|tax|gst|audit|econom|quantit|reasoning|data interpretation|comput|program|coding|c \/|java|python|data structure|dbms|operating|network|web|software|machine|data science|cloud|cyber|electronic|electrical|mechanical|civil|architect|banking|insurance|risk|invest|portfolio|performance|planning|pharma|statistics/i;
+const PRACTICAL_RX = /math|statist|econometr|physic|chemis|\bscience\b|account|financ|cost|tax|gst|audit|econom|quantit|reasoning|data interpretation|comput|program|coding|c \/|java|python|data structure|dbms|operating|network|web|software|machine|data science|cloud|cyber|electronic|electrical|mechanical|civil|architect|banking|insurance|risk|invest|portfolio|performance|planning|pharma|statistics|analys|budget|forecast|valuation|derivative|fixed income|equity|pharmacokinetic/i;
 const practicalOk = () => PRACTICAL_RX.test($('subjectSel').value||'');
 function renderKind(){
   const sel = $('kindSel');
