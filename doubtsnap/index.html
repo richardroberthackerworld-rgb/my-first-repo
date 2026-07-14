@@ -596,16 +596,17 @@ document.addEventListener('paste', e=>{
 });
 
 /* ================= AI ENGINES (multi-provider) ================= */
-const CFG = (window.DS_CONFIG && window.DS_CONFIG.keys) || {gemini:'',groq:'',cerebras:'',openrouter:'',mistral:''};
+const CFG = Object.assign({gemini:'',groq:'',cerebras:'',openrouter:'',mistral:'',github:''}, (window.DS_CONFIG && window.DS_CONFIG.keys) || {});
 const key = id => (CFG[id]||'').trim();
 const active = id => !!key(id);
 const anyEngine = () => Object.keys(CFG).some(active);
-const PROV_NAME = { gemini:'Google Gemini', groq:'Groq', cerebras:'Cerebras', openrouter:'OpenRouter', mistral:'Mistral' };
+const PROV_NAME = { gemini:'Google Gemini', groq:'Groq', cerebras:'Cerebras', openrouter:'OpenRouter', mistral:'Mistral', github:'GitHub Models' };
 const OA_BASE = {
   groq:'https://api.groq.com/openai/v1/chat/completions',
   cerebras:'https://api.cerebras.ai/v1/chat/completions',
   openrouter:'https://openrouter.ai/api/v1/chat/completions',
-  mistral:'https://api.mistral.ai/v1/chat/completions'
+  mistral:'https://api.mistral.ai/v1/chat/completions',
+  github:'https://models.github.ai/inference/chat/completions'
 };
 // Which model each provider uses per task type
 const MODEL_MAP = {
@@ -618,6 +619,8 @@ const MODEL_MAP = {
                 coding:['qwen/qwen3-coder:free'],
                 vision:['google/gemma-4-31b-it:free','nvidia/nemotron-nano-12b-v2-vl:free'],
                 deep:['nvidia/nemotron-3-ultra-550b-a55b:free','tencent/hy3:free','openai/gpt-oss-120b:free'] }, // big free reasoning MoEs (text only)
+  github:     { text:['openai/gpt-4o','meta/llama-3.3-70b-instruct'],
+                deep:['deepseek/deepseek-r1-0528','microsoft/phi-4-reasoning'] },  // free with a GitHub token; R1 = best free CA/CMA numericals solver (150/day)
   mistral:    { text:['mistral-large-latest'], vision:['pixtral-12b-2409'] }
 };
 
@@ -635,9 +638,14 @@ function planRoute(hasImage){
   const cat = categorize();
   const out = [];
   const add = (id, models) => { if(active(id) && models) models.forEach(m=>out.push({id, model:m})); };
-  if(state.deep){                     // 🧠 Deep Think → strongest reasoning models first, normal chain as fallback
+  // 🧠 Deep Think → strongest reasoning models first, normal chain as fallback.
+  // Auto-on for CA · CMA · Professional — typical CA/CMA numericals need real reasoning.
+  if(state.deep || state.level==='prof'){
     add('gemini', MODEL_MAP.gemini.deep);                    // 2.5 Pro solves text AND photos
-    if(!hasImage) add('openrouter', MODEL_MAP.openrouter.deep); // big reasoning MoEs are text-only
+    if(!hasImage){
+      add('github', MODEL_MAP.github.deep);                  // DeepSeek-R1: strongest free step-by-step numericals solver
+      add('openrouter', MODEL_MAP.openrouter.deep);          // big reasoning MoEs are text-only
+    }
   }
   if(hasImage){                       // photo → needs a VISION model
     add('gemini', MODEL_MAP.gemini.vision);          // best at handwriting + Indian languages
@@ -654,6 +662,7 @@ function planRoute(hasImage){
     add('groq', MODEL_MAP.groq.text);
   } else if(cat==='reasoning'){       // math / physics / accounts → strong reasoning
     add('gemini', MODEL_MAP.gemini.text);
+    add('github', MODEL_MAP.github.text);   // GPT-4o (50/day) — strong at accounts/quant
     add('cerebras', MODEL_MAP.cerebras.text);
     add('groq', MODEL_MAP.groq.text);
     add('openrouter', MODEL_MAP.openrouter.text);

@@ -28,6 +28,13 @@
    5) MISTRAL         →  https://console.mistral.ai/api-keys
         Optional. Text + Pixtral vision. Doesn't log prompts.
 
+   6) GITHUB MODELS   →  https://github.com/settings/tokens
+        FREE with any GitHub account — no card. Generate a token
+        (fine-grained with "Models: read" permission, or classic).
+        Unlocks DeepSeek-R1 (~150/day, the best free model for CA/CMA
+        numericals & step-by-step maths), GPT-4o (~50/day) and
+        Phi-4-Reasoning. Token starts "ghp_" or "github_pat_".
+
    TIP: add Gemini (for photos) + Groq (for fast text) at minimum.
    You can add all 5 — the more you add, the fewer "limit reached" errors.
    ============================================================ */
@@ -38,6 +45,7 @@ window.DS_CONFIG = {
     groq:       "",   // gsk_...
     cerebras:   "",   // csk-...
     openrouter: "",   // sk-or-...
-    mistral:    ""    // ...
+    mistral:    "",   // ...
+    github:     ""    // ghp_... or github_pat_...  (GitHub Models — DeepSeek-R1 / GPT-4o)
   }
 };

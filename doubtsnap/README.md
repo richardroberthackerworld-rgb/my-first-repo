@@ -24,13 +24,16 @@ Open **`config.js`** and paste your free keys between the quotes. Add as many as
 | 3 | **Cerebras** | https://cloud.cerebras.ai → API Keys | `csk-…` | Very fast, high daily volume. |
 | 4 | **OpenRouter** | https://openrouter.ai/keys | `sk-or-…` | Coding (Qwen3 Coder) + photo fallback (Gemma 4). |
 | 5 | **Mistral** (optional) | https://console.mistral.ai/api-keys | — | Text + Pixtral vision; doesn't log prompts. |
+| 6 | **GitHub Models** | https://github.com/settings/tokens | `ghp_…` / `github_pat_…` | **DeepSeek-R1** (~150/day) — best free CA/CMA numericals solver — plus GPT-4o (~50/day) and Phi-4-Reasoning. Free with any GitHub account. |
 
 **Minimum recommended:** add **Gemini** (for photos) + **Groq** (for fast text).
 
 The top-right ⚙️ badge shows which engines are active. All keys stay in `config.js` on your own site — the app calls the providers directly from the browser.
 
 ## How the app chooses a model (automatic)
-- **🧠 Deep Think on** → Gemini 2.5 Pro → Nemotron 3 Ultra 555B → Hy3 295B → gpt-oss-120b → then the normal chain below
+- **🧠 Deep Think on, or CA · CMA · Professional level (automatic)** → Gemini 2.5 Pro → DeepSeek-R1 + Phi-4-Reasoning (GitHub Models) → Nemotron 3 Ultra 555B → Hy3 295B → gpt-oss-120b → then the normal chain below
+- **Maths / Accounts (reasoning)** also tries GPT-4o via GitHub Models right after Gemini.
+- Want a model on your own computer instead? See [LOCAL-MODELS.md](../LOCAL-MODELS.md) — honest guide to small local models (and why sub-250 MB ones can't do CA/CMA numericals).
 - **Photo attached** → Gemini (best vision) → OpenRouter Gemma 4 → Mistral Pixtral
 - **Coding / programming** → OpenRouter Qwen3 Coder → Gemini → Groq → Cerebras
 - **Maths / Physics / Accounts (reasoning)** → Gemini → Cerebras → Groq → OpenRouter
