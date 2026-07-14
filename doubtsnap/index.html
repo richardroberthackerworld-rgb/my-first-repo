@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Doubt Snap 📖 — Snap a doubt, get the answer</title>
+<meta name="description" content="Doubt Snap — take a photo of any question from Class 1 to 10, Inter (MPC/BiPC/CEC/MEC), Degree, CA/CMA/US CMA, Jobs & Current Affairs, and get the exact answer with a step-by-step explanation in English, Hindi or Telugu.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700;900&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Serif+Devanagari:wght@400;600&family=Noto+Serif+Telugu:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* ============ BOOK THEME ============ */
+:root{
+  --paper:#f7f1e3;          /* main page paper */
+  --paper-2:#fdf9ee;        /* lighter sheet */
+  --paper-aged:#efe6cf;     /* aged edge */
+  --ink:#2c2418;            /* main text ink */
+  --ink-soft:#5a4c38;       /* secondary ink */
+  --ink-faint:#8a7a60;      /* placeholder / meta */
+  --leather:#5d3220;        /* book cover leather */
+  --leather-2:#7a4530;      /* leather highlight */
+  --maroon:#7b2d26;         /* ribbon / accents */
+  --gold:#b8860b;           /* gilded accents */
+  --gold-soft:#d4af6a;
+  --rule:#d9cbaa;           /* ruled lines / borders */
+  --ok:#3d6b35;
+  --err:#93312b;
+  --shadow-page:0 1px 3px rgba(60,40,10,.15), 0 10px 30px rgba(60,40,10,.12);
+  --serif:'Lora','Noto Serif Devanagari','Noto Serif Telugu',Georgia,serif;
+  --display:'Playfair Display','Noto Serif Devanagari','Noto Serif Telugu',Georgia,serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--serif);
+  color:var(--ink);
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(184,134,11,.06), transparent 50%),
+    repeating-linear-gradient(0deg, transparent 0 3px, rgba(120,90,40,.012) 3px 4px),
+    linear-gradient(160deg,#3a2417 0%, #4a2e1c 45%, #3a2417 100%);
+  min-height:100vh;
+  line-height:1.65;
+}
+/* ---------- Book cover header ---------- */
+header.cover{
+  background:
+    radial-gradient(ellipse at 50% -20%, rgba(212,175,106,.25), transparent 60%),
+    repeating-linear-gradient(90deg, rgba(0,0,0,.06) 0 2px, transparent 2px 90px),
+    linear-gradient(180deg,var(--leather-2),var(--leather));
+  border-bottom:6px double var(--gold-soft);
+  padding:34px 20px 26px;
+  text-align:center;
+  position:relative;
+}
+header.cover::before, header.cover::after{
+  content:'';position:absolute;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--gold-soft),transparent);
+}
+header.cover::before{top:8px} header.cover::after{bottom:12px}
+.brand{
+  font-family:var(--display);font-weight:900;font-size:clamp(34px,6vw,54px);
+  color:#f3e6c8;letter-spacing:1px;text-shadow:0 2px 0 rgba(0,0,0,.35);
+}
+.brand .snap{color:var(--gold-soft)}
+.tagline{color:#e4d1a8;font-style:italic;font-size:15px;margin-top:6px}
+.tagline-sub{color:#c9b183;font-size:12.5px;margin-top:4px;letter-spacing:.5px}
+
+/* ---------- Toolbar (language + key) ---------- */
+.toolbar{
+  max-width:980px;margin:-1px auto 0;display:flex;justify-content:space-between;
+  align-items:center;gap:10px;padding:10px 16px;flex-wrap:wrap;
+}
+.lang-tabs{display:flex;gap:6px}
+.lang-tab{
+  font-family:var(--serif);font-size:13.5px;cursor:pointer;
+  background:rgba(247,241,227,.12);color:#e8d9b5;border:1px solid rgba(212,175,106,.4);
+  border-radius:4px 4px 0 0;padding:7px 14px;transition:all .2s ease;
+}
+.lang-tab:hover{background:rgba(247,241,227,.22)}
+.lang-tab.active{background:var(--paper);color:var(--ink);border-color:var(--paper);font-weight:600}
+.key-btn{
+  font-family:var(--serif);font-size:13px;cursor:pointer;
+  background:transparent;color:#d4bd8d;border:1px dashed rgba(212,175,106,.55);
+  border-radius:4px;padding:7px 12px;transition:all .2s ease;
+}
+.key-btn:hover{color:#f3e6c8;border-style:solid}
+.key-btn.ok{color:#a8d49a;border-color:rgba(120,180,100,.55)}
+.engine-badge{cursor:default;border-style:solid;max-width:60vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.engine-badge.warn{color:#e6b877;border-color:rgba(212,175,106,.6);border-style:dashed}
+.answer-meta .via{color:var(--ok);font-weight:600}
+
+/* ---------- The open book ---------- */
+main.book{
+  max-width:980px;margin:0 auto 60px;background:var(--paper);
+  box-shadow:var(--shadow-page), inset 0 0 60px rgba(140,110,60,.09);
+  border-radius:3px 3px 8px 8px;position:relative;overflow:hidden;
+}
+main.book::before{ /* page edge stack on the right */
+  content:'';position:absolute;top:0;bottom:0;right:0;width:10px;
+  background:repeating-linear-gradient(90deg,var(--paper-aged) 0 2px,var(--paper-2) 2px 4px);
+  border-left:1px solid var(--rule);
+}
+.page{padding:36px clamp(20px,5vw,64px) 44px;position:relative}
+.page + .page{border-top:1px solid var(--rule)}
+.chapter{
+  display:flex;align-items:center;gap:14px;margin-bottom:20px;
+}
+.chapter .orn{color:var(--gold);font-size:18px;letter-spacing:2px;white-space:nowrap}
+.chapter h2{
+  font-family:var(--display);font-size:clamp(19px,3vw,26px);font-weight:700;
+  color:var(--maroon);min-width:0;
+}
+.chapter .line{flex:1;height:1px;background:linear-gradient(90deg,var(--rule),transparent)}
+.hint{font-style:italic;color:var(--ink-faint);font-size:13.5px;margin:-12px 0 18px}
+
+/* ---------- Chapter I : choose study level & subject ---------- */
+.level-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:18px}
+.level-card{
+  background:var(--paper-2);border:1px solid var(--rule);border-radius:5px;
+  padding:12px 10px;text-align:center;cursor:pointer;transition:all .2s ease;
+  font-size:14px;position:relative;
+}
+.level-card .em{display:block;font-size:22px;margin-bottom:4px}
+.level-card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(90,60,20,.15)}
+.level-card.active{
+  border-color:var(--gold);background:#fbf3dd;
+  box-shadow:inset 0 0 0 1px var(--gold), 0 4px 12px rgba(184,134,11,.18);
+}
+.level-card.active::after{content:'✦';position:absolute;top:5px;right:8px;color:var(--gold);font-size:11px}
+.sub-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:640px){.sub-row{grid-template-columns:1fr}}
+.field label{
+  display:block;font-size:11.5px;text-transform:uppercase;letter-spacing:2px;
+  color:var(--ink-soft);margin-bottom:6px;font-weight:600;
+}
+.field select{
+  width:100%;font-family:var(--serif);font-size:15px;color:var(--ink);
+  background:var(--paper-2);border:1px solid var(--rule);border-radius:5px;
+  padding:10px 12px;cursor:pointer;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235a4c38' stroke-width='1.6' fill='none'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;
+}
+.field select:focus{outline:none;border-color:var(--gold)}
+
+/* ---------- Chapter II : ask ---------- */
+.ask-wrap{display:grid;grid-template-columns:1fr 300px;gap:22px}
+@media(max-width:760px){.ask-wrap{grid-template-columns:1fr}}
+textarea#qtext{
+  width:100%;min-height:170px;resize:vertical;
+  font-family:var(--serif);font-size:16px;color:var(--ink);line-height:32px;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 31px, var(--rule) 31px 32px);
+  background-color:var(--paper-2);
+  border:1px solid var(--rule);border-radius:5px;padding:6px 14px 10px;
+}
+textarea#qtext:focus{outline:none;border-color:var(--gold)}
+textarea#qtext::placeholder{color:var(--ink-faint);font-style:italic}
+.photo-box{
+  border:2px dashed var(--gold-soft);border-radius:6px;background:var(--paper-2);
+  min-height:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:8px;padding:16px;text-align:center;cursor:pointer;transition:all .2s ease;position:relative;
+}
+.photo-box:hover,.photo-box.drag{background:#fbf3dd;border-color:var(--gold)}
+.photo-box .cam{font-size:34px}
+.photo-box .pb-title{font-weight:600;font-size:14.5px}
+.photo-box .pb-sub{font-size:12px;color:var(--ink-faint);font-style:italic}
+.photo-btns{display:flex;gap:8px;margin-top:4px}
+.mini-btn{
+  font-family:var(--serif);font-size:12.5px;cursor:pointer;
+  background:var(--paper);border:1px solid var(--rule);border-radius:4px;padding:6px 12px;
+  color:var(--ink-soft);transition:all .2s ease;
+}
+.mini-btn:hover{border-color:var(--gold);color:var(--ink)}
+.preview-wrap{position:relative;width:100%}
+.preview-wrap img{width:100%;border-radius:4px;border:1px solid var(--rule);display:block;max-height:260px;object-fit:contain;background:#fff}
+.remove-img{
+  position:absolute;top:6px;right:6px;background:var(--maroon);color:#f7f1e3;border:none;
+  width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:13px;line-height:1;
+}
+.ask-actions{display:flex;align-items:center;gap:14px;margin-top:20px;flex-wrap:wrap}
+.solve-btn{
+  font-family:var(--display);font-weight:700;font-size:17px;letter-spacing:.5px;cursor:pointer;
+  background:linear-gradient(180deg,var(--leather-2),var(--leather));color:#f3e6c8;
+  border:1px solid var(--gold-soft);border-radius:6px;padding:13px 34px;
+  box-shadow:0 3px 0 #2e1a0e, 0 8px 18px rgba(60,35,15,.35);transition:all .15s ease;
+}
+.solve-btn:hover{transform:translateY(-1px);box-shadow:0 4px 0 #2e1a0e, 0 10px 22px rgba(60,35,15,.4)}
+.solve-btn:active{transform:translateY(2px);box-shadow:0 1px 0 #2e1a0e}
+.solve-btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
+.status{font-style:italic;font-size:14px;color:var(--ink-soft)}
+.status.err{color:var(--err)}
+.deep-line{
+  display:inline-flex;align-items:center;gap:8px;user-select:none;cursor:default;
+  font-size:13.5px;color:var(--ink-soft);background:var(--paper-2);
+  border:1px dashed var(--gold-soft);border-radius:20px;padding:7px 14px;transition:all .2s ease;
+}
+.deep-line.deep{background:#fbf3dd;border-style:solid;color:var(--ink);box-shadow:inset 0 0 0 1px var(--gold)}
+/* quill loading */
+.quill{display:none;align-items:center;gap:10px}
+.quill.on{display:inline-flex}
+.quill .nib{font-size:20px;animation:write 1s ease-in-out infinite}
+@keyframes write{0%,100%{transform:translateX(0) rotate(0)}50%{transform:translateX(10px) rotate(-8deg)}}
+
+/* ---------- Chapter III : the answer page ---------- */
+#answerPage{display:none}
+.answer-sheet{
+  background:var(--paper-2);border:1px solid var(--rule);border-radius:6px;
+  padding:26px clamp(18px,4vw,40px);box-shadow:inset 0 0 40px rgba(150,120,60,.06);
+  position:relative;
+}
+.answer-sheet::before{ /* red margin line like a notebook */
+  content:'';position:absolute;top:0;bottom:0;left:34px;width:1px;background:rgba(147,49,43,.25);
+}
+@media(max-width:640px){.answer-sheet::before{display:none}}
+.answer-meta{
+  font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-faint);
+  border-bottom:1px solid var(--rule);padding-bottom:10px;margin-bottom:16px;
+  display:flex;gap:14px;flex-wrap:wrap;
+}
+.answer-body{font-size:16px}
+.answer-body h1,.answer-body h2,.answer-body h3{
+  font-family:var(--display);color:var(--maroon);margin:22px 0 8px;line-height:1.3;
+}
+.answer-body h1{font-size:24px}.answer-body h2{font-size:20px}.answer-body h3{font-size:17px}
+.answer-body p{margin:10px 0}
+.answer-body strong{color:var(--leather)}
+.answer-body ul,.answer-body ol{margin:10px 0 10px 26px}
+.answer-body li{margin:5px 0}
+.answer-body code{
+  font-family:Consolas,monospace;font-size:14px;background:#efe6cf;
+  border:1px solid var(--rule);border-radius:3px;padding:1px 6px;
+}
+.answer-body pre{
+  background:#efe6cf;border:1px solid var(--rule);border-radius:5px;
+  padding:14px;overflow-x:auto;margin:12px 0;
+}
+.answer-body pre code{border:none;background:none;padding:0}
+.answer-body blockquote{
+  border-left:3px solid var(--gold);background:#fbf3dd;padding:10px 16px;margin:12px 0;
+  font-style:italic;border-radius:0 5px 5px 0;
+}
+.answer-body hr{border:none;border-top:1px dashed var(--rule);margin:18px 0}
+.answer-body table{border-collapse:collapse;margin:12px 0;width:100%}
+.answer-body th,.answer-body td{border:1px solid var(--rule);padding:7px 10px;text-align:left;font-size:14.5px}
+.answer-body th{background:#efe6cf;font-weight:600}
+.answer-actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+
+/* ---------- Chapter IV : notebook (history) ---------- */
+.notebook-list{display:flex;flex-direction:column;gap:8px}
+.note-item{
+  background:var(--paper-2);border:1px solid var(--rule);border-radius:5px;
+  padding:11px 14px;cursor:pointer;display:flex;justify-content:space-between;gap:12px;
+  align-items:center;transition:all .15s ease;
+}
+.note-item:hover{border-color:var(--gold);transform:translateX(3px)}
+.note-item .nq{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.note-item .nm{font-size:11px;color:var(--ink-faint);white-space:nowrap;letter-spacing:.5px}
+.empty-note{font-style:italic;color:var(--ink-faint);font-size:14px}
+
+/* ---------- Key modal ---------- */
+.modal-bg{
+  display:none;position:fixed;inset:0;background:rgba(30,18,8,.72);z-index:50;
+  align-items:center;justify-content:center;padding:16px;
+}
+.modal-bg.on{display:flex}
+.modal{
+  background:var(--paper);border:1px solid var(--gold-soft);border-radius:8px;
+  max-width:560px;width:100%;padding:30px clamp(20px,4vw,38px);
+  box-shadow:0 30px 80px rgba(0,0,0,.5);max-height:90vh;overflow-y:auto;
+}
+.modal h3{font-family:var(--display);color:var(--maroon);font-size:22px;margin-bottom:6px}
+.modal p{font-size:14px;color:var(--ink-soft);margin:8px 0}
+.modal ol{margin:10px 0 14px 22px;font-size:14px;color:var(--ink-soft)}
+.modal ol li{margin:6px 0}
+.modal a{color:var(--maroon);font-weight:600}
+.modal input{
+  width:100%;font-family:Consolas,monospace;font-size:14px;padding:11px 12px;
+  border:1px solid var(--rule);border-radius:5px;background:var(--paper-2);color:var(--ink);
+  margin:8px 0 14px;
+}
+.modal input:focus{outline:none;border-color:var(--gold)}
+.modal .m-actions{display:flex;gap:10px;justify-content:flex-end}
+.free-badge{
+  display:inline-block;background:#e5efdd;color:var(--ok);border:1px solid #b9d3ab;
+  font-size:11.5px;letter-spacing:1px;text-transform:uppercase;border-radius:20px;
+  padding:3px 12px;margin-bottom:8px;font-weight:600;
+}
+
+/* ---------- footer ---------- */
+footer{
+  text-align:center;color:#c9b183;font-size:12.5px;font-style:italic;
+  padding:0 20px 40px;
+}
+footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-bottom:6px}
+</style>
+</head>
+<body>
+
+<header class="cover">
+  <div class="brand">Doubt <span class="snap">Snap</span> <span style="font-size:.7em">📖</span></div>
+  <div class="tagline" data-i18n="tagline">Snap a photo of any doubt — get the exact answer, explained like a good teacher.</div>
+  <div class="tagline-sub" data-i18n="taglineSub">Class 1–10 · Intermediate (MPC · BiPC · CEC · MEC) · Degree · CA · CMA · US CMA · Jobs & Current Affairs</div>
+</header>
+
+<div class="toolbar">
+  <div class="lang-tabs" id="langTabs">
+    <button class="lang-tab active" data-lang="en">English</button>
+    <button class="lang-tab" data-lang="hi">हिंदी</button>
+    <button class="lang-tab" data-lang="te">తెలుగు</button>
+  </div>
+  <div class="key-btn engine-badge" id="engineBadge" title="Keys are set in config.js">⚙️ …</div>
+</div>
+
+<main class="book">
+
+  <!-- CHAPTER I -->
+  <section class="page">
+    <div class="chapter">
+      <span class="orn">❧</span>
+      <h2><span data-i18n="ch1">Chapter I — What are you studying?</span></h2>
+      <span class="line"></span>
+    </div>
+    <div class="level-grid" id="levelGrid"></div>
+    <div class="sub-row">
+      <div class="field">
+        <label data-i18n="lblCourse">Class / Course</label>
+        <select id="courseSel"></select>
+      </div>
+      <div class="field">
+        <label data-i18n="lblSubject">Subject</label>
+        <select id="subjectSel"></select>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHAPTER II -->
+  <section class="page">
+    <div class="chapter">
+      <span class="orn">❧</span>
+      <h2><span data-i18n="ch2">Chapter II — Ask your doubt</span></h2>
+      <span class="line"></span>
+    </div>
+    <p class="hint" data-i18n="ch2hint">Type your question, snap a photo of it, or do both. Handwritten and printed questions both work.</p>
+
+    <div class="ask-wrap">
+      <div>
+        <textarea id="qtext" data-i18n-ph="qPlaceholder" placeholder="Write your doubt here… e.g. “Solve x² − 5x + 6 = 0” or “Explain photosynthesis”"></textarea>
+      </div>
+      <div>
+        <div class="photo-box" id="photoBox">
+          <div id="photoEmpty">
+            <div class="cam">📷</div>
+            <div class="pb-title" data-i18n="pbTitle">Snap or upload the question</div>
+            <div class="pb-sub" data-i18n="pbSub">tap here · drag & drop · or paste (Ctrl+V)</div>
+            <div class="photo-btns">
+              <button class="mini-btn" id="camBtn" type="button">📸 <span data-i18n="camera">Camera</span></button>
+              <button class="mini-btn" id="galBtn" type="button">🖼️ <span data-i18n="gallery">Gallery</span></button>
+            </div>
+          </div>
+          <div class="preview-wrap" id="previewWrap" style="display:none">
+            <img id="previewImg" alt="question photo">
+            <button class="remove-img" id="removeImg" type="button" title="Remove">✕</button>
+          </div>
+        </div>
+        <input type="file" id="fileCam" accept="image/*" capture="environment" hidden>
+        <input type="file" id="fileGal" accept="image/*" hidden>
+      </div>
+    </div>
+
+    <div class="ask-actions">
+      <button class="solve-btn" id="solveBtn">✒️ <span data-i18n="solve">Solve my doubt</span></button>
+      <span class="deep-line" id="modePill" title="Picked automatically from your question — simple doubts use the fastest AI, big problems use the strongest"></span>
+      <span class="quill" id="quill"><span class="nib">🖋️</span><span class="status" data-i18n="thinking">Your teacher is writing the answer…</span></span>
+      <span class="status err" id="errMsg"></span>
+    </div>
+  </section>
+
+  <!-- CHAPTER III -->
+  <section class="page" id="answerPage">
+    <div class="chapter">
+      <span class="orn">❧</span>
+      <h2><span data-i18n="ch3">Chapter III — The Answer</span></h2>
+      <span class="line"></span>
+    </div>
+    <div class="answer-sheet">
+      <div class="answer-meta" id="answerMeta"></div>
+      <div class="answer-body" id="answerBody"></div>
+    </div>
+    <div class="answer-actions">
+      <button class="mini-btn" onclick="copyAnswer()">📋 <span data-i18n="copy">Copy answer</span></button>
+      <button class="mini-btn" onclick="askFollowUp()">💬 <span data-i18n="followup">Ask a follow-up</span></button>
+      <button class="mini-btn" onclick="newDoubt()">➕ <span data-i18n="newDoubt">New doubt</span></button>
+    </div>
+  </section>
+
+  <!-- CHAPTER IV -->
+  <section class="page">
+    <div class="chapter">
+      <span class="orn">❧</span>
+      <h2><span data-i18n="ch4">Chapter IV — My Notebook</span></h2>
+      <span class="line"></span>
+    </div>
+    <p class="hint" data-i18n="ch4hint">Your last 20 solved doubts, saved on this device.</p>
+    <div class="notebook-list" id="notebookList"></div>
+  </section>
+
+</main>
+
+<footer>
+  <span class="fleuron">❦</span>
+  <span data-i18n="footer">Doubt Snap — every doubt deserves a good answer. Free forever, powered by Google Gemini.</span>
+</footer>
+
+<script src="config.js"></script>
+<script>
+/* ================= DATA: levels, courses, subjects ================= */
+const LEVELS = [
+  { id:'school',  em:'🏫', name:{en:'School (1st–10th)', hi:'स्कूल (कक्षा 1–10)', te:'స్కూల్ (1–10 తరగతి)'},
+    courses:['Class 1','Class 2','Class 3','Class 4','Class 5','Class 6','Class 7','Class 8','Class 9','Class 10'],
+    subjects:['Mathematics','Science','Physics','Chemistry','Biology','Social Studies','English','Hindi','Telugu','EVS','Computer Science','General Knowledge'] },
+  { id:'inter', em:'🎓', name:{en:'Intermediate (11th–12th)', hi:'इंटरमीडिएट (11वीं–12वीं)', te:'ఇంటర్మీడియట్ (11–12)'},
+    courses:['MPC (Maths, Physics, Chemistry)','BiPC (Biology, Physics, Chemistry)','CEC (Civics, Economics, Commerce)','MEC (Maths, Economics, Commerce)','HEC (History, Economics, Civics)','MBiPC','Vocational'],
+    subjects:['Mathematics','Physics','Chemistry','Botany','Zoology','Commerce','Accountancy','Economics','Civics','History','English','Sanskrit','Computer Science'] },
+  { id:'degree', em:'🏛️', name:{en:'Degree / UG & PG', hi:'डिग्री / यूजी–पीजी', te:'డిగ్రీ / యూజీ–పీజీ'},
+    courses:['B.Sc','B.Com','B.A','B.Tech / B.E','BBA','BCA','B.Pharmacy','LLB','MBBS / BDS','Nursing / Paramedical','M.Sc','M.Com','M.A','MBA','MCA','M.Tech','Ph.D / Research'],
+    subjects:['Mathematics','Physics','Chemistry','Biology / Life Sciences','Computer Science / Programming','Electronics','Mechanical','Civil','Electrical','Accountancy','Business & Management','Economics','Statistics','Law','Medicine / Anatomy','Pharmacy','English Literature','Psychology','Political Science','History'] },
+  { id:'prof', em:'💼', name:{en:'CA · CMA · Professional', hi:'सीए · सीएमए · प्रोफेशनल', te:'సీఏ · సీఎంఏ · ప్రొఫెషనల్'},
+    courses:['CA Foundation','CA Intermediate','CA Final','CMA (India) Foundation','CMA (India) Inter','CMA (India) Final','US CMA Part 1','US CMA Part 2','CS Executive','CS Professional','ACCA','CFA','CPA'],
+    subjects:['Accounting','Advanced Accounting','Cost & Management Accounting','Financial Management','Taxation (Direct)','Taxation (Indirect / GST)','Auditing','Corporate & Business Law','Economics','Strategic Management','Financial Reporting','Business Mathematics & Statistics'] },
+  { id:'jobs', em:'📋', name:{en:'Jobs & Competitive Exams', hi:'नौकरी और प्रतियोगी परीक्षा', te:'ఉద్యోగాలు & పోటీ పరీక్షలు'},
+    courses:['UPSC Civil Services','APPSC / TSPSC Groups','SSC (CGL / CHSL / MTS)','Banking (IBPS / SBI / RBI)','Railways (RRB)','Police / SI / Constable','Defence (NDA / CDS / Agniveer)','Teaching (TET / DSC / CTET)','JEE / NEET / EAMCET','GATE','CUET','Other Govt Exams'],
+    subjects:['Quantitative Aptitude','Reasoning','General Studies','Indian Polity','Indian Economy','Geography','History','Science & Technology','English Language','Current Affairs','Computer Awareness','Interview / Descriptive'] },
+  { id:'current', em:'📰', name:{en:'Current Affairs & GK', hi:'करेंट अफेयर्स और जीके', te:'కరెంట్ అఫైర్స్ & జీకే'},
+    courses:['Daily Current Affairs','Monthly Current Affairs','Static GK','Sports','Awards & Honours','Government Schemes','International Affairs','Economy & Budget'],
+    subjects:['National','International','Economy','Science & Tech','Sports','Awards','Appointments','Schemes & Policies','Environment','Defence'] },
+  { id:'other', em:'🌍', name:{en:'Other / Anything else', hi:'अन्य / कुछ भी', te:'ఇతర / ఏదైనా'},
+    courses:['General Question','Languages','Coding & Technology','Health & Science','Essay / Letter Writing','Career Guidance','Life Skills'],
+    subjects:['General','English Grammar','Hindi Grammar','Telugu Grammar','Coding','Technology','Essay Writing','Career','Other'] },
+];
+
+/* ================= I18N ================= */
+const I18N = {
+  en:{ tagline:'Snap a photo of any doubt — get the exact answer, explained like a good teacher.',
+    taglineSub:'Class 1–10 · Intermediate (MPC · BiPC · CEC · MEC) · Degree · CA · CMA · US CMA · Jobs & Current Affairs',
+    setKey:'Set free AI key', keySet:'AI key connected', ch1:'Chapter I — What are you studying?',
+    lblCourse:'Class / Course', lblSubject:'Subject', ch2:'Chapter II — Ask your doubt',
+    ch2hint:'Type your question, snap a photo of it, or do both. Handwritten and printed questions both work.',
+    qPlaceholder:'Write your doubt here… e.g. “Solve x² − 5x + 6 = 0” or “Explain photosynthesis”',
+    pbTitle:'Snap or upload the question', pbSub:'tap here · drag & drop · or paste (Ctrl+V)',
+    camera:'Camera', gallery:'Gallery', solve:'Solve my doubt', thinking:'Your teacher is writing the answer…',
+    ch3:'Chapter III — The Answer', copy:'Copy answer', followup:'Ask a follow-up', newDoubt:'New doubt',
+    ch4:'Chapter IV — My Notebook', ch4hint:'Your last 20 solved doubts, saved on this device.',
+    emptyNote:'No doubts solved yet. Your answers will be saved here like notes in a notebook.',
+    footer:'Doubt Snap — every doubt deserves a good answer. Free forever, powered by free AI models.',
+    noEngine:'No AI key set — add one in config.js', engines:'Engines',
+    errNoEngine:'No AI key found. Please add at least one free key in config.js (e.g. Gemini).',
+    errNoVision:'Photo questions need a vision key. Add a Gemini or OpenRouter key in config.js.',
+    errNoQ:'Please type your doubt or upload a photo of it.',
+    errApi:'The AI could not answer. Check your keys / internet and try again.',
+    copied:'Answer copied!', followPrompt:'Type your follow-up question about the same doubt:',
+    modeQuick:'Quick answer — fast AI (auto)', modeStd:'Standard — smart AI (auto)', modeDeep:'Deep Think — strongest AI (auto)',
+    metaAnswered:'Answered', imgAttached:'photo attached', answeredBy:'Answered by' },
+  hi:{ tagline:'किसी भी डाउट की फोटो खींचो — सटीक उत्तर पाओ, एक अच्छे शिक्षक की तरह समझाया हुआ।',
+    taglineSub:'कक्षा 1–10 · इंटर (MPC · BiPC · CEC · MEC) · डिग्री · CA · CMA · US CMA · नौकरी और करेंट अफेयर्स',
+    setKey:'फ्री AI कुंजी सेट करें', keySet:'AI कुंजी जुड़ गई', ch1:'अध्याय I — आप क्या पढ़ रहे हैं?',
+    lblCourse:'कक्षा / कोर्स', lblSubject:'विषय', ch2:'अध्याय II — अपना डाउट पूछें',
+    ch2hint:'अपना प्रश्न लिखें, उसकी फोटो खींचें, या दोनों करें। हस्तलिखित और छपे प्रश्न दोनों चलते हैं।',
+    qPlaceholder:'अपना डाउट यहाँ लिखें… जैसे “x² − 5x + 6 = 0 हल करें” या “प्रकाश संश्लेषण समझाएँ”',
+    pbTitle:'प्रश्न की फोटो खींचें या अपलोड करें', pbSub:'यहाँ टैप करें · ड्रैग-ड्रॉप · या पेस्ट (Ctrl+V)',
+    camera:'कैमरा', gallery:'गैलरी', solve:'मेरा डाउट हल करें', thinking:'आपके शिक्षक उत्तर लिख रहे हैं…',
+    ch3:'अध्याय III — उत्तर', copy:'उत्तर कॉपी करें', followup:'आगे पूछें', newDoubt:'नया डाउट',
+    ch4:'अध्याय IV — मेरी नोटबुक', ch4hint:'आपके पिछले 20 हल किए डाउट, इसी डिवाइस पर सेव।',
+    emptyNote:'अभी तक कोई डाउट हल नहीं हुआ। आपके उत्तर यहाँ नोटबुक की तरह सेव होंगे।',
+    footer:'Doubt Snap — हर डाउट एक अच्छे उत्तर का हकदार है। हमेशा फ्री, फ्री AI मॉडल द्वारा संचालित।',
+    noEngine:'कोई AI कुंजी सेट नहीं — config.js में जोड़ें', engines:'इंजन',
+    errNoEngine:'कोई AI कुंजी नहीं मिली। कृपया config.js में कम से कम एक फ्री कुंजी जोड़ें (जैसे Gemini)।',
+    errNoVision:'फोटो प्रश्नों के लिए विज़न कुंजी चाहिए। config.js में Gemini या OpenRouter कुंजी जोड़ें।',
+    errNoQ:'कृपया अपना डाउट लिखें या उसकी फोटो अपलोड करें।',
+    errApi:'AI उत्तर नहीं दे सका। कुंजियाँ / इंटरनेट जाँचें और फिर कोशिश करें।',
+    copied:'उत्तर कॉपी हो गया!', followPrompt:'इसी डाउट पर अपना अगला प्रश्न लिखें:',
+    modeQuick:'तुरंत उत्तर — तेज़ AI (ऑटो)', modeStd:'स्टैंडर्ड — स्मार्ट AI (ऑटो)', modeDeep:'डीप थिंक — सबसे शक्तिशाली AI (ऑटो)',
+    metaAnswered:'उत्तर दिया गया', imgAttached:'फोटो संलग्न', answeredBy:'उत्तर दिया' },
+  te:{ tagline:'ఏ డౌట్ అయినా ఫోటో తీయండి — ఖచ్చితమైన సమాధానం, మంచి టీచర్ లా వివరణతో.',
+    taglineSub:'1–10 తరగతి · ఇంటర్ (MPC · BiPC · CEC · MEC) · డిగ్రీ · CA · CMA · US CMA · ఉద్యోగాలు & కరెంట్ అఫైర్స్',
+    setKey:'ఫ్రీ AI కీ సెట్ చేయండి', keySet:'AI కీ కనెక్ట్ అయింది', ch1:'అధ్యాయం I — మీరు ఏమి చదువుతున్నారు?',
+    lblCourse:'తరగతి / కోర్సు', lblSubject:'సబ్జెక్టు', ch2:'అధ్యాయం II — మీ డౌట్ అడగండి',
+    ch2hint:'మీ ప్రశ్న టైప్ చేయండి, దాని ఫోటో తీయండి, లేదా రెండూ చేయండి. చేతిరాత, ప్రింటెడ్ ప్రశ్నలు రెండూ పనిచేస్తాయి.',
+    qPlaceholder:'మీ డౌట్ ఇక్కడ రాయండి… ఉదా. “x² − 5x + 6 = 0 సాధించండి” లేదా “కిరణజన్య సంయోగక్రియ వివరించండి”',
+    pbTitle:'ప్రశ్న ఫోటో తీయండి లేదా అప్‌లోడ్ చేయండి', pbSub:'ఇక్కడ నొక్కండి · డ్రాగ్-డ్రాప్ · లేదా పేస్ట్ (Ctrl+V)',
+    camera:'కెమెరా', gallery:'గ్యాలరీ', solve:'నా డౌట్ సాల్వ్ చేయండి', thinking:'మీ టీచర్ సమాధానం రాస్తున్నారు…',
+    ch3:'అధ్యాయం III — సమాధానం', copy:'సమాధానం కాపీ', followup:'ఇంకా అడగండి', newDoubt:'కొత్త డౌట్',
+    ch4:'అధ్యాయం IV — నా నోట్‌బుక్', ch4hint:'మీ చివరి 20 సాల్వ్ చేసిన డౌట్లు, ఈ డివైస్‌లో సేవ్ అవుతాయి.',
+    emptyNote:'ఇంకా డౌట్లు సాల్వ్ చేయలేదు. మీ సమాధానాలు నోట్‌బుక్ లా ఇక్కడ సేవ్ అవుతాయి.',
+    footer:'Doubt Snap — ప్రతి డౌట్ కు మంచి సమాధానం దక్కాలి. ఎప్పటికీ ఫ్రీ, ఫ్రీ AI మోడల్స్ తో నడుస్తుంది.',
+    noEngine:'AI కీ సెట్ చేయలేదు — config.js లో జోడించండి', engines:'ఇంజన్లు',
+    errNoEngine:'AI కీ కనబడలేదు. దయచేసి config.js లో కనీసం ఒక ఫ్రీ కీ జోడించండి (ఉదా. Gemini).',
+    errNoVision:'ఫోటో ప్రశ్నలకు విజన్ కీ అవసరం. config.js లో Gemini లేదా OpenRouter కీ జోడించండి.',
+    errNoQ:'దయచేసి మీ డౌట్ టైప్ చేయండి లేదా దాని ఫోటో అప్‌లోడ్ చేయండి.',
+    errApi:'AI సమాధానం ఇవ్వలేకపోయింది. కీలు / ఇంటర్నెట్ చెక్ చేసి మళ్లీ ప్రయత్నించండి.',
+    copied:'సమాధానం కాపీ అయింది!', followPrompt:'ఇదే డౌట్ పై మీ తదుపరి ప్రశ్న రాయండి:',
+    modeQuick:'త్వరిత సమాధానం — వేగవంతమైన AI (ఆటో)', modeStd:'స్టాండర్డ్ — స్మార్ట్ AI (ఆటో)', modeDeep:'డీప్ థింక్ — అత్యంత శక్తివంతమైన AI (ఆటో)',
+    metaAnswered:'సమాధానం ఇచ్చినది', imgAttached:'ఫోటో జత చేయబడింది', answeredBy:'సమాధానం ఇచ్చినది' }
+};
+const LANG_NAME = {en:'English', hi:'Hindi (हिंदी)', te:'Telugu (తెలుగు)'};
+
+/* ================= STATE ================= */
+let state = {
+  lang: localStorage.getItem('ds_lang') || 'en',
+  level: localStorage.getItem('ds_level') || 'school',
+  imageData: null,   // {mime, b64}
+  lastQ: null,       // for follow-ups
+  lastAnswer: '',
+};
+const $ = id => document.getElementById(id);
+const t = k => (I18N[state.lang] && I18N[state.lang][k]) || I18N.en[k] || k;
+
+/* ================= UI: i18n apply ================= */
+function applyLang(){
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{ el.placeholder = t(el.dataset.i18nPh); });
+  document.querySelectorAll('.lang-tab').forEach(b=>b.classList.toggle('active', b.dataset.lang===state.lang));
+  document.documentElement.lang = state.lang;
+  renderLevels(); renderNotebook(); updateEngineBadge(); updateModePill();
+}
+$('langTabs').addEventListener('click', e=>{
+  const b = e.target.closest('.lang-tab'); if(!b) return;
+  state.lang = b.dataset.lang; localStorage.setItem('ds_lang', state.lang); applyLang();
+});
+
+/* ================= UI: levels / courses / subjects ================= */
+function renderLevels(){
+  const g = $('levelGrid'); g.innerHTML='';
+  LEVELS.forEach(lv=>{
+    const d = document.createElement('div');
+    d.className = 'level-card' + (lv.id===state.level ? ' active':'');
+    d.innerHTML = `<span class="em">${lv.em}</span>${lv.name[state.lang]||lv.name.en}`;
+    d.onclick = ()=>{ state.level = lv.id; localStorage.setItem('ds_level', lv.id); renderLevels(); updateModePill(); };
+    g.appendChild(d);
+  });
+  fillSelects();
+}
+function fillSelects(){
+  const lv = LEVELS.find(l=>l.id===state.level);
+  const cs = $('courseSel'), ss = $('subjectSel');
+  const prevC = cs.value, prevS = ss.value;
+  cs.innerHTML = lv.courses.map(c=>`<option>${c}</option>`).join('');
+  ss.innerHTML = lv.subjects.map(s=>`<option>${s}</option>`).join('');
+  if(lv.courses.includes(prevC)) cs.value = prevC;
+  if(lv.subjects.includes(prevS)) ss.value = prevS;
+}
+
+/* ================= Photo handling ================= */
+function setImage(file){
+  if(!file || !file.type.startsWith('image/')) return;
+  const img = new Image();
+  const url = URL.createObjectURL(file);
+  img.onload = ()=>{
+    // downscale to max 1400px & recompress -> smaller payload, faster answers
+    const max = 1400, scale = Math.min(1, max/Math.max(img.width, img.height));
+    const cv = document.createElement('canvas');
+    cv.width = Math.round(img.width*scale); cv.height = Math.round(img.height*scale);
+    cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+    const dataUrl = cv.toDataURL('image/jpeg', .88);
+    state.imageData = { mime:'image/jpeg', b64:dataUrl.split(',')[1] };
+    $('previewImg').src = dataUrl;
+    $('previewWrap').style.display = 'block';
+    $('photoEmpty').style.display = 'none';
+    URL.revokeObjectURL(url);
+    updateModePill();
+  };
+  img.src = url;
+}
+function clearImage(){
+  state.imageData = null;
+  $('previewWrap').style.display='none';
+  $('photoEmpty').style.display='block';
+  $('fileCam').value=''; $('fileGal').value='';
+  updateModePill();
+}
+$('camBtn').onclick = e=>{ e.stopPropagation(); $('fileCam').click(); };
+$('galBtn').onclick = e=>{ e.stopPropagation(); $('fileGal').click(); };
+$('photoBox').onclick = e=>{ if(!state.imageData && !e.target.closest('button')) $('fileGal').click(); };
+$('removeImg').onclick = e=>{ e.stopPropagation(); clearImage(); };
+$('fileCam').onchange = e=> setImage(e.target.files[0]);
+$('fileGal').onchange = e=> setImage(e.target.files[0]);
+['dragover','dragenter'].forEach(ev=> $('photoBox').addEventListener(ev, e=>{ e.preventDefault(); $('photoBox').classList.add('drag'); }));
+['dragleave','drop'].forEach(ev=> $('photoBox').addEventListener(ev, e=>{ e.preventDefault(); $('photoBox').classList.remove('drag'); }));
+$('photoBox').addEventListener('drop', e=> setImage(e.dataTransfer.files[0]));
+document.addEventListener('paste', e=>{
+  const item = [...(e.clipboardData?.items||[])].find(i=>i.type.startsWith('image/'));
+  if(item) setImage(item.getAsFile());
+});
+
+/* ================= AI ENGINES (multi-provider) ================= */
+const CFG = Object.assign({gemini:'',groq:'',cerebras:'',openrouter:'',mistral:'',github:''}, (window.DS_CONFIG && window.DS_CONFIG.keys) || {});
+const key = id => (CFG[id]||'').trim();
+const active = id => !!key(id);
+const anyEngine = () => Object.keys(CFG).some(active);
+const PROV_NAME = { gemini:'Google Gemini', groq:'Groq', cerebras:'Cerebras', openrouter:'OpenRouter', mistral:'Mistral', github:'GitHub Models' };
+const OA_BASE = {
+  groq:'https://api.groq.com/openai/v1/chat/completions',
+  cerebras:'https://api.cerebras.ai/v1/chat/completions',
+  openrouter:'https://openrouter.ai/api/v1/chat/completions',
+  mistral:'https://api.mistral.ai/v1/chat/completions',
+  github:'https://models.github.ai/inference/chat/completions'
+};
+// Which model each provider uses per task type
+const MODEL_MAP = {
+  gemini:     { text:['gemini-2.5-flash','gemini-2.0-flash','gemini-1.5-flash'],
+                vision:['gemini-2.5-flash','gemini-2.0-flash','gemini-1.5-flash'],
+                deep:['gemini-2.5-pro'] },                                    // strongest free solver (~50 req/day), also reads photos
+  groq:       { text:['llama-3.3-70b-versatile','llama-3.1-8b-instant'] },
+  cerebras:   { text:['llama-3.3-70b'] },
+  openrouter: { text:['nvidia/nemotron-3-super-120b-a12b:free','meta-llama/llama-3.3-70b-instruct:free'],
+                coding:['qwen/qwen3-coder:free'],
+                vision:['google/gemma-4-31b-it:free','nvidia/nemotron-nano-12b-v2-vl:free'],
+                deep:['nvidia/nemotron-3-ultra-550b-a55b:free','tencent/hy3:free','openai/gpt-oss-120b:free'] }, // big free reasoning MoEs (text only)
+  github:     { text:['openai/gpt-4o','meta/llama-3.3-70b-instruct'],
+                deep:['deepseek/deepseek-r1-0528','microsoft/phi-4-reasoning'] },  // free with a GitHub token; R1 = best free CA/CMA numericals solver (150/day)
+  mistral:    { text:['mistral-large-latest'], vision:['pixtral-12b-2409'] }
+};
+
+/* ---- automatic complexity detection: quick / normal / deep ---- */
+const DEEP_WORDS = /calculate|compute|prove|derive|evaluate|solve for|find the (value|area|volume|roots)|show that|journal entr|ledger|balance sheet|trial balance|depreciat|amorti[sz]|variance|marginal cost|contribution|break.?even|\bnpv\b|\birr\b|cash flow|ratio analysis|taxable|\bgst\b|consolidat|equilibrium|projectile|thermodynam|stoichiometr|mole concept|quadratic|polynomial|trigonometr|logarithm|matrix|determinant|probability|permutation|combination|integrat|differenti|derivative|vector|theorem|step by step|working note|हल करें|सिद्ध|गणना|साधించండి|లెక్కించండి|నిరూపించండి/i;
+const SIMPLE_START = /^(what is|what are|what does .{1,40} mean|define|meaning of|full form|who is|who was|when did|when was|where is|name the|list |give two|give any|एक वाक्य|क्या है|कौन|कब|అంటే ఏమిటి|ఎవరు|ఎప్పుడు)/i;
+function assessComplexity(text, hasImage){
+  if(state.level==='prof') return 'deep';                     // CA/CMA/US CMA — always full reasoning
+  const t = (text||'').trim();
+  const lower = t.toLowerCase();
+  const mathBits = (t.match(/[=√∫∑π²³^]|\d+\s*[+\-×÷*/]\s*\d+|\d+\s*%/g)||[]).length;
+  const multiPart = (lower.match(/\([a-d]\)|\(i+v?\)|\bpart\s+[a-d1-4]\b/g)||[]).length;
+  let score = 0;
+  if(DEEP_WORDS.test(t)) score += 2;
+  score += mathBits >= 2 ? 2 : mathBits ? 1 : 0;
+  if(t.length > 240) score += 1;
+  if(multiPart >= 2) score += 1;
+  if(categorize()==='reasoning'){ score += 1; if(hasImage) score += 1; }  // photo of a maths/accounts problem
+  if(SIMPLE_START.test(t) && t.length < 120 && !mathBits && multiPart===0) return 'quick';
+  if(score >= 3) return 'deep';
+  if(!hasImage && t.length > 0 && t.length < 60 && score === 0) return 'quick';
+  return 'normal';
+}
+
+// Decide the type of question from the chosen subject/level
+function categorize(){
+  const s = ($('subjectSel').value||'').toLowerCase();
+  if(/cod|program|computer science|software|technology|electronic/.test(s)) return 'coding';
+  if(state.level==='current' || /current affairs|general knowledge|\bgk\b|award|appointment|scheme|polity|geography|\bhistory\b|national|international|environment|defence|sports/.test(s)) return 'current';
+  if(/math|physic|quantit|reasoning|account|cost|financial|statistic|econom|taxation|audit|chemis/.test(s)) return 'reasoning';
+  return 'general';
+}
+
+// Build an ordered list of {id, model} attempts, best-suited first, skipping missing keys
+function planRoute(hasImage, qText){
+  const cat = categorize();
+  const out = [];
+  const add = (id, models) => { if(active(id) && models) models.forEach(m=>out.push({id, model:m})); };
+  const mode = assessComplexity(qText!==undefined ? qText : $('qtext').value, hasImage);
+  if(mode==='deep'){                  // 🧠 big question → strongest reasoning models first, normal chain as fallback
+    add('gemini', MODEL_MAP.gemini.deep);                    // 2.5 Pro solves text AND photos
+    if(!hasImage){
+      add('github', MODEL_MAP.github.deep);                  // DeepSeek-R1: strongest free step-by-step numericals solver
+      add('openrouter', MODEL_MAP.openrouter.deep);          // big reasoning MoEs are text-only
+    }
+  } else if(mode==='quick' && !hasImage){ // ⚡ simple question → fastest models first (saves the big-model quotas)
+    add('groq', MODEL_MAP.groq.text);
+    add('cerebras', MODEL_MAP.cerebras.text);
+    add('gemini', MODEL_MAP.gemini.text);
+    add('openrouter', MODEL_MAP.openrouter.text);
+    add('mistral', MODEL_MAP.mistral.text);
+    return out;
+  }
+  if(hasImage){                       // photo → needs a VISION model
+    add('gemini', MODEL_MAP.gemini.vision);          // best at handwriting + Indian languages
+    add('openrouter', MODEL_MAP.openrouter.vision);  // Gemma 4 fallback
+    add('mistral', MODEL_MAP.mistral.vision);        // Pixtral fallback
+  } else if(cat==='coding'){          // code → Qwen3 Coder is purpose-built
+    add('openrouter', MODEL_MAP.openrouter.coding);
+    add('gemini', MODEL_MAP.gemini.text);
+    add('groq', MODEL_MAP.groq.text);
+    add('cerebras', MODEL_MAP.cerebras.text);
+  } else if(cat==='current'){         // current affairs / GK → freshest, largest knowledge
+    add('gemini', MODEL_MAP.gemini.text);
+    add('openrouter', MODEL_MAP.openrouter.text);
+    add('groq', MODEL_MAP.groq.text);
+  } else if(cat==='reasoning'){       // math / physics / accounts → strong reasoning
+    add('gemini', MODEL_MAP.gemini.text);
+    add('github', MODEL_MAP.github.text);   // GPT-4o (50/day) — strong at accounts/quant
+    add('cerebras', MODEL_MAP.cerebras.text);
+    add('groq', MODEL_MAP.groq.text);
+    add('openrouter', MODEL_MAP.openrouter.text);
+  } else {                            // general / language / essays → fast + capable
+    add('gemini', MODEL_MAP.gemini.text);
+    add('groq', MODEL_MAP.groq.text);
+    add('cerebras', MODEL_MAP.cerebras.text);
+    add('openrouter', MODEL_MAP.openrouter.text);
+  }
+  return out;
+}
+
+function updateEngineBadge(){
+  const on = Object.keys(CFG).filter(active);
+  const el = $('engineBadge');
+  if(!on.length){ el.textContent = '⚙️ ' + t('noEngine'); el.classList.add('warn'); el.classList.remove('ok'); }
+  else { el.textContent = '⚙️ ' + t('engines') + ': ' + on.map(id=>PROV_NAME[id]).join(' · '); el.classList.add('ok'); el.classList.remove('warn'); }
+}
+
+/* ---- provider callers ---- */
+// reasoning models may leak their chain-of-thought as <think>…</think> — show only the final answer
+const stripThink = s => s.replace(/<think>[\s\S]*?<\/think>/gi,'').replace(/<\/?think>/gi,'').trim();
+async function callGeminiModel(model, sys, userText, img){
+  const parts = [];
+  if(img) parts.push({ inline_data:{ mime_type:img.mime, data:img.b64 } });
+  parts.push({ text:userText });
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key('gemini'))}`,{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ system_instruction:{parts:[{text:sys}]}, contents:[{role:'user', parts}], generationConfig:{temperature:.4, maxOutputTokens:4096} })
+  });
+  const data = await res.json();
+  if(!res.ok) throw new Error(data.error?.message || ('HTTP '+res.status));
+  const txt = stripThink(data.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('') || '');
+  if(!txt) throw new Error('Empty response');
+  return txt;
+}
+async function callOpenAICompat(id, model, sys, userText, img){
+  const userContent = img
+    ? [ {type:'text', text:userText}, {type:'image_url', image_url:{url:`data:${img.mime};base64,${img.b64}`}} ]
+    : userText;
+  const headers = {'Content-Type':'application/json','Authorization':'Bearer '+key(id)};
+  if(id==='openrouter') headers['X-Title'] = 'Doubt Snap';
+  const res = await fetch(OA_BASE[id],{
+    method:'POST', headers,
+    body: JSON.stringify({ model, messages:[{role:'system',content:sys},{role:'user',content:userContent}], temperature:.4, max_tokens:4096 })
+  });
+  const data = await res.json();
+  if(!res.ok) throw new Error(data.error?.message || data.error || ('HTTP '+res.status));
+  const txt = stripThink(data.choices?.[0]?.message?.content || '');
+  if(!txt) throw new Error('Empty response');
+  return txt;
+}
+function runAttempt(a, sys, userText, img){
+  return a.id==='gemini'
+    ? callGeminiModel(a.model, sys, userText, img)
+    : callOpenAICompat(a.id, a.model, sys, userText, img);
+}
+// Try each suitable engine until one answers
+async function getAnswer(userText, img){
+  const attempts = planRoute(!!img, userText);
+  if(!attempts.length) throw new Error(img ? 'NO_VISION' : 'NO_ENGINE');
+  let lastErr = null;
+  for(const a of attempts){
+    try{ const txt = await runAttempt(a, sys(), userText, img); return {text:txt, via:a}; }
+    catch(e){ lastErr = e; }
+  }
+  throw lastErr || new Error('All engines failed');
+}
+const sys = () => buildSystemPrompt();
+
+/* ================= Prompt building ================= */
+function buildSystemPrompt(){
+  const lv = LEVELS.find(l=>l.id===state.level);
+  return `You are "Doubt Snap", a warm, expert Indian teacher who solves student doubts.
+
+STUDENT PROFILE:
+- Level: ${lv.name.en}
+- Class/Course: ${$('courseSel').value}
+- Subject: ${$('subjectSel').value}
+
+STRICT RULES:
+1. Answer ENTIRELY in ${LANG_NAME[state.lang]}. Every heading, step and tip must be in ${LANG_NAME[state.lang]}. (Keep universal symbols, formulas, numbers and technical terms like H2O, GDP as-is.)
+2. If a photo of a question is attached, first READ the question from the photo carefully (handwritten or printed), restate it briefly, then solve it. If the photo has multiple questions, answer all of them one by one.
+3. Structure your answer in Markdown exactly like this:
+   - "## ✅ <Answer heading in the student's language>" — give the EXACT final answer first (the direct result/option/value).
+   - "## 📖 <Step-by-step explanation heading>" — explain step by step, simply, at the level of a ${$('courseSel').value} student. Use short numbered steps.
+   - If a diagram/figure would genuinely help (biology diagrams, geometry figures, physics ray diagrams, graphs, flow charts, maps): add "## ✏️ <Draw this diagram heading>" and describe EXACTLY how to draw it — step by step: what shapes/lines to draw, where, and what labels to write. Make it easy to copy into a notebook.
+   - End with "## 💡 <Quick tip heading>" — one short memory trick, exam tip, or common mistake to avoid.
+4. Math: use plain text notation (×, ÷, √, ², ³, fractions like 3/4). NEVER use LaTeX like \\frac or $...$.
+5. Be accurate. For MCQs state the correct option clearly. For numericals show working. For current affairs, note your knowledge date if the answer may have changed recently.
+6. Keep the tone encouraging, like a favourite teacher. Length: as long as needed to fully explain, but no padding.`;
+}
+
+/* ================= Solve flow ================= */
+async function solve(extraQuestion){
+  $('errMsg').textContent='';
+  const typed = (extraQuestion!==undefined ? extraQuestion : $('qtext').value.trim());
+  if(!typed && !state.imageData){ $('errMsg').textContent = t('errNoQ'); return; }
+  if(!anyEngine()){ $('errMsg').textContent = t('errNoEngine'); updateEngineBadge(); return; }
+
+  let userText = typed || 'Please read the question in the attached photo and solve it fully.';
+  if(extraQuestion!==undefined && state.lastQ){
+    userText = `Earlier doubt: "${state.lastQ}"\nYour earlier answer is known to the student.\nFOLLOW-UP question: ${extraQuestion}`;
+  }
+
+  $('solveBtn').disabled = true; $('quill').classList.add('on');
+  try{
+    const { text, via } = await getAnswer(userText, state.imageData);
+    state.lastQ = typed || '(photo question)';
+    state.lastAnswer = text;
+    state.lastVia = PROV_NAME[via.id] + ' · ' + via.model;
+    showAnswer(text);
+    saveToNotebook(typed || '📷 ' + t('imgAttached'), text, state.lastVia);
+  }catch(err){
+    const m = err.message;
+    const msg = m==='NO_VISION' ? t('errNoVision') : m==='NO_ENGINE' ? t('errNoEngine') : t('errApi') + '  [' + m + ']';
+    $('errMsg').textContent = msg;
+  }finally{
+    $('solveBtn').disabled = false; $('quill').classList.remove('on');
+  }
+}
+$('solveBtn').onclick = ()=> solve();
+
+/* ---- live auto-mode pill: shows which AI tier will answer ---- */
+function updateModePill(){
+  const mode = assessComplexity($('qtext').value, !!state.imageData);
+  const icon = mode==='deep' ? '🧠' : mode==='quick' ? '⚡' : '📖';
+  const label = mode==='deep' ? t('modeDeep') : mode==='quick' ? t('modeQuick') : t('modeStd');
+  const pill = $('modePill');
+  pill.textContent = icon + ' ' + label;
+  pill.classList.toggle('deep', mode==='deep');
+}
+$('qtext').addEventListener('input', updateModePill);
+$('subjectSel').addEventListener('change', updateModePill);
+
+function showAnswer(md){
+  const lv = LEVELS.find(l=>l.id===state.level);
+  $('answerMeta').innerHTML =
+    `<span>📚 ${(lv.name[state.lang]||lv.name.en)}</span>` +
+    `<span>✒️ ${$('courseSel').value} · ${$('subjectSel').value}</span>` +
+    (state.imageData?`<span>📷 ${t('imgAttached')}</span>`:'') +
+    (state.lastVia?`<span class="via">🤖 ${t('answeredBy')}: ${state.lastVia}</span>`:'') +
+    `<span>🕰️ ${new Date().toLocaleString()}</span>`;
+  $('answerBody').innerHTML = mdToHtml(md);
+  $('answerPage').style.display='block';
+  $('answerPage').scrollIntoView({behavior:'smooth', block:'start'});
+}
+function copyAnswer(){
+  navigator.clipboard.writeText(state.lastAnswer||'').then(()=>{
+    $('errMsg').textContent=''; alert(t('copied'));
+  });
+}
+function askFollowUp(){
+  const q = prompt(t('followPrompt')); if(q && q.trim()) solve(q.trim());
+}
+function newDoubt(){
+  $('qtext').value=''; clearImage(); state.lastQ=null;
+  $('answerPage').style.display='none';
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+/* ================= Notebook (history) ================= */
+function getNotes(){ try{ return JSON.parse(localStorage.getItem('ds_notes')||'[]'); }catch{ return []; } }
+function saveToNotebook(q, a, via){
+  const notes = getNotes();
+  notes.unshift({ q, a, via:via||'', when: Date.now(), meta:`${$('courseSel').value} · ${$('subjectSel').value}` });
+  localStorage.setItem('ds_notes', JSON.stringify(notes.slice(0,20)));
+  renderNotebook();
+}
+function renderNotebook(){
+  const list = $('notebookList'); const notes = getNotes();
+  if(!notes.length){ list.innerHTML = `<div class="empty-note">${t('emptyNote')}</div>`; return; }
+  list.innerHTML = '';
+  notes.forEach((n)=>{
+    const d = document.createElement('div');
+    d.className='note-item';
+    d.innerHTML = `<span class="nq">📌 ${escapeHtml(n.q).slice(0,90)}</span><span class="nm">${n.meta} · ${new Date(n.when).toLocaleDateString()}</span>`;
+    d.onclick = ()=>{ state.lastAnswer=n.a; state.lastQ=n.q; $('answerMeta').innerHTML=`<span>📚 ${n.meta}</span>`+(n.via?`<span class="via">🤖 ${t('answeredBy')}: ${n.via}</span>`:'')+`<span>🕰️ ${new Date(n.when).toLocaleString()}</span>`; $('answerBody').innerHTML=mdToHtml(n.a); $('answerPage').style.display='block'; $('answerPage').scrollIntoView({behavior:'smooth'}); };
+    list.appendChild(d);
+  });
+}
+
+/* ================= Tiny Markdown renderer ================= */
+function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function mdToHtml(md){
+  const lines = escapeHtml(md).split('\n');
+  let html='', inUl=false, inOl=false, inCode=false, codeBuf=[], inTable=false, tableBuf=[];
+  const closeLists=()=>{ if(inUl){html+='</ul>';inUl=false;} if(inOl){html+='</ol>';inOl=false;} };
+  const flushTable=()=>{
+    if(!inTable) return;
+    const rows = tableBuf.filter(r=>!/^\s*\|?[\s:|-]+\|?\s*$/.test(r));
+    html += '<table>' + rows.map((r,i)=>{
+      const cells = r.replace(/^\||\|$/g,'').split('|').map(c=>inline(c.trim()));
+      const tag = i===0?'th':'td';
+      return '<tr>'+cells.map(c=>`<${tag}>${c}</${tag}>`).join('')+'</tr>';
+    }).join('') + '</table>';
+    inTable=false; tableBuf=[];
+  };
+  const inline = s => s
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/(^|[^*])\*([^*\n]+)\*/g,'$1<em>$2</em>')
+    .replace(/`([^`]+)`/g,'<code>$1</code>');
+  for(const raw of lines){
+    if(raw.trim().startsWith('```')){
+      if(inCode){ html+='<pre><code>'+codeBuf.join('\n')+'</code></pre>'; codeBuf=[]; inCode=false; }
+      else { closeLists(); flushTable(); inCode=true; }
+      continue;
+    }
+    if(inCode){ codeBuf.push(raw); continue; }
+    if(/^\s*\|.*\|/.test(raw)){ closeLists(); inTable=true; tableBuf.push(raw); continue; }
+    else flushTable();
+    let m;
+    if(m=raw.match(/^\s*(#{1,3})\s+(.*)/)){ closeLists(); html+=`<h${m[1].length+0}>${inline(m[2])}</h${m[1].length}>`; }
+    else if(/^\s*([-*_]){3,}\s*$/.test(raw)){ closeLists(); html+='<hr>'; }
+    else if(m=raw.match(/^\s*&gt;\s?(.*)/)){ closeLists(); html+=`<blockquote>${inline(m[1])}</blockquote>`; }
+    else if(m=raw.match(/^\s*[-*]\s+(.*)/)){ if(inOl){html+='</ol>';inOl=false;} if(!inUl){html+='<ul>';inUl=true;} html+=`<li>${inline(m[1])}</li>`; }
+    else if(m=raw.match(/^\s*(\d+)[.)]\s+(.*)/)){ if(inUl){html+='</ul>';inUl=false;} if(!inOl){html+='<ol>';inOl=true;} html+=`<li>${inline(m[2])}</li>`; }
+    else if(raw.trim()===''){ closeLists(); }
+    else { closeLists(); html+=`<p>${inline(raw)}</p>`; }
+  }
+  if(inCode) html+='<pre><code>'+codeBuf.join('\n')+'</code></pre>';
+  closeLists(); flushTable();
+  return html;
+}
+
+/* ================= init ================= */
+applyLang();
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+# Built deployment artifacts (rebuilt by make-zips.ps1) — may contain live API keys, never commit
+*.zip
+*.tar.gz
+
+# Local tooling state
+.gstack/
+.claude/settings.local.json
+
+# Node
+node_modules/

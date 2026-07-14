@@ -1,0 +1,171 @@
+:root{
+  --ink:#0f1120;--muted:#5b6472;--dim:#9aa3b2;--line:#e8eaf1;--line2:#dcdfe9;
+  --primary:#5b3df5;--primary2:#8b5cf6;--accent:#06b6d4;--pink:#ec4899;
+  --surface:#ffffff;--soft:#f3f2ff;--success:#059669;--danger:#dc2626;
+  --r:18px;--shadow:0 30px 80px rgba(20,10,60,.28);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{min-height:100%}
+body{font-family:'Outfit',system-ui,sans-serif;color:var(--ink);background:#0b0a1f;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+
+/* ===== animated background ===== */
+.bg-anim{position:fixed;inset:0;z-index:0;overflow:hidden;
+  background:linear-gradient(120deg,#3a1c9e,#5b3df5,#7c3aed,#06b6d4,#5b3df5);
+  background-size:300% 300%;animation:bgshift 18s ease infinite}
+@keyframes bgshift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.blob{position:absolute;border-radius:50%;filter:blur(70px);opacity:.55;mix-blend-mode:screen}
+.b1{width:420px;height:420px;background:#ec4899;top:-120px;left:-80px;animation:float1 14s ease-in-out infinite}
+.b2{width:380px;height:380px;background:#06b6d4;bottom:-140px;right:-60px;animation:float2 16s ease-in-out infinite}
+.b3{width:300px;height:300px;background:#a855f7;top:40%;left:55%;animation:float1 20s ease-in-out infinite}
+@keyframes float1{0%,100%{transform:translate(0,0)}50%{transform:translate(40px,-40px)}}
+@keyframes float2{0%,100%{transform:translate(0,0)}50%{transform:translate(-50px,30px)}}
+.spark{position:absolute;width:8px;height:8px;border-radius:50%;background:#fff;opacity:.7;box-shadow:0 0 12px #fff;animation:twinkle 5s ease-in-out infinite}
+.s1{top:18%;left:22%;animation-delay:.2s}.s2{top:70%;left:14%;animation-delay:1.4s}
+.s3{top:30%;left:78%;animation-delay:2.1s}.s4{top:82%;left:66%;animation-delay:3s}
+@keyframes twinkle{0%,100%{opacity:.15;transform:scale(.6)}50%{opacity:.9;transform:scale(1.2)}}
+
+/* ===== layout ===== */
+.shell{position:relative;z-index:1;max-width:1040px;margin:0 auto;min-height:100vh;
+  display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center;padding:40px 28px}
+
+/* ===== brand panel ===== */
+.brand-panel{color:#fff}
+.brand-logo{display:inline-flex;align-items:center;gap:8px;font-size:26px;font-weight:800;color:#fff;text-decoration:none;margin-bottom:26px}
+.brand-logo .logo-mark{font-size:28px}
+.brand-h{font-size:44px;line-height:1.05;font-weight:900;letter-spacing:-1.5px}
+.brand-h .grad{background:linear-gradient(90deg,#a5f3fc,#f0abfc);-webkit-background-clip:text;background-clip:text;color:transparent}
+.brand-p{margin:18px 0 24px;font-size:16px;line-height:1.6;color:rgba(255,255,255,.82);max-width:400px}
+.brand-feats{list-style:none;display:flex;flex-direction:column;gap:12px;margin-bottom:30px}
+.brand-feats li{display:flex;align-items:center;gap:12px;font-size:15px;color:rgba(255,255,255,.92)}
+.brand-feats span{width:34px;height:34px;display:grid;place-items:center;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.18);border-radius:10px;font-size:16px}
+.brand-foot{margin-top:26px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.5px;color:rgba(255,255,255,.6)}
+.brand-foot b{color:#fff}
+
+/* floating payment card — laid out like a real card, nothing overlaps */
+.pay-card{position:relative;width:320px;height:196px;border-radius:18px;padding:18px 22px;color:#fff;
+  display:flex;flex-direction:column;justify-content:space-between;
+  background:linear-gradient(135deg,#7c3aed,#5b3df5 45%,#06b6d4);box-shadow:0 24px 60px rgba(10,5,40,.5);
+  transform:rotate(-6deg);animation:cardfloat 6s ease-in-out infinite;overflow:hidden}
+.pay-card::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 40%,rgba(255,255,255,.28) 50%,transparent 60%);transform:translateX(-120%);animation:sheen 5s ease-in-out infinite}
+@keyframes cardfloat{0%,100%{transform:rotate(-6deg) translateY(0)}50%{transform:rotate(-6deg) translateY(-14px)}}
+@keyframes sheen{0%,70%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+.pc-top{display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;white-space:nowrap}
+.pc-logo{font-size:18px}
+.pc-mid{display:flex;align-items:center;gap:10px}
+.pc-chip{width:42px;height:30px;border-radius:6px;background:linear-gradient(135deg,#ffe08a,#e0a400);flex-shrink:0}
+.pc-nfc{font-family:'JetBrains Mono',monospace;font-size:15px;letter-spacing:-3px;opacity:.75;transform:scaleY(1.4)}
+.pc-num{font-family:'JetBrains Mono',monospace;font-size:15px;letter-spacing:2.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pc-bottom{display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
+.pc-col{display:flex;flex-direction:column;gap:2px;min-width:0}
+.pc-right{text-align:right;flex-shrink:0}
+.pc-lbl{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:1.5px;opacity:.65}
+.pc-name{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px}
+.pc-amt{font-size:18px;font-weight:800;letter-spacing:0;line-height:1}
+
+/* ===== auth / dash card ===== */
+.auth-panel{width:100%}
+.card{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);padding:34px 32px;border:1px solid rgba(255,255,255,.5)}
+
+/* multi-step */
+.astep{display:flex;flex-direction:column;gap:15px;position:relative;animation:pop .35s ease}
+@keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.auth-title{font-size:26px;font-weight:800;letter-spacing:-.5px;text-align:center}
+.auth-sub{font-size:14px;color:var(--muted);text-align:center;margin-top:-8px}
+.astep label{display:flex;flex-direction:column;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;color:var(--muted);text-transform:uppercase}
+.astep input{font-family:'Outfit';font-size:15px;padding:13px 14px;border:1.5px solid var(--line2);border-radius:12px;background:#fbfbff;color:var(--ink);transition:border-color .2s,box-shadow .2s}
+.astep input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 4px var(--soft);background:#fff}
+.otp-input{text-align:center;font-size:26px!important;font-weight:700;letter-spacing:12px;font-family:'JetBrains Mono',monospace!important;padding-left:26px!important}
+.back{position:absolute;top:-6px;left:-6px;width:36px;height:36px;border:none;background:#f2f1fb;border-radius:10px;font-size:18px;color:var(--muted);cursor:pointer;transition:.2s}
+.back:hover{background:var(--soft);color:var(--primary);transform:translateX(-2px)}
+.link-btn{background:none;border:none;color:var(--primary);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;padding:2px}
+.link-btn:hover{text-decoration:underline}
+
+/* ===== buttons ===== */
+.btn{position:relative;font-family:inherit;font-size:15px;font-weight:700;padding:14px 18px;border-radius:12px;border:1.5px solid transparent;cursor:pointer;transition:transform .18s,box-shadow .25s,background .2s;display:inline-flex;align-items:center;justify-content:center;gap:8px;overflow:hidden}
+.btn-block{width:100%}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.btn-primary{background:linear-gradient(120deg,var(--primary),var(--primary2) 60%,var(--accent));background-size:200% 100%;color:#fff;box-shadow:0 10px 26px rgba(91,61,245,.4)}
+.btn-primary:hover{transform:translateY(-2px);background-position:100% 0;box-shadow:0 16px 34px rgba(91,61,245,.5)}
+.btn-primary::before{content:"";position:absolute;top:0;left:-80%;width:60%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.4),transparent);transform:skewX(-20deg)}
+.btn-primary:hover::before{animation:shine .8s ease}
+@keyframes shine{from{left:-80%}to{left:130%}}
+.btn-outline{background:#fff;color:var(--primary);border-color:var(--line2)}
+.btn-outline:hover{border-color:var(--primary);background:var(--soft);transform:translateY(-2px)}
+.btn-mail{font-size:16px}
+.btn-ghost{background:transparent;color:var(--muted);border-color:var(--line2);padding:9px 14px;font-size:13px}
+.btn-ghost:hover{background:#f4f5f9;color:var(--ink)}
+
+.or{display:flex;align-items:center;gap:12px;margin:4px 0;color:var(--dim);font-size:13px;font-weight:500}
+.or::before,.or::after{content:'';flex:1;height:1px;background:var(--line)}
+.g_id_signin{display:flex;justify-content:center}
+.msg{margin-top:6px;font-size:14px;text-align:center;min-height:20px;font-weight:500}
+.msg.err{color:var(--danger)}.msg.ok{color:var(--success)}
+
+/* ===== dashboard ===== */
+.dash-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
+.hello{font-size:22px;font-weight:800}
+.email{font-size:13px;color:var(--muted)}
+.credit-box{position:relative;text-align:center;border-radius:16px;padding:26px;margin-bottom:24px;color:#fff;
+  background:linear-gradient(135deg,#5b3df5,#7c3aed 55%,#06b6d4);box-shadow:0 16px 40px rgba(91,61,245,.32);overflow:hidden}
+.credit-box::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 80% 20%,rgba(255,255,255,.25),transparent 60%)}
+.credit-num{position:relative;font-size:56px;font-weight:900;letter-spacing:-2px;line-height:1}
+.credit-label{position:relative;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;opacity:.9;margin-top:4px}
+.plan-line{position:relative;font-size:13px;opacity:.9;margin-top:10px}
+h3{font-size:16px;font-weight:800;margin-bottom:12px}
+.plans{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.plan{position:relative;border:1.5px solid var(--line);border-radius:14px;padding:18px;text-align:center;transition:.2s}
+.plan:hover{border-color:var(--primary);transform:translateY(-3px);box-shadow:0 12px 26px rgba(91,61,245,.14)}
+.plan-best{border:2px solid var(--primary)}
+.plan-badge{position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:linear-gradient(120deg,var(--primary),var(--accent));color:#fff;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1px;padding:3px 10px;border-radius:9999px}
+.plan-name{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.plan-price{font-size:30px;font-weight:900;letter-spacing:-1px;margin:4px 0}
+.plan-desc{font-size:12px;color:var(--muted);margin-bottom:14px;min-height:32px}
+.plan .btn{width:100%;font-size:14px;padding:11px}
+.fineprint{font-size:12px;color:var(--dim);text-align:center;margin-top:16px}
+.back-link{display:block;text-align:center;margin-top:16px;color:var(--primary);text-decoration:none;font-weight:700}
+
+/* ===== responsive: desktop / laptop / tablet / mobile ===== */
+
+/* Desktop (≥1400px) — roomier layout */
+@media(min-width:1400px){
+  .shell{max-width:1200px;gap:72px}
+  .brand-h{font-size:52px}
+  .brand-p{font-size:17px;max-width:440px}
+  .card{padding:38px 36px}
+}
+
+/* Laptop (1024–1399px) is the default layout above */
+
+/* Tablet (≤1023px) — stack: brand on top, card centred below it */
+@media(max-width:1023px){
+  .shell{grid-template-columns:1fr;gap:30px;padding:36px 24px;max-width:640px}
+  .brand-panel{text-align:center}
+  .brand-h{font-size:38px}
+  .brand-p{margin-left:auto;margin-right:auto}
+  .brand-feats{align-items:center}
+  .brand-feats li{justify-content:flex-start;width:max-content;margin:0 auto}
+  .pay-card{margin:6px auto 0;transform:rotate(-3deg)}
+  @keyframes cardfloat{0%,100%{transform:rotate(-3deg) translateY(0)}50%{transform:rotate(-3deg) translateY(-10px)}}
+  .brand-foot{margin-top:20px}
+}
+
+/* Mobile (≤600px) — tighter spacing, single-column plans, smaller card */
+@media(max-width:600px){
+  .shell{padding:24px 14px;gap:22px}
+  .brand-logo{font-size:22px;margin-bottom:16px}
+  .brand-h{font-size:30px;letter-spacing:-1px}
+  .brand-p{font-size:14.5px}
+  .brand-feats li{font-size:13.5px}
+  .pay-card{width:280px;height:176px;padding:16px 18px}
+  .pc-num{font-size:13px;letter-spacing:2px}
+  .pc-name{max-width:150px;font-size:11px}
+  .card{padding:24px 16px;border-radius:16px}
+  .auth-title{font-size:22px}
+  .astep input{font-size:16px} /* prevents iOS zoom-on-focus */
+  .otp-input{letter-spacing:8px;font-size:22px!important}
+  .plans{grid-template-columns:1fr}
+  .credit-num{font-size:44px}
+  .hello{font-size:19px}
+  .dash-head{flex-wrap:wrap;gap:10px}
+}

@@ -1,0 +1,16 @@
+# 7By Account Hub — pretty product URLs
+#
+#   account.7by.in/removebgpremiumaccount      -> index.php?p=removebg
+#   account.7by.in/vocalremoverpremiumaccount  -> index.php?p=vocalremover
+#
+# To add a new tool: add a product block in products.php, then one line here.
+
+RewriteEngine On
+
+# Never rewrite real files or folders (api.php, assets/, .well-known, ...)
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+RewriteRule ^removebgpremiumaccount/?$      index.php?p=removebg     [L,QSA]
+RewriteRule ^vocalremoverpremiumaccount/?$  index.php?p=vocalremover [L,QSA]

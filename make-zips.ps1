@@ -1,0 +1,65 @@
+# Builds cPanel/WordPress-ready zips with FORWARD-SLASH paths (Linux/WordPress safe).
+# Windows PowerShell's Compress-Archive uses backslashes which break on Linux — this avoids that.
+Add-Type -AssemblyName System.IO.Compression | Out-Null
+Add-Type -AssemblyName System.IO.Compression.FileSystem | Out-Null
+
+function New-Zip {
+  param([string]$Zip, [string[]]$Roots, [string]$Prefix = '', [string[]]$ExcludeExt = @())
+  if (Test-Path -LiteralPath $Zip) { [System.IO.File]::Delete((Resolve-Path -LiteralPath $Zip).Path) }
+  $fs = [System.IO.File]::Open($Zip, [System.IO.FileMode]::Create)
+  $arch = New-Object System.IO.Compression.ZipArchive($fs, [System.IO.Compression.ZipArchiveMode]::Create)
+  $dirs = New-Object System.Collections.Generic.HashSet[string]
+  function Add-Dirs($path) {  # add a directory entry for every parent folder in the path
+    $parts = $path.Split('/'); $acc = ''
+    for ($i = 0; $i -lt $parts.Length - 1; $i++) {
+      $acc += $parts[$i] + '/'
+      if ($dirs.Add($acc)) { $arch.CreateEntry($acc) | Out-Null }
+    }
+  }
+  function Add-File($fullPath, $name) {
+    Add-Dirs $name
+    $entry = $arch.CreateEntry($name, [System.IO.Compression.CompressionLevel]::Optimal)
+    $es = $entry.Open(); $bytes = [System.IO.File]::ReadAllBytes($fullPath)
+    $es.Write($bytes, 0, $bytes.Length); $es.Dispose()
+  }
+  foreach ($root in $Roots) {
+    if (-not (Test-Path -LiteralPath $root)) { continue }
+    $item = Get-Item -LiteralPath $root
+    if ($item.PSIsContainer) {
+      $baseLen = $item.FullName.Length + 1
+      Get-ChildItem -LiteralPath $root -Recurse -File | ForEach-Object {
+        if ($ExcludeExt -contains $_.Extension.ToLower()) { return }
+        $rel = $_.FullName.Substring($baseLen) -replace '\\','/'
+        Add-File $_.FullName ($Prefix + $item.Name + '/' + $rel)
+      }
+    } else {
+      Add-File $item.FullName ($Prefix + $item.Name)
+    }
+  }
+  $arch.Dispose(); $fs.Close()
+  Write-Output ("built " + (Split-Path $Zip -Leaf))
+}
+
+$base = $PSScriptRoot
+if (-not $base) { $base = (Get-Location).Path }
+
+# 1) WordPress theme — 'sevenby/' at zip root. EXCLUDE .js (its JS loads from the app subdomain)
+#    so the cPanel ClamAV "Foxhole.JS_Zip" false-positive can't block the upload.
+New-Zip -Zip (Join-Path $base 'sevenby-theme.zip') -Roots @((Join-Path $base 'wordpress-theme\sevenby')) -ExcludeExt @('.js')
+
+# 2) Static tool app for the subdomain
+$appRoots = @('assets','tools','blog') | ForEach-Object { Join-Path $base $_ }
+$appRoots += (Get-ChildItem -LiteralPath $base -File -Filter *.html | Select-Object -ExpandProperty FullName)
+$htaccess = Join-Path $base '.htaccess'
+if (Test-Path -LiteralPath $htaccess) { $appRoots += $htaccess }   # cache-control rules
+New-Zip -Zip (Join-Path $base 'vocalremover-app.zip') -Roots $appRoots
+
+# 3) QBank static app for the qbank.7by.in subdomain (files at zip root)
+$qbRoots = Get-ChildItem -LiteralPath (Join-Path $base 'qbank') -File | Select-Object -ExpandProperty FullName
+New-Zip -Zip (Join-Path $base 'qbank-site.zip') -Roots $qbRoots
+
+# 4) Backend (no node_modules / db.json / logs)
+$srvRoots = Get-ChildItem -LiteralPath (Join-Path $base 'server') -Force |
+  Where-Object { $_.Name -notin @('node_modules','db.json') -and $_.Name -notlike '*.log' } |
+  Select-Object -ExpandProperty FullName
+New-Zip -Zip (Join-Path $base 'server-backend.zip') -Roots $srvRoots

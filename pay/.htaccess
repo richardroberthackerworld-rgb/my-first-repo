@@ -1,0 +1,8 @@
+# 7Pay — block direct web access to the SQLite database folder.
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteRule ^data/ - [F,L]
+</IfModule>
+
+# Serve the companion app with the correct MIME type so phones install it.
+AddType application/vnd.android.package-archive .apk

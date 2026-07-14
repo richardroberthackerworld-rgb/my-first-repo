@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Toolkit — Trim, Convert, GIF, Mute, Extract MP3 Free | VidLab</title>
+  <meta name="description" content="Free browser video toolkit: trim and cut videos, convert to MP4/WebM/GIF, mute videos, extract MP3 audio. No upload, no sign-up, no watermark.">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8250159057339426" crossorigin="anonymous"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="logo" href="index.html"><span class="logo-mark">▶</span> Vid<b>Lab</b></a>
+      <nav class="nav-links">
+        <a href="index.html">All Tools</a>
+        <a href="watermark-remover.html">Watermark Remover</a>
+        <a href="compressor.html">Compressor</a>
+        <a href="bg-remover.html">BG Remover</a>
+        <a href="toolkit.html" class="active">Toolkit</a>
+      </nav>
+      <a href="../pricing.html" class="btn btn-primary nav-cta">⭐ Get Pro</a>
+    </div>
+  </header>
+
+  <section class="hero" style="padding-bottom:24px">
+    <div class="hero-badge"><span class="dot"></span> 5 TOOLS IN ONE · NO UPLOAD · FREE</div>
+    <h1>The video toolkit<br><span class="grad-text">for everything else</span></h1>
+    <p class="hero-sub">Trim, convert, turn clips into GIFs, mute audio or rip the soundtrack to MP3 —
+      one upload, every tool.</p>
+  </section>
+
+  <main class="tool-wrap" id="trim">
+
+    <div class="dropzone" id="dropzone">
+      <input type="file" id="fileInput" accept="video/*" hidden>
+      <div class="dz-icon">🧰</div>
+      <h2>Upload a video</h2>
+      <p>Drag &amp; drop or</p>
+      <button class="btn btn-primary btn-lg" type="button">Choose Video</button>
+      <div class="dz-formats">
+        <span class="chip">MP4</span><span class="chip">MOV</span><span class="chip">WEBM</span><span class="chip">MKV</span><span class="chip">AVI</span>
+      </div>
+      <p class="dz-privacy">🔒 Private by design — your video never leaves this device.</p>
+    </div>
+
+    <div class="hidden" id="editor">
+      <div class="toolbar">
+        <button class="btn btn-ghost btn-sm" id="newFileBtn">↺ New video</button>
+        <span class="mono" id="fileMeta" style="font-size:12px;color:var(--dim)"></span>
+      </div>
+
+      <div class="workspace">
+        <div class="stage">
+          <video id="preview" controls></video>
+          <div class="stage-overlay hidden" id="overlay">
+            <div class="spinner"></div>
+            <div class="overlay-status" id="overlayStatus">Working…</div>
+            <div class="overlay-bar"><div class="overlay-bar-fill" id="overlayBar"></div></div>
+            <div class="overlay-note">Processing runs on your device. Keep this tab open.</div>
+          </div>
+        </div>
+
+        <aside class="panel">
+          <h3>Action</h3>
+          <div class="field">
+            <select id="action">
+              <option value="trim">✂️ Trim / cut section</option>
+              <option value="mp4">🔄 Convert to MP4</option>
+              <option value="webm">🔄 Convert to WebM</option>
+              <option value="gif">🎞️ Convert to GIF</option>
+              <option value="mute">🔇 Mute (remove audio)</option>
+              <option value="mp3">🎵 Extract audio as MP3</option>
+            </select>
+          </div>
+
+          <!-- trim options -->
+          <div id="trimOpts">
+            <div class="field">
+              <label>Start time</label>
+              <input type="text" id="trimStart" placeholder="0:00" value="0:00">
+            </div>
+            <div class="field">
+              <label>End time</label>
+              <input type="text" id="trimEnd" placeholder="e.g. 1:30">
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-ghost btn-sm" id="setStartBtn">Set start = playhead</button>
+              <button class="btn btn-ghost btn-sm" id="setEndBtn">Set end = playhead</button>
+            </div>
+            <label class="checkbox-row" style="margin-top:10px">
+              <input type="checkbox" id="fastTrim" checked> Lossless fast trim (cuts on keyframes)
+            </label>
+          </div>
+
+          <!-- gif options -->
+          <div id="gifOpts" class="hidden">
+            <div class="field">
+              <label>GIF width</label>
+              <select id="gifWidth">
+                <option value="320">320 px</option>
+                <option value="480" selected>480 px</option>
+                <option value="640">640 px</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Frame rate</label>
+              <select id="gifFps">
+                <option value="8">8 fps (small)</option>
+                <option value="12" selected>12 fps (smooth)</option>
+                <option value="18">18 fps (smoothest)</option>
+              </select>
+            </div>
+            <span class="hint">Tip: trim to a short clip first — GIFs get huge fast.</span>
+          </div>
+
+          <button class="btn btn-primary" id="processBtn" style="margin-top:6px">⚡ Run</button>
+
+        </aside>
+      </div>
+
+      <div class="hidden" id="resultWrap" style="margin-top:24px">
+        <div class="stage">
+          <div class="section-label">// Result</div>
+          <video id="resultVideo" controls class="hidden" style="max-height:60vh"></video>
+          <img id="resultImg" class="hidden" alt="GIF result">
+          <audio id="resultAudio" controls class="hidden" style="width:100%"></audio>
+          <div class="toolbar" style="margin-top:14px;margin-bottom:0">
+            <div class="result-stats">
+              <span class="stat">Output <b id="statOut">—</b></span>
+            </div>
+            <div class="toolbar-spacer"></div>
+            <button class="btn btn-primary" id="downloadBtn">⬇ Download</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="footer">
+    <div class="footer-bottom" style="border-top:none">
+      <span>© 2026 7BY.IN — VIDLAB · DEVELOPED BY 7BY.IN · FOUNDER &amp; CEO SHIRANDASU SANDEEP</span>
+      <span><a href="index.html">ALL TOOLS</a> · <a href="../privacy-policy.html">PRIVACY</a></span>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+  <script>
+  (() => {
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    const editor = document.getElementById('editor');
+    const preview = document.getElementById('preview');
+    const actionEl = document.getElementById('action');
+    const overlay = makeOverlay(
+      document.getElementById('overlay'),
+      document.getElementById('overlayStatus'),
+      document.getElementById('overlayBar')
+    );
+    const processBtn = document.getElementById('processBtn');
+
+    let currentFile = null;
+    let resultBlob = null;
+    let resultName = 'output';
+
+    setupDropzone(dropzone, fileInput, file => {
+      if (!file.type.startsWith('video/') && !/\.(mp4|mov|webm|mkv|avi|m4v)$/i.test(file.name)) {
+        toastError('Please choose a video file.');
+        return;
+      }
+      currentFile = file;
+      resultBlob = null;
+      document.getElementById('resultWrap').classList.add('hidden');
+      preview.src = URL.createObjectURL(file);
+      preview.addEventListener('loadedmetadata', () => {
+        document.getElementById('fileMeta').textContent =
+          `${file.name} · ${preview.videoWidth}×${preview.videoHeight} · ${formatTime(preview.duration)} · ${formatBytes(file.size)}`;
+        document.getElementById('trimEnd').value = formatTime(preview.duration);
+      }, { once: true });
+      dropzone.classList.add('hidden');
+      editor.classList.remove('hidden');
+    });
+
+    document.getElementById('newFileBtn').addEventListener('click', () => {
+      editor.classList.add('hidden');
+      dropzone.classList.remove('hidden');
+      fileInput.value = '';
+    });
+
+    actionEl.addEventListener('change', () => {
+      document.getElementById('trimOpts').classList.toggle('hidden', actionEl.value !== 'trim');
+      document.getElementById('gifOpts').classList.toggle('hidden', actionEl.value !== 'gif');
+    });
+    document.getElementById('setStartBtn').addEventListener('click', () => {
+      document.getElementById('trimStart').value = formatTime(preview.currentTime);
+    });
+    document.getElementById('setEndBtn').addEventListener('click', () => {
+      document.getElementById('trimEnd').value = formatTime(preview.currentTime);
+    });
+
+    processBtn.addEventListener('click', async () => {
+      if (!currentFile) return;
+      const action = actionEl.value;
+      processBtn.disabled = true;
+      overlay.show('Please wait while processing…');
+      try {
+        const ffmpeg = await getFFmpeg(s => overlay.status(s));
+        const onProg = ({ progress }) => overlay.progress(progress);
+        ffmpeg.on('progress', onProg);
+
+        overlay.status('Reading video…');
+        await ffmpeg.writeFile('in.dat', await ffFetchFile(currentFile));
+
+        let args = ['-i', 'in.dat'];
+        let outFile, mime, ext, statusMsg = 'Processing…';
+        const vcodec = ['-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23'];
+
+        if (action === 'trim') {
+          const start = parseTimeInput(document.getElementById('trimStart').value, 0);
+          const end = parseTimeInput(document.getElementById('trimEnd').value, preview.duration);
+          if (end <= start) throw new Error('End time must be after start time.');
+          const fast = document.getElementById('fastTrim').checked;
+          statusMsg = 'Trimming…';
+          outFile = 'out.mp4'; mime = 'video/mp4'; ext = '_trimmed.mp4';
+          if (fast) {
+            // stream copy must keep the source container (VP8/VP9 can't go into MP4)
+            const srcExt = (currentFile.name.match(/\.(webm|mkv|mov|avi)$/i) || [,'mp4'])[1].toLowerCase();
+            const container = { webm: ['out.webm', 'video/webm', '_trimmed.webm'],
+                                mkv:  ['out.mkv', 'video/x-matroska', '_trimmed.mkv'],
+                                avi:  ['out.avi', 'video/x-msvideo', '_trimmed.avi'] }[srcExt];
+            if (container) [outFile, mime, ext] = container;
+            // -ss before -i = fast keyframe seek + stream copy (no re-encode)
+            args = ['-ss', String(start), '-to', String(end), '-i', 'in.dat', '-c', 'copy', outFile];
+            if (outFile === 'out.mp4') args.splice(args.length - 1, 0, '-movflags', '+faststart');
+          } else {
+            args = ['-ss', String(start), '-to', String(end), '-i', 'in.dat', ...vcodec, '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart', outFile];
+          }
+        } else if (action === 'mp4') {
+          statusMsg = 'Converting to MP4…';
+          outFile = 'out.mp4'; mime = 'video/mp4'; ext = '.mp4';
+          args = ['-i', 'in.dat', ...vcodec, '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart', outFile];
+        } else if (action === 'webm') {
+          statusMsg = 'Converting to WebM (slower codec — hang tight)…';
+          outFile = 'out.webm'; mime = 'video/webm'; ext = '.webm';
+          args = ['-i', 'in.dat', '-c:v', 'libvpx', '-b:v', '1.5M', '-deadline', 'realtime', '-cpu-used', '8', '-c:a', 'libvorbis', outFile];
+        } else if (action === 'gif') {
+          statusMsg = 'Building GIF palette…';
+          const w = document.getElementById('gifWidth').value;
+          const fps = document.getElementById('gifFps').value;
+          outFile = 'out.gif'; mime = 'image/gif'; ext = '.gif';
+          args = ['-i', 'in.dat', '-filter_complex',
+            `fps=${fps},scale=${w}:-2:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse`,
+            outFile];
+        } else if (action === 'mute') {
+          statusMsg = 'Removing audio (no re-encode)…';
+          outFile = 'out.mp4'; mime = 'video/mp4'; ext = '_muted.mp4';
+          args = ['-i', 'in.dat', '-c:v', 'copy', '-an', '-movflags', '+faststart', outFile];
+        } else if (action === 'mp3') {
+          statusMsg = 'Extracting audio…';
+          outFile = 'out.mp3'; mime = 'audio/mpeg'; ext = '.mp3';
+          args = ['-i', 'in.dat', '-vn', '-c:a', 'libmp3lame', '-b:a', '192k', outFile];
+        }
+
+        overlay.status(statusMsg);
+        const rc = await ffmpeg.exec(args);
+        ffmpeg.off('progress', onProg);
+        if (rc !== 0) throw new Error('Processing failed (code ' + rc + ')' + (action === 'trim' && document.getElementById('fastTrim').checked ? '. Try unchecking "Lossless fast trim".' : ''));
+
+        const data = await ffmpeg.readFile(outFile);
+        resultBlob = new Blob([data.buffer], { type: mime });
+        resultName = baseName(currentFile.name) + ext;
+        await ffmpeg.deleteFile('in.dat').catch(() => {});
+        await ffmpeg.deleteFile(outFile).catch(() => {});
+
+        // show in the right element
+        const rv = document.getElementById('resultVideo');
+        const ri = document.getElementById('resultImg');
+        const ra = document.getElementById('resultAudio');
+        rv.classList.add('hidden'); ri.classList.add('hidden'); ra.classList.add('hidden');
+        const url = URL.createObjectURL(resultBlob);
+        if (mime.startsWith('video/')) { rv.src = url; rv.classList.remove('hidden'); }
+        else if (mime.startsWith('image/')) { ri.src = url; ri.classList.remove('hidden'); }
+        else { ra.src = url; ra.classList.remove('hidden'); }
+
+        document.getElementById('statOut').textContent = formatBytes(resultBlob.size);
+        document.getElementById('resultWrap').classList.remove('hidden');
+        document.getElementById('resultWrap').scrollIntoView({ behavior: 'smooth' });
+      } catch (err) {
+        console.error(err);
+        toastError('Processing failed: ' + (err.message || err));
+      } finally {
+        overlay.hide();
+        processBtn.disabled = false;
+      }
+    });
+
+    document.getElementById('downloadBtn').addEventListener('click', () => {
+      if (resultBlob) downloadBlob(resultBlob, resultName);
+    });
+
+    /* start fetching the ffmpeg wrapper libs in the background so the first
+       run is fast; errors are ignored — getFFmpeg() retries with fallback */
+    _ffEnsureLibs().catch(() => {});
+  })();
+  </script>
+</body>
+</html>
