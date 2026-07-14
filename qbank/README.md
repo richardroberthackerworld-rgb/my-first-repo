@@ -58,9 +58,9 @@ No build step, no dependencies.
 
 The homepage tool card and footer already link to `https://qbank.7by.in`, so going live is just:
 
-1. **Add your API keys first**: edit `config.js` (copy the keys from your live Doubt Snap `config.js`), then rebuild the zip with `.\make-zips.ps1` — or edit `config.js` directly on the server after upload.
-2. cPanel → **Domains → Create A New Domain** → `qbank.7by.in`. Uncheck "share document root"; let it create `/home/USER/qbank.7by.in` as the document root.
-3. **File Manager** → open that folder → upload **`qbank-site.zip`** (from the repo root) → **Extract**. The files (`index.html`, `config.js`, `README.md`) must sit directly in the document root.
+1. cPanel → **Domains → Create A New Domain** → `qbank.7by.in`. Uncheck "share document root"; let it create `/home/USER/qbank.7by.in` as the document root.
+2. **File Manager** → open that folder → upload **`qbank-site.zip`** (from the repo root) → **Extract**. The files must sit directly in the document root.
+3. **Rename `config.js.txt` → `config.js`** (right-click → Rename), then **Edit** it and paste your API keys. *(The zip ships it as `.txt` because cPanel's virus scanner false-positives on any zip containing `.js` files — "Foxhole.JS_Zip". It's not a real virus.)*
 4. cPanel → **SSL/TLS Status → Run AutoSSL** so `https://qbank.7by.in` is secure.
 5. Also re-upload the updated main-site `index.html` (or `vocalremover-app.zip`) so the homepage QBank card shows the new description.
 

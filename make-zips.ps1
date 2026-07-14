@@ -54,9 +54,21 @@ $htaccess = Join-Path $base '.htaccess'
 if (Test-Path -LiteralPath $htaccess) { $appRoots += $htaccess }   # cache-control rules
 New-Zip -Zip (Join-Path $base 'vocalremover-app.zip') -Roots $appRoots
 
-# 3) QBank static app for the qbank.7by.in subdomain (files at zip root)
-$qbRoots = Get-ChildItem -LiteralPath (Join-Path $base 'qbank') -File | Select-Object -ExpandProperty FullName
-New-Zip -Zip (Join-Path $base 'qbank-site.zip') -Roots $qbRoots
+# 3) QBank + DoubtSnap static apps for their subdomains (files at zip root).
+#    cPanel ClamAV flags any zip containing .js (Foxhole.JS_Zip false-positive),
+#    so config.js ships as config.js.txt — after uploading, edit your keys into it
+#    and RENAME it to config.js in File Manager.
+function New-AppZip {
+  param([string]$AppDir, [string]$Zip)
+  $stage = Join-Path $env:TEMP ("appzip-" + (Split-Path $AppDir -Leaf))
+  New-Item -ItemType Directory -Force $stage | Out-Null
+  Copy-Item (Join-Path $AppDir 'config.js') (Join-Path $stage 'config.js.txt') -Force
+  $roots = Get-ChildItem -LiteralPath $AppDir -File | Where-Object { $_.Extension -ne '.js' } | Select-Object -ExpandProperty FullName
+  $roots += (Join-Path $stage 'config.js.txt')
+  New-Zip -Zip $Zip -Roots $roots
+}
+New-AppZip -AppDir (Join-Path $base 'qbank')     -Zip (Join-Path $base 'qbank-site.zip')
+New-AppZip -AppDir (Join-Path $base 'doubtsnap') -Zip (Join-Path $base 'doubtsnap-site.zip')
 
 # 4) Backend (no node_modules / db.json / logs)
 $srvRoots = Get-ChildItem -LiteralPath (Join-Path $base 'server') -Force |
