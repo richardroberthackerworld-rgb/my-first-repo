@@ -1,4 +1,4 @@
-# Doubt Snap 📖
+# 7Solve ✅ (formerly Doubt Snap)
 
 Snap a photo of any doubt (or type it) and get the exact answer with a step-by-step explanation — like a good teacher writing in your notebook.
 
