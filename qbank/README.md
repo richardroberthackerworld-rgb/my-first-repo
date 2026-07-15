@@ -1,6 +1,6 @@
 # 7Marks 💯
 
-Pick a subject & topic — or snap photos of your textbook / notes — and generate a full **question bank**: theory or practical, long answer, short answer, very short answer, MCQs, fill in the blanks, and true/false — with an optional answer key. The sister app of [Doubt Snap](../doubtsnap/) (Doubt Snap answers *your* questions; 7Marks *asks you* questions).
+Pick a subject & topic — or snap photos of your textbook / notes — and generate a full **question bank**: theory or practical, long answer, short answer, very short answer, MCQs, fill in the blanks, and true/false — with an optional answer key. The sister app of [7Solve](../doubtsnap/) (7Solve answers *your* questions; 7Marks *asks you* questions).
 
 ## Features
 - 📷 **Photo material** — upload up to **5 photos** of textbook pages or class notes (camera, gallery, drag & drop, paste Ctrl+V). Questions are generated **only from that material**. Handwritten and printed pages both work.
