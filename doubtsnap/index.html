@@ -679,7 +679,8 @@ const MODEL_MAP = {
                 vision:['google/gemma-4-31b-it:free','nvidia/nemotron-nano-12b-v2-vl:free'],
                 deep:['nvidia/nemotron-3-ultra-550b-a55b:free','tencent/hy3:free','openai/gpt-oss-120b:free'] }, // big free reasoning MoEs (text only)
   github:     { text:['openai/gpt-4o','meta/llama-3.3-70b-instruct'],
-                deep:['deepseek/deepseek-r1-0528','microsoft/phi-4-reasoning'] },  // free with a GitHub token; R1 = best free CA/CMA numericals solver (150/day)
+                deep:['deepseek/deepseek-r1-0528'] },  // free with a GitHub token; R1 = best free CA/CMA numericals solver (150/day).
+                                                      // phi-4-reasoning removed: it leaks raw chain-of-thought and ignores the answer format.
   mistral:    { text:['mistral-large-latest'], vision:['pixtral-12b-2409'] }
 };
 
@@ -773,7 +774,22 @@ function updateEngineBadge(){
 
 /* ---- provider callers ---- */
 // reasoning models may leak their chain-of-thought as <think>…</think> — show only the final answer
-const stripThink = s => s.replace(/<think>[\s\S]*?<\/think>/gi,'').replace(/<\/?think>/gi,'').trim();
+// Reasoning models may leak their chain-of-thought. Strip <think>…</think> (DeepSeek style),
+// a dangling </think> whose opening tag got dropped, and other analysis-channel markers.
+function stripThink(s){
+  s = s.replace(/<think>[\s\S]*?<\/think>/gi,'');
+  if(/<\/think>/i.test(s)) s = s.replace(/^[\s\S]*<\/think>/i,'');          // lost opening tag
+  s = s.replace(/<\|?\/?(?:assistant|analysis|final|channel|end|message)\|?>/gi,'');
+  return s.replace(/<\/?think>/gi,'').trim();
+}
+// A well-formed answer uses our "## ✅ …" headings. Models that leak reasoning or ignore
+// the format fail this and we fall through to the next engine.
+function looksLikeAnswer(md){
+  if(!md) return false;
+  const hasHeading = /^\s{0,3}#{1,3}\s+\S/m.test(md);
+  const leaked = /\bI'?ll produce\b|\bI need to produce\b|\bI'?m Phi\b|as an AI language model/i.test(md.slice(0, 400));
+  return hasHeading && !leaked;
+}
 const CONTINUE_MSG = 'Continue EXACTLY from where your previous message stopped. Do not repeat anything already written, do not add any commentary — just continue the answer seamlessly and finish it, including any diagram.';
 async function callGeminiModel(model, sys, userText, img, prior){
   const parts = [];
@@ -827,11 +843,17 @@ async function runAttempt(a, sys, userText, img){
 async function getAnswer(userText, img){
   const attempts = planRoute(!!img, userText);
   if(!attempts.length) throw new Error(img ? 'NO_VISION' : 'NO_ENGINE');
-  let lastErr = null;
+  let lastErr = null, fallback = null;
   for(const a of attempts){
-    try{ const txt = await runAttempt(a, sys(), userText, img); return {text:txt, via:a}; }
+    try{
+      const txt = await runAttempt(a, sys(), userText, img);
+      if(looksLikeAnswer(txt)) return {text:txt, via:a};   // well-formed → done
+      if(!fallback) fallback = {text:txt, via:a};           // keep first response as a last resort
+      lastErr = new Error('BAD_FORMAT');
+    }
     catch(e){ lastErr = e; }
   }
+  if(fallback) return fallback;   // every engine returned an odd shape — show the best we got, don't dead-end
   throw lastErr || new Error('All engines failed');
 }
 const sys = () => buildSystemPrompt();
