@@ -317,6 +317,12 @@ textarea#qtext::placeholder{color:var(--ink-faint);font-style:italic}
 .note-item .nq{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
 .note-item .nm{font-size:11px;color:var(--ink-faint);white-space:nowrap;letter-spacing:.5px}
 .empty-note{font-style:italic;color:var(--ink-faint);font-size:14px}
+.del-btn{
+  background:none;border:none;cursor:pointer;color:var(--ink-faint);
+  font-size:14px;line-height:1;padding:4px 6px;border-radius:4px;flex-shrink:0;transition:all .15s ease;
+}
+.del-btn:hover{background:var(--maroon);color:var(--paper)}
+.clear-all{align-self:flex-start;margin-top:4px}
 
 /* ---------- Key modal ---------- */
 .modal-bg{
@@ -635,6 +641,7 @@ const I18N = {
     ch3:'The Answer', copy:'Copy answer', followup:'Ask my own follow-up', newDoubt:'New doubt',
     hint:'Give me a hint', hintTitle:'Hint — try it yourself first', hintSolve:'Show me the full solution',
     share:'Share', exportPdf:'Export PDF', close:'Close',
+    del:'Delete', clearAll:'Clear all', clearConfirm:'Delete all saved doubts from this device?',
     grpLearn:'📚 Learn More', grpPractice:'📝 Practice', grpExplore:'🔄 Explore', grpSmart:'🎯 Smart Tutor',
     eli10:"🧒 Explain like I'm 10", explainSimply:'💡 Explain more simply', detailSteps:'🔍 Each step in detail',
     whyMethod:'🤔 Why this method works', concepts:'📖 Concepts used',
@@ -666,6 +673,7 @@ const I18N = {
     ch3:'उत्तर', copy:'उत्तर कॉपी करें', followup:'अपना सवाल पूछें', newDoubt:'नया डाउट',
     hint:'मुझे संकेत दें', hintTitle:'संकेत — पहले खुद कोशिश करें', hintSolve:'पूरा हल दिखाएँ',
     share:'शेयर करें', exportPdf:'PDF सेव करें', close:'बंद करें',
+    del:'हटाएँ', clearAll:'सभी हटाएँ', clearConfirm:'इस डिवाइस से सभी सेव किए डाउट हटा दें?',
     grpLearn:'📚 और सीखें', grpPractice:'📝 अभ्यास', grpExplore:'🔄 और जानें', grpSmart:'🎯 स्मार्ट ट्यूटर',
     eli10:'🧒 10 साल के बच्चे जैसा समझाएँ', explainSimply:'💡 आसान भाषा में समझाएँ', detailSteps:'🔍 हर चरण विस्तार से',
     whyMethod:'🤔 यह तरीका क्यों सही है', concepts:'📖 प्रयुक्त अवधारणाएँ',
@@ -697,6 +705,7 @@ const I18N = {
     ch3:'సమాధానం', copy:'సమాధానం కాపీ', followup:'నా ప్రశ్న అడగండి', newDoubt:'కొత్త డౌట్',
     hint:'ఒక సూచన ఇవ్వండి', hintTitle:'సూచన — ముందు మీరే ప్రయత్నించండి', hintSolve:'పూర్తి సాధన చూపించండి',
     share:'షేర్ చేయండి', exportPdf:'PDF సేవ్', close:'మూసివేయండి',
+    del:'తొలగించు', clearAll:'అన్నీ తొలగించు', clearConfirm:'ఈ డివైస్ నుండి సేవ్ చేసిన అన్ని డౌట్లను తొలగించాలా?',
     grpLearn:'📚 ఇంకా నేర్చుకోండి', grpPractice:'📝 ప్రాక్టీస్', grpExplore:'🔄 అన్వేషించండి', grpSmart:'🎯 స్మార్ట్ ట్యూటర్',
     eli10:'🧒 10 ఏళ్ల పిల్లాడికిలా వివరించండి', explainSimply:'💡 సులభంగా వివరించండి', detailSteps:'🔍 ప్రతి దశ వివరంగా',
     whyMethod:'🤔 ఈ పద్ధతి ఎందుకు సరైనది', concepts:'📖 వాడిన భావనలు',
@@ -962,16 +971,22 @@ async function callGeminiModel(model, sys, userText, img, prior){
   parts.push({ text:userText });
   const contents = [{role:'user', parts}];
   if(prior) contents.push({role:'model', parts:[{text:prior}]}, {role:'user', parts:[{text:CONTINUE_MSG}]});
-  const maxTok = /gemini-2\.5/.test(model) ? 16384 : 8192;   // room for step-by-step working + SVG diagram
+  const is25 = /gemini-2\.5/.test(model);
+  const maxTok = is25 ? 32768 : 8192;                       // room for thinking + step-by-step working
+  const genCfg = { temperature:.4, maxOutputTokens:maxTok };
+  // Gemini 2.5 are THINKING models: unbounded thinking can eat the whole output budget and
+  // return zero visible text ("Empty response"). Cap the thinking so text is always produced.
+  if(is25) genCfg.thinkingConfig = { thinkingBudget: /pro/.test(model) ? 8192 : 2048 };
   const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,{
     method:'POST', headers:{'Content-Type':'application/json','x-goog-api-key':key('gemini')},
-    body: JSON.stringify({ system_instruction:{parts:[{text:sys}]}, contents, generationConfig:{temperature:.4, maxOutputTokens:maxTok} })
+    body: JSON.stringify({ system_instruction:{parts:[{text:sys}]}, contents, generationConfig:genCfg })
   });
   const data = await res.json();
   if(!res.ok) throw new Error(data.error?.message || ('HTTP '+res.status));
-  const txt = stripThink(data.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('') || '');
-  if(!txt && !prior) throw new Error('Empty response');
-  return { text: txt, truncated: data.candidates?.[0]?.finishReason === 'MAX_TOKENS' };
+  const cand = data.candidates?.[0];
+  const txt = stripThink(cand?.content?.parts?.map(p=>p.text||'').join('') || '');
+  if(!txt && !prior) throw new Error(cand?.finishReason ? 'No text ('+cand.finishReason+')' : 'Empty response');
+  return { text: txt, truncated: cand?.finishReason === 'MAX_TOKENS' };
 }
 async function callOpenAICompat(id, model, sys, userText, img, prior){
   const userContent = img
@@ -1283,17 +1298,35 @@ function saveToNotebook(q, a, via){
   localStorage.setItem('ds_notes', JSON.stringify(notes.slice(0,20)));
   renderNotebook();
 }
+function deleteNote(i){
+  const notes = getNotes(); notes.splice(i,1);
+  localStorage.setItem('ds_notes', JSON.stringify(notes));
+  renderNotebook();
+}
+function clearNotes(){
+  if(!confirm(t('clearConfirm'))) return;
+  localStorage.removeItem('ds_notes'); renderNotebook();
+}
 function renderNotebook(){
   const list = $('notebookList'); const notes = getNotes();
   if(!notes.length){ list.innerHTML = `<div class="empty-note">${t('emptyNote')}</div>`; return; }
   list.innerHTML = '';
-  notes.forEach((n)=>{
+  notes.forEach((n,i)=>{
     const d = document.createElement('div');
     d.className='note-item';
-    d.innerHTML = `<span class="nq">📌 ${escapeHtml(n.q).slice(0,90)}</span><span class="nm">${n.meta} · ${new Date(n.when).toLocaleDateString()}</span>`;
-    d.onclick = ()=>{ state.lastAnswer=n.a; state.lastQ=n.q; $('answerMeta').innerHTML=`<span>📚 ${escapeHtml(String(n.meta||''))}</span>`+(isOwnerView() && n.via?`<span class="via">🤖 ${escapeHtml(String(n.via))}</span>`:'')+`<span>🕰️ ${new Date(n.when).toLocaleString()}</span>`; $('answerBody').innerHTML=mdToHtml(n.a); $('answerPage').style.display='block'; $('answerPage').scrollIntoView({behavior:'smooth'}); };
+    // localStorage is a trust boundary: escape everything, slice BEFORE escaping so entities can't be bisected
+    d.innerHTML = `<span class="nq">📌 ${escapeHtml(String(n.q||'').slice(0,90))}</span>`+
+      `<span class="nm">${escapeHtml(String(n.meta||''))} · ${new Date(n.when).toLocaleDateString()}</span>`+
+      `<button class="del-btn" title="${t('del')}">✕</button>`;
+    d.onclick = ()=>{ state.lastAnswer=n.a; state.lastQ=n.q; $('answerMeta').innerHTML=`<span>📚 ${escapeHtml(String(n.meta||''))}</span>`+(isOwnerView() && n.via?`<span class="via">🤖 ${escapeHtml(String(n.via))}</span>`:'')+`<span>🕰️ ${new Date(n.when).toLocaleString()}</span>`; $('answerBody').innerHTML=mdToHtml(n.a); $('tutorPanel').style.display='none'; $('checkBox').style.display='none'; $('answerPage').style.display='block'; $('answerPage').scrollIntoView({behavior:'smooth'}); };
+    d.querySelector('.del-btn').onclick = e=>{ e.stopPropagation(); deleteNote(i); };
     list.appendChild(d);
   });
+  const clear = document.createElement('button');
+  clear.className='mini-btn clear-all';
+  clear.innerHTML = '🗑️ ' + t('clearAll');
+  clear.onclick = clearNotes;
+  list.appendChild(clear);
 }
 
 /* ================= Tiny Markdown renderer ================= */

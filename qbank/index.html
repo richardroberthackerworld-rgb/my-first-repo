@@ -282,6 +282,51 @@ textarea#topicText::placeholder{color:var(--ink-faint);font-style:italic}
 #answerKey.on{display:block}
 .paper-actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
 
+/* ---------- study & practice tools (chips, quiz, notes) ---------- */
+.chip{
+  font-family:var(--serif);font-size:13px;cursor:pointer;
+  background:var(--paper-2);color:var(--ink-soft);border:1px solid var(--rule);
+  border-radius:20px;padding:6px 14px;transition:all .2s ease;white-space:nowrap;
+}
+.chip:hover{border-color:var(--gold);color:var(--ink);background:#fbf3dd}
+.chip.cg-star{background:#fbf3dd;border-color:var(--gold);color:var(--maroon);font-weight:600}
+.chip.cg-star:hover{background:var(--gold-soft);color:var(--ink)}
+.learn-panel{margin-top:20px;display:flex;flex-direction:column;gap:12px}
+.chip-group{display:flex;flex-direction:column;gap:7px}
+.cg-label{font-family:var(--display);color:var(--maroon);font-size:14.5px}
+.cg-chips{display:flex;flex-wrap:wrap;gap:8px}
+@media(max-width:560px){.cg-chips{gap:6px}.chip{font-size:12.5px;padding:6px 11px}}
+.check-box{
+  margin-top:18px;background:var(--paper-2);border:1px solid var(--gold-soft);
+  border-left:4px solid var(--gold);border-radius:6px;padding:14px 18px;
+}
+.hint-box-head{font-family:var(--display);color:var(--maroon);font-size:16px;margin-bottom:6px}
+.hint-box-body{font-size:15px;color:var(--ink);line-height:1.6}
+.hint-box-body p{margin:6px 0}.hint-box-body ul,.hint-box-body ol{margin:6px 0 6px 22px}
+.hint-box-body h3{font-family:var(--display);color:var(--maroon);font-size:16px;margin:12px 0 4px}
+.check-box .mini-btn{margin-top:10px}
+.tutor-panel{
+  margin-top:18px;background:var(--paper-2);border:1px solid var(--gold-soft);
+  border-radius:8px;padding:20px clamp(16px,3vw,28px);box-shadow:inset 0 0 30px rgba(150,120,60,.06);
+}
+.tutor-head{font-family:var(--display);color:var(--maroon);font-size:19px;margin-bottom:4px}
+.tutor-progress{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--ink-faint);margin-bottom:14px}
+.tutor-q{font-size:16.5px;color:var(--ink);margin-bottom:14px;line-height:1.55}
+.tutor-opts{display:flex;flex-direction:column;gap:9px}
+.tutor-opt{
+  text-align:left;font-family:var(--serif);font-size:15px;cursor:pointer;color:var(--ink);
+  background:var(--paper);border:1px solid var(--rule);border-radius:6px;padding:11px 15px;transition:all .15s ease;
+}
+.tutor-opt:hover:not(:disabled){border-color:var(--gold);background:#fbf3dd}
+.tutor-opt:disabled{cursor:default}
+.tutor-opt.correct{border-color:var(--ok);background:#e5efdd;color:#2f5a28;font-weight:600}
+.tutor-opt.wrong{border-color:var(--err);background:#f6e2e0;color:var(--err)}
+.tutor-fb{margin-top:14px;font-size:15px;line-height:1.6;color:var(--ink)}
+.tutor-fb.good{color:var(--ok)}
+.tutor-actions{margin-top:16px;display:flex;gap:10px;flex-wrap:wrap}
+.tutor-done{font-family:var(--display);color:var(--ok);font-size:18px;text-align:center;padding:10px}
+.tutor-score{font-family:var(--display);color:var(--maroon);font-size:22px;text-align:center;margin-bottom:8px}
+
 /* ---------- Chapter V : shelf (history) ---------- */
 .notebook-list{display:flex;flex-direction:column;gap:8px}
 .note-item{
@@ -293,6 +338,12 @@ textarea#topicText::placeholder{color:var(--ink-faint);font-style:italic}
 .note-item .nq{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
 .note-item .nm{font-size:11px;color:var(--ink-faint);white-space:nowrap;letter-spacing:.5px}
 .empty-note{font-style:italic;color:var(--ink-faint);font-size:14px}
+.del-btn{
+  background:none;border:none;cursor:pointer;color:var(--ink-faint);
+  font-size:14px;line-height:1;padding:4px 6px;border-radius:4px;flex-shrink:0;transition:all .15s ease;
+}
+.del-btn:hover{background:var(--maroon);color:var(--paper)}
+.clear-all{align-self:flex-start;margin-top:4px}
 
 /* ---------- footer ---------- */
 footer{
@@ -304,7 +355,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
 /* ---------- print: only the question paper ---------- */
 @media print{
   body{background:#fff}
-  header.cover,.toolbar,footer,.paper-actions,.page:not(#paperPage){display:none !important}
+  header.cover,.toolbar,footer,.paper-actions,.learn-panel,.tutor-panel,.check-box,.page:not(#paperPage){display:none !important}
   main.book{box-shadow:none;max-width:100%;background:#fff}
   main.book::before{display:none}
   #paperPage{display:block !important;padding:0}
@@ -434,11 +485,41 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
       <div class="paper-body" id="paperBody"></div>
       <div class="paper-body" id="answerKey"></div>
     </div>
+
+    <!-- Interactive Practice Test -->
+    <div class="tutor-panel" id="quizPanel" style="display:none"></div>
+    <!-- Study notes / formulas output -->
+    <div class="check-box" id="extraBox" style="display:none">
+      <div class="hint-box-head" id="extraHead"></div>
+      <div class="hint-box-body" id="extraBody"></div>
+      <button class="mini-btn" onclick="document.getElementById('extraBox').style.display='none'">✕ <span data-i18n="close">Close</span></button>
+    </div>
+
+    <div class="learn-panel" id="paperTools">
+      <div class="chip-group">
+        <span class="cg-label" data-i18n="grpStudy">🎓 Study & Practice</span>
+        <div class="cg-chips">
+          <button class="chip cg-star" onclick="startQuiz()" data-i18n="practiceTest">🎯 Take a practice test</button>
+          <button class="chip cg-star" onclick="getExtra('notes')" data-i18n="studyNotes">📖 Study notes</button>
+          <button class="chip cg-star" onclick="getExtra('formulas')" data-i18n="keyFormulas">🧠 Key formulas</button>
+          <button class="chip cg-star" onclick="getExtra('mistakes')" data-i18n="examMistakesM">❓ Common exam mistakes</button>
+        </div>
+      </div>
+      <div class="chip-group">
+        <span class="cg-label" data-i18n="grpVary">🔄 Make another</span>
+        <div class="cg-chips">
+          <button class="chip" onclick="morePaper()" data-i18n="moreChip">📝 More questions</button>
+          <button class="chip" onclick="regen('hard')" data-i18n="harderSet">📈 Harder set</button>
+          <button class="chip" onclick="regen('easy')" data-i18n="easierSet">📉 Easier set</button>
+        </div>
+      </div>
+    </div>
+
     <div class="paper-actions">
       <button class="mini-btn" id="toggleKeyBtn" onclick="toggleAnswers()" style="display:none">🔑 <span id="toggleKeyLabel"></span></button>
       <button class="mini-btn" onclick="copyPaper()">📋 <span data-i18n="copy">Copy paper</span></button>
+      <button class="mini-btn" onclick="sharePaper()">🔗 <span data-i18n="share">Share</span></button>
       <button class="mini-btn" onclick="printPaper()">🖨️ <span data-i18n="print">Print / Save PDF</span></button>
-      <button class="mini-btn" onclick="morePaper()">➕ <span data-i18n="more">More questions (same topic)</span></button>
       <button class="mini-btn" onclick="newPaper()">📄 <span data-i18n="newPaper">New paper</span></button>
     </div>
   </section>
@@ -571,6 +652,13 @@ const I18N = {
     ch4:'Your Question Bank',
     showKey:'Show answer key', hideKey:'Hide answer key',
     copy:'Copy paper', print:'Print / Save PDF', more:'More questions (same topic)', newPaper:'New paper',
+    share:'Share', close:'Close',
+    del:'Delete', clearAll:'Clear all', clearConfirm:'Delete all saved papers from this device?',
+    grpStudy:'🎓 Study & Practice', grpVary:'🔄 Make another',
+    practiceTest:'🎯 Take a practice test', studyNotes:'📖 Study notes', keyFormulas:'🧠 Key formulas', examMistakesM:'❓ Common exam mistakes',
+    moreChip:'📝 More questions', harderSet:'📈 Harder set', easierSet:'📉 Easier set',
+    tutorLoading:'Preparing…', tutorFail:'Could not build this — please try again.', tutorStep:'Question', tutorNext:'Next', tutorFinish:'Finish', tutorWell:'Well done — test complete!',
+    score:'Score', retry:'Try again',
     ch5:'My Paper Shelf', ch5hint:'Your last 20 generated question papers, saved on this device.',
     emptyNote:'No papers generated yet. Your question banks will be saved here like papers on a shelf.',
     footer:'7Marks — practice makes rank. Free forever, from 7By.in. · AI-generated — please verify answers before your exam.',
@@ -602,6 +690,13 @@ const I18N = {
     ch4:'आपका प्रश्न बैंक',
     showKey:'उत्तर कुंजी दिखाएँ', hideKey:'उत्तर कुंजी छिपाएँ',
     copy:'पेपर कॉपी करें', print:'प्रिंट / PDF सेव करें', more:'और प्रश्न (इसी टॉपिक पर)', newPaper:'नया पेपर',
+    share:'शेयर करें', close:'बंद करें',
+    del:'हटाएँ', clearAll:'सभी हटाएँ', clearConfirm:'इस डिवाइस से सभी सेव किए पेपर हटा दें?',
+    grpStudy:'🎓 पढ़ाई और अभ्यास', grpVary:'🔄 और बनाएँ',
+    practiceTest:'🎯 प्रैक्टिस टेस्ट दें', studyNotes:'📖 स्टडी नोट्स', keyFormulas:'🧠 मुख्य सूत्र', examMistakesM:'❓ परीक्षा में आम गलतियाँ',
+    moreChip:'📝 और प्रश्न', harderSet:'📈 कठिन सेट', easierSet:'📉 आसान सेट',
+    tutorLoading:'तैयार हो रहा है…', tutorFail:'यह नहीं बन सका — कृपया फिर कोशिश करें।', tutorStep:'प्रश्न', tutorNext:'अगला', tutorFinish:'समाप्त', tutorWell:'शाबाश — टेस्ट पूरा हुआ!',
+    score:'स्कोर', retry:'फिर से',
     ch5:'मेरी पेपर शेल्फ', ch5hint:'आपके पिछले 20 प्रश्न पत्र, इसी डिवाइस पर सेव।',
     emptyNote:'अभी तक कोई पेपर नहीं बना। आपके प्रश्न बैंक यहाँ शेल्फ पर पेपर की तरह सेव होंगे।',
     footer:'7Marks — अभ्यास से ही रैंक बनती है। हमेशा फ्री, 7By.in की ओर से। · AI से बना — परीक्षा से पहले उत्तर जाँच लें।',
@@ -633,6 +728,13 @@ const I18N = {
     ch4:'మీ క్వశ్చన్ బ్యాంక్',
     showKey:'ఆన్సర్ కీ చూపించండి', hideKey:'ఆన్సర్ కీ దాచండి',
     copy:'పేపర్ కాపీ', print:'ప్రింట్ / PDF సేవ్', more:'ఇంకా ప్రశ్నలు (ఇదే టాపిక్)', newPaper:'కొత్త పేపర్',
+    share:'షేర్ చేయండి', close:'మూసివేయండి',
+    del:'తొలగించు', clearAll:'అన్నీ తొలగించు', clearConfirm:'ఈ డివైస్ నుండి సేవ్ చేసిన అన్ని పేపర్లను తొలగించాలా?',
+    grpStudy:'🎓 చదువు & ప్రాక్టీస్', grpVary:'🔄 మరొకటి తయారు చేయండి',
+    practiceTest:'🎯 ప్రాక్టీస్ టెస్ట్ రాయండి', studyNotes:'📖 స్టడీ నోట్స్', keyFormulas:'🧠 ముఖ్య సూత్రాలు', examMistakesM:'❓ పరీక్షలో సాధారణ తప్పులు',
+    moreChip:'📝 ఇంకా ప్రశ్నలు', harderSet:'📈 కఠిన సెట్', easierSet:'📉 సులభ సెట్',
+    tutorLoading:'సిద్ధమవుతోంది…', tutorFail:'ఇది తయారు చేయలేకపోయాం — దయచేసి మళ్లీ ప్రయత్నించండి.', tutorStep:'ప్రశ్న', tutorNext:'తదుపరి', tutorFinish:'ముగించు', tutorWell:'బాగుంది — టెస్ట్ పూర్తయింది!',
+    score:'స్కోర్', retry:'మళ్లీ',
     ch5:'నా పేపర్ షెల్ఫ్', ch5hint:'మీ చివరి 20 ప్రశ్నాపత్రాలు, ఈ డివైస్‌లో సేవ్ అవుతాయి.',
     emptyNote:'ఇంకా పేపర్లు తయారు చేయలేదు. మీ క్వశ్చన్ బ్యాంకులు షెల్ఫ్‌లో పేపర్లలా ఇక్కడ సేవ్ అవుతాయి.',
     footer:'7Marks — ప్రాక్టీస్ చేస్తేనే ర్యాంక్. ఎప్పటికీ ఫ్రీ, 7By.in నుండి. · AI రూపొందించినది — పరీక్షకు ముందు సమాధానాలు సరిచూసుకోండి.',
@@ -939,16 +1041,22 @@ async function callGeminiModel(model, sysText, userText, imgs, prior){
   parts.push({ text:userText });
   const contents = [{role:'user', parts}];
   if(prior) contents.push({role:'model', parts:[{text:prior}]}, {role:'user', parts:[{text:CONTINUE_MSG}]});
-  const maxTok = /gemini-2\.5/.test(model) ? 32768 : 8192;   // 2.5 models support long outputs
+  const is25 = /gemini-2\.5/.test(model);
+  const maxTok = is25 ? 32768 : 8192;                       // 2.5 models support long outputs
+  const genCfg = { temperature:.5, maxOutputTokens:maxTok };
+  // Gemini 2.5 are THINKING models: unbounded thinking can eat the whole output budget and
+  // return zero visible text ("Empty response"). Cap the thinking so text is always produced.
+  if(is25) genCfg.thinkingConfig = { thinkingBudget: /pro/.test(model) ? 8192 : 2048 };
   const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,{
     method:'POST', headers:{'Content-Type':'application/json','x-goog-api-key':key('gemini')},
-    body: JSON.stringify({ system_instruction:{parts:[{text:sysText}]}, contents, generationConfig:{temperature:.5, maxOutputTokens:maxTok} })
+    body: JSON.stringify({ system_instruction:{parts:[{text:sysText}]}, contents, generationConfig:genCfg })
   });
   const data = await res.json();
   if(!res.ok) throw new Error(errText(data.error, res.status));
-  const txt = stripThink(data.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('') || '');
-  if(!txt && !prior) throw new Error('Empty response');
-  return { text: txt, truncated: data.candidates?.[0]?.finishReason === 'MAX_TOKENS' };
+  const cand = data.candidates?.[0];
+  const txt = stripThink(cand?.content?.parts?.map(p=>p.text||'').join('') || '');
+  if(!txt && !prior) throw new Error(cand?.finishReason ? 'No text ('+cand.finishReason+')' : 'Empty response');
+  return { text: txt, truncated: cand?.finishReason === 'MAX_TOKENS' };
 }
 async function callOpenAICompat(id, model, sysText, userText, imgs, prior){
   const userContent = (imgs && imgs.length)
@@ -983,15 +1091,17 @@ async function runAttempt(a, sysText, userText, imgs){
   if(out.truncated) full += truncNote();
   return full;
 }
-async function getPaper(userText, imgs){
+async function getPaper(userText, imgs, opts){
+  const sysText = (opts && opts.sysText) || buildSystemPrompt();
+  const validate = (opts && opts.validate) || looksLikePaper;
   const attempts = planRoute(!!(imgs && imgs.length));
   if(!attempts.length) throw new Error((imgs && imgs.length) ? 'NO_VISION' : 'NO_ENGINE');
   let lastErr = null, fallback = null;
   for(const a of attempts){
     try{
-      const txt = await runAttempt(a, buildSystemPrompt(), userText, imgs);
-      if(looksLikePaper(txt)) return {text:txt, via:a};   // well-formed → done
-      if(!fallback) fallback = {text:txt, via:a};          // keep first response as a last resort
+      const txt = await runAttempt(a, sysText, userText, imgs);
+      if(validate(txt)) return {text:txt, via:a};   // well-formed → done
+      if(!fallback) fallback = {text:txt, via:a};    // keep first response as a last resort
       lastErr = new Error('BAD_FORMAT');
     }
     catch(e){ lastErr = e; }
@@ -1122,6 +1232,7 @@ function showPaper(md, meta){
   $('answerKey').classList.remove('on');
   $('toggleKeyBtn').style.display = keyMd ? '' : 'none';
   updateKeyToggleLabel();
+  $('quizPanel').style.display='none'; $('extraBox').style.display='none';   // fresh paper clears open tools
   $('paperPage').style.display='block';
   $('paperPage').scrollIntoView({behavior:'smooth', block:'start'});
 }
@@ -1147,11 +1258,110 @@ function printPaper(){
   window.print();
 }
 function morePaper(){ generate(true); }
+function sharePaper(){
+  const text = state.lastMd||'';
+  if(navigator.share){ navigator.share({title:'7Marks', text}).catch(()=>{}); return; }
+  copyPaper();
+}
+function regen(diff){ $('diffSel').value = diff; localStorage.setItem('qb_diff', diff); generate(false); }
 function newPaper(){
   $('topicText').value=''; state.images=[]; renderThumbs();
   state.lastTopic=null; state.seenQuestions='';
   $('paperPage').style.display='none';
+  $('quizPanel').style.display='none'; $('extraBox').style.display='none';
   window.scrollTo({top:0, behavior:'smooth'});
+}
+
+/* ---- Study notes / key formulas / common mistakes (one-off, rendered in a panel) ---- */
+const EXTRA_SPEC = {   // note: the i18n labels already carry their emoji
+  notes:{ key:'studyNotes', ask:'Write concise, well-structured STUDY NOTES a student can revise from: key points as bullets, important definitions, and any formulas in plain text. Use "### " subheadings. No question paper, no preamble.' },
+  formulas:{ key:'keyFormulas', ask:'List all the KEY FORMULAS, rules and important facts for this topic in plain text (×, ÷, √, ²), grouped with "### " subheadings, each with a one-line note on when to use it. No question paper.' },
+  mistakes:{ key:'examMistakesM', ask:'List the most COMMON EXAM MISTAKES students make on this topic and how to avoid each, as a bullet list. No question paper.' }
+};
+async function getExtra(kind){
+  const spec = EXTRA_SPEC[kind]; if(!spec) return;
+  if(state.busy) return;
+  if(!anyEngine()){ $('errMsg').textContent = t('errNoEngine'); return; }
+  const box=$('extraBox'), body=$('extraBody');
+  $('extraHead').textContent = t(spec.key);
+  body.innerHTML = '<p><em>'+t('thinking')+'</em></p>';
+  box.style.display='block'; box.scrollIntoView({behavior:'smooth',block:'nearest'});
+  const lv = LEVELS.find(l=>l.id===state.level);
+  const sysText = `You are "7Marks", an expert Indian teacher. Reply ENTIRELY in ${LANG_NAME[state.lang]} for a ${lv.name.en} · ${$('courseSel').value} · ${$('subjectSel').value} student. Keep it concise and scannable. Plain-text math only, never LaTeX.`;
+  state.busy=true;
+  try{
+    const { text } = await getPaper(`Topic: "${state.lastTopic||$('topicText').value}". ${spec.ask}`, [], { sysText, validate:s=>!!s });
+    body.innerHTML = mdToHtml(text);
+  }catch(e){ body.innerHTML = '<p>'+t('errApi')+'</p>'; }
+  finally{ state.busy=false; }
+}
+
+/* ================= Interactive Practice Test ================= */
+function buildQuizPrompt(){
+  const lv = LEVELS.find(l=>l.id===state.level);
+  return `You are "7Marks" building an interactive PRACTICE TEST for a ${lv.name.en} · ${$('courseSel').value} · ${$('subjectSel').value} student on the given topic.
+Output ONLY a JSON object (no prose, no code fence) shaped EXACTLY:
+{"intro":"one line","steps":[{"q":"question","options":["A","B","C","D"],"answer":0,"explain":"why, 1-2 lines"}],"final":"one closing tip"}
+Rules: 5 MCQ questions, each 4 options, "answer" is the 0-based index of the correct option; make sure exactly one option is correct and verify it; write EVERYTHING in ${LANG_NAME[state.lang]}; plain-text math (×, ÷, √, ²), never LaTeX. Return VALID JSON only.`;
+}
+let quiz=null, quizStep=0, quizScore=0;
+async function startQuiz(){
+  if(state.busy) return;
+  if(!anyEngine()){ $('errMsg').textContent=t('errNoEngine'); return; }
+  const panel=$('quizPanel');
+  panel.style.display='block';
+  panel.innerHTML=`<div class="tutor-head">🎯 ${t('practiceTest')}</div><div class="tutor-progress">${t('tutorLoading')}</div>`;
+  panel.scrollIntoView({behavior:'smooth',block:'start'});
+  state.busy=true;
+  try{
+    const topic = state.lastTopic || $('topicText').value.trim() || t('photoTopic');
+    const { text } = await getPaper(`Build the practice test on this topic: ${topic}`, state.images, { sysText:buildQuizPrompt(), validate:s=>!!s });
+    quiz = parseTutor(text);
+    if(!quiz){ panel.innerHTML=`<div class="tutor-head">🎯 ${t('practiceTest')}</div><div class="tutor-fb">${t('tutorFail')}</div><div class="tutor-actions"><button class="mini-btn" onclick="document.getElementById('quizPanel').style.display='none'">✕ ${t('close')}</button></div>`; return; }
+    quizStep=0; quizScore=0; renderQuizStep();
+  }catch(e){
+    panel.innerHTML=`<div class="tutor-head">🎯 ${t('practiceTest')}</div><div class="tutor-fb">${t('tutorFail')}</div>`;
+  }finally{ state.busy=false; }
+}
+function parseTutor(txt){
+  try{
+    let s=stripThink(txt).trim().replace(/^```(json)?/i,'').replace(/```$/,'').trim();
+    const a=s.indexOf('{'), b=s.lastIndexOf('}');
+    if(a<0||b<0) return null;
+    const o=JSON.parse(s.slice(a,b+1));
+    if(!o.steps||!Array.isArray(o.steps)) return null;
+    o.steps=o.steps.filter(st=>st&&st.q&&Array.isArray(st.options)&&st.options.length>=2&&Number.isInteger(st.answer)&&st.answer<st.options.length);
+    return o.steps.length?o:null;
+  }catch(e){ return null; }
+}
+function renderQuizStep(){
+  const panel=$('quizPanel'), st=quiz.steps[quizStep], n=quiz.steps.length;
+  const intro = quizStep===0 && quiz.intro ? `<div class="tutor-fb">${escapeHtml(quiz.intro)}</div>` : '';
+  panel.innerHTML =
+    `<div class="tutor-head">🎯 ${t('practiceTest')}</div>`+
+    `<div class="tutor-progress">${t('tutorStep')} ${quizStep+1} / ${n} · ${t('score')}: ${quizScore}</div>`+
+    intro+
+    `<div class="tutor-q">${escapeHtml(st.q)}</div>`+
+    `<div class="tutor-opts">${st.options.map((o,i)=>`<button class="tutor-opt" data-i="${i}">${escapeHtml(o)}</button>`).join('')}</div>`+
+    `<div class="tutor-fb" id="quizFb"></div><div class="tutor-actions" id="quizActions"></div>`;
+  panel.querySelectorAll('.tutor-opt').forEach(btn=> btn.onclick=()=>answerQuiz(+btn.dataset.i));
+}
+function answerQuiz(pick){
+  const st=quiz.steps[quizStep];
+  const opts=$('quizPanel').querySelectorAll('.tutor-opt');
+  opts.forEach((b,i)=>{ b.disabled=true; if(i===st.answer) b.classList.add('correct'); });
+  const right = pick===st.answer;
+  if(right) quizScore++; else opts[pick].classList.add('wrong');
+  const fb=$('quizFb'); fb.className='tutor-fb'+(right?' good':'');
+  fb.innerHTML=(right?'✅ ':'❌ ')+escapeHtml(st.explain||'');
+  const last = quizStep===quiz.steps.length-1;
+  $('quizActions').innerHTML = `<button class="solve-btn" id="quizNext">${last?('🎉 '+t('tutorFinish')):(t('tutorNext')+' →')}</button>`;
+  $('quizNext').onclick = ()=>{
+    if(last){
+      const n=quiz.steps.length;
+      $('quizPanel').innerHTML=`<div class="tutor-score">${t('score')}: ${quizScore} / ${n}</div><div class="tutor-done">🎉 ${escapeHtml(quiz.final||t('tutorWell'))}</div><div class="tutor-actions" style="justify-content:center"><button class="mini-btn" onclick="startQuiz()">🔁 ${t('retry')}</button><button class="mini-btn" onclick="document.getElementById('quizPanel').style.display='none'">✕ ${t('close')}</button></div>`;
+    } else { quizStep++; renderQuizStep(); $('quizPanel').scrollIntoView({behavior:'smooth',block:'start'}); }
+  };
 }
 
 /* ================= Paper shelf (history) ================= */
@@ -1162,15 +1372,26 @@ function saveToShelf(topic, md, via){
   localStorage.setItem('qb_papers', JSON.stringify(papers.slice(0,20)));
   renderShelf();
 }
+function deletePaper(i){
+  const papers = getShelf(); papers.splice(i,1);
+  localStorage.setItem('qb_papers', JSON.stringify(papers));
+  renderShelf();
+}
+function clearPapers(){
+  if(!confirm(t('clearConfirm'))) return;
+  localStorage.removeItem('qb_papers'); renderShelf();
+}
 function renderShelf(){
   const list = $('shelfList'); const papers = getShelf();
   if(!papers.length){ list.innerHTML = `<div class="empty-note">${t('emptyNote')}</div>`; return; }
   list.innerHTML = '';
-  papers.forEach((n)=>{
+  papers.forEach((n,i)=>{
     const d = document.createElement('div');
     d.className='note-item';
     // localStorage is a trust boundary — escape everything on render, slice BEFORE escaping so entities can't be bisected
-    d.innerHTML = `<span class="nq">📄 ${escapeHtml(String(n.q||'').slice(0,90))}</span><span class="nm">${escapeHtml(String(n.meta||''))} · ${new Date(n.when).toLocaleDateString()}</span>`;
+    d.innerHTML = `<span class="nq">📄 ${escapeHtml(String(n.q||'').slice(0,90))}</span>`+
+      `<span class="nm">${escapeHtml(String(n.meta||''))} · ${new Date(n.when).toLocaleDateString()}</span>`+
+      `<button class="del-btn" title="${t('del')}">✕</button>`;
     d.onclick = ()=>{
       state.lastMd = n.a; state.lastTopic = n.q;
       state.lastTopicIsPhoto = Object.values(I18N).some(l=>l.photoTopic===n.q);
@@ -1180,8 +1401,14 @@ function renderShelf(){
         `<span>🕰️ ${new Date(n.when).toLocaleString()}</span>`;
       showPaper(n.a, meta);
     };
+    d.querySelector('.del-btn').onclick = e=>{ e.stopPropagation(); deletePaper(i); };
     list.appendChild(d);
   });
+  const clear = document.createElement('button');
+  clear.className='mini-btn clear-all';
+  clear.innerHTML = '🗑️ ' + t('clearAll');
+  clear.onclick = clearPapers;
+  list.appendChild(clear);
 }
 
 /* ================= Tiny Markdown renderer (same as Doubt Snap) ================= */
