@@ -209,15 +209,53 @@ textarea#qtext::placeholder{color:var(--ink-faint);font-style:italic}
 .hint-box-body{font-size:15px;color:var(--ink);line-height:1.6}
 .hint-box-body p{margin:6px 0}.hint-box-body ul,.hint-box-body ol{margin:6px 0 6px 22px}
 .hint-box .mini-btn{margin-top:10px}
-/* follow-up chips */
-.followups{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:18px}
-.followups-label{font-style:italic;color:var(--ink-soft);font-size:13.5px;margin-right:2px}
+/* follow-up chips + categorised learn panel */
 .chip{
   font-family:var(--serif);font-size:13px;cursor:pointer;
   background:var(--paper-2);color:var(--ink-soft);border:1px solid var(--rule);
-  border-radius:20px;padding:6px 14px;transition:all .2s ease;
+  border-radius:20px;padding:6px 14px;transition:all .2s ease;white-space:nowrap;
 }
 .chip:hover{border-color:var(--gold);color:var(--ink);background:#fbf3dd}
+.chip.cg-star{background:#fbf3dd;border-color:var(--gold);color:var(--maroon);font-weight:600}
+.chip.cg-star:hover{background:var(--gold-soft);color:var(--ink)}
+.learn-panel{margin-top:20px;display:flex;flex-direction:column;gap:12px}
+.chip-group{display:flex;flex-direction:column;gap:7px}
+.cg-label{font-family:var(--display);color:var(--maroon);font-size:14.5px}
+.cg-chips{display:flex;flex-wrap:wrap;gap:8px}
+@media(max-width:560px){.cg-chips{gap:6px}.chip{font-size:12.5px;padding:6px 11px}}
+/* check-my-answer box */
+.check-box{
+  margin-top:18px;background:var(--paper-2);border:1px solid var(--gold-soft);
+  border-left:4px solid var(--gold);border-radius:6px;padding:14px 18px;
+}
+.check-box textarea{
+  width:100%;min-height:90px;resize:vertical;margin:8px 0;
+  font-family:var(--serif);font-size:15px;color:var(--ink);
+  background:var(--paper);border:1px solid var(--rule);border-radius:5px;padding:10px 12px;
+}
+.check-box textarea:focus{outline:none;border-color:var(--gold)}
+.check-actions{display:flex;gap:8px}
+/* interactive AI Tutor Mode */
+.tutor-panel{
+  margin-top:18px;background:var(--paper-2);border:1px solid var(--gold-soft);
+  border-radius:8px;padding:20px clamp(16px,3vw,28px);box-shadow:inset 0 0 30px rgba(150,120,60,.06);
+}
+.tutor-head{font-family:var(--display);color:var(--maroon);font-size:19px;margin-bottom:4px}
+.tutor-progress{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--ink-faint);margin-bottom:14px}
+.tutor-q{font-size:16.5px;color:var(--ink);margin-bottom:14px;line-height:1.55}
+.tutor-opts{display:flex;flex-direction:column;gap:9px}
+.tutor-opt{
+  text-align:left;font-family:var(--serif);font-size:15px;cursor:pointer;color:var(--ink);
+  background:var(--paper);border:1px solid var(--rule);border-radius:6px;padding:11px 15px;transition:all .15s ease;
+}
+.tutor-opt:hover:not(:disabled){border-color:var(--gold);background:#fbf3dd}
+.tutor-opt:disabled{cursor:default}
+.tutor-opt.correct{border-color:var(--ok);background:#e5efdd;color:#2f5a28;font-weight:600}
+.tutor-opt.wrong{border-color:var(--err);background:#f6e2e0;color:var(--err)}
+.tutor-fb{margin-top:14px;font-size:15px;line-height:1.6;color:var(--ink)}
+.tutor-fb.good{color:var(--ok)}
+.tutor-actions{margin-top:16px;display:flex;gap:10px;flex-wrap:wrap}
+.tutor-done{font-family:var(--display);color:var(--ok);font-size:18px;text-align:center;padding:10px}
 
 /* ---------- Chapter III : the answer page ---------- */
 #answerPage{display:none}
@@ -315,6 +353,18 @@ footer{
   padding:0 20px 40px;
 }
 footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-bottom:6px}
+
+/* print / Export PDF: only the answer sheet */
+@media print{
+  body{background:#fff}
+  header.cover,.toolbar,footer,.answer-actions,.learn-panel,.tutor-panel,.check-box,.hint-box,.page:not(#answerPage){display:none !important}
+  main.book{box-shadow:none;max-width:100%;background:#fff}
+  main.book::before{display:none}
+  #answerPage{display:block !important;padding:0}
+  #answerPage .chapter{display:none}
+  .answer-sheet{border:none;box-shadow:none;padding:0}
+  .answer-sheet::before{display:none}
+}
 </style>
 </head>
 <body>
@@ -415,16 +465,68 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
       <div class="answer-meta" id="answerMeta"></div>
       <div class="answer-body" id="answerBody"></div>
     </div>
-    <div class="followups">
-      <span class="followups-label" data-i18n="learnMore">Understand it better:</span>
-      <button class="chip" onclick="quickFollow('explainSimply')" data-i18n="explainSimply">Explain more simply</button>
-      <button class="chip" onclick="quickFollow('anotherExample')" data-i18n="anotherExample">Another example</button>
-      <button class="chip" onclick="quickFollow('whySteps')" data-i18n="whySteps">Why these steps?</button>
-      <button class="chip" onclick="quickFollow('realLife')" data-i18n="realLife">Real-life use</button>
+    <!-- Interactive AI Tutor Mode panel -->
+    <div class="tutor-panel" id="tutorPanel" style="display:none"></div>
+
+    <!-- Check my answer -->
+    <div class="check-box" id="checkBox" style="display:none">
+      <div class="hint-box-head">🧮 <span data-i18n="checkTitle">Check my answer</span></div>
+      <textarea id="checkText" data-i18n-ph="checkPh" placeholder="Type your answer or working here — the tutor will check it and tell you where you went right or wrong…"></textarea>
+      <div class="check-actions">
+        <button class="mini-btn" id="checkSubmit">✅ <span data-i18n="checkSubmit">Check it</span></button>
+        <button class="mini-btn" onclick="document.getElementById('checkBox').style.display='none'">✕ <span data-i18n="close">Close</span></button>
+      </div>
+    </div>
+
+    <div class="learn-panel" id="learnPanel">
+      <div class="chip-group">
+        <span class="cg-label" data-i18n="grpLearn">📚 Learn More</span>
+        <div class="cg-chips">
+          <button class="chip" onclick="quickFollow('eli10')" data-i18n="eli10">🧒 Explain like I'm 10</button>
+          <button class="chip" onclick="quickFollow('explainSimply')" data-i18n="explainSimply">💡 Explain more simply</button>
+          <button class="chip" onclick="quickFollow('detailSteps')" data-i18n="detailSteps">🔍 Each step in detail</button>
+          <button class="chip" onclick="quickFollow('whyMethod')" data-i18n="whyMethod">🤔 Why this method works</button>
+          <button class="chip" onclick="quickFollow('concepts')" data-i18n="concepts">📖 Concepts used</button>
+        </div>
+      </div>
+      <div class="chip-group">
+        <span class="cg-label" data-i18n="grpPractice">📝 Practice</span>
+        <div class="cg-chips">
+          <button class="chip" onclick="quickFollow('anotherExample')" data-i18n="anotherExample">📝 Another example</button>
+          <button class="chip" onclick="quickFollow('similarQ')" data-i18n="similarQ">🎯 Similar question</button>
+          <button class="chip" onclick="quickFollow('harder')" data-i18n="harder">📈 Harder version</button>
+          <button class="chip" onclick="quickFollow('easier')" data-i18n="easier">📉 Easier version</button>
+          <button class="chip" onclick="quickFollow('fivePractice')" data-i18n="fivePractice">🎲 5 practice problems</button>
+        </div>
+      </div>
+      <div class="chip-group">
+        <span class="cg-label" data-i18n="grpExplore">🔄 Explore</span>
+        <div class="cg-chips">
+          <button class="chip" onclick="quickFollow('realLife')" data-i18n="realLife">🌍 Real-life uses</button>
+          <button class="chip" onclick="quickFollow('anotherMethod')" data-i18n="anotherMethod">🔄 Another method</button>
+          <button class="chip" onclick="quickFollow('compareMethods')" data-i18n="compareMethods">⚖️ Compare methods</button>
+          <button class="chip" onclick="quickFollow('examMistakes')" data-i18n="examMistakes">❓ Common exam mistakes</button>
+          <button class="chip" onclick="quickFollow('relatedTopics')" data-i18n="relatedTopics">🧠 Related topics</button>
+        </div>
+      </div>
+      <div class="chip-group">
+        <span class="cg-label" data-i18n="grpSmart">🎯 Smart Tutor</span>
+        <div class="cg-chips">
+          <button class="chip cg-star" onclick="startTutorMode()" data-i18n="tutorMode">🎓 AI Tutor Mode</button>
+          <button class="chip cg-star" onclick="openCheck()" data-i18n="checkAnswer">🧮 Check my answer</button>
+          <button class="chip" onclick="quickFollow('quizMe')" data-i18n="quizMe">🧠 Quiz me</button>
+          <button class="chip" onclick="quickFollow('importantSteps')" data-i18n="importantSteps">🎯 Only important steps</button>
+          <button class="chip" onclick="quickFollow('fullDerivation')" data-i18n="fullDerivation">📖 Full derivation</button>
+          <button class="chip" onclick="quickFollow('prereq')" data-i18n="prereq">📚 What to learn first</button>
+          <button class="chip" onclick="quickFollow('solveFaster')" data-i18n="solveFaster">⚡ Exam shortcut</button>
+        </div>
+      </div>
     </div>
     <div class="answer-actions">
-      <button class="mini-btn" onclick="copyAnswer()">📋 <span data-i18n="copy">Copy answer</span></button>
-      <button class="mini-btn" onclick="askFollowUp()">💬 <span data-i18n="followup">Ask my own follow-up</span></button>
+      <button class="mini-btn" onclick="copyAnswer()">📋 <span data-i18n="copy">Copy</span></button>
+      <button class="mini-btn" onclick="shareAnswer()">🔗 <span data-i18n="share">Share</span></button>
+      <button class="mini-btn" onclick="printAnswer()">📄 <span data-i18n="exportPdf">Export PDF</span></button>
+      <button class="mini-btn" onclick="askFollowUp()">💬 <span data-i18n="followup">Ask a follow-up</span></button>
       <button class="mini-btn" onclick="newDoubt()">➕ <span data-i18n="newDoubt">New doubt</span></button>
     </div>
   </section>
@@ -532,8 +634,15 @@ const I18N = {
     camera:'Camera', gallery:'Gallery', solve:'Solve my doubt', thinking:'Your teacher is writing the answer…',
     ch3:'The Answer', copy:'Copy answer', followup:'Ask my own follow-up', newDoubt:'New doubt',
     hint:'Give me a hint', hintTitle:'Hint — try it yourself first', hintSolve:'Show me the full solution',
-    learnMore:'Understand it better:', explainSimply:'Explain more simply', anotherExample:'Another example',
-    whySteps:'Why these steps?', realLife:'Real-life use',
+    share:'Share', exportPdf:'Export PDF', close:'Close',
+    grpLearn:'📚 Learn More', grpPractice:'📝 Practice', grpExplore:'🔄 Explore', grpSmart:'🎯 Smart Tutor',
+    eli10:"🧒 Explain like I'm 10", explainSimply:'💡 Explain more simply', detailSteps:'🔍 Each step in detail',
+    whyMethod:'🤔 Why this method works', concepts:'📖 Concepts used',
+    anotherExample:'📝 Another example', similarQ:'🎯 Similar question', harder:'📈 Harder version', easier:'📉 Easier version', fivePractice:'🎲 5 practice problems',
+    realLife:'🌍 Real-life uses', anotherMethod:'🔄 Another method', compareMethods:'⚖️ Compare methods', examMistakes:'❓ Common exam mistakes', relatedTopics:'🧠 Related topics',
+    tutorMode:'🎓 AI Tutor Mode', checkAnswer:'🧮 Check my answer', quizMe:'🧠 Quiz me', importantSteps:'🎯 Only important steps', fullDerivation:'📖 Full derivation', prereq:'📚 What to learn first', solveFaster:'⚡ Exam shortcut',
+    checkTitle:'Check my answer', checkPh:'Type your answer or working here — the tutor will check it and tell you where you went right or wrong…', checkSubmit:'Check it',
+    tutorLoading:'Building your lesson…', tutorFail:'Could not build the interactive lesson — try again, or read the full answer above.', tutorStep:'Step', tutorNext:'Next', tutorFinish:'Finish', tutorWell:'Well done — you completed the lesson!',
     ch4:'My Notebook', ch4hint:'Your last 20 solved doubts, saved on this device.',
     emptyNote:'No doubts solved yet. Your answers will be saved here like notes in a notebook.',
     footer:'7Solve — every doubt deserves a good answer. Free forever, from 7By.in. · AI-generated — please verify before your exam.',
@@ -556,8 +665,15 @@ const I18N = {
     camera:'कैमरा', gallery:'गैलरी', solve:'मेरा डाउट हल करें', thinking:'आपके शिक्षक उत्तर लिख रहे हैं…',
     ch3:'उत्तर', copy:'उत्तर कॉपी करें', followup:'अपना सवाल पूछें', newDoubt:'नया डाउट',
     hint:'मुझे संकेत दें', hintTitle:'संकेत — पहले खुद कोशिश करें', hintSolve:'पूरा हल दिखाएँ',
-    learnMore:'और अच्छे से समझें:', explainSimply:'आसान भाषा में समझाएँ', anotherExample:'एक और उदाहरण',
-    whySteps:'ये चरण क्यों?', realLife:'असल जीवन में उपयोग',
+    share:'शेयर करें', exportPdf:'PDF सेव करें', close:'बंद करें',
+    grpLearn:'📚 और सीखें', grpPractice:'📝 अभ्यास', grpExplore:'🔄 और जानें', grpSmart:'🎯 स्मार्ट ट्यूटर',
+    eli10:'🧒 10 साल के बच्चे जैसा समझाएँ', explainSimply:'💡 आसान भाषा में समझाएँ', detailSteps:'🔍 हर चरण विस्तार से',
+    whyMethod:'🤔 यह तरीका क्यों सही है', concepts:'📖 प्रयुक्त अवधारणाएँ',
+    anotherExample:'📝 एक और उदाहरण', similarQ:'🎯 मिलता-जुलता प्रश्न', harder:'📈 कठिन संस्करण', easier:'📉 आसान संस्करण', fivePractice:'🎲 5 अभ्यास प्रश्न',
+    realLife:'🌍 असल जीवन में उपयोग', anotherMethod:'🔄 दूसरा तरीका', compareMethods:'⚖️ दोनों तरीकों की तुलना', examMistakes:'❓ परीक्षा में आम गलतियाँ', relatedTopics:'🧠 संबंधित टॉपिक',
+    tutorMode:'🎓 AI ट्यूटर मोड', checkAnswer:'🧮 मेरा उत्तर जाँचें', quizMe:'🧠 मुझसे सवाल पूछें', importantSteps:'🎯 केवल ज़रूरी चरण', fullDerivation:'📖 पूरा व्युत्पादन', prereq:'📚 पहले क्या सीखें', solveFaster:'⚡ परीक्षा शॉर्टकट',
+    checkTitle:'मेरा उत्तर जाँचें', checkPh:'अपना उत्तर या हल यहाँ लिखें — ट्यूटर उसे जाँचकर बताएगा कि कहाँ सही और कहाँ गलत है…', checkSubmit:'जाँचें',
+    tutorLoading:'आपका पाठ तैयार हो रहा है…', tutorFail:'इंटरैक्टिव पाठ नहीं बन सका — फिर कोशिश करें, या ऊपर पूरा उत्तर पढ़ें।', tutorStep:'चरण', tutorNext:'अगला', tutorFinish:'समाप्त', tutorWell:'शाबाश — आपने पाठ पूरा किया!',
     ch4:'मेरी नोटबुक', ch4hint:'आपके पिछले 20 हल किए डाउट, इसी डिवाइस पर सेव।',
     emptyNote:'अभी तक कोई डाउट हल नहीं हुआ। आपके उत्तर यहाँ नोटबुक की तरह सेव होंगे।',
     footer:'7Solve — हर डाउट एक अच्छे उत्तर का हकदार है। हमेशा फ्री, 7By.in की ओर से। · AI से बना — परीक्षा से पहले जाँच लें।',
@@ -580,8 +696,15 @@ const I18N = {
     camera:'కెమెరా', gallery:'గ్యాలరీ', solve:'నా డౌట్ సాల్వ్ చేయండి', thinking:'మీ టీచర్ సమాధానం రాస్తున్నారు…',
     ch3:'సమాధానం', copy:'సమాధానం కాపీ', followup:'నా ప్రశ్న అడగండి', newDoubt:'కొత్త డౌట్',
     hint:'ఒక సూచన ఇవ్వండి', hintTitle:'సూచన — ముందు మీరే ప్రయత్నించండి', hintSolve:'పూర్తి సాధన చూపించండి',
-    learnMore:'ఇంకా బాగా అర్థం చేసుకోండి:', explainSimply:'సులభంగా వివరించండి', anotherExample:'మరో ఉదాహరణ',
-    whySteps:'ఈ దశలు ఎందుకు?', realLife:'నిజ జీవితంలో ఉపయోగం',
+    share:'షేర్ చేయండి', exportPdf:'PDF సేవ్', close:'మూసివేయండి',
+    grpLearn:'📚 ఇంకా నేర్చుకోండి', grpPractice:'📝 ప్రాక్టీస్', grpExplore:'🔄 అన్వేషించండి', grpSmart:'🎯 స్మార్ట్ ట్యూటర్',
+    eli10:'🧒 10 ఏళ్ల పిల్లాడికిలా వివరించండి', explainSimply:'💡 సులభంగా వివరించండి', detailSteps:'🔍 ప్రతి దశ వివరంగా',
+    whyMethod:'🤔 ఈ పద్ధతి ఎందుకు సరైనది', concepts:'📖 వాడిన భావనలు',
+    anotherExample:'📝 మరో ఉదాహరణ', similarQ:'🎯 సారూప్య ప్రశ్న', harder:'📈 కఠిన వెర్షన్', easier:'📉 సులభ వెర్షన్', fivePractice:'🎲 5 ప్రాక్టీస్ ప్రశ్నలు',
+    realLife:'🌍 నిజ జీవిత ఉపయోగాలు', anotherMethod:'🔄 మరో పద్ధతి', compareMethods:'⚖️ రెండు పద్ధతుల పోలిక', examMistakes:'❓ పరీక్షలో సాధారణ తప్పులు', relatedTopics:'🧠 సంబంధిత అంశాలు',
+    tutorMode:'🎓 AI ట్యూటర్ మోడ్', checkAnswer:'🧮 నా సమాధానం సరిచూడండి', quizMe:'🧠 నన్ను ప్రశ్నించండి', importantSteps:'🎯 ముఖ్యమైన దశలు మాత్రమే', fullDerivation:'📖 పూర్తి ఉత్పాదన', prereq:'📚 ముందు ఏం నేర్చుకోవాలి', solveFaster:'⚡ పరీక్ష షార్ట్‌కట్',
+    checkTitle:'నా సమాధానం సరిచూడండి', checkPh:'మీ సమాధానం లేదా వర్కింగ్ ఇక్కడ రాయండి — ట్యూటర్ దానిని సరిచూసి ఎక్కడ సరైనది, ఎక్కడ తప్పో చెబుతుంది…', checkSubmit:'సరిచూడండి',
+    tutorLoading:'మీ పాఠం సిద్ధమవుతోంది…', tutorFail:'ఇంటరాక్టివ్ పాఠం తయారు చేయలేకపోయాం — మళ్లీ ప్రయత్నించండి, లేదా పైన పూర్తి సమాధానం చదవండి.', tutorStep:'దశ', tutorNext:'తదుపరి', tutorFinish:'ముగించు', tutorWell:'బాగుంది — మీరు పాఠం పూర్తి చేశారు!',
     ch4:'నా నోట్‌బుక్', ch4hint:'మీ చివరి 20 సాల్వ్ చేసిన డౌట్లు, ఈ డివైస్‌లో సేవ్ అవుతాయి.',
     emptyNote:'ఇంకా డౌట్లు సాల్వ్ చేయలేదు. మీ సమాధానాలు నోట్‌బుక్ లా ఇక్కడ సేవ్ అవుతాయి.',
     footer:'7Solve — ప్రతి డౌట్ కు మంచి సమాధానం దక్కాలి. ఎప్పటికీ ఫ్రీ, 7By.in నుండి. · AI రూపొందించినది — పరీక్షకు ముందు సరిచూసుకోండి.',
@@ -898,7 +1021,7 @@ async function getAnswer(userText, img){
   if(fallback) return fallback;   // every engine returned an odd shape — show the best we got, don't dead-end
   throw lastErr || new Error('All engines failed');
 }
-const sys = () => state.hintMode ? buildHintPrompt() : buildSystemPrompt();
+const sys = () => window.__sysOverride || (state.hintMode ? buildHintPrompt() : buildSystemPrompt());
 function buildHintPrompt(){
   const lv = LEVELS.find(l=>l.id===state.level);
   return `You are "7Solve", a warm Indian tutor. The student wants a HINT, not the answer — help them try it themselves.
@@ -989,14 +1112,127 @@ async function getHint(){
 $('hintBtn').onclick = ()=> getHint();
 $('hintSolveBtn').onclick = ()=>{ $('hintBox').style.display='none'; solve(); };
 
-/* ---- one-tap follow-up explanations ---- */
+/* ---- one-tap follow-up explanations (each is an instruction; the answer stays in the student's language) ---- */
 const FOLLOW_PROMPTS = {
+  // Learn More
+  eli10:'Explain this to me like I am 10 years old — very simple words, a everyday comparison, no jargon.',
   explainSimply:'Explain the same answer again in the simplest possible words, as if to a beginner. Keep the tutor sections.',
-  anotherExample:'Give one more solved example of the same type of question, with the same step-by-step tutor format.',
-  whySteps:'Explain WHY each step works and why this method/formula is the right approach here.',
-  realLife:'Give a short real-life example or application of this concept so it is easy to remember.'
+  detailSteps:'Break the solution into even smaller steps and explain each one in detail, so nothing is skipped.',
+  whyMethod:'Explain WHY this method/formula is the correct approach for this question, and when to use it.',
+  concepts:'Explain in depth the key concepts, formulas and definitions this question is built on.',
+  // Practice
+  anotherExample:'Give one more fully solved example of the same type of question, with the same step-by-step tutor format.',
+  similarQ:'Give ONE similar practice question at the same level. Do NOT solve it — leave it for me to try. Then add the answer at the very end under a "Answer:" line so I can check.',
+  harder:'Give a HARDER version of this question and solve it fully with the tutor format.',
+  easier:'Give an EASIER version of this question and solve it fully with the tutor format.',
+  fivePractice:'Give me 5 practice questions on this topic, ordered easy to hard, numbered. Put a compact answer key at the end.',
+  // Explore
+  realLife:'Give short real-life examples or applications of this concept so it is easy to remember.',
+  anotherMethod:'Solve the SAME question again using a different method or approach, step by step.',
+  compareMethods:'Compare the two methods of solving this — which is faster, which is clearer, and when to use each.',
+  examMistakes:'List the most common mistakes students make on this topic in exams, and how to avoid each.',
+  relatedTopics:'List the related topics I should study next after this, with one line on how each connects.',
+  // Smart tutor
+  quizMe:'Quiz me on this topic: ask me 5 short questions one after another (mix MCQ and one-word). Put the correct answers in a collapsible list at the very end so I can check after trying.',
+  importantSteps:'Show ONLY the most important steps and the final answer — a quick revision version, no extra explanation.',
+  fullDerivation:'Show the COMPLETE derivation / full working with every step and reason, leaving nothing out.',
+  prereq:'What should I learn BEFORE this topic to understand it well? List the prerequisites in order.',
+  solveFaster:'Show me the fastest way to solve this in an exam — shortcuts, tricks and time-savers for this type of question.'
 };
 function quickFollow(kind){ if(FOLLOW_PROMPTS[kind]) solve(FOLLOW_PROMPTS[kind]); }
+
+/* ---- Check my answer ---- */
+function openCheck(){ const b=$('checkBox'); b.style.display='block'; $('checkText').focus(); b.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+$('checkSubmit').onclick = ()=>{
+  const mine = $('checkText').value.trim();
+  if(!mine){ $('checkText').focus(); return; }
+  $('checkBox').style.display='none';
+  solve(`Here is MY attempt at the answer:\n"""${mine}"""\nCheck it against the correct solution. Tell me clearly: is it correct? If not, exactly where did I go wrong and what is the fix? Be encouraging. Then show the correct answer in the tutor format.`);
+};
+
+/* ---- Share & Export ---- */
+function shareAnswer(){
+  const text = state.lastAnswer||'';
+  if(navigator.share){ navigator.share({title:'7Solve', text}).catch(()=>{}); return; }
+  const done=()=>alert(t('copied'));
+  if(navigator.clipboard?.writeText) navigator.clipboard.writeText(text).then(done).catch(()=>{});
+  else { const ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');done();}catch{} ta.remove(); }
+}
+function printAnswer(){ window.print(); }
+
+/* ================= Interactive AI Tutor Mode ================= */
+function buildTutorPrompt(){
+  const lv = LEVELS.find(l=>l.id===state.level);
+  return `You are "7Solve" building an INTERACTIVE step-by-step lesson for a ${lv.name.en} · ${$('courseSel').value} · ${$('subjectSel').value} student.
+Turn the solution into a guided quiz. Output ONLY a JSON object (no prose, no code fence) shaped EXACTLY:
+{"intro":"one encouraging line","steps":[{"q":"question for this step","options":["A text","B text","C text"],"answer":0,"explain":"why that option is right, 1-2 lines"}],"final":"the final answer + one takeaway"}
+Rules: 3 to 5 steps that build to the answer; each step 2-4 options; "answer" is the 0-based index of the correct option; write EVERYTHING (q, options, explain, intro, final) in ${LANG_NAME[state.lang]}; keep it tight; use plain-text math (×, ÷, √, ²), never LaTeX. Return VALID JSON only.`;
+}
+let tutorLesson=null, tutorStep=0;
+async function startTutorMode(){
+  if(state.busy) return;
+  if(!anyEngine()){ $('errMsg').textContent=t('errNoEngine'); return; }
+  const panel=$('tutorPanel');
+  panel.style.display='block';
+  panel.innerHTML=`<div class="tutor-head">🎓 ${t('tutorMode')}</div><div class="tutor-progress">${t('tutorLoading')}</div>`;
+  panel.scrollIntoView({behavior:'smooth',block:'start'});
+  state.busy=true; state.hintMode=false;
+  const prevSys = window.__sysOverride;
+  try{
+    const q = state.lastQ && state.lastQ!=='(photo question)' ? state.lastQ : $('qtext').value.trim();
+    window.__sysOverride = buildTutorPrompt();
+    const { text } = await getAnswer(`Build the interactive lesson for this question: ${q||'the attached photo question'}`, state.imageData);
+    tutorLesson = parseTutor(text);
+    if(!tutorLesson){ panel.innerHTML=`<div class="tutor-head">🎓 ${t('tutorMode')}</div><div class="tutor-fb">${t('tutorFail')}</div><div class="tutor-actions"><button class="mini-btn" onclick="document.getElementById('tutorPanel').style.display='none'">✕ ${t('close')}</button></div>`; return; }
+    tutorStep=0; renderTutorStep();
+  }catch(e){
+    panel.innerHTML=`<div class="tutor-head">🎓 ${t('tutorMode')}</div><div class="tutor-fb">${t('tutorFail')}</div>`;
+  }finally{
+    window.__sysOverride = prevSys; state.busy=false;
+  }
+}
+function parseTutor(txt){
+  try{
+    let s=stripThink(txt).trim().replace(/^```(json)?/i,'').replace(/```$/,'').trim();
+    const a=s.indexOf('{'), b=s.lastIndexOf('}');
+    if(a<0||b<0) return null;
+    const o=JSON.parse(s.slice(a,b+1));
+    if(!o.steps||!Array.isArray(o.steps)||!o.steps.length) return null;
+    o.steps=o.steps.filter(st=>st&&st.q&&Array.isArray(st.options)&&st.options.length>=2&&Number.isInteger(st.answer));
+    return o.steps.length?o:null;
+  }catch(e){ return null; }
+}
+function renderTutorStep(){
+  const panel=$('tutorPanel'), st=tutorLesson.steps[tutorStep], n=tutorLesson.steps.length;
+  const intro = tutorStep===0 && tutorLesson.intro ? `<div class="tutor-fb">${escapeHtml(tutorLesson.intro)}</div>` : '';
+  panel.innerHTML =
+    `<div class="tutor-head">🎓 ${t('tutorMode')}</div>`+
+    `<div class="tutor-progress">${t('tutorStep')} ${tutorStep+1} / ${n}</div>`+
+    intro+
+    `<div class="tutor-q">${escapeHtml(st.q)}</div>`+
+    `<div class="tutor-opts">${st.options.map((o,i)=>`<button class="tutor-opt" data-i="${i}">${escapeHtml(o)}</button>`).join('')}</div>`+
+    `<div class="tutor-fb" id="tutorFb"></div>`+
+    `<div class="tutor-actions" id="tutorActions"></div>`;
+  panel.querySelectorAll('.tutor-opt').forEach(btn=> btn.onclick=()=>answerTutor(+btn.dataset.i));
+}
+function answerTutor(pick){
+  const st=tutorLesson.steps[tutorStep];
+  const opts=$('tutorPanel').querySelectorAll('.tutor-opt');
+  opts.forEach((b,i)=>{ b.disabled=true; if(i===st.answer) b.classList.add('correct'); });
+  const right = pick===st.answer;
+  if(!right) opts[pick].classList.add('wrong');
+  const fb=$('tutorFb');
+  fb.className='tutor-fb'+(right?' good':'');
+  fb.innerHTML=(right?'✅ ':'❌ ')+escapeHtml(st.explain||'');
+  const last = tutorStep===tutorLesson.steps.length-1;
+  $('tutorActions').innerHTML = last
+    ? `<button class="solve-btn" id="tutorNext">🎉 ${t('tutorFinish')}</button>`
+    : `<button class="solve-btn" id="tutorNext">${t('tutorNext')} →</button>`;
+  $('tutorNext').onclick = ()=>{
+    if(last){ $('tutorPanel').innerHTML=`<div class="tutor-done">🎉 ${escapeHtml(tutorLesson.final||t('tutorWell'))}</div><div class="tutor-actions" style="justify-content:center"><button class="mini-btn" onclick="document.getElementById('tutorPanel').style.display='none'">✕ ${t('close')}</button></div>`; }
+    else { tutorStep++; renderTutorStep(); $('tutorPanel').scrollIntoView({behavior:'smooth',block:'start'}); }
+  };
+}
 
 /* ---- live auto-mode pill: shows which AI tier will answer ---- */
 function updateModePill(){
@@ -1019,6 +1255,7 @@ function showAnswer(md){
     (isOwnerView() && state.lastVia?`<span class="via">🤖 ${state.lastVia}</span>`:'') +
     `<span>🕰️ ${new Date().toLocaleString()}</span>`;
   $('answerBody').innerHTML = mdToHtml(md);
+  $('tutorPanel').style.display='none'; $('checkBox').style.display='none';   // a fresh answer supersedes an open lesson
   $('answerPage').style.display='block';
   $('answerPage').scrollIntoView({behavior:'smooth', block:'start'});
 }
@@ -1034,6 +1271,7 @@ function newDoubt(){
   $('qtext').value=''; clearImage(); state.lastQ=null;
   $('answerPage').style.display='none';
   $('hintBox').style.display='none';
+  $('tutorPanel').style.display='none'; $('checkBox').style.display='none';
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
