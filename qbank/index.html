@@ -930,9 +930,15 @@ document.addEventListener('paste', e=>{
 
 /* ================= AI ENGINES (multi-provider, same as Doubt Snap) ================= */
 const CFG = Object.assign({gemini:'',groq:'',cerebras:'',openrouter:'',mistral:'',github:''}, (window.QB_CONFIG && window.QB_CONFIG.keys) || {});
-const key = id => (CFG[id]||'').trim();
-const active = id => !!key(id);
+// Each provider may hold ONE key or MANY (array, or comma/newline separated).
+// More keys = more free daily quota: we rotate to the next key when one is rate-limited.
+const keysOf = id => (Array.isArray(CFG[id]) ? CFG[id] : String(CFG[id]||'').split(/[,\n]/))
+  .map(s=>String(s||'').trim()).filter(Boolean);
+const key = id => keysOf(id)[0] || '';
+const active = id => keysOf(id).length > 0;
 const anyEngine = () => Object.keys(CFG).some(active);
+// true when the error means "this key is out of quota / rate-limited" → try the next key
+const isQuotaErr = e => /429|quota|rate.?limit|exhaust|too many requests|billing/i.test(e && e.message || '');
 const PROV_NAME = { gemini:'Google Gemini', groq:'Groq', cerebras:'Cerebras', openrouter:'OpenRouter', mistral:'Mistral', github:'GitHub Models' };
 const OA_BASE = {
   groq:'https://api.groq.com/openai/v1/chat/completions',
@@ -1035,7 +1041,7 @@ function looksLikePaper(md){
   return headings >= 2 && !leaked;
 }
 const CONTINUE_MSG = 'Continue EXACTLY from where your previous message stopped. Do not repeat anything already written, do not add any commentary — just continue the paper seamlessly and finish it completely, including the full answer key and any diagrams.';
-async function callGeminiModel(model, sysText, userText, imgs, prior){
+async function callGeminiModel(model, sysText, userText, imgs, prior, apiKey){
   const parts = [];
   (imgs||[]).forEach(img=> parts.push({ inline_data:{ mime_type:img.mime, data:img.b64 } }));
   parts.push({ text:userText });
@@ -1048,7 +1054,7 @@ async function callGeminiModel(model, sysText, userText, imgs, prior){
   // return zero visible text ("Empty response"). Cap the thinking so text is always produced.
   if(is25) genCfg.thinkingConfig = { thinkingBudget: /pro/.test(model) ? 8192 : 2048 };
   const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,{
-    method:'POST', headers:{'Content-Type':'application/json','x-goog-api-key':key('gemini')},
+    method:'POST', headers:{'Content-Type':'application/json','x-goog-api-key':apiKey||key('gemini')},
     body: JSON.stringify({ system_instruction:{parts:[{text:sysText}]}, contents, generationConfig:genCfg })
   });
   const data = await res.json();
@@ -1058,13 +1064,13 @@ async function callGeminiModel(model, sysText, userText, imgs, prior){
   if(!txt && !prior) throw new Error(cand?.finishReason ? 'No text ('+cand.finishReason+')' : 'Empty response');
   return { text: txt, truncated: cand?.finishReason === 'MAX_TOKENS' };
 }
-async function callOpenAICompat(id, model, sysText, userText, imgs, prior){
+async function callOpenAICompat(id, model, sysText, userText, imgs, prior, apiKey){
   const userContent = (imgs && imgs.length)
     ? [ {type:'text', text:userText}, ...imgs.map(img=>({type:'image_url', image_url:{url:`data:${img.mime};base64,${img.b64}`}})) ]
     : userText;
   const messages = [{role:'system',content:sysText},{role:'user',content:userContent}];
   if(prior) messages.push({role:'assistant',content:prior},{role:'user',content:CONTINUE_MSG});
-  const headers = {'Content-Type':'application/json','Authorization':'Bearer '+key(id)};
+  const headers = {'Content-Type':'application/json','Authorization':'Bearer '+(apiKey||key(id))};
   if(id==='openrouter') headers['X-Title'] = '7Marks';
   const res = await fetch(OA_BASE[id],{
     method:'POST', headers,
@@ -1077,9 +1083,22 @@ async function callOpenAICompat(id, model, sysText, userText, imgs, prior){
   return { text: txt, truncated: data.choices?.[0]?.finish_reason === 'length' };
 }
 async function runAttempt(a, sysText, userText, imgs){
+  const ks = keysOf(a.id);
+  let keyErr = null;
+  // Rotate through this provider's keys: a rate-limited key just moves us to the next one.
+  for(const k of (ks.length ? ks : [''])){
+    try{ return await runWithKey(a, sysText, userText, imgs, k); }
+    catch(e){
+      keyErr = e;
+      if(!isQuotaErr(e)) throw e;   // a real failure → let the engine chain move on
+    }
+  }
+  throw keyErr || new Error('No key');
+}
+async function runWithKey(a, sysText, userText, imgs, k){
   const call = prior => a.id==='gemini'
-    ? callGeminiModel(a.model, sysText, userText, imgs, prior)
-    : callOpenAICompat(a.id, a.model, sysText, userText, imgs, prior);
+    ? callGeminiModel(a.model, sysText, userText, imgs, prior, k)
+    : callOpenAICompat(a.id, a.model, sysText, userText, imgs, prior, k);
   let out = await call();
   let full = out.text;
   // cut-off paper → auto-continue (answer key + diagrams come LAST, so they're what gets lost)

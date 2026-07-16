@@ -39,6 +39,13 @@
    You can add all 5 — the more you add, the fewer "limit reached" errors.
    ============================================================ */
 
+/* MORE FREE QUOTA — use SEVERAL keys per provider.
+   Any slot below accepts one key, OR a list. When a key hits its daily
+   limit the app automatically rotates to the next one. Examples:
+     gemini: ["AIza...key1", "AIza...key2", "AIza...key3"],
+     gemini: "AIza...key1, AIza...key2",
+   Tip: each Google Cloud project you own can have its own key. */
+
 window.DS_CONFIG = {
   keys: {
     gemini:     "",   // AIza...
