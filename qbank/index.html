@@ -1329,17 +1329,18 @@ async function startQuiz(){
   if(!anyEngine()){ $('errMsg').textContent=t('errNoEngine'); return; }
   const panel=$('quizPanel');
   panel.style.display='block';
-  panel.innerHTML=`<div class="tutor-head">🎯 ${t('practiceTest')}</div><div class="tutor-progress">${t('tutorLoading')}</div>`;
+  panel.innerHTML=`<div class="tutor-head">${t('practiceTest')}</div><div class="tutor-progress">${t('tutorLoading')}</div>`;
   panel.scrollIntoView({behavior:'smooth',block:'start'});
   state.busy=true;
   try{
     const topic = state.lastTopic || $('topicText').value.trim() || t('photoTopic');
-    const { text } = await getPaper(`Build the practice test on this topic: ${topic}`, state.images, { sysText:buildQuizPrompt(), validate:s=>!!s });
+    // the quiz comes back as JSON — validate THAT shape, so a junk reply falls through to a better engine
+    const { text } = await getPaper(`Build the practice test on this topic: ${topic}`, state.images, { sysText:buildQuizPrompt(), validate:s=>!!parseTutor(s) });
     quiz = parseTutor(text);
-    if(!quiz){ panel.innerHTML=`<div class="tutor-head">🎯 ${t('practiceTest')}</div><div class="tutor-fb">${t('tutorFail')}</div><div class="tutor-actions"><button class="mini-btn" onclick="document.getElementById('quizPanel').style.display='none'">✕ ${t('close')}</button></div>`; return; }
+    if(!quiz){ panel.innerHTML=`<div class="tutor-head">${t('practiceTest')}</div><div class="tutor-fb">${t('tutorFail')}</div><div class="tutor-actions"><button class="mini-btn" onclick="document.getElementById('quizPanel').style.display='none'">✕ ${t('close')}</button></div>`; return; }
     quizStep=0; quizScore=0; renderQuizStep();
   }catch(e){
-    panel.innerHTML=`<div class="tutor-head">🎯 ${t('practiceTest')}</div><div class="tutor-fb">${t('tutorFail')}</div>`;
+    panel.innerHTML=`<div class="tutor-head">${t('practiceTest')}</div><div class="tutor-fb">${t('tutorFail')}</div>`;
   }finally{ state.busy=false; }
 }
 function parseTutor(txt){
@@ -1357,7 +1358,7 @@ function renderQuizStep(){
   const panel=$('quizPanel'), st=quiz.steps[quizStep], n=quiz.steps.length;
   const intro = quizStep===0 && quiz.intro ? `<div class="tutor-fb">${escapeHtml(quiz.intro)}</div>` : '';
   panel.innerHTML =
-    `<div class="tutor-head">🎯 ${t('practiceTest')}</div>`+
+    `<div class="tutor-head">${t('practiceTest')}</div>`+
     `<div class="tutor-progress">${t('tutorStep')} ${quizStep+1} / ${n} · ${t('score')}: ${quizScore}</div>`+
     intro+
     `<div class="tutor-q">${escapeHtml(st.q)}</div>`+
