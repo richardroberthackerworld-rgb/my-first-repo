@@ -409,6 +409,10 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
         <input type="checkbox" id="withAnswers" checked>
         <span data-i18n="withAnswers">Include answer key (answers + explanations)</span>
       </label>
+      <label class="check-line" for="withHints">
+        <input type="checkbox" id="withHints">
+        <span data-i18n="withHints">Add a hint under each question (practice mode)</span>
+      </label>
     </div>
 
     <div class="gen-actions">
@@ -562,6 +566,7 @@ const I18N = {
     lblQKind:'Theory or Practical', kindMixed:'Mixed — theory + practical', kindTheory:'Theory (definitions, explanations)', kindPractical:'Practical (numericals, problems, sums)',
     lblDifficulty:'Difficulty', diffEasy:'Easy', diffMedium:'Medium', diffHard:'Hard (extra tough)', diffMixed:'Mixed (easy → hard)',
     withAnswers:'Include answer key (answers + explanations)',
+    withHints:'Add a hint under each question (practice mode)',
     generate:'Generate question bank', thinking:'Your examiner is setting the paper…',
     ch4:'Your Question Bank',
     showKey:'Show answer key', hideKey:'Hide answer key',
@@ -592,6 +597,7 @@ const I18N = {
     lblQKind:'थ्योरी या प्रैक्टिकल', kindMixed:'मिश्रित — थ्योरी + प्रैक्टिकल', kindTheory:'थ्योरी (परिभाषाएँ, व्याख्याएँ)', kindPractical:'प्रैक्टिकल (न्यूमेरिकल, समस्याएँ)',
     lblDifficulty:'कठिनाई', diffEasy:'आसान', diffMedium:'मध्यम', diffHard:'कठिन (अतिरिक्त कठिन)', diffMixed:'मिश्रित (आसान → कठिन)',
     withAnswers:'उत्तर कुंजी शामिल करें (उत्तर + व्याख्या)',
+    withHints:'हर प्रश्न के नीचे संकेत जोड़ें (अभ्यास मोड)',
     generate:'प्रश्न बैंक बनाएँ', thinking:'आपके परीक्षक प्रश्न पत्र सेट कर रहे हैं…',
     ch4:'आपका प्रश्न बैंक',
     showKey:'उत्तर कुंजी दिखाएँ', hideKey:'उत्तर कुंजी छिपाएँ',
@@ -622,6 +628,7 @@ const I18N = {
     lblQKind:'థియరీ లేదా ప్రాక్టికల్', kindMixed:'మిశ్రమం — థియరీ + ప్రాక్టికల్', kindTheory:'థియరీ (నిర్వచనాలు, వివరణలు)', kindPractical:'ప్రాక్టికల్ (లెక్కలు, సమస్యలు)',
     lblDifficulty:'కఠినత', diffEasy:'సులభం', diffMedium:'మధ్యస్థం', diffHard:'కఠినం (చాలా కష్టం)', diffMixed:'మిశ్రమం (సులభం → కఠినం)',
     withAnswers:'ఆన్సర్ కీ చేర్చండి (సమాధానాలు + వివరణ)',
+    withHints:'ప్రతి ప్రశ్న కింద సూచన జోడించండి (ప్రాక్టీస్ మోడ్)',
     generate:'క్వశ్చన్ బ్యాంక్ తయారు చేయండి', thinking:'మీ ఎగ్జామినర్ పేపర్ సెట్ చేస్తున్నారు…',
     ch4:'మీ క్వశ్చన్ బ్యాంక్',
     showKey:'ఆన్సర్ కీ చూపించండి', hideKey:'ఆన్సర్ కీ దాచండి',
@@ -998,6 +1005,7 @@ function selectedTypes(){ return QTYPES.filter(qt=> state.types[qt.id].on); }
 function buildSystemPrompt(){
   const lv = LEVELS.find(l=>l.id===state.level);
   const withKey = $('withAnswers').checked;
+  const withHints = $('withHints').checked;
   const diff = $('diffSel').value;
   const diffText = {
     easy:'EASY — direct, single-concept questions a average student can answer.',
@@ -1029,7 +1037,8 @@ STRICT RULES:
    - Start with "# 📋 <a short paper title: subject — topic>"
    - Then one section per requested type, in this order:
 ${sections}
-5. MCQ options go on separate lines as "A) …", "B) …", "C) …", "D) …". Fill-in-the-blank questions show the blank as "______".
+5. MCQ options go on separate lines as "A) …", "B) …", "C) …", "D) …". Fill-in-the-blank questions show the blank as "______".${withHints ? `
+   HINTS (requested): after ALL question sections${withKey ? ' and BEFORE the answer key' : ''}, add "## 💭 <Hints heading in the student's language>". Under it, repeat each section name as "### <section name>" and give ONE short nudge per question number — name the concept/formula/approach to use, WITHOUT revealing the answer. Keep each hint to a single line.` : ''}
 ${withKey
 ? `6. After ALL question sections, add "## 🔑 <Answer Key heading in the student's language>". Under it, repeat each section name as "### <section name>" and give the answer to every question by number: for MCQs the correct option letter + the answer, for fill/true-false the answer with one line of reason, for very short/short a model answer, for long answers the key points as a compact bullet list. Keep entries CONCISE (MCQ: option letter + one line; fill/true-false: answer + one-line reason; short: 3–4 lines; long: compact key-point bullets) so the COMPLETE answer key always fits — never stop mid-paper.
    ACCURACY IS NON-NEGOTIABLE. For every NUMERICAL/calculation question: work it out step by step, SHOW the working (formula → substitution → each step → final answer with correct unit), and re-check the arithmetic before writing it. State any assumption you made. Only set an MCQ's "correct" option to a value you have actually computed — make sure exactly one option matches your worked answer. If a question is genuinely ambiguous or you are not fully sure, briefly say so rather than inventing a confident wrong figure. Never write an answer you have not verified.
