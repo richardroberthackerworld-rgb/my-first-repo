@@ -200,6 +200,24 @@ textarea#qtext::placeholder{color:var(--ink-faint);font-style:italic}
 .quill.on{display:inline-flex}
 .quill .nib{font-size:20px;animation:write 1s ease-in-out infinite}
 @keyframes write{0%,100%{transform:translateX(0) rotate(0)}50%{transform:translateX(10px) rotate(-8deg)}}
+/* hint box */
+.hint-box{
+  margin-top:16px;background:#fbf3dd;border:1px solid var(--gold-soft);
+  border-left:4px solid var(--gold);border-radius:6px;padding:14px 18px;
+}
+.hint-box-head{font-family:var(--display);color:var(--maroon);font-size:16px;margin-bottom:6px}
+.hint-box-body{font-size:15px;color:var(--ink);line-height:1.6}
+.hint-box-body p{margin:6px 0}.hint-box-body ul,.hint-box-body ol{margin:6px 0 6px 22px}
+.hint-box .mini-btn{margin-top:10px}
+/* follow-up chips */
+.followups{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:18px}
+.followups-label{font-style:italic;color:var(--ink-soft);font-size:13.5px;margin-right:2px}
+.chip{
+  font-family:var(--serif);font-size:13px;cursor:pointer;
+  background:var(--paper-2);color:var(--ink-soft);border:1px solid var(--rule);
+  border-radius:20px;padding:6px 14px;transition:all .2s ease;
+}
+.chip:hover{border-color:var(--gold);color:var(--ink);background:#fbf3dd}
 
 /* ---------- Chapter III : the answer page ---------- */
 #answerPage{display:none}
@@ -374,9 +392,15 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
 
     <div class="ask-actions">
       <button class="solve-btn" id="solveBtn">✒️ <span data-i18n="solve">Solve my doubt</span></button>
+      <button class="mini-btn" id="hintBtn" title="Get a nudge and try it yourself first">💡 <span data-i18n="hint">Give me a hint</span></button>
       <span class="deep-line" id="modePill" title="Picked automatically from your question — simple doubts use the fastest AI, big problems use the strongest"></span>
       <span class="quill" id="quill"><span class="nib">🖋️</span><span class="status" data-i18n="thinking">Your teacher is writing the answer…</span></span>
       <span class="status err" id="errMsg"></span>
+    </div>
+    <div class="hint-box" id="hintBox" style="display:none">
+      <div class="hint-box-head">💡 <span data-i18n="hintTitle">Hint — try it yourself first</span></div>
+      <div class="hint-box-body" id="hintBody"></div>
+      <button class="mini-btn" id="hintSolveBtn">✒️ <span data-i18n="hintSolve">Show me the full solution</span></button>
     </div>
   </section>
 
@@ -391,9 +415,16 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
       <div class="answer-meta" id="answerMeta"></div>
       <div class="answer-body" id="answerBody"></div>
     </div>
+    <div class="followups">
+      <span class="followups-label" data-i18n="learnMore">Understand it better:</span>
+      <button class="chip" onclick="quickFollow('explainSimply')" data-i18n="explainSimply">Explain more simply</button>
+      <button class="chip" onclick="quickFollow('anotherExample')" data-i18n="anotherExample">Another example</button>
+      <button class="chip" onclick="quickFollow('whySteps')" data-i18n="whySteps">Why these steps?</button>
+      <button class="chip" onclick="quickFollow('realLife')" data-i18n="realLife">Real-life use</button>
+    </div>
     <div class="answer-actions">
       <button class="mini-btn" onclick="copyAnswer()">📋 <span data-i18n="copy">Copy answer</span></button>
-      <button class="mini-btn" onclick="askFollowUp()">💬 <span data-i18n="followup">Ask a follow-up</span></button>
+      <button class="mini-btn" onclick="askFollowUp()">💬 <span data-i18n="followup">Ask my own follow-up</span></button>
       <button class="mini-btn" onclick="newDoubt()">➕ <span data-i18n="newDoubt">New doubt</span></button>
     </div>
   </section>
@@ -499,7 +530,10 @@ const I18N = {
     qPlaceholder:'Write your doubt here… e.g. “Solve x² − 5x + 6 = 0” or “Explain photosynthesis”',
     pbTitle:'Snap or upload the question', pbSub:'tap here · drag & drop · or paste (Ctrl+V)',
     camera:'Camera', gallery:'Gallery', solve:'Solve my doubt', thinking:'Your teacher is writing the answer…',
-    ch3:'The Answer', copy:'Copy answer', followup:'Ask a follow-up', newDoubt:'New doubt',
+    ch3:'The Answer', copy:'Copy answer', followup:'Ask my own follow-up', newDoubt:'New doubt',
+    hint:'Give me a hint', hintTitle:'Hint — try it yourself first', hintSolve:'Show me the full solution',
+    learnMore:'Understand it better:', explainSimply:'Explain more simply', anotherExample:'Another example',
+    whySteps:'Why these steps?', realLife:'Real-life use',
     ch4:'My Notebook', ch4hint:'Your last 20 solved doubts, saved on this device.',
     emptyNote:'No doubts solved yet. Your answers will be saved here like notes in a notebook.',
     footer:'7Solve — every doubt deserves a good answer. Free forever, from 7By.in. · AI-generated — please verify before your exam.',
@@ -520,7 +554,10 @@ const I18N = {
     qPlaceholder:'अपना डाउट यहाँ लिखें… जैसे “x² − 5x + 6 = 0 हल करें” या “प्रकाश संश्लेषण समझाएँ”',
     pbTitle:'प्रश्न की फोटो खींचें या अपलोड करें', pbSub:'यहाँ टैप करें · ड्रैग-ड्रॉप · या पेस्ट (Ctrl+V)',
     camera:'कैमरा', gallery:'गैलरी', solve:'मेरा डाउट हल करें', thinking:'आपके शिक्षक उत्तर लिख रहे हैं…',
-    ch3:'उत्तर', copy:'उत्तर कॉपी करें', followup:'आगे पूछें', newDoubt:'नया डाउट',
+    ch3:'उत्तर', copy:'उत्तर कॉपी करें', followup:'अपना सवाल पूछें', newDoubt:'नया डाउट',
+    hint:'मुझे संकेत दें', hintTitle:'संकेत — पहले खुद कोशिश करें', hintSolve:'पूरा हल दिखाएँ',
+    learnMore:'और अच्छे से समझें:', explainSimply:'आसान भाषा में समझाएँ', anotherExample:'एक और उदाहरण',
+    whySteps:'ये चरण क्यों?', realLife:'असल जीवन में उपयोग',
     ch4:'मेरी नोटबुक', ch4hint:'आपके पिछले 20 हल किए डाउट, इसी डिवाइस पर सेव।',
     emptyNote:'अभी तक कोई डाउट हल नहीं हुआ। आपके उत्तर यहाँ नोटबुक की तरह सेव होंगे।',
     footer:'7Solve — हर डाउट एक अच्छे उत्तर का हकदार है। हमेशा फ्री, 7By.in की ओर से। · AI से बना — परीक्षा से पहले जाँच लें।',
@@ -541,7 +578,10 @@ const I18N = {
     qPlaceholder:'మీ డౌట్ ఇక్కడ రాయండి… ఉదా. “x² − 5x + 6 = 0 సాధించండి” లేదా “కిరణజన్య సంయోగక్రియ వివరించండి”',
     pbTitle:'ప్రశ్న ఫోటో తీయండి లేదా అప్‌లోడ్ చేయండి', pbSub:'ఇక్కడ నొక్కండి · డ్రాగ్-డ్రాప్ · లేదా పేస్ట్ (Ctrl+V)',
     camera:'కెమెరా', gallery:'గ్యాలరీ', solve:'నా డౌట్ సాల్వ్ చేయండి', thinking:'మీ టీచర్ సమాధానం రాస్తున్నారు…',
-    ch3:'సమాధానం', copy:'సమాధానం కాపీ', followup:'ఇంకా అడగండి', newDoubt:'కొత్త డౌట్',
+    ch3:'సమాధానం', copy:'సమాధానం కాపీ', followup:'నా ప్రశ్న అడగండి', newDoubt:'కొత్త డౌట్',
+    hint:'ఒక సూచన ఇవ్వండి', hintTitle:'సూచన — ముందు మీరే ప్రయత్నించండి', hintSolve:'పూర్తి సాధన చూపించండి',
+    learnMore:'ఇంకా బాగా అర్థం చేసుకోండి:', explainSimply:'సులభంగా వివరించండి', anotherExample:'మరో ఉదాహరణ',
+    whySteps:'ఈ దశలు ఎందుకు?', realLife:'నిజ జీవితంలో ఉపయోగం',
     ch4:'నా నోట్‌బుక్', ch4hint:'మీ చివరి 20 సాల్వ్ చేసిన డౌట్లు, ఈ డివైస్‌లో సేవ్ అవుతాయి.',
     emptyNote:'ఇంకా డౌట్లు సాల్వ్ చేయలేదు. మీ సమాధానాలు నోట్‌బుక్ లా ఇక్కడ సేవ్ అవుతాయి.',
     footer:'7Solve — ప్రతి డౌట్ కు మంచి సమాధానం దక్కాలి. ఎప్పటికీ ఫ్రీ, 7By.in నుండి. · AI రూపొందించినది — పరీక్షకు ముందు సరిచూసుకోండి.',
@@ -564,6 +604,8 @@ let state = {
   imageData: null,   // {mime, b64}
   lastQ: null,       // for follow-ups
   lastAnswer: '',
+  hintMode: false,   // hint-only request vs full solution
+  busy: false,       // one AI call at a time
 };
 const $ = id => document.getElementById(id);
 const t = k => (I18N[state.lang] && I18N[state.lang][k]) || I18N.en[k] || k;
@@ -856,7 +898,16 @@ async function getAnswer(userText, img){
   if(fallback) return fallback;   // every engine returned an odd shape — show the best we got, don't dead-end
   throw lastErr || new Error('All engines failed');
 }
-const sys = () => buildSystemPrompt();
+const sys = () => state.hintMode ? buildHintPrompt() : buildSystemPrompt();
+function buildHintPrompt(){
+  const lv = LEVELS.find(l=>l.id===state.level);
+  return `You are "7Solve", a warm Indian tutor. The student wants a HINT, not the answer — help them try it themselves.
+STUDENT: ${lv.name.en} · ${$('courseSel').value} · ${$('subjectSel').value}
+Reply ENTIRELY in ${LANG_NAME[state.lang]}, in 2–4 short lines, Markdown, EXACTLY:
+- "**💡 Hint:**" then name the concept/formula/rule needed and the FIRST step or approach — a nudge only.
+- Optionally one line "**Try:**" telling them what to attempt next.
+STRICT: Do NOT reveal the final answer, final value, or correct option. Do NOT solve it fully. No diagram. Keep it encouraging and tiny.`;
+}
 
 /* ================= Prompt building ================= */
 function buildSystemPrompt(){
@@ -885,33 +936,67 @@ STRICT RULES:
 
 /* ================= Solve flow ================= */
 async function solve(extraQuestion){
+  if(state.busy) return;
   $('errMsg').textContent='';
   const typed = (extraQuestion!==undefined ? extraQuestion : $('qtext').value.trim());
   if(!typed && !state.imageData){ $('errMsg').textContent = t('errNoQ'); return; }
   if(!anyEngine()){ $('errMsg').textContent = t('errNoEngine'); updateEngineBadge(); return; }
+  $('hintBox').style.display='none';   // full solution supersedes any hint
 
   let userText = typed || 'Please read the question in the attached photo and solve it fully.';
   if(extraQuestion!==undefined && state.lastQ){
     userText = `Earlier doubt: "${state.lastQ}"\nYour earlier answer is known to the student.\nFOLLOW-UP question: ${extraQuestion}`;
   }
 
-  $('solveBtn').disabled = true; $('quill').classList.add('on');
+  state.busy = true; state.hintMode = false; $('solveBtn').disabled = true; $('hintBtn').disabled = true; $('quill').classList.add('on');
   try{
     const { text, via } = await getAnswer(userText, state.imageData);
-    state.lastQ = typed || '(photo question)';
+    if(extraQuestion===undefined) state.lastQ = typed || '(photo question)';
     state.lastAnswer = text;
     state.lastVia = PROV_NAME[via.id] + ' · ' + via.model;
     showAnswer(text);
-    saveToNotebook(typed || '📷 ' + t('imgAttached'), text, state.lastVia);
+    saveToNotebook((extraQuestion!==undefined ? '↪ ' : '') + (typed || '📷 ' + t('imgAttached')), text, state.lastVia);
   }catch(err){
     const m = err.message;
     const msg = m==='NO_VISION' ? t('errNoVision') : m==='NO_ENGINE' ? t('errNoEngine') : t('errApi') + '  [' + m + ']';
     $('errMsg').textContent = msg;
   }finally{
-    $('solveBtn').disabled = false; $('quill').classList.remove('on');
+    state.busy = false; $('solveBtn').disabled = false; $('hintBtn').disabled = false; $('quill').classList.remove('on');
   }
 }
 $('solveBtn').onclick = ()=> solve();
+
+/* ---- Hint: a nudge without the answer, so the student can try first ---- */
+async function getHint(){
+  if(state.busy) return;
+  $('errMsg').textContent='';
+  const typed = $('qtext').value.trim();
+  if(!typed && !state.imageData){ $('errMsg').textContent = t('errNoQ'); return; }
+  if(!anyEngine()){ $('errMsg').textContent = t('errNoEngine'); updateEngineBadge(); return; }
+  const userText = typed || 'Read the question in the attached photo and give a hint only.';
+  state.busy = true; state.hintMode = true; $('solveBtn').disabled = true; $('hintBtn').disabled = true; $('quill').classList.add('on');
+  try{
+    const { text } = await getAnswer(userText, state.imageData);
+    $('hintBody').innerHTML = mdToHtml(text);
+    $('hintBox').style.display='block';
+    $('hintBox').scrollIntoView({behavior:'smooth', block:'nearest'});
+  }catch(err){
+    $('errMsg').textContent = t('errApi') + '  [' + err.message + ']';
+  }finally{
+    state.busy = false; state.hintMode = false; $('solveBtn').disabled = false; $('hintBtn').disabled = false; $('quill').classList.remove('on');
+  }
+}
+$('hintBtn').onclick = ()=> getHint();
+$('hintSolveBtn').onclick = ()=>{ $('hintBox').style.display='none'; solve(); };
+
+/* ---- one-tap follow-up explanations ---- */
+const FOLLOW_PROMPTS = {
+  explainSimply:'Explain the same answer again in the simplest possible words, as if to a beginner. Keep the tutor sections.',
+  anotherExample:'Give one more solved example of the same type of question, with the same step-by-step tutor format.',
+  whySteps:'Explain WHY each step works and why this method/formula is the right approach here.',
+  realLife:'Give a short real-life example or application of this concept so it is easy to remember.'
+};
+function quickFollow(kind){ if(FOLLOW_PROMPTS[kind]) solve(FOLLOW_PROMPTS[kind]); }
 
 /* ---- live auto-mode pill: shows which AI tier will answer ---- */
 function updateModePill(){
@@ -948,6 +1033,7 @@ function askFollowUp(){
 function newDoubt(){
   $('qtext').value=''; clearImage(); state.lastQ=null;
   $('answerPage').style.display='none';
+  $('hintBox').style.display='none';
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
