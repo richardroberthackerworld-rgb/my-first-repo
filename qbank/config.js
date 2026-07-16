@@ -42,6 +42,13 @@
    same keys here — both apps share the same providers.
    ============================================================ */
 
+/* MORE FREE QUOTA — use SEVERAL keys per provider.
+   Any slot below accepts one key, OR a list. When a key hits its daily
+   limit the app automatically rotates to the next one. Examples:
+     gemini: ["AIza...key1", "AIza...key2", "AIza...key3"],
+     gemini: "AIza...key1, AIza...key2",
+   Tip: each Google Cloud project you own can have its own key. */
+
 window.QB_CONFIG = {
   keys: {
     gemini:     "",   // AIza...
