@@ -1036,16 +1036,20 @@ async function runAttempt(a, sys, userText, img){
   }
   throw lastErr || new Error('No key');
 }
-// Try each suitable engine until one answers
-async function getAnswer(userText, img){
+// Try each suitable engine until one answers.
+// opts.sysText  — use a custom system prompt (e.g. Tutor Mode's JSON lesson)
+// opts.validate — shape check for THAT kind of reply (JSON isn't markdown, so it needs its own)
+async function getAnswer(userText, img, opts){
+  const sysText  = (opts && opts.sysText)  || sys();
+  const validate = (opts && opts.validate) || looksLikeAnswer;
   const attempts = planRoute(!!img, userText);
   if(!attempts.length) throw new Error(img ? 'NO_VISION' : 'NO_ENGINE');
   let lastErr = null, fallback = null;
   for(const a of attempts){
     try{
-      const txt = await runAttempt(a, sys(), userText, img);
-      if(looksLikeAnswer(txt)) return {text:txt, via:a};   // well-formed → done
-      if(!fallback) fallback = {text:txt, via:a};           // keep first response as a last resort
+      const txt = await runAttempt(a, sysText, userText, img);
+      if(validate(txt)) return {text:txt, via:a};   // well-formed → done
+      if(!fallback) fallback = {text:txt, via:a};    // keep first response as a last resort
       lastErr = new Error('BAD_FORMAT');
     }
     catch(e){ lastErr = e; }
@@ -1053,7 +1057,7 @@ async function getAnswer(userText, img){
   if(fallback) return fallback;   // every engine returned an odd shape — show the best we got, don't dead-end
   throw lastErr || new Error('All engines failed');
 }
-const sys = () => window.__sysOverride || (state.hintMode ? buildHintPrompt() : buildSystemPrompt());
+const sys = () => state.hintMode ? buildHintPrompt() : buildSystemPrompt();
 function buildHintPrompt(){
   const lv = LEVELS.find(l=>l.id===state.level);
   return `You are "7Solve", a warm Indian tutor. The student wants a HINT, not the answer — help them try it themselves.
@@ -1201,26 +1205,30 @@ Turn the solution into a guided quiz. Output ONLY a JSON object (no prose, no co
 Rules: 3 to 5 steps that build to the answer; each step 2-4 options; "answer" is the 0-based index of the correct option; write EVERYTHING (q, options, explain, intro, final) in ${LANG_NAME[state.lang]}; keep it tight; use plain-text math (×, ÷, √, ²), never LaTeX. Return VALID JSON only.`;
 }
 let tutorLesson=null, tutorStep=0;
+const tutorFailHtml = () => `<div class="tutor-head">${t('tutorMode')}</div><div class="tutor-fb">${t('tutorFail')}</div>`+
+  `<div class="tutor-actions"><button class="mini-btn" onclick="startTutorMode()">🔁 ${t('retry')}</button>`+
+  `<button class="mini-btn" onclick="document.getElementById('tutorPanel').style.display='none'">✕ ${t('close')}</button></div>`;
 async function startTutorMode(){
   if(state.busy) return;
   if(!anyEngine()){ $('errMsg').textContent=t('errNoEngine'); return; }
   const panel=$('tutorPanel');
   panel.style.display='block';
-  panel.innerHTML=`<div class="tutor-head">🎓 ${t('tutorMode')}</div><div class="tutor-progress">${t('tutorLoading')}</div>`;
+  panel.innerHTML=`<div class="tutor-head">${t('tutorMode')}</div><div class="tutor-progress">${t('tutorLoading')}</div>`;
   panel.scrollIntoView({behavior:'smooth',block:'start'});
   state.busy=true; state.hintMode=false;
-  const prevSys = window.__sysOverride;
   try{
     const q = state.lastQ && state.lastQ!=='(photo question)' ? state.lastQ : $('qtext').value.trim();
-    window.__sysOverride = buildTutorPrompt();
-    const { text } = await getAnswer(`Build the interactive lesson for this question: ${q||'the attached photo question'}`, state.imageData);
+    // the lesson comes back as JSON, so it needs its own prompt + shape check
+    // (the markdown validator would reject it and burn every engine)
+    const { text } = await getAnswer(`Build the interactive lesson for this question: ${q||'the attached photo question'}`,
+      state.imageData, { sysText: buildTutorPrompt(), validate: s => !!parseTutor(s) });
     tutorLesson = parseTutor(text);
-    if(!tutorLesson){ panel.innerHTML=`<div class="tutor-head">🎓 ${t('tutorMode')}</div><div class="tutor-fb">${t('tutorFail')}</div><div class="tutor-actions"><button class="mini-btn" onclick="document.getElementById('tutorPanel').style.display='none'">✕ ${t('close')}</button></div>`; return; }
+    if(!tutorLesson){ panel.innerHTML = tutorFailHtml(); return; }
     tutorStep=0; renderTutorStep();
   }catch(e){
-    panel.innerHTML=`<div class="tutor-head">🎓 ${t('tutorMode')}</div><div class="tutor-fb">${t('tutorFail')}</div>`;
+    panel.innerHTML = tutorFailHtml();
   }finally{
-    window.__sysOverride = prevSys; state.busy=false;
+    state.busy=false;
   }
 }
 function parseTutor(txt){
@@ -1238,7 +1246,7 @@ function renderTutorStep(){
   const panel=$('tutorPanel'), st=tutorLesson.steps[tutorStep], n=tutorLesson.steps.length;
   const intro = tutorStep===0 && tutorLesson.intro ? `<div class="tutor-fb">${escapeHtml(tutorLesson.intro)}</div>` : '';
   panel.innerHTML =
-    `<div class="tutor-head">🎓 ${t('tutorMode')}</div>`+
+    `<div class="tutor-head">${t('tutorMode')}</div>`+
     `<div class="tutor-progress">${t('tutorStep')} ${tutorStep+1} / ${n}</div>`+
     intro+
     `<div class="tutor-q">${escapeHtml(st.q)}</div>`+
