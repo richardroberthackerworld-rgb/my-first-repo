@@ -338,6 +338,12 @@ textarea#topicText::placeholder{color:var(--ink-faint);font-style:italic}
 .note-item .nq{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
 .note-item .nm{font-size:11px;color:var(--ink-faint);white-space:nowrap;letter-spacing:.5px}
 .empty-note{font-style:italic;color:var(--ink-faint);font-size:14px}
+.del-btn{
+  background:none;border:none;cursor:pointer;color:var(--ink-faint);
+  font-size:14px;line-height:1;padding:4px 6px;border-radius:4px;flex-shrink:0;transition:all .15s ease;
+}
+.del-btn:hover{background:var(--maroon);color:var(--paper)}
+.clear-all{align-self:flex-start;margin-top:4px}
 
 /* ---------- footer ---------- */
 footer{
@@ -647,6 +653,7 @@ const I18N = {
     showKey:'Show answer key', hideKey:'Hide answer key',
     copy:'Copy paper', print:'Print / Save PDF', more:'More questions (same topic)', newPaper:'New paper',
     share:'Share', close:'Close',
+    del:'Delete', clearAll:'Clear all', clearConfirm:'Delete all saved papers from this device?',
     grpStudy:'🎓 Study & Practice', grpVary:'🔄 Make another',
     practiceTest:'🎯 Take a practice test', studyNotes:'📖 Study notes', keyFormulas:'🧠 Key formulas', examMistakesM:'❓ Common exam mistakes',
     moreChip:'📝 More questions', harderSet:'📈 Harder set', easierSet:'📉 Easier set',
@@ -684,6 +691,7 @@ const I18N = {
     showKey:'उत्तर कुंजी दिखाएँ', hideKey:'उत्तर कुंजी छिपाएँ',
     copy:'पेपर कॉपी करें', print:'प्रिंट / PDF सेव करें', more:'और प्रश्न (इसी टॉपिक पर)', newPaper:'नया पेपर',
     share:'शेयर करें', close:'बंद करें',
+    del:'हटाएँ', clearAll:'सभी हटाएँ', clearConfirm:'इस डिवाइस से सभी सेव किए पेपर हटा दें?',
     grpStudy:'🎓 पढ़ाई और अभ्यास', grpVary:'🔄 और बनाएँ',
     practiceTest:'🎯 प्रैक्टिस टेस्ट दें', studyNotes:'📖 स्टडी नोट्स', keyFormulas:'🧠 मुख्य सूत्र', examMistakesM:'❓ परीक्षा में आम गलतियाँ',
     moreChip:'📝 और प्रश्न', harderSet:'📈 कठिन सेट', easierSet:'📉 आसान सेट',
@@ -721,6 +729,7 @@ const I18N = {
     showKey:'ఆన్సర్ కీ చూపించండి', hideKey:'ఆన్సర్ కీ దాచండి',
     copy:'పేపర్ కాపీ', print:'ప్రింట్ / PDF సేవ్', more:'ఇంకా ప్రశ్నలు (ఇదే టాపిక్)', newPaper:'కొత్త పేపర్',
     share:'షేర్ చేయండి', close:'మూసివేయండి',
+    del:'తొలగించు', clearAll:'అన్నీ తొలగించు', clearConfirm:'ఈ డివైస్ నుండి సేవ్ చేసిన అన్ని పేపర్లను తొలగించాలా?',
     grpStudy:'🎓 చదువు & ప్రాక్టీస్', grpVary:'🔄 మరొకటి తయారు చేయండి',
     practiceTest:'🎯 ప్రాక్టీస్ టెస్ట్ రాయండి', studyNotes:'📖 స్టడీ నోట్స్', keyFormulas:'🧠 ముఖ్య సూత్రాలు', examMistakesM:'❓ పరీక్షలో సాధారణ తప్పులు',
     moreChip:'📝 ఇంకా ప్రశ్నలు', harderSet:'📈 కఠిన సెట్', easierSet:'📉 సులభ సెట్',
@@ -1032,16 +1041,22 @@ async function callGeminiModel(model, sysText, userText, imgs, prior){
   parts.push({ text:userText });
   const contents = [{role:'user', parts}];
   if(prior) contents.push({role:'model', parts:[{text:prior}]}, {role:'user', parts:[{text:CONTINUE_MSG}]});
-  const maxTok = /gemini-2\.5/.test(model) ? 32768 : 8192;   // 2.5 models support long outputs
+  const is25 = /gemini-2\.5/.test(model);
+  const maxTok = is25 ? 32768 : 8192;                       // 2.5 models support long outputs
+  const genCfg = { temperature:.5, maxOutputTokens:maxTok };
+  // Gemini 2.5 are THINKING models: unbounded thinking can eat the whole output budget and
+  // return zero visible text ("Empty response"). Cap the thinking so text is always produced.
+  if(is25) genCfg.thinkingConfig = { thinkingBudget: /pro/.test(model) ? 8192 : 2048 };
   const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,{
     method:'POST', headers:{'Content-Type':'application/json','x-goog-api-key':key('gemini')},
-    body: JSON.stringify({ system_instruction:{parts:[{text:sysText}]}, contents, generationConfig:{temperature:.5, maxOutputTokens:maxTok} })
+    body: JSON.stringify({ system_instruction:{parts:[{text:sysText}]}, contents, generationConfig:genCfg })
   });
   const data = await res.json();
   if(!res.ok) throw new Error(errText(data.error, res.status));
-  const txt = stripThink(data.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('') || '');
-  if(!txt && !prior) throw new Error('Empty response');
-  return { text: txt, truncated: data.candidates?.[0]?.finishReason === 'MAX_TOKENS' };
+  const cand = data.candidates?.[0];
+  const txt = stripThink(cand?.content?.parts?.map(p=>p.text||'').join('') || '');
+  if(!txt && !prior) throw new Error(cand?.finishReason ? 'No text ('+cand.finishReason+')' : 'Empty response');
+  return { text: txt, truncated: cand?.finishReason === 'MAX_TOKENS' };
 }
 async function callOpenAICompat(id, model, sysText, userText, imgs, prior){
   const userContent = (imgs && imgs.length)
@@ -1258,17 +1273,17 @@ function newPaper(){
 }
 
 /* ---- Study notes / key formulas / common mistakes (one-off, rendered in a panel) ---- */
-const EXTRA_SPEC = {
-  notes:{ icon:'📖', key:'studyNotes', ask:'Write concise, well-structured STUDY NOTES a student can revise from: key points as bullets, important definitions, and any formulas in plain text. Use "### " subheadings. No question paper, no preamble.' },
-  formulas:{ icon:'🧠', key:'keyFormulas', ask:'List all the KEY FORMULAS, rules and important facts for this topic in plain text (×, ÷, √, ²), grouped with "### " subheadings, each with a one-line note on when to use it. No question paper.' },
-  mistakes:{ icon:'❓', key:'examMistakesM', ask:'List the most COMMON EXAM MISTAKES students make on this topic and how to avoid each, as a bullet list. No question paper.' }
+const EXTRA_SPEC = {   // note: the i18n labels already carry their emoji
+  notes:{ key:'studyNotes', ask:'Write concise, well-structured STUDY NOTES a student can revise from: key points as bullets, important definitions, and any formulas in plain text. Use "### " subheadings. No question paper, no preamble.' },
+  formulas:{ key:'keyFormulas', ask:'List all the KEY FORMULAS, rules and important facts for this topic in plain text (×, ÷, √, ²), grouped with "### " subheadings, each with a one-line note on when to use it. No question paper.' },
+  mistakes:{ key:'examMistakesM', ask:'List the most COMMON EXAM MISTAKES students make on this topic and how to avoid each, as a bullet list. No question paper.' }
 };
 async function getExtra(kind){
   const spec = EXTRA_SPEC[kind]; if(!spec) return;
   if(state.busy) return;
   if(!anyEngine()){ $('errMsg').textContent = t('errNoEngine'); return; }
   const box=$('extraBox'), body=$('extraBody');
-  $('extraHead').innerHTML = spec.icon+' '+t(spec.key);
+  $('extraHead').textContent = t(spec.key);
   body.innerHTML = '<p><em>'+t('thinking')+'</em></p>';
   box.style.display='block'; box.scrollIntoView({behavior:'smooth',block:'nearest'});
   const lv = LEVELS.find(l=>l.id===state.level);
@@ -1357,15 +1372,26 @@ function saveToShelf(topic, md, via){
   localStorage.setItem('qb_papers', JSON.stringify(papers.slice(0,20)));
   renderShelf();
 }
+function deletePaper(i){
+  const papers = getShelf(); papers.splice(i,1);
+  localStorage.setItem('qb_papers', JSON.stringify(papers));
+  renderShelf();
+}
+function clearPapers(){
+  if(!confirm(t('clearConfirm'))) return;
+  localStorage.removeItem('qb_papers'); renderShelf();
+}
 function renderShelf(){
   const list = $('shelfList'); const papers = getShelf();
   if(!papers.length){ list.innerHTML = `<div class="empty-note">${t('emptyNote')}</div>`; return; }
   list.innerHTML = '';
-  papers.forEach((n)=>{
+  papers.forEach((n,i)=>{
     const d = document.createElement('div');
     d.className='note-item';
     // localStorage is a trust boundary — escape everything on render, slice BEFORE escaping so entities can't be bisected
-    d.innerHTML = `<span class="nq">📄 ${escapeHtml(String(n.q||'').slice(0,90))}</span><span class="nm">${escapeHtml(String(n.meta||''))} · ${new Date(n.when).toLocaleDateString()}</span>`;
+    d.innerHTML = `<span class="nq">📄 ${escapeHtml(String(n.q||'').slice(0,90))}</span>`+
+      `<span class="nm">${escapeHtml(String(n.meta||''))} · ${new Date(n.when).toLocaleDateString()}</span>`+
+      `<button class="del-btn" title="${t('del')}">✕</button>`;
     d.onclick = ()=>{
       state.lastMd = n.a; state.lastTopic = n.q;
       state.lastTopicIsPhoto = Object.values(I18N).some(l=>l.photoTopic===n.q);
@@ -1375,8 +1401,14 @@ function renderShelf(){
         `<span>🕰️ ${new Date(n.when).toLocaleString()}</span>`;
       showPaper(n.a, meta);
     };
+    d.querySelector('.del-btn').onclick = e=>{ e.stopPropagation(); deletePaper(i); };
     list.appendChild(d);
   });
+  const clear = document.createElement('button');
+  clear.className='mini-btn clear-all';
+  clear.innerHTML = '🗑️ ' + t('clearAll');
+  clear.onclick = clearPapers;
+  list.appendChild(clear);
 }
 
 /* ================= Tiny Markdown renderer (same as Doubt Snap) ================= */
