@@ -78,9 +78,11 @@ function origin_allowed(array $CFG): bool {
    is unique, and it keeps students' uploads off the disk).                     */
 function cache_dir(array $CFG): ?string {
     if (!($CFG['cache_hours'] ?? 168)) return null;
-    $dir = $CFG['cache_dir'] ?? (sys_get_temp_dir() . '/7by-cache');
+    // ?? misses an empty string; a broken dir would just disable caching (costly, not unsafe)
+    $dir = trim((string)($CFG['cache_dir'] ?? ''));
+    if ($dir === '') $dir = sys_get_temp_dir() . '/7by-cache';
     if (!is_dir($dir)) @mkdir($dir, 0700, true);
-    return is_dir($dir) ? $dir : null;
+    return (is_dir($dir) && is_writable($dir)) ? $dir : null;
 }
 function has_image(array $payload): bool {
     $j = json_encode($payload);
@@ -105,9 +107,10 @@ function cache_put(?string $dir, string $k, string $body): void {
 function rate_ok(array $CFG): bool {
     $limit = (int)($CFG['rate_per_hour'] ?? 60);
     if ($limit <= 0) return true;
-    $dir = ($CFG['rate_dir'] ?? sys_get_temp_dir() . '/7by-rl');
+    $dir = trim((string)($CFG['rate_dir'] ?? ''));      // ?? misses an empty string
+    if ($dir === '') $dir = sys_get_temp_dir() . '/7by-rl';
     if (!is_dir($dir)) @mkdir($dir, 0700, true);
-    if (!is_dir($dir)) return true; // can't track → don't block real users
+    if (!is_dir($dir) || !is_writable($dir)) return true; // can't track → don't block real users
     $ip   = $_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['REMOTE_ADDR'] ?? '0';
     $file = $dir . '/' . hash('sha256', $ip . date('YmdH')) . '.txt';
     $n = (int)@file_get_contents($file);
@@ -121,6 +124,8 @@ function rate_ok(array $CFG): bool {
 
 $action = $_GET['action'] ?? '';
 $passTok = preg_replace('/[^a-f0-9]/', '', (string)($_SERVER['HTTP_X_7BY_PASS'] ?? $_GET['pass'] ?? ''));
+// signed-in student: account.7by.in API token (credits live on the ACCOUNT, any device)
+$hubTok  = preg_replace('/[^A-Za-z0-9_-]/', '', (string)($_SERVER['HTTP_X_7BY_HUB'] ?? ''));
 
 /* ---------- GET ?action=providers → which engines the site may offer ---------- */
 if ($action === 'providers') {
@@ -137,6 +142,24 @@ if ($action === 'me') {
     $st['plans'] = bill_plans($CFG);
     $st['app']   = $APP;
     $st['pay_ready'] = !empty($CFG['pay_base']) && !empty($CFG['pay_key_id']) && !empty($CFG['pay_key_secret']);
+    $st['hub']       = hub_url($CFG);          // '' = accounts switched off
+    $st['hub_google']= $CFG['hub_google_client_id'] ?? '';
+    // signed in? then the account's credits are what count
+    if (hub_on($CFG) && $hubTok !== '') {
+        $me = hub_me($CFG, $hubTok);
+        if ($me) {
+            $st['signed_in'] = true;
+            $st['user']      = ['name' => $me['name'] ?? '', 'email' => $me['email'] ?? ''];
+            $st['credits']   = (int)($me['credits'] ?? 0);
+            $st['plan']      = $me['plan'] ?? 'none';
+            $st['paid']      = (int)($me['credits'] ?? 0) > 0;
+        } else {
+            $st['signed_in'] = false;          // token expired/invalid → treat as guest
+            $st['stale_token'] = true;
+        }
+    } else {
+        $st['signed_in'] = false;
+    }
     out(200, $st);
 }
 
@@ -217,13 +240,29 @@ if ($cacheable) {
     if ($hit !== null) { header('X-7By-Cache: HIT'); echo $hit; exit; }
 }
 
-/* ---------- billing gate: only a REAL AI call costs a credit ---------- */
-list($okToSpend, $billStatus) = bill_charge($CFG, $APP, $passTok);
-if (!$okToSpend) {
-    out(402, ['error' => ['message' => 'Free limit reached'], 'needsPlan' => true, 'billing' => $billStatus]);
+/* ---------- billing gate: only a REAL AI call costs a credit ----------
+   Signed-in student → their ACCOUNT's credits (checked now, spent only if the
+   AI actually answers). Guest → the per-device daily free allowance.          */
+$hubUser = (hub_on($CFG) && $hubTok !== '') ? hub_me($CFG, $hubTok) : null;
+$useHub  = $hubUser !== null;
+$billStatus = null;
+
+if (!empty($CFG['billing_off'])) {
+    // paywall disabled — everything free
+} elseif ($useHub) {
+    if ((int)($hubUser['credits'] ?? 0) <= 0) {
+        out(402, ['error' => ['message' => 'Out of credits'], 'needsPlan' => true,
+                  'billing' => ['signed_in' => true, 'credits' => 0, 'paid' => false]]);
+    }
+    header('X-7By-Credits: ' . (int)$hubUser['credits']);
+} else {
+    list($okToSpend, $billStatus) = bill_charge($CFG, $APP, $passTok);
+    if (!$okToSpend) {
+        out(402, ['error' => ['message' => 'Free limit reached'], 'needsPlan' => true, 'billing' => $billStatus]);
+    }
+    header('X-7By-Credits: ' . (int)($billStatus['credits'] ?? 0));
+    header('X-7By-Free-Left: ' . (int)($billStatus['free_left'] ?? 0));
 }
-header('X-7By-Credits: ' . (int)($billStatus['credits'] ?? 0));
-header('X-7By-Free-Left: ' . (int)($billStatus['free_left'] ?? 0));
 
 /* ---------- call the provider; rotate keys when one is rate-limited ---------- */
 $url  = str_replace('{model}', rawurlencode($model), $ENDPOINTS[$provider]);
@@ -268,8 +307,15 @@ if ($last['code'] === 200 && strlen($last['text']) > 40) {
 }
 // only cache a genuinely good answer — never an error or an empty reply
 if ($cacheable && $gotAnswer) cache_put($cDir, $cKey, $last['text']);
-// the AI failed → give the student their credit back
-if (!$gotAnswer) bill_refund($CFG, $APP, $passTok);
+
+if (empty($CFG['billing_off'])) {
+    if ($useHub) {
+        // signed in: charge the ACCOUNT only now that we know it answered
+        if ($gotAnswer) { list($ok, $left) = hub_spend($CFG, $APP, $hubTok); if ($ok) header('X-7By-Credits: ' . (int)$left); }
+    } elseif (!$gotAnswer) {
+        bill_refund($CFG, $APP, $passTok);   // guest: the AI failed → give the free use back
+    }
+}
 
 header('X-7By-Cache: MISS');
 http_response_code($last['code']);

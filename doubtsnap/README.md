@@ -125,3 +125,24 @@ student unblocked → credits 500 → 497. Attacks all rejected: forged signatur
 (*Bad signature*), valid signature but underpaid (*Amount mismatch*), invented order
 (*Unknown order*), webhook replay (*same token, no double credit*), attacker return URL
 (*Bad return url*), another site using the proxy (*Origin not allowed*).
+
+## 👤 Accounts — sign in / sign up
+
+Without an account, credits live in **one browser**: pay on a phone and they are gone on the
+laptop (or when the student clears their browser). With accounts on, **credits live on the
+account** and follow the student everywhere.
+
+Powered by your existing **account-hub** (account.7by.in) — one account works across 7Q, 7Solve
+and every other 7By tool.
+
+### Switching it on
+1. In  set 2. In **account-hub/config.php** add this site to :
+   , 3. Done. Leave  empty to switch accounts off (the sign-in button then hides itself).
+
+### How it works
+- Sign up (email + OTP), sign in, or Google — all handled by account-hub
+- On login the hub returns an **API token**; the tool stores it and sends it as - The tool's **server** asks the hub for the balance and spends a credit — the browser can
+  never fake it
+- **Signed in** → the account's credits are used. **Signed out** → the per-device daily free tier
+- A credit is spent **only after the AI actually answers** — a failed call costs nothing
+- Buying requires signing in first, so credits attach to the person, not the browser

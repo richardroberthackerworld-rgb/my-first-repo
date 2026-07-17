@@ -71,6 +71,14 @@ return [
         'pack_150' => ['label' => '150 credits',  'amount' => 4900, 'credits' => 150, 'days' => 365],
     ],
 
+    /* ---- ACCOUNTS (account.7by.in) — sign in / sign up ----
+       With this set, students sign in and their credits live on their
+       ACCOUNT: pay on a phone, keep the credits on a laptop. Leave it
+       empty to switch accounts off (credits then stick to one browser).
+       The hub must list this site in its 'allowed_origins' (config.php). */
+    'hub_base' => '',   // e.g. 'https://account.7by.in'
+    'hub_google_client_id' => '',   // optional: Google sign-in button
+
     /* ---- 7Pay gateway (your own, at pay.7by.in) ----
        The order is created here on the SERVER using key_secret, so the
        secret never reaches the browser. Get these from 7Pay's dashboard. */
