@@ -973,6 +973,7 @@ function looksLikeAnswer(md){
 const CONTINUE_MSG = 'Continue EXACTLY from where your previous message stopped. Do not repeat anything already written, do not add any commentary — just continue the answer seamlessly and finish it, including any diagram.';
 // thrown when a model replies with no usable text — the caller retries it without thinking
 const noTextErr = why => Object.assign(new Error(why), { noText:true });
+const sleep = ms => new Promise(r => setTimeout(r, ms));
 async function callGeminiModel(model, sys, userText, img, prior, apiKey, noThink){
   const parts = [];
   if(img) parts.push({ inline_data:{ mime_type:img.mime, data:img.b64 } });
@@ -1028,9 +1029,11 @@ async function runAttempt(a, sys, userText, img){
       let out;
       try{ out = await call(); }
       catch(e){
-        // model burned its budget thinking and returned nothing → force it to answer
-        if(e.noText && a.id==='gemini' && /gemini-2\.5/.test(a.model)) out = await call(undefined, true);
-        else throw e;
+        if(!e.noText) throw e;
+        // No text back. Either a transient blank reply (retrying just works) or the model
+        // burned its budget thinking. Pause briefly, then retry once — thinking floored for 2.5.
+        await sleep(400);
+        out = await call(undefined, a.id==='gemini' && /gemini-2\.5/.test(a.model));
       }
       let full = out.text;
       for(let i=0; i<2 && out.truncated; i++){   // cut-off answer → auto-continue
