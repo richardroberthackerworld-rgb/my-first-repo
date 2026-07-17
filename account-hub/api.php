@@ -11,6 +11,7 @@ boot_session();
 
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 $in = body();
+$GLOBALS['__RAW_IN'] = $in;   // lets current_user() find a {"token":...} in the body
 
 switch ($action) {
 
@@ -65,7 +66,7 @@ switch ($action) {
 		$st->execute(array($data['name'], $email, $data['password_hash'], (int)$CFG['free_signup_credits']));
 		clear_otp($email, 'signup');
 		$_SESSION['uid'] = db()->lastInsertId();
-		json_out(array('ok' => true, 'user' => public_user(current_user())));
+		json_out(array('ok' => true, 'user' => public_user(current_user()), 'token' => issue_api_token($_SESSION['uid'])));
 		break;
 	}
 
@@ -104,7 +105,7 @@ switch ($action) {
 		$u = $st->fetch();
 		if (!$u || !$u['password_hash'] || !password_verify($pass, $u['password_hash'])) fail('Wrong email or password.', 401);
 		$_SESSION['uid'] = $u['id'];
-		json_out(array('ok' => true, 'user' => public_user(refresh_plan($u))));
+		json_out(array('ok' => true, 'user' => public_user(refresh_plan($u)), 'token' => issue_api_token($u['id'])));
 		break;
 	}
 
@@ -126,7 +127,7 @@ switch ($action) {
 			if (empty($u['google_id'])) db()->prepare('UPDATE users SET google_id = ? WHERE id = ?')->execute(array($g['sub'], $u['id']));
 			$_SESSION['uid'] = $u['id'];
 		}
-		json_out(array('ok' => true, 'user' => public_user(current_user())));
+		json_out(array('ok' => true, 'user' => public_user(current_user()), 'token' => issue_api_token($_SESSION['uid'])));
 		break;
 	}
 

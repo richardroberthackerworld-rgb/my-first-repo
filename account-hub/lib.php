@@ -41,8 +41,12 @@ function db() {
 		credits INT NOT NULL DEFAULT 0,
 		plan VARCHAR(20) NOT NULL DEFAULT 'none',
 		plan_expires DATETIME NULL,
+		api_token VARCHAR(64) NULL,
 		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+	// existing installs: add the token column if it isn't there yet
+	try { $pdo->exec("ALTER TABLE users ADD COLUMN api_token VARCHAR(64) NULL"); } catch (Exception $e) {}
+	try { $pdo->exec("CREATE INDEX idx_users_api_token ON users (api_token)"); } catch (Exception $e) {}
 	$pdo->exec("CREATE TABLE IF NOT EXISTS transactions (
 		id INT AUTO_INCREMENT PRIMARY KEY,
 		user_id INT NOT NULL,
@@ -295,12 +299,42 @@ function boot_session() {
 
 /* ---------------- Users + credits ---------------- */
 function current_user() {
-	if (empty($_SESSION['uid'])) return null;
-	$st = db()->prepare('SELECT * FROM users WHERE id = ?');
-	$st->execute(array($_SESSION['uid']));
-	$u = $st->fetch();
-	if (!$u) return null;
-	return refresh_plan($u);
+	// 1) Normal browser session (account.7by.in pages).
+	if (!empty($_SESSION['uid'])) {
+		$st = db()->prepare('SELECT * FROM users WHERE id = ?');
+		$st->execute(array($_SESSION['uid']));
+		$u = $st->fetch();
+		if ($u) return refresh_plan($u);
+	}
+	// 2) API token — lets a TOOL's SERVER act for a signed-in user
+	//    (a tool on another subdomain can't see our session cookie).
+	$tok = api_token_from_request();
+	if ($tok !== '') {
+		$st = db()->prepare('SELECT * FROM users WHERE api_token = ?');
+		$st->execute(array(hash('sha256', $tok)));
+		$u = $st->fetch();
+		if ($u) return refresh_plan($u);
+	}
+	return null;
+}
+
+// Bearer header, X-7By-Token, or ?token= / {"token":...}
+function api_token_from_request() {
+	$h = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '';
+	if (stripos($h, 'bearer ') === 0) return trim(substr($h, 7));
+	if (!empty($_SERVER['HTTP_X_7BY_TOKEN'])) return trim($_SERVER['HTTP_X_7BY_TOKEN']);
+	if (!empty($_GET['token'])) return trim((string)$_GET['token']);
+	$raw = $GLOBALS['__RAW_IN'] ?? null;
+	if (is_array($raw) && !empty($raw['token'])) return trim((string)$raw['token']);
+	return '';
+}
+
+// Issue (or reuse) a long-lived API token for this user. Only the HASH is stored.
+function issue_api_token($userId) {
+	$plain = bin2hex(random_bytes(24));
+	db()->prepare('UPDATE users SET api_token = ? WHERE id = ?')
+		->execute(array(hash('sha256', $plain), $userId));
+	return $plain;
 }
 
 // Expire the plan (and its credits) once past plan_expires.

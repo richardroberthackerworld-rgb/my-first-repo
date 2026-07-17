@@ -30,9 +30,15 @@ function bill_plans(array $CFG): array {
 function bill_apps(): array { return ['7q', '7solve']; }
 
 function bill_dir(array $CFG): ?string {
-    $dir = $CFG['billing_dir'] ?? (sys_get_temp_dir() . '/7by-billing');
+    // NOTE: ?? does not catch an EMPTY string, and an unusable dir would silently
+    // disable credit tracking (= free unlimited AI for everyone). Always fall back.
+    $dir = trim((string)($CFG['billing_dir'] ?? ''));
+    if ($dir === '') $dir = sys_get_temp_dir() . '/7by-billing';
     if (!is_dir($dir)) @mkdir($dir, 0700, true);
-    return is_dir($dir) ? $dir : null;
+    if (is_dir($dir) && is_writable($dir)) return $dir;
+    $fb = sys_get_temp_dir() . '/7by-billing';        // configured dir is broken → use temp
+    if (!is_dir($fb)) @mkdir($fb, 0700, true);
+    return (is_dir($fb) && is_writable($fb)) ? $fb : null;
 }
 function bill_pass_file(array $CFG, string $token): ?string {
     $dir = bill_dir($CFG);
@@ -89,6 +95,53 @@ function bill_status(array $CFG, string $app, string $token): array {
     }
     return ['plan' => 'free', 'credits' => 0, 'expires' => 0,
             'free_left' => $free, 'free_limit' => $limit, 'paid' => false];
+}
+
+/* ============================================================
+   ACCOUNT HUB (account.7by.in) — signed-in students
+   ------------------------------------------------------------
+   Credits then live on the ACCOUNT, not the device: pay on your
+   phone, keep your credits on the laptop. The tool's server calls
+   the hub with the student's API token, so the browser cannot
+   fake a balance.
+   ============================================================ */
+function hub_url(array $CFG): string { return rtrim((string)($CFG['hub_base'] ?? ''), '/'); }
+function hub_on(array $CFG): bool { return hub_url($CFG) !== ''; }
+
+function hub_call(array $CFG, string $action, string $userToken, array $body = [], string $method = 'POST') {
+    $base = hub_url($CFG);
+    if ($base === '' || $userToken === '') return null;
+    $url = $base . '/api.php?action=' . rawurlencode($action);
+    $ch = curl_init($url);
+    $opts = [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 15,
+        CURLOPT_HTTPHEADER     => ['Content-Type: application/json', 'Authorization: Bearer ' . $userToken],
+    ];
+    if ($method === 'POST') { $opts[CURLOPT_POST] = true; $opts[CURLOPT_POSTFIELDS] = json_encode($body); }
+    curl_setopt_array($ch, $opts);
+    $resp = curl_exec($ch);
+    $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    $j = json_decode((string)$resp, true);
+    return is_array($j) ? ['code' => $code, 'body' => $j] : null;
+}
+
+/* Who is this student, per the hub? null when signed out / hub off. */
+function hub_me(array $CFG, string $userToken): ?array {
+    $r = hub_call($CFG, 'me', $userToken, [], 'GET');
+    if (!$r || empty($r['body']['authed'])) return null;
+    return $r['body']['user'] ?? null;
+}
+
+/* Spend 1 hub credit — called ONLY after the AI actually answered, so a failed
+   call never costs the student anything and no refund path is needed (the hub's
+   consume clamps count to >= 1, so a "negative refund" would charge again). */
+function hub_spend(array $CFG, string $app, string $userToken): array {
+    $r = hub_call($CFG, 'consume', $userToken, ['count' => 1, 'product' => $app]);
+    if (!$r) return [false, 'hub_unreachable'];
+    if (!empty($r['body']['ok'])) return [true, (int)($r['body']['credits'] ?? 0)];
+    return [false, (string)($r['body']['error'] ?? 'hub_error')];
 }
 
 /* ---------- spend one credit. Returns [ok, status] ----------

@@ -361,6 +361,18 @@ textarea#qtext::placeholder{color:var(--ink-faint);font-style:italic}
   opacity:0;pointer-events:none;transition:all .3s ease;z-index:60;box-shadow:0 10px 30px rgba(0,0,0,.4);
 }
 .pay-toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.auth-modal{max-width:420px}
+.auth-modal input{
+  width:100%;font-family:var(--serif);font-size:15px;padding:11px 13px;margin:7px 0;
+  border:1px solid var(--rule);border-radius:6px;background:var(--paper-2);color:var(--ink);
+}
+.auth-modal input:focus{outline:none;border-color:var(--gold)}
+.auth-err{display:none;color:var(--err);font-size:13.5px;margin:6px 0;font-style:italic}
+.auth-go{width:100%;margin-top:10px}
+.auth-switch{text-align:center;font-size:13.5px;color:var(--ink-soft);margin-top:12px}
+.auth-switch a{color:var(--maroon);font-weight:600;cursor:pointer;text-decoration:underline}
+.auth-otp-note{font-size:14px;color:var(--ink-soft);margin:4px 0 8px}
 .del-btn{
   background:none;border:none;cursor:pointer;color:var(--ink-faint);
   font-size:14px;line-height:1;padding:4px 6px;border-radius:4px;flex-shrink:0;transition:all .15s ease;
@@ -432,6 +444,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
     <button class="lang-tab" data-lang="te">తెలుగు</button>
   </div>
   <div style="display:flex;gap:8px;align-items:center">
+    <button class="credit-badge" id="authBadge" style="display:none"></button>
     <button class="credit-badge" id="creditBadge" style="display:none"></button>
     <div class="key-btn engine-badge" id="engineBadge">…</div>
   </div>
@@ -629,17 +642,129 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
 
   const money = p => '₹' + (p / 100).toFixed(0);
 
+
+  /* ============================================================
+     ACCOUNTS (account.7by.in) — sign in so credits follow the
+     student across devices instead of living on one browser.
+     ============================================================ */
+  const LS_HUB = 'sevenby_hub_token';        // shared by 7Q + 7Solve: one account, one sign-in
+  Pay.hubToken = localStorage.getItem(LS_HUB) || '';
+  Pay.hub = '';                              // hub base url, filled from ?action=me
+
+  Pay.authHeaders = function () {
+    const h = {};
+    if (Pay.token) h['X-7By-Pass'] = Pay.token;
+    if (Pay.hubToken) h['X-7By-Hub'] = Pay.hubToken;
+    return h;
+  };
+
+  Pay.hubApi = async function (action, body, method) {
+    if (!Pay.hub) throw new Error('accounts off');
+    const h = { 'Content-Type': 'application/json' };
+    if (Pay.hubToken) h['Authorization'] = 'Bearer ' + Pay.hubToken;
+    const r = await fetch(Pay.hub + '/api.php?action=' + action, {
+      method: method || 'POST', headers: h, credentials: 'include',
+      body: body ? JSON.stringify(body) : undefined
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || d.ok === false) throw new Error(d.error || ('HTTP ' + r.status));
+    return d;
+  };
+
+  Pay.signOut = async function () {
+    try { await Pay.hubApi('logout', {}); } catch (e) {}
+    Pay.hubToken = ''; localStorage.removeItem(LS_HUB);
+    await Pay.refresh();
+    Pay.toast(Pay.T('signedOut') || 'Signed out.');
+  };
+
+  /* ---------- sign in / sign up modal ---------- */
+  Pay.auth = function (mode, thenBuy) {
+    mode = mode || 'in';
+    const bg = document.getElementById('authModal') || (() => {
+      const d = document.createElement('div');
+      d.id = 'authModal'; d.className = 'modal-bg';
+      document.body.appendChild(d);
+      d.addEventListener('click', e => { if (e.target === d) d.classList.remove('on'); });
+      return d;
+    })();
+    const T = k => Pay.T(k) || k;
+    const draw = (m, step, email) => {
+      const isUp = m === 'up';
+      bg.innerHTML = `<div class="modal auth-modal">
+        <h3>${isUp ? T('signUpTitle') : T('signInTitle')}</h3>
+        <p class="pay-sub">${isUp ? T('signUpSub') : T('signInSub')}</p>
+        ${step === 'otp' ? `
+          <p class="auth-otp-note">${T('otpSent')} <b>${email}</b></p>
+          <input id="aOtp" inputmode="numeric" maxlength="6" placeholder="${T('otpPh')}">
+        ` : `
+          ${isUp ? `<input id="aName" placeholder="${T('namePh')}" autocomplete="name">` : ''}
+          <input id="aEmail" type="email" placeholder="${T('emailPh')}" autocomplete="email">
+          <input id="aPass" type="password" placeholder="${T('passPh')}" autocomplete="${isUp ? 'new-password' : 'current-password'}">
+        `}
+        <div class="auth-err" id="aErr"></div>
+        <button class="solve-btn auth-go" id="aGo">${step === 'otp' ? T('verify') : (isUp ? T('signUpBtn') : T('signInBtn'))}</button>
+        <div class="auth-switch">
+          ${step === 'otp' ? '' : (isUp
+            ? `${T('haveAcct')} <a id="aSwitch">${T('signInTitle')}</a>`
+            : `${T('noAcct')} <a id="aSwitch">${T('signUpTitle')}</a>`)}
+        </div>
+        <div class="m-actions"><button class="mini-btn" id="aClose">${T('close')}</button></div>
+      </div>`;
+      bg.classList.add('on');
+      bg.querySelector('#aClose').onclick = () => bg.classList.remove('on');
+      const sw = bg.querySelector('#aSwitch'); if (sw) sw.onclick = () => draw(isUp ? 'in' : 'up', 'form', '');
+      const err = t => { const e = bg.querySelector('#aErr'); e.textContent = t; e.style.display = 'block'; };
+      const go = bg.querySelector('#aGo');
+      go.onclick = async () => {
+        go.disabled = true;
+        try {
+          if (step === 'otp') {
+            const d = await Pay.hubApi('signup_verify', { email, code: bg.querySelector('#aOtp').value.trim() });
+            await Pay.afterAuth(d, bg, thenBuy);
+          } else if (isUp) {
+            const em = bg.querySelector('#aEmail').value.trim();
+            await Pay.hubApi('signup_start', {
+              name: bg.querySelector('#aName').value.trim(), email: em,
+              password: bg.querySelector('#aPass').value
+            });
+            draw('up', 'otp', em);
+          } else {
+            const d = await Pay.hubApi('login', {
+              email: bg.querySelector('#aEmail').value.trim(),
+              password: bg.querySelector('#aPass').value
+            });
+            await Pay.afterAuth(d, bg, thenBuy);
+          }
+        } catch (e) { err(e.message || T('authFail')); go.disabled = false; }
+      };
+      const inp = bg.querySelector('input'); if (inp) setTimeout(() => inp.focus(), 50);
+      bg.querySelectorAll('input').forEach(i => i.addEventListener('keydown', e => { if (e.key === 'Enter') go.click(); }));
+    };
+    draw(mode, 'form', '');
+  };
+
+  Pay.afterAuth = async function (d, bg, thenBuy) {
+    if (d.token) { Pay.hubToken = d.token; localStorage.setItem(LS_HUB, d.token); }
+    if (bg) bg.classList.remove('on');
+    await Pay.refresh();
+    Pay.toast('✅ ' + (Pay.T('welcome') || 'Signed in') + (d.user && d.user.name ? ', ' + d.user.name : '') + '!');
+    if (thenBuy) Pay.open();
+  };
+
   /* ---------- talk to the server ---------- */
   Pay.refresh = async function () {
     if (!Pay.active) return null;
     try {
       const r = await fetch(PROXY + '?action=me', { headers: Pay.headers() });
       Pay.status = await r.json();
+      Pay.hub = (Pay.status && Pay.status.hub) || '';
+      if (Pay.status && Pay.status.stale_token) { Pay.hubToken = ''; localStorage.removeItem(LS_HUB); }
     } catch (e) { Pay.status = null; }
     Pay.renderBadge();
     return Pay.status;
   };
-  Pay.headers = () => Pay.token ? { 'X-7By-Pass': Pay.token } : {};
+  Pay.headers = () => Pay.authHeaders();
 
   /* ---------- after 7Pay sends the buyer back with ?paid=ORDER ---------- */
   Pay.claimIfPaid = async function () {
@@ -664,7 +789,9 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   };
 
   /* ---------- small helpers the apps can override for i18n ---------- */
-  Pay.T = k => (window.t ? window.t(k) : null);
+  // the app's translator is a top-level const (global LEXICAL scope, not on window),
+  // so reach it by bare name; it is only ever called after the app has initialised.
+  Pay.T = function (k) { try { return typeof t === 'function' ? t(k) : null; } catch (e) { return null; } };
 
   Pay.toast = function (msg) {
     let el = document.getElementById('payToast');
@@ -686,7 +813,10 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
     if (!Pay.active || !Pay.status || Pay.status.plan === 'off') { el.style.display = 'none'; return; }
     el.style.display = '';
     const s = Pay.status;
-    if (s.paid) {
+    if (s.signed_in) {
+      el.textContent = '💎 ' + s.credits + ' ' + (Pay.T('credits') || 'credits');
+      el.className = 'credit-badge paid';
+    } else if (s.paid) {
       el.textContent = '💎 ' + s.credits + ' ' + (Pay.T('credits') || 'credits');
       el.className = 'credit-badge paid';
     } else {
@@ -694,6 +824,22 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
       el.className = 'credit-badge' + (s.free_left === 0 ? ' out' : '');
     }
     el.onclick = () => Pay.open();
+    // sign in / account button next to it
+    const ab = document.getElementById('authBadge');
+    if (ab) {
+      if (!Pay.hub) { ab.style.display = 'none'; }
+      else {
+        ab.style.display = '';
+        if (s.signed_in) {
+          const nm = (s.user && (s.user.name || s.user.email)) || '';
+          ab.textContent = '👤 ' + (nm.split(' ')[0] || (Pay.T('account') || 'Account'));
+          ab.onclick = () => { if (confirm((Pay.T('signOutQ') || 'Sign out?'))) Pay.signOut(); };
+        } else {
+          ab.textContent = '👤 ' + (Pay.T('signIn') || 'Sign in');
+          ab.onclick = () => Pay.auth('in');
+        }
+      }
+    }
   };
 
   /* ---------- the paywall / pricing modal ---------- */
@@ -749,6 +895,13 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   Pay.checkout = async function (planKey) {
     const s = Pay.status || {};
     if (!(s.plans || {})[planKey]) return;
+    // must be signed in first, or the credits would be stuck on this one browser
+    if (Pay.hub && !s.signed_in) {
+      const bg = document.getElementById('payModal'); if (bg) bg.classList.remove('on');
+      Pay.toast(Pay.T('signInToBuy') || 'Please sign in first so your credits are saved to your account.');
+      Pay.auth('up', true);
+      return;
+    }
     Pay.toast(Pay.T('payStarting') || 'Opening secure checkout…');
     try {
       const r = await fetch(PROXY + '?action=checkout', {
@@ -864,6 +1017,13 @@ const I18N = {
     ch3:'The Answer', copy:'Copy answer', followup:'Ask my own follow-up', newDoubt:'New doubt',
     hint:'Give me a hint', hintTitle:'Hint — try it yourself first', hintSolve:'Show me the full solution',
     share:'Share', exportPdf:'Export PDF', close:'Close',
+    signIn:'Sign in', account:'Account', signedOut:'Signed out.', signOutQ:'Sign out?', welcome:'Signed in',
+    signInTitle:'Sign in', signUpTitle:'Create account',
+    signInSub:'Sign in so your credits work on every device.', signUpSub:'Free to join — your credits stay with your account.',
+    namePh:'Your name', emailPh:'Email address', passPh:'Password (min 6 characters)', otpPh:'6-digit code',
+    otpSent:'We emailed a 6-digit code to', verify:'Verify', signInBtn:'Sign in', signUpBtn:'Create account',
+    haveAcct:'Already have an account?', noAcct:'New here?', authFail:'Could not sign you in — please try again.',
+    signInToBuy:'Please sign in first so your credits are saved to your account.',
     credits:'credits', freeToday:'free today', month:'month', bestValue:'BEST VALUE', choose:'Choose',
     payTitle:'Get more questions', paySub:'Free every day. Unlock more whenever you need them.',
     payOutTitle:'You’ve used today’s free questions', payOutSub:'Come back tomorrow for more free ones — or unlock now and keep going.',
@@ -903,6 +1063,13 @@ const I18N = {
     ch3:'उत्तर', copy:'उत्तर कॉपी करें', followup:'अपना सवाल पूछें', newDoubt:'नया डाउट',
     hint:'मुझे संकेत दें', hintTitle:'संकेत — पहले खुद कोशिश करें', hintSolve:'पूरा हल दिखाएँ',
     share:'शेयर करें', exportPdf:'PDF सेव करें', close:'बंद करें',
+    signIn:'साइन इन', account:'खाता', signedOut:'साइन आउट हो गए।', signOutQ:'साइन आउट करें?', welcome:'साइन इन हो गए',
+    signInTitle:'साइन इन', signUpTitle:'खाता बनाएँ',
+    signInSub:'साइन इन करें ताकि आपके क्रेडिट हर डिवाइस पर चलें।', signUpSub:'जुड़ना फ्री है — क्रेडिट आपके खाते में सुरक्षित रहते हैं।',
+    namePh:'आपका नाम', emailPh:'ईमेल', passPh:'पासवर्ड (कम से कम 6 अक्षर)', otpPh:'6 अंकों का कोड',
+    otpSent:'हमने 6 अंकों का कोड भेजा है', verify:'सत्यापित करें', signInBtn:'साइन इन', signUpBtn:'खाता बनाएँ',
+    haveAcct:'पहले से खाता है?', noAcct:'नए हैं?', authFail:'साइन इन नहीं हो सका — फिर कोशिश करें।',
+    signInToBuy:'पहले साइन इन करें ताकि क्रेडिट आपके खाते में सेव हों।',
     credits:'क्रेडिट', freeToday:'आज फ्री', month:'माह', bestValue:'सबसे बढ़िया', choose:'चुनें',
     payTitle:'और प्रश्न पाएँ', paySub:'हर दिन फ्री। जब चाहें और अनलॉक करें।',
     payOutTitle:'आज के फ्री प्रश्न पूरे हो गए', payOutSub:'कल फिर फ्री मिलेंगे — या अभी अनलॉक करके जारी रखें।',
@@ -942,6 +1109,13 @@ const I18N = {
     ch3:'సమాధానం', copy:'సమాధానం కాపీ', followup:'నా ప్రశ్న అడగండి', newDoubt:'కొత్త డౌట్',
     hint:'ఒక సూచన ఇవ్వండి', hintTitle:'సూచన — ముందు మీరే ప్రయత్నించండి', hintSolve:'పూర్తి సాధన చూపించండి',
     share:'షేర్ చేయండి', exportPdf:'PDF సేవ్', close:'మూసివేయండి',
+    signIn:'సైన్ ఇన్', account:'ఖాతా', signedOut:'సైన్ అవుట్ అయ్యారు.', signOutQ:'సైన్ అవుట్ చేయాలా?', welcome:'సైన్ ఇన్ అయ్యారు',
+    signInTitle:'సైన్ ఇన్', signUpTitle:'ఖాతా సృష్టించండి',
+    signInSub:'సైన్ ఇన్ చేస్తే మీ క్రెడిట్లు అన్ని డివైస్‌లలో పనిచేస్తాయి.', signUpSub:'చేరడం ఉచితం — క్రెడిట్లు మీ ఖాతాలో ఉంటాయి.',
+    namePh:'మీ పేరు', emailPh:'ఈమెయిల్', passPh:'పాస్‌వర్డ్ (కనీసం 6 అక్షరాలు)', otpPh:'6 అంకెల కోడ్',
+    otpSent:'6 అంకెల కోడ్ పంపాము', verify:'ధృవీకరించండి', signInBtn:'సైన్ ఇన్', signUpBtn:'ఖాతా సృష్టించండి',
+    haveAcct:'ఇప్పటికే ఖాతా ఉందా?', noAcct:'కొత్తవారా?', authFail:'సైన్ ఇన్ కాలేదు — మళ్లీ ప్రయత్నించండి.',
+    signInToBuy:'ముందు సైన్ ఇన్ చేయండి, తద్వారా క్రెడిట్లు మీ ఖాతాలో సేవ్ అవుతాయి.',
     credits:'క్రెడిట్లు', freeToday:'ఈరోజు ఫ్రీ', month:'నెల', bestValue:'బెస్ట్ వాల్యూ', choose:'ఎంచుకోండి',
     payTitle:'మరిన్ని ప్రశ్నలు పొందండి', paySub:'ప్రతిరోజూ ఫ్రీ. కావలసినప్పుడు అన్‌లాక్ చేయండి.',
     payOutTitle:'ఈరోజు ఫ్రీ ప్రశ్నలు అయిపోయాయి', payOutSub:'రేపు మళ్లీ ఫ్రీ — లేదా ఇప్పుడే అన్‌లాక్ చేసి కొనసాగండి.',
