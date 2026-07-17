@@ -133,45 +133,140 @@ function bill_refund(array $CFG, string $app, string $token): void {
     if ($f && $used > 0) @file_put_contents($f, (string)($used - 1), LOCK_EX);
 }
 
-/* ---------- called by your 7Pay webhook after a real payment ----------
-   POST api.php?action=activate
-     { secret, order_id, app, plan, email }
-   → { token }  (7Pay then redirects the buyer back with ?paid=order_id) */
-function bill_activate(array $CFG, array $req): array {
-    $secret = (string)($CFG['billing_secret'] ?? '');
-    if ($secret === '' || !hash_equals($secret, (string)($req['secret'] ?? ''))) return ['error' => 'Bad secret', 'code' => 403];
+/* ============================================================
+   7PAY WIRING
+   ------------------------------------------------------------
+   1. Buyer clicks a plan → api.php?action=checkout
+      → we create a 7Pay order SERVER-SIDE (key_secret never
+        touches the browser) and remember order → {app, plan}
+      → buyer is sent to 7Pay's hosted checkout
+   2. Buyer pays → 7Pay POSTs payment.captured to
+      api.php?action=webhook (HMAC-signed) → we issue the pass
+   3. 7Pay redirects the buyer to  <site>?paid=<order_id>
+      → the page swaps that for the pass token (action=claim)
+   ============================================================ */
 
-    $app  = (string)($req['app'] ?? '');
-    $plan = (string)($req['plan'] ?? '');
-    $order = preg_replace('/[^A-Za-z0-9_\-]/', '', (string)($req['order_id'] ?? ''));
+/* remember what an order was for, so the webhook can't be lied to about the plan */
+function bill_pending_file(array $CFG, string $orderId): ?string {
+    $dir = bill_dir($CFG);
+    return $dir ? $dir . '/pending_' . hash('sha256', $orderId) . '.json' : null;
+}
+
+/* Step 1 — create the order on 7Pay and return its checkout URL. */
+function bill_checkout(array $CFG, string $app, string $plan, string $returnUrl): array {
     $plans = bill_plans($CFG);
+    if (!isset($plans[$plan]))              return ['error' => 'Unknown plan', 'code' => 400];
+    if (!in_array($app, bill_apps(), true)) return ['error' => 'Unknown app', 'code' => 400];
+
+    $base   = rtrim((string)($CFG['pay_base'] ?? ''), '/');     // e.g. https://pay.7by.in
+    $keyId  = (string)($CFG['pay_key_id'] ?? '');
+    $secret = (string)($CFG['pay_key_secret'] ?? '');
+    if ($base === '' || $keyId === '' || $secret === '') return ['error' => 'Payments are not configured yet', 'code' => 503];
+
+    $p = $plans[$plan];
+    // 7Pay redirects here on success and appends ?sevenpay_order_id=..&sevenpay_payment_id=..&sevenpay_signature=..
+    $back = $returnUrl;
+
+    $body = json_encode([
+        'action'       => 'order.create',
+        'amount'       => (int)$p['amount'],
+        'currency'     => 'INR',
+        'receipt'      => $app . '-' . $plan . '-' . time(),
+        'notes'        => ['app' => $app, 'plan' => $plan],
+        'callback_url' => $back,
+    ]);
+    $ch = curl_init($base . '/api.php?action=order.create');
+    curl_setopt_array($ch, [
+        CURLOPT_POST           => true,
+        CURLOPT_POSTFIELDS     => $body,
+        CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
+        CURLOPT_USERPWD        => $keyId . ':' . $secret,   // 7Pay uses HTTP Basic
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 20,
+    ]);
+    $resp = curl_exec($ch);
+    $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    $j = json_decode((string)$resp, true);
+    if ($code !== 200 || empty($j['id'])) {
+        return ['error' => 'Could not start checkout: ' . (($j['error'] ?? '') ?: ('HTTP ' . $code)), 'code' => 502];
+    }
+    $orderId = (string)$j['id'];
+
+    // Remember the plan for THIS order. The webhook trusts this, not its own input,
+    // so nobody can pay ₹20 and claim the ₹99 plan.
+    $pf = bill_pending_file($CFG, $orderId);
+    if ($pf) @file_put_contents($pf, json_encode(['app' => $app, 'plan' => $plan, 'amount' => (int)$p['amount'], 'created' => time()]), LOCK_EX);
+
+    return [
+        'order_id'     => $orderId,
+        'checkout_url' => $base . '/checkout.php?order_id=' . rawurlencode($orderId) . '&key_id=' . rawurlencode($keyId)
+                        . '&description=' . rawurlencode(($CFG['app_label'] ?? '7By') . ' — ' . $p['label']),
+    ];
+}
+
+/* Step 2 — 7Pay calls this when a payment is captured. Signature-verified. */
+function bill_webhook(array $CFG, string $raw, string $sigHeader): array {
+    $wsecret = (string)($CFG['pay_webhook_secret'] ?? '');
+    if ($wsecret === '') return ['error' => 'Webhook secret not set', 'code' => 503];
+    // 7Pay signs the whole body with the merchant's webhook_secret
+    $expect = hash_hmac('sha256', $raw, $wsecret);
+    if (!hash_equals($expect, $sigHeader)) return ['error' => 'Bad signature', 'code' => 403];
+
+    $e = json_decode($raw, true);
+    if (!is_array($e)) return ['error' => 'Bad JSON', 'code' => 400];
+    if (($e['event'] ?? '') !== 'payment.captured') return ['ok' => true, 'ignored' => $e['event'] ?? ''];
+
+    $pay = $e['payload']['payment']['entity'] ?? [];
+    $orderId = (string)($pay['order_id'] ?? '');
+    if ($orderId === '') return ['error' => 'No order_id', 'code' => 400];
+
+    // what was this order for? (our own record — not attacker-supplied)
+    $pf = bill_pending_file($CFG, $orderId);
+    $pending = ($pf && is_file($pf)) ? json_decode((string)@file_get_contents($pf), true) : null;
+    if (!is_array($pending)) return ['error' => 'Unknown order', 'code' => 404];
+
+    // amount actually paid must match the plan's price
+    if ((int)($pay['amount'] ?? 0) < (int)($pending['amount'] ?? 0)) return ['error' => 'Amount mismatch', 'code' => 400];
+
+    $r = bill_issue($CFG, (string)$pending['app'], (string)$pending['plan'], $orderId, (string)($pay['email'] ?? ''));
+    return isset($r['error']) ? $r : ['ok' => true, 'token' => $r['token']];
+}
+
+/* shared by the webhook and the manual activate hook */
+function bill_issue(array $CFG, string $app, string $plan, string $order, string $email = ''): array {
+    $plans = bill_plans($CFG);
+    $order = preg_replace('/[^A-Za-z0-9_\-]/', '', $order);
     if (!in_array($app, bill_apps(), true)) return ['error' => 'Bad app', 'code' => 400];
     if (!isset($plans[$plan]))              return ['error' => 'Bad plan', 'code' => 400];
     if ($order === '')                      return ['error' => 'Bad order', 'code' => 400];
-
     $dir = bill_dir($CFG);
     if (!$dir) return ['error' => 'Storage unavailable', 'code' => 500];
 
-    // same order twice (webhook retry) → return the same token, never double-credit
+    // same order twice (webhook retry) → same token, never double-credit
     $orderFile = $dir . '/order_' . hash('sha256', $order) . '.txt';
-    if (is_file($orderFile)) {
-        $tok = trim((string)@file_get_contents($orderFile));
-        return ['token' => $tok, 'reused' => true];
-    }
+    if (is_file($orderFile)) return ['token' => trim((string)@file_get_contents($orderFile)), 'reused' => true];
 
     $token = bin2hex(random_bytes(24));
     $p = $plans[$plan];
     bill_write_pass($CFG, $token, [
-        'app'     => $app,
-        'plan'    => $plan,
+        'app' => $app, 'plan' => $plan,
         'credits' => (int)$p['credits'],
         'expires' => time() + ((int)$p['days'] * 86400),
-        'email'   => substr((string)($req['email'] ?? ''), 0, 120),
-        'order'   => $order,
-        'created' => time(),
+        'email' => substr($email, 0, 120), 'order' => $order, 'created' => time(),
     ]);
     @file_put_contents($orderFile, $token, LOCK_EX);
     return ['token' => $token];
+}
+
+/* ---------- manual/legacy hook: POST api.php?action=activate ----------
+     { secret, order_id, app, plan, email }
+   → { token }  (use only if you are NOT using the 7Pay webhook) */
+function bill_activate(array $CFG, array $req): array {
+    $secret = (string)($CFG['billing_secret'] ?? '');
+    if ($secret === '' || !hash_equals($secret, (string)($req['secret'] ?? ''))) return ['error' => 'Bad secret', 'code' => 403];
+    return bill_issue($CFG, (string)($req['app'] ?? ''), (string)($req['plan'] ?? ''),
+                      (string)($req['order_id'] ?? ''), (string)($req['email'] ?? ''));
 }
 
 /* ---------- buyer returns from 7Pay: swap order id for their token ---------- */

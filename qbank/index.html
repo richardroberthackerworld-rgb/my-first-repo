@@ -632,7 +632,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   Pay.claimIfPaid = async function () {
     if (!Pay.active) return;
     const u = new URL(location.href);
-    const order = u.searchParams.get('paid');
+    const order = u.searchParams.get('sevenpay_order_id') || u.searchParams.get('paid');
     if (!order) return;
     try {
       const r = await fetch(PROXY + '?action=claim&order=' + encodeURIComponent(order));
@@ -646,7 +646,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
         Pay.toast('⏳ ' + (Pay.T('paidPending') || 'Payment is still being confirmed. Refresh in a minute.'));
       }
     } catch (e) {}
-    u.searchParams.delete('paid');
+    ['paid','sevenpay_order_id','sevenpay_payment_id','sevenpay_signature'].forEach(k=>u.searchParams.delete(k));
     history.replaceState(null, '', u.pathname + (u.search || '') + u.hash);
   };
 
@@ -732,21 +732,22 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
     });
   };
 
-  /* ---------- send the buyer to 7Pay ---------- */
-  Pay.checkout = function (planKey) {
+  /* ---------- send the buyer to 7Pay (order is created server-side) ---------- */
+  Pay.checkout = async function (planKey) {
     const s = Pay.status || {};
-    const p = (s.plans || {})[planKey];
-    if (!p) return;
-    if (!s.pay_url) { Pay.toast(Pay.T('payNotReady') || 'Payments are not switched on yet — please try again later.'); return; }
-    const back = location.origin + location.pathname;
-    const url = s.pay_url
-      + (s.pay_url.includes('?') ? '&' : '?')
-      + 'app=' + encodeURIComponent(s.app || '')
-      + '&plan=' + encodeURIComponent(planKey)
-      + '&amount=' + encodeURIComponent(p.amount)
-      + '&label=' + encodeURIComponent(APP_NAME + ' — ' + p.label)
-      + '&return=' + encodeURIComponent(back);
-    location.href = url;
+    if (!(s.plans || {})[planKey]) return;
+    Pay.toast(Pay.T('payStarting') || 'Opening secure checkout…');
+    try {
+      const r = await fetch(PROXY + '?action=checkout', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: planKey, return: location.origin + location.pathname })
+      });
+      const j = await r.json();
+      if (j.checkout_url) { location.href = j.checkout_url; return; }
+      Pay.toast((j.error && j.error.message) || Pay.T('payNotReady') || 'Payments are not switched on yet.');
+    } catch (e) {
+      Pay.toast(Pay.T('payNotReady') || 'Could not open checkout — please try again.');
+    }
   };
 
   /* ---------- called by the apps when the server says 402 ---------- */

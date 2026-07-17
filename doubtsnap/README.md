@@ -103,16 +103,25 @@ pass token — editing the page cannot grant anyone credits.
 - **7Solve and 7Q bill separately** — a 7Q pass gives no credits on 7Solve.
 
 ### Switching it on
-1. In `keys.php` set `'app' => '7solve'`, a long random `'billing_secret'`, and your
-   `'pay_url'` (your 7Pay checkout page).
+1. In  set  and your 7Pay credentials (see below).
 2. Tune `'free_per_day'` and `'plans'` to taste. `'billing_off' => true` disables the paywall entirely.
 
-### What 7Pay must do after a successful payment
-1. **Webhook** (server→server): `POST api.php?action=activate` with
-   `{"secret":"<billing_secret>","order_id":"<id>","app":"7q","plan":"monthly","email":"..."}`
-   → responds `{"token":"..."}`. Retries are safe: the same order always returns the same token and
-   never double-credits.
-2. **Redirect** the buyer back to the site with `?paid=<order_id>` — the page swaps that for their
-   pass token automatically and the credits appear.
+### Wiring 7Pay (one-time)
 
-The checkout button already sends `app`, `plan`, `amount`, `label` and `return` to your `pay_url`.
+1. **In 7Pay's **, add a merchant for each app:
+\(7Solve →  = )
+
+2. **In this app's ** set , , ,
+    to match. That's it.
+
+**The flow** (all automatic): student picks a plan → our server creates the 7Pay order
+(the secret never reaches the browser) → 7Pay's checkout takes the money → 7Pay POSTs
+ to our webhook → we issue the pass → 7Pay returns the student with
+ → the page picks up the pass and the credits appear.
+
+**Verified against a live 7Pay instance:** free tier blocks at the limit (402) → real ₹99
+order created → real payment captured → webhook delivered (HTTP 200) → pass issued →
+student unblocked → credits 500 → 497. Attacks all rejected: forged signature
+(*Bad signature*), valid signature but underpaid (*Amount mismatch*), invented order
+(*Unknown order*), webhook replay (*same token, no double credit*), attacker return URL
+(*Bad return url*), another site using the proxy (*Origin not allowed*).

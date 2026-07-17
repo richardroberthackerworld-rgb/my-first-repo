@@ -136,11 +136,38 @@ if ($action === 'me') {
     $st = bill_status($CFG, $APP, $passTok);
     $st['plans'] = bill_plans($CFG);
     $st['app']   = $APP;
-    $st['pay_url'] = $CFG['pay_url'] ?? '';
+    $st['pay_ready'] = !empty($CFG['pay_base']) && !empty($CFG['pay_key_id']) && !empty($CFG['pay_key_secret']);
     out(200, $st);
 }
 
-/* ---------- POST ?action=activate → called by your 7Pay webhook after payment ---------- */
+/* ---------- POST ?action=checkout → create a 7Pay order, return its checkout URL ---------- */
+if ($action === 'checkout') {
+    if (!origin_allowed($CFG)) out(403, ['error' => ['message' => 'Origin not allowed']]);
+    $req = json_decode((string)file_get_contents('php://input'), true) ?: [];
+    $ret = (string)($req['return'] ?? '');
+    // only ever send buyers back to our own site
+    $retHost = parse_url($ret, PHP_URL_HOST) ?: '';
+    $okHost = false;
+    foreach (($CFG['allow_origins'] ?? []) as $a) {
+        $ah = parse_url((strpos($a, '//') === false ? 'https://' . $a : $a), PHP_URL_HOST) ?: $a;
+        if (strcasecmp($retHost, $ah) === 0) { $okHost = true; break; }
+    }
+    if (!$okHost) out(400, ['error' => ['message' => 'Bad return url']]);
+    $r = bill_checkout($CFG, $APP, (string)($req['plan'] ?? ''), $ret);
+    if (isset($r['error'])) out((int)$r['code'], ['error' => ['message' => $r['error']]]);
+    out(200, $r);
+}
+
+/* ---------- POST ?action=webhook → 7Pay tells us a payment was captured ---------- */
+if ($action === 'webhook') {
+    $raw = (string)file_get_contents('php://input');
+    $sig = (string)($_SERVER['HTTP_X_7PAY_SIGNATURE'] ?? '');
+    $r = bill_webhook($CFG, $raw, $sig);
+    if (isset($r['error'])) out((int)$r['code'], ['error' => ['message' => $r['error']]]);
+    out(200, $r);
+}
+
+/* ---------- POST ?action=activate → manual hook (only if not using the webhook) ---------- */
 if ($action === 'activate') {
     $req = json_decode((string)file_get_contents('php://input'), true) ?: $_POST;
     $r = bill_activate($CFG, is_array($req) ? $req : []);
