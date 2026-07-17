@@ -1,6 +1,6 @@
-# 7Marks 💯
+# 7Q 💯
 
-Pick a subject & topic — or snap photos of your textbook / notes — and generate a full **question bank**: theory or practical, long answer, short answer, very short answer, MCQs, fill in the blanks, and true/false — with an optional answer key. The sister app of [7Solve](../doubtsnap/) (7Solve answers *your* questions; 7Marks *asks you* questions).
+Pick a subject & topic — or snap photos of your textbook / notes — and generate a full **question bank**: theory or practical, long answer, short answer, very short answer, MCQs, fill in the blanks, and true/false — with an optional answer key. The sister app of [7Solve](../doubtsnap/) (7Solve answers *your* questions; 7Q *asks you* questions).
 
 ## Features
 - 📷 **Photo material** — upload up to **5 photos** of textbook pages or class notes (camera, gallery, drag & drop, paste Ctrl+V). Questions are generated **only from that material**. Handwritten and printed pages both work.
@@ -63,7 +63,7 @@ The homepage tool card and footer already link to `https://qbank.7by.in`, so goi
 2. **File Manager** → open that folder → upload **`qbank-site.zip`** (from the repo root) → **Extract**. The files must sit directly in the document root.
 3. **Rename `config.js.txt` → `config.js`** (right-click → Rename), then **Edit** it and paste your API keys. *(The zip ships it as `.txt` because cPanel's virus scanner false-positives on any zip containing `.js` files — "Foxhole.JS_Zip". It's not a real virus.)*
 4. cPanel → **SSL/TLS Status → Run AutoSSL** so `https://qbank.7by.in` is secure.
-5. Also re-upload the updated main-site `index.html` (or `vocalremover-app.zip`) so the homepage 7Marks card shows the new name.
+5. Also re-upload the updated main-site `index.html` (or `vocalremover-app.zip`) so the homepage 7Q card shows the new name.
 
 Visit `https://qbank.7by.in` — the ⚙️ badge at the top-right should show your active engines. If it says "No AI key set", `config.js` on the server still has empty keys.
 
@@ -101,3 +101,36 @@ traffic, and making repeat questions feel instant.
 - **Errors and empty replies are never cached** — only genuinely good answers
 - Clicking **"More questions"** always generates fresh ones (it tells the AI what was already asked)
 - Response header `X-7By-Cache: HIT|MISS` lets you confirm it's working
+
+## 💳 Paywall — free tier, credits, ₹99/month
+
+**Enforced on the server** (`billing.php`, called from `api.php`). The browser only holds an opaque
+pass token — editing the page cannot grant anyone credits.
+
+| Plan | Price | Credits |
+|---|---|---|
+| Free | ₹0 | **5 per day**, resets daily |
+| Monthly | **₹99** | 500 credits / 30 days |
+| 150 pack | ₹49 | 150 credits, valid 1 year |
+| 50 pack | ₹20 | 50 credits, valid 1 year |
+
+- **1 credit = 1 AI answer.** Cached answers (already asked by another student) are **free** — they
+  cost you no quota, so they cost the student no credit.
+- **Even paid plans use credits**, so one heavy user can never drain your API quota.
+- **A failed AI call is refunded** — students are never charged for an error.
+- **7Q and 7Solve bill separately** — a 7Q pass gives no credits on 7Solve.
+
+### Switching it on
+1. In `keys.php` set `'app' => '7q'` (or `'7solve'`), a long random `'billing_secret'`, and your
+   `'pay_url'` (your 7Pay checkout page).
+2. Tune `'free_per_day'` and `'plans'` to taste. `'billing_off' => true` disables the paywall entirely.
+
+### What 7Pay must do after a successful payment
+1. **Webhook** (server→server): `POST api.php?action=activate` with
+   `{"secret":"<billing_secret>","order_id":"<id>","app":"7q","plan":"monthly","email":"..."}`
+   → responds `{"token":"..."}`. Retries are safe: the same order always returns the same token and
+   never double-credits.
+2. **Redirect** the buyer back to the site with `?paid=<order_id>` — the page swaps that for their
+   pass token automatically and the credits appear.
+
+The checkout button already sends `app`, `plan`, `amount`, `label` and `return` to your `pay_url`.

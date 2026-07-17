@@ -1,6 +1,6 @@
 <?php
 /* ============================================================
-   7Marks — SERVER-SIDE API KEYS  (never sent to the browser)
+   7Q — SERVER-SIDE API KEYS  (never sent to the browser)
    ------------------------------------------------------------
    1. Copy this file to  keys.php   (same folder)
    2. Paste your keys below
@@ -51,6 +51,41 @@ return [
        Photo questions are never cached (every photo is unique). */
     'cache_hours' => 168,
     // 'cache_dir' => '/home/USER/7by-cache',   // set if your host wipes /tmp often
+
+    /* ============================================================
+       PAYWALL — free tier, credits, ₹99/month
+       ============================================================
+       Which app this folder is:  '7q'  or  '7solve'
+       (they bill SEPARATELY — a 7Q pass does not work on 7Solve) */
+    'app' => '7q',
+
+    /* Free credits per DEVICE per DAY (resets at midnight).
+       Students get this much without paying anything. */
+    'free_per_day' => ['7q' => 5, '7solve' => 5],
+
+    /* Plans. amount is in PAISE (9900 = ₹99). Even paid plans use
+       credits, so one heavy user can never drain your API quota. */
+    'plans' => [
+        'monthly'  => ['label' => 'Monthly ₹99',  'amount' => 9900, 'credits' => 500, 'days' => 30],
+        'pack_50'  => ['label' => '50 credits',   'amount' => 2000, 'credits' => 50,  'days' => 365],
+        'pack_150' => ['label' => '150 credits',  'amount' => 4900, 'credits' => 150, 'days' => 365],
+    ],
+
+    /* Your 7Pay checkout page. The Subscribe button sends buyers here with
+       ?app=..&plan=..&amount=..  After payment, 7Pay must:
+         1) POST to  api.php?action=activate  with
+            {"secret":"<billing_secret>","order_id":"..","app":"7q","plan":"monthly"}
+         2) redirect the buyer back to the site with  ?paid=<order_id> */
+    'pay_url' => '',   // e.g. 'https://pay.7by.in/checkout.php'
+
+    /* Shared secret your 7Pay webhook sends to prove a payment is real.
+       MUST be long and random. Never put it in config.js. */
+    'billing_secret' => '',
+
+    /* true = switch the paywall off completely (everything free) */
+    'billing_off' => false,
+
+    // 'billing_dir' => '/home/USER/7by-billing',   // passes + credit balances live here
 
     /* ---- advanced (safe to leave alone) ---- */
     'max_body_mb' => 12,   // photo uploads need room

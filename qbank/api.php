@@ -25,6 +25,10 @@ function out(int $code, array $body): void { http_response_code($code); echo jso
 $cfgFile = __DIR__ . '/keys.php';
 if (!is_file($cfgFile)) out(500, ['error' => ['message' => 'Proxy not configured: copy keys.example.php to keys.php and add your keys.']]);
 $CFG = require $cfgFile;
+require_once __DIR__ . '/billing.php';
+
+/* which app is billing this request (7Solve and 7Q bill separately) */
+$APP = $CFG['app'] ?? '7q';
 
 /* ---------- where each provider lives (fixed — never built from user input) ---------- */
 $ENDPOINTS = [
@@ -115,12 +119,41 @@ function rate_ok(array $CFG): bool {
     return true;
 }
 
+$action = $_GET['action'] ?? '';
+$passTok = preg_replace('/[^a-f0-9]/', '', (string)($_SERVER['HTTP_X_7BY_PASS'] ?? $_GET['pass'] ?? ''));
+
 /* ---------- GET ?action=providers → which engines the site may offer ---------- */
-if (($_GET['action'] ?? '') === 'providers') {
+if ($action === 'providers') {
     if (!origin_allowed($CFG)) out(403, ['error' => ['message' => 'Origin not allowed']]);
     $on = [];
     foreach (array_keys($ENDPOINTS) as $p) if (keys_for($CFG, $p)) $on[] = $p;
     out(200, ['providers' => $on]);
+}
+
+/* ---------- GET ?action=me → this visitor's plan / credits / free left ---------- */
+if ($action === 'me') {
+    if (!origin_allowed($CFG)) out(403, ['error' => ['message' => 'Origin not allowed']]);
+    $st = bill_status($CFG, $APP, $passTok);
+    $st['plans'] = bill_plans($CFG);
+    $st['app']   = $APP;
+    $st['pay_url'] = $CFG['pay_url'] ?? '';
+    out(200, $st);
+}
+
+/* ---------- POST ?action=activate → called by your 7Pay webhook after payment ---------- */
+if ($action === 'activate') {
+    $req = json_decode((string)file_get_contents('php://input'), true) ?: $_POST;
+    $r = bill_activate($CFG, is_array($req) ? $req : []);
+    if (isset($r['error'])) out((int)$r['code'], ['error' => ['message' => $r['error']]]);
+    out(200, $r);
+}
+
+/* ---------- GET ?action=claim&order=... → buyer returns from 7Pay, gets their pass ---------- */
+if ($action === 'claim') {
+    if (!origin_allowed($CFG)) out(403, ['error' => ['message' => 'Origin not allowed']]);
+    $r = bill_claim($CFG, (string)($_GET['order'] ?? ''));
+    if (isset($r['error'])) out((int)$r['code'], ['error' => ['message' => $r['error']]]);
+    out(200, $r);
 }
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') out(405, ['error' => ['message' => 'POST only']]);
@@ -153,8 +186,17 @@ $cKey  = hash('sha256', $provider . '|' . $model . '|' . json_encode($payload));
 $cacheable = $cDir && !has_image($payload);                    // never cache photo questions
 if ($cacheable) {
     $hit = cache_get($cDir, $cKey, $cacheHours);
+    // A cache hit costs you no AI quota, so it costs the student no credit either.
     if ($hit !== null) { header('X-7By-Cache: HIT'); echo $hit; exit; }
 }
+
+/* ---------- billing gate: only a REAL AI call costs a credit ---------- */
+list($okToSpend, $billStatus) = bill_charge($CFG, $APP, $passTok);
+if (!$okToSpend) {
+    out(402, ['error' => ['message' => 'Free limit reached'], 'needsPlan' => true, 'billing' => $billStatus]);
+}
+header('X-7By-Credits: ' . (int)($billStatus['credits'] ?? 0));
+header('X-7By-Free-Left: ' . (int)($billStatus['free_left'] ?? 0));
 
 /* ---------- call the provider; rotate keys when one is rate-limited ---------- */
 $url  = str_replace('{model}', rawurlencode($model), $ENDPOINTS[$provider]);
@@ -167,7 +209,7 @@ foreach ($keys as $k) {
         $headers[] = 'x-goog-api-key: ' . $k;
     } else {
         $headers[] = 'Authorization: Bearer ' . $k;
-        if ($provider === 'openrouter') $headers[] = 'X-Title: 7Marks';
+        if ($provider === 'openrouter') $headers[] = 'X-Title: 7Q';
     }
     $ch = curl_init($url);
     curl_setopt_array($ch, [
@@ -189,13 +231,18 @@ foreach ($keys as $k) {
     break;                                                          // success or a real error → return it
 }
 
-// only cache a genuinely good answer — never an error or an empty reply
-if ($cacheable && $last['code'] === 200 && strlen($last['text']) > 40) {
+// did we actually get an answer? (used for caching AND for refunding)
+$gotAnswer = false;
+if ($last['code'] === 200 && strlen($last['text']) > 40) {
     $probe = json_decode($last['text'], true);
     $text  = ($probe['candidates'][0]['content']['parts'][0]['text'] ?? '')
            . ($probe['choices'][0]['message']['content'] ?? '');
-    if (trim($text) !== '') cache_put($cDir, $cKey, $last['text']);
+    $gotAnswer = trim($text) !== '';
 }
+// only cache a genuinely good answer — never an error or an empty reply
+if ($cacheable && $gotAnswer) cache_put($cDir, $cKey, $last['text']);
+// the AI failed → give the student their credit back
+if (!$gotAnswer) bill_refund($CFG, $APP, $passTok);
 
 header('X-7By-Cache: MISS');
 http_response_code($last['code']);

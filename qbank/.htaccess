@@ -1,4 +1,4 @@
-# 7Marks — protect the server-side key file.
+# 7Q — protect the server-side key file.
 # api.php is the only thing the browser may call; keys*.php must never be fetched.
 
 <FilesMatch "^keys.*\.php$">
