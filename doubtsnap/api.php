@@ -1,0 +1,152 @@
+<?php
+/* ============================================================
+   7By AI PROXY  —  keeps your API keys on the SERVER.
+   ------------------------------------------------------------
+   The browser calls THIS file; this file calls the AI provider
+   using keys from keys.php. Keys are never sent to the browser
+   and never appear in page source.
+
+   SETUP (2 minutes):
+     1. Copy keys.example.php  →  keys.php
+     2. Paste your API keys into keys.php
+     3. In config.js set:  proxy: "api.php"
+     4. Blank out the keys in config.js — they're not needed there any more.
+
+   Requires PHP 7.0+ with cURL (standard on every cPanel host).
+   ============================================================ */
+declare(strict_types=1);
+
+header('Content-Type: application/json; charset=utf-8');
+header('X-Content-Type-Options: nosniff');
+header('Cache-Control: no-store');
+
+function out(int $code, array $body): void { http_response_code($code); echo json_encode($body); exit; }
+
+$cfgFile = __DIR__ . '/keys.php';
+if (!is_file($cfgFile)) out(500, ['error' => ['message' => 'Proxy not configured: copy keys.example.php to keys.php and add your keys.']]);
+$CFG = require $cfgFile;
+
+/* ---------- where each provider lives (fixed — never built from user input) ---------- */
+$ENDPOINTS = [
+    'gemini'     => 'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent',
+    'groq'       => 'https://api.groq.com/openai/v1/chat/completions',
+    'cerebras'   => 'https://api.cerebras.ai/v1/chat/completions',
+    'openrouter' => 'https://openrouter.ai/api/v1/chat/completions',
+    'mistral'    => 'https://api.mistral.ai/v1/chat/completions',
+    'github'     => 'https://models.github.ai/inference/chat/completions',
+];
+/* model names must match these — stops anyone injecting a URL or calling a paid model */
+$MODEL_OK = [
+    'gemini'     => '/^gemini-[a-z0-9.\-]+$/i',
+    'groq'       => '/^[a-z0-9.\-]+$/i',
+    'cerebras'   => '/^[a-z0-9.\-]+$/i',
+    'openrouter' => '/^[a-z0-9.\-]+\/[a-z0-9.\-]+(:free)?$/i',
+    'mistral'    => '/^[a-z0-9.\-]+$/i',
+    'github'     => '/^[a-z0-9.\-]+\/[a-z0-9.\-]+$/i',
+];
+
+/* ---------- normalise configured keys: one string, "a,b", or ['a','b'] ---------- */
+function keys_for(array $CFG, string $provider): array {
+    $raw = $CFG['keys'][$provider] ?? '';
+    $list = is_array($raw) ? $raw : preg_split('/[,\n]/', (string)$raw);
+    return array_values(array_filter(array_map('trim', $list), fn($k) => $k !== ''));
+}
+
+/* ---------- only our own pages may use this proxy ---------- */
+function origin_allowed(array $CFG): bool {
+    $allow = $CFG['allow_origins'] ?? [];
+    if (in_array('*', $allow, true)) return true;
+    $src = $_SERVER['HTTP_ORIGIN'] ?? $_SERVER['HTTP_REFERER'] ?? '';
+    if ($src === '') return (bool)($CFG['allow_missing_origin'] ?? false); // some in-app browsers omit it
+    $host = parse_url($src, PHP_URL_HOST) ?: '';
+    foreach ($allow as $a) {
+        $ah = parse_url((strpos($a, '//') === false ? 'https://' . $a : $a), PHP_URL_HOST) ?: $a;
+        if (strcasecmp($host, $ah) === 0) return true;
+    }
+    return false;
+}
+
+/* ---------- simple per-IP hourly cap so nobody drains your quota ---------- */
+function rate_ok(array $CFG): bool {
+    $limit = (int)($CFG['rate_per_hour'] ?? 60);
+    if ($limit <= 0) return true;
+    $dir = ($CFG['rate_dir'] ?? sys_get_temp_dir() . '/7by-rl');
+    if (!is_dir($dir)) @mkdir($dir, 0700, true);
+    if (!is_dir($dir)) return true; // can't track → don't block real users
+    $ip   = $_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['REMOTE_ADDR'] ?? '0';
+    $file = $dir . '/' . hash('sha256', $ip . date('YmdH')) . '.txt';
+    $n = (int)@file_get_contents($file);
+    if ($n >= $limit) return false;
+    @file_put_contents($file, (string)($n + 1), LOCK_EX);
+    if (mt_rand(1, 50) === 1) { // occasional sweep of old counters
+        foreach ((array)@glob($dir . '/*.txt') as $f) if (@filemtime($f) < time() - 7200) @unlink($f);
+    }
+    return true;
+}
+
+/* ---------- GET ?action=providers → which engines the site may offer ---------- */
+if (($_GET['action'] ?? '') === 'providers') {
+    if (!origin_allowed($CFG)) out(403, ['error' => ['message' => 'Origin not allowed']]);
+    $on = [];
+    foreach (array_keys($ENDPOINTS) as $p) if (keys_for($CFG, $p)) $on[] = $p;
+    out(200, ['providers' => $on]);
+}
+
+if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') out(405, ['error' => ['message' => 'POST only']]);
+if (!origin_allowed($CFG)) out(403, ['error' => ['message' => 'Origin not allowed']]);
+if (!rate_ok($CFG))        out(429, ['error' => ['message' => 'Too many requests from this device — please wait a while and try again.']]);
+
+$rawBody = file_get_contents('php://input') ?: '';
+$maxMb = (int)($CFG['max_body_mb'] ?? 12);           // photos are big; 12MB covers 5 images
+if (strlen($rawBody) > $maxMb * 1024 * 1024) out(413, ['error' => ['message' => 'Request too large']]);
+
+$req = json_decode($rawBody, true);
+if (!is_array($req)) out(400, ['error' => ['message' => 'Bad JSON']]);
+
+$provider = (string)($req['provider'] ?? '');
+$model    = (string)($req['model'] ?? '');
+$payload  = $req['payload'] ?? null;
+
+if (!isset($ENDPOINTS[$provider]))                    out(400, ['error' => ['message' => 'Unknown provider']]);
+if (!is_array($payload))                              out(400, ['error' => ['message' => 'Missing payload']]);
+if ($model === '' || strlen($model) > 100 ||
+    !preg_match($MODEL_OK[$provider], $model))        out(400, ['error' => ['message' => 'Model not allowed']]);
+
+$keys = keys_for($CFG, $provider);
+if (!$keys) out(503, ['error' => ['message' => 'No key configured for ' . $provider]]);
+
+/* ---------- call the provider; rotate keys when one is rate-limited ---------- */
+$url  = str_replace('{model}', rawurlencode($model), $ENDPOINTS[$provider]);
+$body = json_encode($payload);
+$last = ['code' => 502, 'text' => '{"error":{"message":"Upstream failed"}}'];
+
+foreach ($keys as $k) {
+    $headers = ['Content-Type: application/json'];
+    if ($provider === 'gemini') {
+        $headers[] = 'x-goog-api-key: ' . $k;
+    } else {
+        $headers[] = 'Authorization: Bearer ' . $k;
+        if ($provider === 'openrouter') $headers[] = 'X-Title: 7Solve';
+    }
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_POST           => true,
+        CURLOPT_POSTFIELDS     => $body,
+        CURLOPT_HTTPHEADER     => $headers,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => (int)($CFG['timeout'] ?? 120),
+        CURLOPT_CONNECTTIMEOUT => 15,
+    ]);
+    $text = curl_exec($ch);
+    $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $cerr = curl_error($ch);
+    curl_close($ch);
+
+    if ($text === false) { $last = ['code' => 502, 'text' => json_encode(['error' => ['message' => 'Network error: ' . $cerr]])]; continue; }
+    $last = ['code' => $code ?: 502, 'text' => $text];
+    if ($code === 429 || $code === 402 || $code === 403) continue;  // key spent → next key
+    break;                                                          // success or a real error → return it
+}
+
+http_response_code($last['code']);
+echo $last['text'];

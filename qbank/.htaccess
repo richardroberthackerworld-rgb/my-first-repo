@@ -1,0 +1,22 @@
+# 7Marks — protect the server-side key file.
+# api.php is the only thing the browser may call; keys*.php must never be fetched.
+
+<FilesMatch "^keys.*\.php$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Belt and braces: if PHP ever stops executing (misconfig), never serve these as plain text.
+<FilesMatch "\.(php|inc)$">
+    <IfModule mod_php.c>
+        php_flag engine on
+    </IfModule>
+</FilesMatch>
+
+# Don't list folder contents
+Options -Indexes

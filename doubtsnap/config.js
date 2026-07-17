@@ -47,6 +47,19 @@
    Tip: each Google Cloud project you own can have its own key. */
 
 window.DS_CONFIG = {
+
+  /* ---- RECOMMENDED FOR A PUBLIC SITE: hide your keys on the server ----
+     Anything in THIS file is visible to anyone who views the page source.
+     To keep keys private instead:
+       1. copy keys.example.php → keys.php and put your keys there
+       2. set   proxy: "api.php"   below
+       3. leave every key below EMPTY
+     The browser then calls api.php, and api.php calls the AI with the
+     server-side keys. Nobody can read them.
+     Leave proxy as "" to keep using the keys below directly (fine for
+     local/personal use).                                              */
+  proxy: "",
+
   keys: {
     gemini:     "",   // AIza...
     groq:       "",   // gsk_...
