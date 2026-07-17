@@ -71,15 +71,24 @@ return [
         'pack_150' => ['label' => '150 credits',  'amount' => 4900, 'credits' => 150, 'days' => 365],
     ],
 
-    /* Your 7Pay checkout page. The Subscribe button sends buyers here with
-       ?app=..&plan=..&amount=..  After payment, 7Pay must:
-         1) POST to  api.php?action=activate  with
-            {"secret":"<billing_secret>","order_id":"..","app":"7q","plan":"monthly"}
-         2) redirect the buyer back to the site with  ?paid=<order_id> */
-    'pay_url' => '',   // e.g. 'https://pay.7by.in/checkout.php'
+    /* ---- 7Pay gateway (your own, at pay.7by.in) ----
+       The order is created here on the SERVER using key_secret, so the
+       secret never reaches the browser. Get these from 7Pay's dashboard. */
+    'pay_base'           => '',   // e.g. 'https://pay.7by.in'   (no trailing slash)
+    'pay_key_id'         => '',   // 7Pay key_id
+    'pay_key_secret'     => '',   // 7Pay key_secret  — server only, never in config.js
+    'pay_webhook_secret' => '',   // 7Pay merchant webhook_secret (verifies payment.captured)
+    'app_label'          => '7Solve', // shown on the checkout page
 
-    /* Shared secret your 7Pay webhook sends to prove a payment is real.
-       MUST be long and random. Never put it in config.js. */
+    /* In 7Pay's dashboard set this merchant's Webhook URL to:
+         https://doubtsnap.7by.in/api.php?action=webhook
+       (7Q → https://qbank.7by.in/api.php?action=webhook)
+       That is what actually grants the credits. Nothing else is needed —
+       7Pay redirects the buyer back with ?sevenpay_order_id=… and the page
+       picks the pass up automatically. */
+
+    /* Optional manual hook (only if you are NOT using the webhook above):
+       POST api.php?action=activate {"secret":..,"order_id":..,"app":..,"plan":..} */
     'billing_secret' => '',
 
     /* true = switch the paywall off completely (everything free) */
