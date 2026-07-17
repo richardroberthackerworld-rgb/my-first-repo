@@ -636,7 +636,9 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
      ============================================================ */
   const LS_HUB = 'sevenby_hub_token';        // shared by 7Q + 7Solve: one account, one sign-in
   Pay.hubToken = localStorage.getItem(LS_HUB) || '';
-  Pay.hub = '';                              // hub base url, filled from ?action=me
+  // hub url is a PUBLIC address (no secret) — set it in config.js so the
+  // sign-in button works even when the billing proxy is off.
+  Pay.hub = (CFG.hub || '').trim();
 
   Pay.authHeaders = function () {
     const h = {};
@@ -741,13 +743,23 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
 
   /* ---------- talk to the server ---------- */
   Pay.refresh = async function () {
-    if (!Pay.active) return null;
-    try {
-      const r = await fetch(PROXY + '?action=me', { headers: Pay.headers() });
-      Pay.status = await r.json();
-      Pay.hub = (Pay.status && Pay.status.hub) || '';
-      if (Pay.status && Pay.status.stale_token) { Pay.hubToken = ''; localStorage.removeItem(LS_HUB); }
-    } catch (e) { Pay.status = null; }
+    if (Pay.active) {
+      // proxy on: the server is the source of truth for billing + who is signed in
+      try {
+        const r = await fetch(PROXY + '?action=me', { headers: Pay.headers() });
+        Pay.status = await r.json();
+        if (Pay.status && Pay.status.hub) Pay.hub = Pay.status.hub;
+        if (Pay.status && Pay.status.stale_token) { Pay.hubToken = ''; localStorage.removeItem(LS_HUB); }
+      } catch (e) { Pay.status = null; }
+    } else if (Pay.hub) {
+      // proxy off but accounts on: ask the hub directly just for signed-in state
+      try {
+        const d = await Pay.hubApi('me', null, 'GET');
+        Pay.status = d.authed
+          ? { signed_in: true, user: d.user, credits: (d.user && d.user.credits) || 0, plan: (d.user && d.user.plan) || 'none', paid: !!(d.user && d.user.credits) }
+          : { signed_in: false };
+      } catch (e) { Pay.status = { signed_in: false }; }
+    }
     Pay.renderBadge();
     return Pay.status;
   };
@@ -795,38 +807,36 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
 
   /* ---------- the little "credits left" chip ---------- */
   Pay.renderBadge = function () {
-    const el = document.getElementById('creditBadge');
-    if (!el) return;
-    if (!Pay.active || !Pay.status || Pay.status.plan === 'off') { el.style.display = 'none'; return; }
-    el.style.display = '';
-    const s = Pay.status;
-    if (s.signed_in) {
-      el.textContent = '💎 ' + s.credits + ' ' + (Pay.T('credits') || 'credits');
-      el.className = 'credit-badge paid';
-    } else if (s.paid) {
-      el.textContent = '💎 ' + s.credits + ' ' + (Pay.T('credits') || 'credits');
-      el.className = 'credit-badge paid';
-    } else {
-      el.textContent = '🎟️ ' + s.free_left + '/' + s.free_limit + ' ' + (Pay.T('freeToday') || 'free today');
-      el.className = 'credit-badge' + (s.free_left === 0 ? ' out' : '');
-    }
-    el.onclick = () => Pay.open();
-    // sign in / account button next to it
-    const ab = document.getElementById('authBadge');
+    const s = Pay.status || {};
+    // ---- account button: shows whenever a hub is configured (login is separate from billing) ----
+    const ab = document.getElementById("authBadge");
     if (ab) {
-      if (!Pay.hub) { ab.style.display = 'none'; }
+      if (!Pay.hub) { ab.style.display = "none"; }
       else {
-        ab.style.display = '';
+        ab.style.display = "";
         if (s.signed_in) {
-          const nm = (s.user && (s.user.name || s.user.email)) || '';
-          ab.textContent = '👤 ' + (nm.split(' ')[0] || (Pay.T('account') || 'Account'));
-          ab.onclick = () => { if (confirm((Pay.T('signOutQ') || 'Sign out?'))) Pay.signOut(); };
+          const nm = (s.user && (s.user.name || s.user.email)) || "";
+          ab.textContent = "👤 " + ((nm.split(" ")[0]) || (Pay.T("account") || "Account"));
+          ab.onclick = () => { if (confirm((Pay.T("signOutQ") || "Sign out?"))) Pay.signOut(); };
         } else {
-          ab.textContent = '👤 ' + (Pay.T('signIn') || 'Sign in');
-          ab.onclick = () => Pay.auth('in');
+          ab.textContent = "👤 " + (Pay.T("signIn") || "Sign in");
+          ab.onclick = () => Pay.auth("in");
         }
       }
     }
+    // ---- credit chip: only meaningful when the billing proxy is on ----
+    const el = document.getElementById("creditBadge");
+    if (!el) return;
+    if (!Pay.active || Pay.status === null || Pay.status.plan === "off") { el.style.display = "none"; return; }
+    el.style.display = "";
+    if (s.signed_in || s.paid) {
+      el.textContent = "💎 " + (s.credits || 0) + " " + (Pay.T("credits") || "credits");
+      el.className = "credit-badge paid";
+    } else {
+      el.textContent = "🎟️ " + (s.free_left || 0) + "/" + (s.free_limit || 0) + " " + (Pay.T("freeToday") || "free today");
+      el.className = "credit-badge" + (s.free_left === 0 ? " out" : "");
+    }
+    el.onclick = () => Pay.open();
   };
 
   /* ---------- the paywall / pricing modal ---------- */
@@ -912,8 +922,9 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
 
   /* ---------- boot ---------- */
   Pay.init = async function () {
-    if (!Pay.active) { const el = document.getElementById('creditBadge'); if (el) el.style.display = 'none'; return; }
-    await Pay.claimIfPaid();
+    const cb = document.getElementById('creditBadge'); if (cb && !Pay.active) cb.style.display = 'none';
+    if (!Pay.active && !Pay.hub) return;   // neither billing nor accounts configured
+    if (Pay.active) await Pay.claimIfPaid();
     await Pay.refresh();
   };
 })();
