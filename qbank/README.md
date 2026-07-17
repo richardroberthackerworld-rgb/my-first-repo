@@ -90,5 +90,14 @@ reply unchanged. `api.php` also:
 never overwrites it (the zip only ships `keys.example.php`). Requires PHP 7+ with cURL — standard
 on every cPanel host.
 
-## ⚠️ Note on key privacy
-Because this is a static site, any key you put in `config.js` is visible to anyone who can open the page's source. That's fine for personal use or a private/local deployment. If you ever put this on a **public** website, move the keys behind a tiny backend proxy so visitors can't read them.
+### 💾 Answer cache (built in, on by default with the proxy)
+
+Hundreds of students ask the same topics. The first one costs an AI call; **everyone after that is
+served instantly from disk for free** — typically cutting API usage by **60–80%** once you have real
+traffic, and making repeat questions feel instant.
+
+- Controlled by `cache_hours` in `keys.php` (default `168` = 7 days; `0` disables)
+- **Photo questions are never cached** — every photo is unique
+- **Errors and empty replies are never cached** — only genuinely good answers
+- Clicking **"More questions"** always generates fresh ones (it tells the AI what was already asked)
+- Response header `X-7By-Cache: HIT|MISS` lets you confirm it's working

@@ -66,6 +66,37 @@ function origin_allowed(array $CFG): bool {
     return false;
 }
 
+/* ---------- answer cache ----------------------------------------------------
+   Hundreds of students ask the same topics ("plant cell", "quadratic equations").
+   Caching the AI's reply means the 2nd..500th student is served instantly and
+   costs ZERO quota. Keyed by the exact request, so a different subject/topic/
+   language/settings never collides. Photo requests are never cached (each photo
+   is unique, and it keeps students' uploads off the disk).                     */
+function cache_dir(array $CFG): ?string {
+    if (!($CFG['cache_hours'] ?? 168)) return null;
+    $dir = $CFG['cache_dir'] ?? (sys_get_temp_dir() . '/7by-cache');
+    if (!is_dir($dir)) @mkdir($dir, 0700, true);
+    return is_dir($dir) ? $dir : null;
+}
+function has_image(array $payload): bool {
+    $j = json_encode($payload);
+    return strpos($j, 'inline_data') !== false || strpos($j, 'image_url') !== false;
+}
+function cache_get(?string $dir, string $k, int $hours): ?string {
+    if (!$dir) return null;
+    $f = $dir . '/' . $k . '.json';
+    if (!is_file($f) || @filemtime($f) < time() - $hours * 3600) return null;
+    $v = @file_get_contents($f);
+    return ($v === false || $v === '') ? null : $v;
+}
+function cache_put(?string $dir, string $k, string $body): void {
+    if (!$dir) return;
+    @file_put_contents($dir . '/' . $k . '.json', $body, LOCK_EX);
+    if (mt_rand(1, 100) === 1) {   // occasional sweep of expired entries
+        foreach ((array)@glob($dir . '/*.json') as $f) if (@filemtime($f) < time() - 30 * 86400) @unlink($f);
+    }
+}
+
 /* ---------- simple per-IP hourly cap so nobody drains your quota ---------- */
 function rate_ok(array $CFG): bool {
     $limit = (int)($CFG['rate_per_hour'] ?? 60);
@@ -115,6 +146,16 @@ if ($model === '' || strlen($model) > 100 ||
 $keys = keys_for($CFG, $provider);
 if (!$keys) out(503, ['error' => ['message' => 'No key configured for ' . $provider]]);
 
+/* ---------- serve from cache when the same question was already answered ---------- */
+$cacheHours = (int)($CFG['cache_hours'] ?? 168);              // 168h = 7 days; 0 disables
+$cDir  = cache_dir($CFG);
+$cKey  = hash('sha256', $provider . '|' . $model . '|' . json_encode($payload));
+$cacheable = $cDir && !has_image($payload);                    // never cache photo questions
+if ($cacheable) {
+    $hit = cache_get($cDir, $cKey, $cacheHours);
+    if ($hit !== null) { header('X-7By-Cache: HIT'); echo $hit; exit; }
+}
+
 /* ---------- call the provider; rotate keys when one is rate-limited ---------- */
 $url  = str_replace('{model}', rawurlencode($model), $ENDPOINTS[$provider]);
 $body = json_encode($payload);
@@ -148,5 +189,14 @@ foreach ($keys as $k) {
     break;                                                          // success or a real error → return it
 }
 
+// only cache a genuinely good answer — never an error or an empty reply
+if ($cacheable && $last['code'] === 200 && strlen($last['text']) > 40) {
+    $probe = json_decode($last['text'], true);
+    $text  = ($probe['candidates'][0]['content']['parts'][0]['text'] ?? '')
+           . ($probe['choices'][0]['message']['content'] ?? '');
+    if (trim($text) !== '') cache_put($cDir, $cKey, $last['text']);
+}
+
+header('X-7By-Cache: MISS');
 http_response_code($last['code']);
 echo $last['text'];

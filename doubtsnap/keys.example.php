@@ -42,6 +42,16 @@ return [
        Raise it once you add logins/paid plans. 0 = unlimited. ---- */
     'rate_per_hour' => 60,
 
+    /* ---- ANSWER CACHE — your biggest quota saver ----
+       Hundreds of students ask the same topics ("plant cell", "quadratic
+       equations"). The first one costs an AI call; everyone after that is
+       served instantly from disk for FREE. Typically cuts API usage by
+       60-80% once you have real traffic.
+         168 = keep answers 7 days   |   0 = disable caching
+       Photo questions are never cached (every photo is unique). */
+    'cache_hours' => 168,
+    // 'cache_dir' => '/home/USER/7by-cache',   // set if your host wipes /tmp often
+
     /* ---- advanced (safe to leave alone) ---- */
     'max_body_mb' => 12,   // photo uploads need room
     'timeout'     => 120,  // seconds to wait for the AI

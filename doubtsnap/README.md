@@ -73,3 +73,14 @@ reply unchanged. `api.php` also:
 `.htaccess` blocks `keys.php` from ever being fetched over the web, and re-uploading the site zip
 never overwrites it (the zip only ships `keys.example.php`). Requires PHP 7+ with cURL — standard
 on every cPanel host.
+### 💾 Answer cache (built in, on by default with the proxy)
+
+Hundreds of students ask the same topics. The first one costs an AI call; **everyone after that is
+served instantly from disk for free** — typically cutting API usage by **60–80%** once you have real
+traffic, and making repeat questions feel instant.
+
+- Controlled by `cache_hours` in `keys.php` (default `168` = 7 days; `0` disables)
+- **Photo questions are never cached** — every photo is unique
+- **Errors and empty replies are never cached** — only genuinely good answers
+- Clicking **"More questions"** always generates fresh ones (it tells the AI what was already asked)
+- Response header `X-7By-Cache: HIT|MISS` lets you confirm it's working
