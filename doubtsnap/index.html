@@ -830,13 +830,29 @@ document.addEventListener('paste', e=>{
 
 /* ================= AI ENGINES (multi-provider) ================= */
 const CFG = Object.assign({gemini:'',groq:'',cerebras:'',openrouter:'',mistral:'',github:''}, (window.DS_CONFIG && window.DS_CONFIG.keys) || {});
+// PROXY MODE (recommended for a public site): set proxy:"api.php" in config.js and the
+// keys live only on the server (keys.php) — the browser never sees them. Without it, the
+// app calls providers straight from the browser using the keys in config.js.
+const PROXY = String((window.DS_CONFIG && window.DS_CONFIG.proxy) || '').trim();
+let proxyProviders = [];   // which engines the server has keys for (fetched once at startup)
 // Each provider may hold ONE key or MANY (array, or comma/newline separated).
 // More keys = more free daily quota: we rotate to the next key when one is rate-limited.
-const keysOf = id => (Array.isArray(CFG[id]) ? CFG[id] : String(CFG[id]||'').split(/[,\n]/))
-  .map(s=>String(s||'').trim()).filter(Boolean);
+const keysOf = id => PROXY
+  ? (proxyProviders.includes(id) ? ['server'] : [])   // the server holds the real keys
+  : (Array.isArray(CFG[id]) ? CFG[id] : String(CFG[id]||'').split(/[,\n]/))
+      .map(s=>String(s||'').trim()).filter(Boolean);
 const key = id => keysOf(id)[0] || '';
 const active = id => keysOf(id).length > 0;
-const anyEngine = () => Object.keys(CFG).some(active);
+const anyEngine = () => PROXY ? proxyProviders.length > 0 : Object.keys(CFG).some(active);
+async function initProxy(){
+  if(!PROXY) return;
+  try{
+    const r = await fetch(PROXY + '?action=providers', {headers:{'Accept':'application/json'}});
+    const j = await r.json();
+    proxyProviders = Array.isArray(j.providers) ? j.providers : [];
+  }catch(e){ proxyProviders = []; }
+  updateEngineBadge();
+}
 // true when the error means "this key is out of quota / rate-limited" → try the next key
 const isQuotaErr = e => /429|quota|rate.?limit|exhaust|too many requests|billing/i.test(e && e.message || '');
 const PROV_NAME = { gemini:'Google Gemini', groq:'Groq', cerebras:'Cerebras', openrouter:'OpenRouter', mistral:'Mistral', github:'GitHub Models' };
@@ -987,10 +1003,14 @@ async function callGeminiModel(model, sys, userText, img, prior, apiKey, noThink
   // return zero visible text ("Empty response"). Cap the thinking so text is always produced;
   // on a retry (noThink) drop it to the floor so the model MUST answer.
   if(is25) genCfg.thinkingConfig = { thinkingBudget: noThink ? (/pro/.test(model) ? 128 : 0) : (/pro/.test(model) ? 8192 : 2048) };
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,{
-    method:'POST', headers:{'Content-Type':'application/json','x-goog-api-key':apiKey||key('gemini')},
-    body: JSON.stringify({ system_instruction:{parts:[{text:sys}]}, contents, generationConfig:genCfg })
-  });
+  const payload = { system_instruction:{parts:[{text:sys}]}, contents, generationConfig:genCfg };
+  // proxy mode → the server adds the key and returns the provider's reply unchanged
+  const res = PROXY
+    ? await fetch(PROXY, { method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ provider:'gemini', model, payload }) })
+    : await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,{
+        method:'POST', headers:{'Content-Type':'application/json','x-goog-api-key':apiKey||key('gemini')},
+        body: JSON.stringify(payload) });
   const data = await res.json();
   if(!res.ok) throw new Error(data.error?.message || ('HTTP '+res.status));
   const cand = data.candidates?.[0];
@@ -1004,12 +1024,14 @@ async function callOpenAICompat(id, model, sys, userText, img, prior, apiKey){
     : userText;
   const messages = [{role:'system',content:sys},{role:'user',content:userContent}];
   if(prior) messages.push({role:'assistant',content:prior},{role:'user',content:CONTINUE_MSG});
+  const payload = { model, messages, temperature:.4, max_tokens:8192 };
   const headers = {'Content-Type':'application/json','Authorization':'Bearer '+(apiKey||key(id))};
   if(id==='openrouter') headers['X-Title'] = '7Solve';
-  const res = await fetch(OA_BASE[id],{
-    method:'POST', headers,
-    body: JSON.stringify({ model, messages, temperature:.4, max_tokens:8192 })
-  });
+  // proxy mode → the server adds the key and returns the provider's reply unchanged
+  const res = PROXY
+    ? await fetch(PROXY, { method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ provider:id, model, payload }) })
+    : await fetch(OA_BASE[id], { method:'POST', headers, body: JSON.stringify(payload) });
   const data = await res.json();
   if(!res.ok) throw new Error(data.error?.message || data.error || ('HTTP '+res.status));
   const ch = data.choices?.[0];
@@ -1443,6 +1465,7 @@ function mdToHtml(md){
 
 /* ================= init ================= */
 applyLang();
+initProxy();   // proxy mode: ask the server which engines it has keys for
 </script>
 </body>
 </html>

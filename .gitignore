@@ -2,6 +2,10 @@
 *.zip
 *.tar.gz
 
+# SERVER-SIDE API KEYS — never commit. Only keys.example.php belongs in git.
+keys.php
+*/keys.php
+
 # Local tooling state
 .gstack/
 .claude/settings.local.json

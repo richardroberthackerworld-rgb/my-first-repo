@@ -67,5 +67,28 @@ The homepage tool card and footer already link to `https://qbank.7by.in`, so goi
 
 Visit `https://qbank.7by.in` — the ⚙️ badge at the top-right should show your active engines. If it says "No AI key set", `config.js` on the server still has empty keys.
 
+## 🔒 Hide your keys (do this before a public launch)
+
+By default the app calls the AI providers straight from the browser, so anything in `config.js` is
+visible in the page source. That's fine for personal use. For a **public site, use the built-in
+proxy** — your keys then live only on the server and visitors can never read them:
+
+1. **File Manager** → in the site folder, copy **`keys.example.php`** → **`keys.php`**
+2. **Edit `keys.php`** → paste your API keys there (it also holds the allowed-origins list and the
+   per-visitor hourly limit)
+3. **Edit `config.js`** → set `proxy: "api.php"` and leave every key **empty**
+4. Hard-refresh. Done — view source and you'll find no keys anywhere.
+
+How it works: the browser posts to `api.php`, which adds the key server-side and returns the AI's
+reply unchanged. `api.php` also:
+- **rotates keys** when one hits its daily limit (put several in `keys.php` for more quota)
+- **blocks other websites** from using your proxy (`allow_origins`)
+- **rate-limits per visitor** (`rate_per_hour`, default 60) so nobody drains your quota
+- **allow-lists models** so nobody can make it call something expensive
+
+`.htaccess` blocks `keys.php` from ever being fetched over the web, and re-uploading the site zip
+never overwrites it (the zip only ships `keys.example.php`). Requires PHP 7+ with cURL — standard
+on every cPanel host.
+
 ## ⚠️ Note on key privacy
 Because this is a static site, any key you put in `config.js` is visible to anyone who can open the page's source. That's fine for personal use or a private/local deployment. If you ever put this on a **public** website, move the keys behind a tiny backend proxy so visitors can't read them.

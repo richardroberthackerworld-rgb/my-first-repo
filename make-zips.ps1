@@ -58,12 +58,16 @@ New-Zip -Zip (Join-Path $base 'vocalremover-app.zip') -Roots $appRoots
 #    cPanel ClamAV flags any zip containing .js (Foxhole.JS_Zip false-positive),
 #    so config.js ships as config.js.txt — after uploading, edit your keys into it
 #    and RENAME it to config.js in File Manager.
+#    keys.php holds LIVE server-side keys — it must NEVER be zipped or shipped.
+#    Only keys.example.php goes out; the user copies it to keys.php on the server.
 function New-AppZip {
   param([string]$AppDir, [string]$Zip)
   $stage = Join-Path $env:TEMP ("appzip-" + (Split-Path $AppDir -Leaf))
   New-Item -ItemType Directory -Force $stage | Out-Null
   Copy-Item (Join-Path $AppDir 'config.js') (Join-Path $stage 'config.js.txt') -Force
-  $roots = Get-ChildItem -LiteralPath $AppDir -File | Where-Object { $_.Extension -ne '.js' } | Select-Object -ExpandProperty FullName
+  $roots = Get-ChildItem -LiteralPath $AppDir -File |
+    Where-Object { $_.Extension -ne '.js' -and $_.Name -ne 'keys.php' } |
+    Select-Object -ExpandProperty FullName
   $roots += (Join-Path $stage 'config.js.txt')
   New-Zip -Zip $Zip -Roots $roots
 }
