@@ -3,8 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>7Marks 💯 — Generate question papers from any subject or photo</title>
-<meta name="description" content="7Marks — select a subject & topic or upload photos of your textbook/notes, and generate a full question bank: theory or practical, long answers, short answers, MCQs, fill in the blanks, true/false — with answer key — for Class 1 to 10, Inter, Degree, CA/CMA, Jobs & Current Affairs, in English, Hindi or Telugu.">
+<title>7Q 💯 — Generate question papers from any subject or photo</title>
+<meta name="description" content="7Q — select a subject & topic or upload photos of your textbook/notes, and generate a full question bank: theory or practical, long answers, short answers, MCQs, fill in the blanks, true/false — with answer key — for Class 1 to 10, Inter, Degree, CA/CMA, Jobs & Current Affairs, in English, Hindi or Telugu.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="favicon.svg">
+<meta name="theme-color" content="#3B37F5">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700;900&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Serif+Devanagari:wght@400;600&family=Noto+Serif+Telugu:wght@400;600&display=swap" rel="stylesheet">
@@ -338,6 +341,47 @@ textarea#topicText::placeholder{color:var(--ink-faint);font-style:italic}
 .note-item .nq{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
 .note-item .nm{font-size:11px;color:var(--ink-faint);white-space:nowrap;letter-spacing:.5px}
 .empty-note{font-style:italic;color:var(--ink-faint);font-size:14px}
+/* ---------- paywall: credit chip, pricing modal, toast ---------- */
+.credit-badge{
+  font-family:var(--serif);font-size:13px;cursor:pointer;
+  background:rgba(247,241,227,.12);color:#e8d9b5;border:1px solid rgba(212,175,106,.45);
+  border-radius:20px;padding:6px 13px;transition:all .2s ease;white-space:nowrap;
+}
+.credit-badge:hover{background:rgba(247,241,227,.24);color:#fff}
+.credit-badge.paid{color:#a8d49a;border-color:rgba(120,180,100,.6)}
+.credit-badge.out{color:#f0b3ad;border-color:rgba(200,90,80,.7);background:rgba(150,50,40,.25)}
+.pay-modal{max-width:640px}
+.pay-sub{color:var(--ink-soft);margin-bottom:16px !important}
+.plan-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:16px 0}
+.plan{
+  position:relative;background:var(--paper-2);border:1px solid var(--rule);border-radius:8px;
+  padding:18px 14px 14px;text-align:center;transition:all .2s ease;
+}
+.plan:hover{border-color:var(--gold);transform:translateY(-2px);box-shadow:0 6px 18px rgba(90,60,20,.15)}
+.plan.best{border-color:var(--gold);background:#fbf3dd;box-shadow:inset 0 0 0 1px var(--gold)}
+.plan-tag{
+  position:absolute;top:-10px;left:50%;transform:translateX(-50%);
+  background:var(--maroon);color:var(--paper);font-size:10px;letter-spacing:1px;
+  padding:3px 10px;border-radius:10px;white-space:nowrap;
+}
+.plan-price{font-family:var(--display);font-size:27px;font-weight:700;color:var(--maroon)}
+.plan-price span{font-size:13px;font-weight:400;color:var(--ink-faint)}
+.plan-credits{font-size:15px;color:var(--ink);margin-top:2px}
+.plan-note{font-size:11.5px;color:var(--ink-faint);font-style:italic;margin:6px 0 12px;line-height:1.4}
+.plan-btn{
+  width:100%;font-family:var(--display);font-weight:700;font-size:14px;cursor:pointer;
+  background:linear-gradient(180deg,var(--leather-2),var(--leather));color:#f3e6c8;
+  border:1px solid var(--gold-soft);border-radius:6px;padding:9px 0;transition:all .15s ease;
+}
+.plan-btn:hover{transform:translateY(-1px)}
+.pay-fine{font-size:12px;color:var(--ink-faint);font-style:italic;line-height:1.5}
+.pay-toast{
+  position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);
+  background:var(--leather);color:#f3e6c8;border:1px solid var(--gold-soft);
+  border-radius:8px;padding:12px 20px;font-size:14px;max-width:90vw;text-align:center;
+  opacity:0;pointer-events:none;transition:all .3s ease;z-index:60;box-shadow:0 10px 30px rgba(0,0,0,.4);
+}
+.pay-toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 .del-btn{
   background:none;border:none;cursor:pointer;color:var(--ink-faint);
   font-size:14px;line-height:1;padding:4px 6px;border-radius:4px;flex-shrink:0;transition:all .15s ease;
@@ -368,7 +412,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
 <body>
 
 <header class="cover">
-  <div class="brand">7<span class="bank">Marks</span> <span style="font-size:.7em">💯</span></div>
+  <div class="brand">7<span class="bank">Q</span> <span style="font-size:.7em">💯</span></div>
   <div class="tagline" data-i18n="tagline">Pick a subject & topic — or snap your textbook — and get a full question bank with answers.</div>
   <div class="tagline-sub" data-i18n="taglineSub">Class 1–10 · Intermediate (MPC · BiPC · CEC · MEC) · Degree · CA · CMA · US CMA · Jobs & Current Affairs</div>
 </header>
@@ -379,7 +423,10 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
     <button class="lang-tab" data-lang="hi">हिंदी</button>
     <button class="lang-tab" data-lang="te">తెలుగు</button>
   </div>
-  <div class="key-btn engine-badge" id="engineBadge">…</div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <button class="credit-badge" id="creditBadge" style="display:none"></button>
+    <div class="key-btn engine-badge" id="engineBadge">…</div>
+  </div>
 </div>
 
 <main class="book">
@@ -539,10 +586,185 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
 
 <footer>
   <span class="fleuron">❦</span>
-  <span data-i18n="footer">7Marks — practice makes rank. Free forever, from 7By.in. · AI-generated — please verify answers before your exam.</span>
+  <span data-i18n="footer">7Q — practice makes rank. Free forever, from 7By.in. · AI-generated — please verify answers before your exam.</span>
 </footer>
 
+<script>window.__APP_ID='7q'; window.__APP_NAME='7Q';</script>
 <script src="config.js"></script>
+<script>
+/* ============================================================
+   7By PAYWALL (client)
+   ------------------------------------------------------------
+   This file only DISPLAYS the plan and opens checkout.
+   Every credit decision is made server-side in api.php/billing.php,
+   so editing anything here cannot grant free usage.
+
+   Needs: window.QB_CONFIG/DS_CONFIG .proxy  → paywall is active
+          (no proxy = direct keys = personal use, paywall off)
+   ============================================================ */
+(function () {
+  const CFG = window.QB_CONFIG || window.DS_CONFIG || {};
+  const PROXY = (CFG.proxy || '').trim();
+  const APP_NAME = window.__APP_NAME || '7By';
+  const LS_PASS = 'sevenby_pass_' + (window.__APP_ID || 'app');
+
+  const Pay = window.Pay = {
+    status: null,          // {plan, credits, free_left, free_limit, paid, plans, pay_url}
+    token: localStorage.getItem(LS_PASS) || '',
+    active: !!PROXY,       // no proxy → no paywall
+  };
+
+  const money = p => '₹' + (p / 100).toFixed(0);
+
+  /* ---------- talk to the server ---------- */
+  Pay.refresh = async function () {
+    if (!Pay.active) return null;
+    try {
+      const r = await fetch(PROXY + '?action=me', { headers: Pay.headers() });
+      Pay.status = await r.json();
+    } catch (e) { Pay.status = null; }
+    Pay.renderBadge();
+    return Pay.status;
+  };
+  Pay.headers = () => Pay.token ? { 'X-7By-Pass': Pay.token } : {};
+
+  /* ---------- after 7Pay sends the buyer back with ?paid=ORDER ---------- */
+  Pay.claimIfPaid = async function () {
+    if (!Pay.active) return;
+    const u = new URL(location.href);
+    const order = u.searchParams.get('paid');
+    if (!order) return;
+    try {
+      const r = await fetch(PROXY + '?action=claim&order=' + encodeURIComponent(order));
+      const j = await r.json();
+      if (j.token) {
+        Pay.token = j.token;
+        localStorage.setItem(LS_PASS, j.token);
+        await Pay.refresh();
+        Pay.toast('✅ ' + (Pay.T('paidOk') || 'Payment successful — your credits are ready!'));
+      } else {
+        Pay.toast('⏳ ' + (Pay.T('paidPending') || 'Payment is still being confirmed. Refresh in a minute.'));
+      }
+    } catch (e) {}
+    u.searchParams.delete('paid');
+    history.replaceState(null, '', u.pathname + (u.search || '') + u.hash);
+  };
+
+  /* ---------- small helpers the apps can override for i18n ---------- */
+  Pay.T = k => (window.t ? window.t(k) : null);
+
+  Pay.toast = function (msg) {
+    let el = document.getElementById('payToast');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'payToast';
+      el.className = 'pay-toast';
+      document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    el.classList.add('on');
+    setTimeout(() => el.classList.remove('on'), 4000);
+  };
+
+  /* ---------- the little "credits left" chip ---------- */
+  Pay.renderBadge = function () {
+    const el = document.getElementById('creditBadge');
+    if (!el) return;
+    if (!Pay.active || !Pay.status || Pay.status.plan === 'off') { el.style.display = 'none'; return; }
+    el.style.display = '';
+    const s = Pay.status;
+    if (s.paid) {
+      el.textContent = '💎 ' + s.credits + ' ' + (Pay.T('credits') || 'credits');
+      el.className = 'credit-badge paid';
+    } else {
+      el.textContent = '🎟️ ' + s.free_left + '/' + s.free_limit + ' ' + (Pay.T('freeToday') || 'free today');
+      el.className = 'credit-badge' + (s.free_left === 0 ? ' out' : '');
+    }
+    el.onclick = () => Pay.open();
+  };
+
+  /* ---------- the paywall / pricing modal ---------- */
+  Pay.open = function (reason) {
+    const s = Pay.status || {};
+    const plans = s.plans || {};
+    const bg = document.getElementById('payModal') || (() => {
+      const d = document.createElement('div');
+      d.id = 'payModal'; d.className = 'modal-bg';
+      document.body.appendChild(d);
+      d.addEventListener('click', e => { if (e.target === d) d.classList.remove('on'); });
+      return d;
+    })();
+
+    const head = reason === 'out'
+      ? (Pay.T('payOutTitle') || 'You’ve used today’s free questions')
+      : (Pay.T('payTitle') || 'Get more questions');
+    const sub = reason === 'out'
+      ? (Pay.T('payOutSub') || 'Come back tomorrow for more free ones — or unlock now and keep going.')
+      : (Pay.T('paySub') || 'Free every day. Unlock more whenever you need them.');
+
+    const order = ['monthly', 'pack_150', 'pack_50'];
+    const cards = order.filter(k => plans[k]).map(k => {
+      const p = plans[k];
+      const best = k === 'monthly';
+      return `<div class="plan${best ? ' best' : ''}" data-plan="${k}">
+        ${best ? `<div class="plan-tag">${Pay.T('bestValue') || 'BEST VALUE'}</div>` : ''}
+        <div class="plan-price">${money(p.amount)}${best ? `<span>/${Pay.T('month') || 'month'}</span>` : ''}</div>
+        <div class="plan-credits">${p.credits} ${Pay.T('credits') || 'credits'}</div>
+        <div class="plan-note">${best ? (Pay.T('planMonthlyNote') || 'Renews monthly · cancel anytime')
+                                       : (Pay.T('planPackNote') || 'One-time · valid 1 year')}</div>
+        <button class="plan-btn">${Pay.T('choose') || 'Choose'}</button>
+      </div>`;
+    }).join('');
+
+    bg.innerHTML = `<div class="modal pay-modal">
+      <h3>${head}</h3>
+      <p class="pay-sub">${sub}</p>
+      <div class="plan-grid">${cards || '<p>' + (Pay.T('noPlans') || 'Plans are not configured yet.') + '</p>'}</div>
+      <p class="pay-fine">${Pay.T('payFine') || 'One credit = one AI answer. Answers already asked by other students are free and never use a credit.'}</p>
+      <div class="m-actions">
+        <button class="mini-btn" id="payClose">${Pay.T('close') || 'Close'}</button>
+      </div>
+    </div>`;
+    bg.classList.add('on');
+    bg.querySelector('#payClose').onclick = () => bg.classList.remove('on');
+    bg.querySelectorAll('.plan').forEach(card => {
+      card.querySelector('.plan-btn').onclick = () => Pay.checkout(card.dataset.plan);
+    });
+  };
+
+  /* ---------- send the buyer to 7Pay ---------- */
+  Pay.checkout = function (planKey) {
+    const s = Pay.status || {};
+    const p = (s.plans || {})[planKey];
+    if (!p) return;
+    if (!s.pay_url) { Pay.toast(Pay.T('payNotReady') || 'Payments are not switched on yet — please try again later.'); return; }
+    const back = location.origin + location.pathname;
+    const url = s.pay_url
+      + (s.pay_url.includes('?') ? '&' : '?')
+      + 'app=' + encodeURIComponent(s.app || '')
+      + '&plan=' + encodeURIComponent(planKey)
+      + '&amount=' + encodeURIComponent(p.amount)
+      + '&label=' + encodeURIComponent(APP_NAME + ' — ' + p.label)
+      + '&return=' + encodeURIComponent(back);
+    location.href = url;
+  };
+
+  /* ---------- called by the apps when the server says 402 ---------- */
+  Pay.handle402 = async function (body) {
+    if (body && body.billing) { Pay.status = Object.assign(Pay.status || {}, body.billing); Pay.renderBadge(); }
+    await Pay.refresh();
+    Pay.open('out');
+  };
+
+  /* ---------- boot ---------- */
+  Pay.init = async function () {
+    if (!Pay.active) { const el = document.getElementById('creditBadge'); if (el) el.style.display = 'none'; return; }
+    await Pay.claimIfPaid();
+    await Pay.refresh();
+  };
+})();
+
+</script>
 <script>
 /* ================= DATA: levels, courses, subjects (same as Doubt Snap) ================= */
 const LEVELS = [
@@ -653,6 +875,13 @@ const I18N = {
     showKey:'Show answer key', hideKey:'Hide answer key',
     copy:'Copy paper', print:'Print / Save PDF', more:'More questions (same topic)', newPaper:'New paper',
     share:'Share', close:'Close',
+    credits:'credits', freeToday:'free today', month:'month', bestValue:'BEST VALUE', choose:'Choose',
+    payTitle:'Get more questions', paySub:'Free every day. Unlock more whenever you need them.',
+    payOutTitle:'You’ve used today’s free questions', payOutSub:'Come back tomorrow for more free ones — or unlock now and keep going.',
+    planMonthlyNote:'Renews monthly · cancel anytime', planPackNote:'One-time · valid 1 year',
+    payFine:'One credit = one AI answer. Answers already asked by other students are free and never use a credit.',
+    payNotReady:'Payments are not switched on yet — please try again later.', noPlans:'Plans are not configured yet.',
+    paidOk:'Payment successful — your credits are ready!', paidPending:'Payment is still being confirmed. Refresh in a minute.',
     del:'Delete', clearAll:'Clear all', clearConfirm:'Delete all saved papers from this device?',
     grpStudy:'🎓 Study & Practice', grpVary:'🔄 Make another',
     practiceTest:'🎯 Take a practice test', studyNotes:'📖 Study notes', keyFormulas:'🧠 Key formulas', examMistakesM:'❓ Common exam mistakes',
@@ -661,7 +890,7 @@ const I18N = {
     score:'Score', retry:'Try again',
     ch5:'My Paper Shelf', ch5hint:'Your last 20 generated question papers, saved on this device.',
     emptyNote:'No papers generated yet. Your question banks will be saved here like papers on a shelf.',
-    footer:'7Marks — practice makes rank. Free forever, from 7By.in. · AI-generated — please verify answers before your exam.',
+    footer:'7Q — practice makes rank. Free forever, from 7By.in. · AI-generated — please verify answers before your exam.',
     siteChip:'Free question papers for every exam',
     noEngine:'No AI key set — add one in config.js', engines:'Engines',
     errNoEngine:'No AI key found. Please add at least one free key in config.js (e.g. Gemini).',
@@ -691,6 +920,13 @@ const I18N = {
     showKey:'उत्तर कुंजी दिखाएँ', hideKey:'उत्तर कुंजी छिपाएँ',
     copy:'पेपर कॉपी करें', print:'प्रिंट / PDF सेव करें', more:'और प्रश्न (इसी टॉपिक पर)', newPaper:'नया पेपर',
     share:'शेयर करें', close:'बंद करें',
+    credits:'क्रेडिट', freeToday:'आज फ्री', month:'माह', bestValue:'सबसे बढ़िया', choose:'चुनें',
+    payTitle:'और प्रश्न पाएँ', paySub:'हर दिन फ्री। जब चाहें और अनलॉक करें।',
+    payOutTitle:'आज के फ्री प्रश्न पूरे हो गए', payOutSub:'कल फिर फ्री मिलेंगे — या अभी अनलॉक करके जारी रखें।',
+    planMonthlyNote:'हर माह रिन्यू · कभी भी बंद करें', planPackNote:'एक बार · 1 साल वैध',
+    payFine:'1 क्रेडिट = 1 AI उत्तर। जो प्रश्न पहले पूछे जा चुके हैं वे फ्री हैं, क्रेडिट नहीं लगता।',
+    payNotReady:'भुगतान अभी चालू नहीं है — बाद में कोशिश करें।', noPlans:'प्लान अभी सेट नहीं हैं।',
+    paidOk:'भुगतान सफल — आपके क्रेडिट तैयार हैं!', paidPending:'भुगतान की पुष्टि हो रही है। एक मिनट बाद रिफ्रेश करें।',
     del:'हटाएँ', clearAll:'सभी हटाएँ', clearConfirm:'इस डिवाइस से सभी सेव किए पेपर हटा दें?',
     grpStudy:'🎓 पढ़ाई और अभ्यास', grpVary:'🔄 और बनाएँ',
     practiceTest:'🎯 प्रैक्टिस टेस्ट दें', studyNotes:'📖 स्टडी नोट्स', keyFormulas:'🧠 मुख्य सूत्र', examMistakesM:'❓ परीक्षा में आम गलतियाँ',
@@ -699,7 +935,7 @@ const I18N = {
     score:'स्कोर', retry:'फिर से',
     ch5:'मेरी पेपर शेल्फ', ch5hint:'आपके पिछले 20 प्रश्न पत्र, इसी डिवाइस पर सेव।',
     emptyNote:'अभी तक कोई पेपर नहीं बना। आपके प्रश्न बैंक यहाँ शेल्फ पर पेपर की तरह सेव होंगे।',
-    footer:'7Marks — अभ्यास से ही रैंक बनती है। हमेशा फ्री, 7By.in की ओर से। · AI से बना — परीक्षा से पहले उत्तर जाँच लें।',
+    footer:'7Q — अभ्यास से ही रैंक बनती है। हमेशा फ्री, 7By.in की ओर से। · AI से बना — परीक्षा से पहले उत्तर जाँच लें।',
     siteChip:'हर परीक्षा के लिए फ्री प्रश्न पत्र',
     noEngine:'कोई AI कुंजी सेट नहीं — config.js में जोड़ें', engines:'इंजन',
     errNoEngine:'कोई AI कुंजी नहीं मिली। कृपया config.js में कम से कम एक फ्री कुंजी जोड़ें (जैसे Gemini)।',
@@ -729,6 +965,13 @@ const I18N = {
     showKey:'ఆన్సర్ కీ చూపించండి', hideKey:'ఆన్సర్ కీ దాచండి',
     copy:'పేపర్ కాపీ', print:'ప్రింట్ / PDF సేవ్', more:'ఇంకా ప్రశ్నలు (ఇదే టాపిక్)', newPaper:'కొత్త పేపర్',
     share:'షేర్ చేయండి', close:'మూసివేయండి',
+    credits:'క్రెడిట్లు', freeToday:'ఈరోజు ఫ్రీ', month:'నెల', bestValue:'బెస్ట్ వాల్యూ', choose:'ఎంచుకోండి',
+    payTitle:'మరిన్ని ప్రశ్నలు పొందండి', paySub:'ప్రతిరోజూ ఫ్రీ. కావలసినప్పుడు అన్‌లాక్ చేయండి.',
+    payOutTitle:'ఈరోజు ఫ్రీ ప్రశ్నలు అయిపోయాయి', payOutSub:'రేపు మళ్లీ ఫ్రీ — లేదా ఇప్పుడే అన్‌లాక్ చేసి కొనసాగండి.',
+    planMonthlyNote:'ప్రతి నెలా రెన్యూ · ఎప్పుడైనా ఆపవచ్చు', planPackNote:'ఒకసారి · 1 సంవత్సరం చెల్లుతుంది',
+    payFine:'1 క్రెడిట్ = 1 AI సమాధానం. ఇతర విద్యార్థులు ఇప్పటికే అడిగిన ప్రశ్నలు ఫ్రీ, క్రెడిట్ ఖర్చు కాదు.',
+    payNotReady:'చెల్లింపులు ఇంకా ప్రారంభం కాలేదు — తర్వాత ప్రయత్నించండి.', noPlans:'ప్లాన్లు ఇంకా సెట్ కాలేదు.',
+    paidOk:'చెల్లింపు విజయవంతం — మీ క్రెడిట్లు సిద్ధం!', paidPending:'చెల్లింపు నిర్ధారణ జరుగుతోంది. ఒక నిమిషంలో రిఫ్రెష్ చేయండి.',
     del:'తొలగించు', clearAll:'అన్నీ తొలగించు', clearConfirm:'ఈ డివైస్ నుండి సేవ్ చేసిన అన్ని పేపర్లను తొలగించాలా?',
     grpStudy:'🎓 చదువు & ప్రాక్టీస్', grpVary:'🔄 మరొకటి తయారు చేయండి',
     practiceTest:'🎯 ప్రాక్టీస్ టెస్ట్ రాయండి', studyNotes:'📖 స్టడీ నోట్స్', keyFormulas:'🧠 ముఖ్య సూత్రాలు', examMistakesM:'❓ పరీక్షలో సాధారణ తప్పులు',
@@ -737,7 +980,7 @@ const I18N = {
     score:'స్కోర్', retry:'మళ్లీ',
     ch5:'నా పేపర్ షెల్ఫ్', ch5hint:'మీ చివరి 20 ప్రశ్నాపత్రాలు, ఈ డివైస్‌లో సేవ్ అవుతాయి.',
     emptyNote:'ఇంకా పేపర్లు తయారు చేయలేదు. మీ క్వశ్చన్ బ్యాంకులు షెల్ఫ్‌లో పేపర్లలా ఇక్కడ సేవ్ అవుతాయి.',
-    footer:'7Marks — ప్రాక్టీస్ చేస్తేనే ర్యాంక్. ఎప్పటికీ ఫ్రీ, 7By.in నుండి. · AI రూపొందించినది — పరీక్షకు ముందు సమాధానాలు సరిచూసుకోండి.',
+    footer:'7Q — ప్రాక్టీస్ చేస్తేనే ర్యాంక్. ఎప్పటికీ ఫ్రీ, 7By.in నుండి. · AI రూపొందించినది — పరీక్షకు ముందు సమాధానాలు సరిచూసుకోండి.',
     siteChip:'ప్రతి పరీక్షకూ ఫ్రీ ప్రశ్నాపత్రాలు',
     noEngine:'AI కీ సెట్ చేయలేదు — config.js లో జోడించండి', engines:'ఇంజన్లు',
     errNoEngine:'AI కీ కనబడలేదు. దయచేసి config.js లో కనీసం ఒక ఫ్రీ కీ జోడించండి (ఉదా. Gemini).',
@@ -1060,6 +1303,10 @@ const CONTINUE_MSG = 'Continue EXACTLY from where your previous message stopped.
 // thrown when a model replies with no usable text — the caller retries it without thinking
 const noTextErr = why => Object.assign(new Error(why), { noText:true });
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+// proxy requests carry the pass token so the server knows the plan/credits
+const proxyHeaders = () => Object.assign({'Content-Type':'application/json'}, (window.Pay && Pay.headers()) || {});
+// server said "out of credits" (402) — stop the whole chain, no other engine will help
+const payWallErr = data => Object.assign(new Error('PAYWALL'), { paywall:true, body:data });
 async function callGeminiModel(model, sysText, userText, imgs, prior, apiKey, noThink){
   const parts = [];
   (imgs||[]).forEach(img=> parts.push({ inline_data:{ mime_type:img.mime, data:img.b64 } }));
@@ -1076,12 +1323,13 @@ async function callGeminiModel(model, sysText, userText, imgs, prior, apiKey, no
   const payload = { system_instruction:{parts:[{text:sysText}]}, contents, generationConfig:genCfg };
   // proxy mode → the server adds the key and returns the provider's reply unchanged
   const res = PROXY
-    ? await fetch(PROXY, { method:'POST', headers:{'Content-Type':'application/json'},
+    ? await fetch(PROXY, { method:'POST', headers:proxyHeaders(),
         body: JSON.stringify({ provider:'gemini', model, payload }) })
     : await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,{
         method:'POST', headers:{'Content-Type':'application/json','x-goog-api-key':apiKey||key('gemini')},
         body: JSON.stringify(payload) });
   const data = await res.json();
+  if(res.status === 402) throw payWallErr(data);
   if(!res.ok) throw new Error(errText(data.error, res.status));
   const cand = data.candidates?.[0];
   const txt = stripThink(cand?.content?.parts?.map(p=>p.text||'').join('') || '');
@@ -1096,13 +1344,14 @@ async function callOpenAICompat(id, model, sysText, userText, imgs, prior, apiKe
   if(prior) messages.push({role:'assistant',content:prior},{role:'user',content:CONTINUE_MSG});
   const payload = { model, messages, temperature:.5, max_tokens:8192 };
   const headers = {'Content-Type':'application/json','Authorization':'Bearer '+(apiKey||key(id))};
-  if(id==='openrouter') headers['X-Title'] = '7Marks';
+  if(id==='openrouter') headers['X-Title'] = '7Q';
   // proxy mode → the server adds the key and returns the provider's reply unchanged
   const res = PROXY
-    ? await fetch(PROXY, { method:'POST', headers:{'Content-Type':'application/json'},
+    ? await fetch(PROXY, { method:'POST', headers:proxyHeaders(),
         body: JSON.stringify({ provider:id, model, payload }) })
     : await fetch(OA_BASE[id], { method:'POST', headers, body: JSON.stringify(payload) });
   const data = await res.json();
+  if(res.status === 402) throw payWallErr(data);
   if(!res.ok) throw new Error(errText(data.error, res.status));
   const ch = data.choices?.[0];
   const txt = stripThink(ch?.message?.content || '');
@@ -1122,6 +1371,8 @@ async function runAttempt(a, sysText, userText, imgs){
   }
   throw keyErr || new Error('No key');
 }
+// out of credits → give up immediately; no engine can fix that
+function isPaywall(e){ return !!(e && e.paywall); }
 async function runWithKey(a, sysText, userText, imgs, k){
   const call = (prior, noThink) => a.id==='gemini'
     ? callGeminiModel(a.model, sysText, userText, imgs, prior, k, noThink)
@@ -1158,7 +1409,7 @@ async function getPaper(userText, imgs, opts){
       if(!fallback) fallback = {text:txt, via:a};    // keep first response as a last resort
       lastErr = new Error('BAD_FORMAT');
     }
-    catch(e){ lastErr = e; }
+    catch(e){ if(isPaywall(e)) throw e; lastErr = e; }   // out of credits → stop now
   }
   if(fallback) return fallback;   // every engine returned an odd shape — show the best we got, don't dead-end
   throw lastErr || new Error('All engines failed');
@@ -1185,7 +1436,7 @@ function buildSystemPrompt(){
   const sections = selectedTypes().map((qt,i)=>
     `   ${i+1}. "## ${qt.em} <${qt.name.en} heading in the student's language>" — EXACTLY ${state.types[qt.id].count} questions, numbered 1., 2., 3.… ${qt.instr}`
   ).join('\n');
-  return `You are "7Marks", a strict but fair Indian examiner and expert question-paper setter.
+  return `You are "7Q", a strict but fair Indian examiner and expert question-paper setter.
 
 STUDENT PROFILE:
 - Level: ${lv.name.en}
@@ -1251,11 +1502,15 @@ async function generate(more){
     showPaper(text);
     saveToShelf(state.lastTopic, text, state.lastVia);
   }catch(err){
-    const m = err.message;
-    const msg = m==='NO_VISION' ? t('errNoVision') : m==='NO_ENGINE' ? t('errNoEngine') : t('errApi') + '  [' + m + ']';
-    $('errMsg').textContent = msg;
+    if(isPaywall(err)){ Pay.handle402(err.body); }    // out of credits → show plans, not an error
+    else {
+      const m = err.message;
+      const msg = m==='NO_VISION' ? t('errNoVision') : m==='NO_ENGINE' ? t('errNoEngine') : t('errApi') + '  [' + m + ']';
+      $('errMsg').textContent = msg;
+    }
   }finally{
     state.busy = false; $('genBtn').disabled = false; $('quill').classList.remove('on');
+    if(window.Pay && Pay.active) Pay.refresh();       // keep the credit chip in sync
   }
 }
 $('genBtn').onclick = ()=> generate(false);
@@ -1314,7 +1569,7 @@ function printPaper(){
 function morePaper(){ generate(true); }
 function sharePaper(){
   const text = state.lastMd||'';
-  if(navigator.share){ navigator.share({title:'7Marks', text}).catch(()=>{}); return; }
+  if(navigator.share){ navigator.share({title:'7Q', text}).catch(()=>{}); return; }
   copyPaper();
 }
 function regen(diff){ $('diffSel').value = diff; localStorage.setItem('qb_diff', diff); generate(false); }
@@ -1341,7 +1596,7 @@ async function getExtra(kind){
   body.innerHTML = '<p><em>'+t('thinking')+'</em></p>';
   box.style.display='block'; box.scrollIntoView({behavior:'smooth',block:'nearest'});
   const lv = LEVELS.find(l=>l.id===state.level);
-  const sysText = `You are "7Marks", an expert Indian teacher. Reply ENTIRELY in ${LANG_NAME[state.lang]} for a ${lv.name.en} · ${$('courseSel').value} · ${$('subjectSel').value} student. Keep it concise and scannable. Plain-text math only, never LaTeX.`;
+  const sysText = `You are "7Q", an expert Indian teacher. Reply ENTIRELY in ${LANG_NAME[state.lang]} for a ${lv.name.en} · ${$('courseSel').value} · ${$('subjectSel').value} student. Keep it concise and scannable. Plain-text math only, never LaTeX.`;
   state.busy=true;
   try{
     const { text } = await getPaper(`Topic: "${state.lastTopic||$('topicText').value}". ${spec.ask}`, [], { sysText, validate:s=>!!s });
@@ -1353,7 +1608,7 @@ async function getExtra(kind){
 /* ================= Interactive Practice Test ================= */
 function buildQuizPrompt(){
   const lv = LEVELS.find(l=>l.id===state.level);
-  return `You are "7Marks" building an interactive PRACTICE TEST for a ${lv.name.en} · ${$('courseSel').value} · ${$('subjectSel').value} student on the given topic.
+  return `You are "7Q" building an interactive PRACTICE TEST for a ${lv.name.en} · ${$('courseSel').value} · ${$('subjectSel').value} student on the given topic.
 Output ONLY a JSON object (no prose, no code fence) shaped EXACTLY:
 {"intro":"one line","steps":[{"q":"question","options":["A","B","C","D"],"answer":0,"explain":"why, 1-2 lines"}],"final":"one closing tip"}
 Rules: 5 MCQ questions, each 4 options, "answer" is the 0-based index of the correct option; make sure exactly one option is correct and verify it; write EVERYTHING in ${LANG_NAME[state.lang]}; plain-text math (×, ÷, √, ²), never LaTeX. Return VALID JSON only.`;
@@ -1543,6 +1798,7 @@ function mdToHtml(md){
 /* ================= init ================= */
 applyLang();
 initProxy();   // proxy mode: ask the server which engines it has keys for
+if(window.Pay) Pay.init();   // paywall: claim a fresh payment, then show credits left
 </script>
 </body>
 </html>

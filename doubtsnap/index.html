@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>7Solve ✅ — Snap a doubt, get the answer</title>
 <meta name="description" content="7Solve — take a photo of any question from Class 1 to 10, Inter (MPC/BiPC/CEC/MEC), Degree, CA/CMA/US CMA, Jobs & Current Affairs, and get the exact answer with a step-by-step explanation in English, Hindi or Telugu.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="favicon.svg">
+<meta name="theme-color" content="#3B37F5">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700;900&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Serif+Devanagari:wght@400;600&family=Noto+Serif+Telugu:wght@400;600&display=swap" rel="stylesheet">
@@ -317,6 +320,47 @@ textarea#qtext::placeholder{color:var(--ink-faint);font-style:italic}
 .note-item .nq{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
 .note-item .nm{font-size:11px;color:var(--ink-faint);white-space:nowrap;letter-spacing:.5px}
 .empty-note{font-style:italic;color:var(--ink-faint);font-size:14px}
+/* ---------- paywall: credit chip, pricing modal, toast ---------- */
+.credit-badge{
+  font-family:var(--serif);font-size:13px;cursor:pointer;
+  background:rgba(247,241,227,.12);color:#e8d9b5;border:1px solid rgba(212,175,106,.45);
+  border-radius:20px;padding:6px 13px;transition:all .2s ease;white-space:nowrap;
+}
+.credit-badge:hover{background:rgba(247,241,227,.24);color:#fff}
+.credit-badge.paid{color:#a8d49a;border-color:rgba(120,180,100,.6)}
+.credit-badge.out{color:#f0b3ad;border-color:rgba(200,90,80,.7);background:rgba(150,50,40,.25)}
+.pay-modal{max-width:640px}
+.pay-sub{color:var(--ink-soft);margin-bottom:16px !important}
+.plan-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:16px 0}
+.plan{
+  position:relative;background:var(--paper-2);border:1px solid var(--rule);border-radius:8px;
+  padding:18px 14px 14px;text-align:center;transition:all .2s ease;
+}
+.plan:hover{border-color:var(--gold);transform:translateY(-2px);box-shadow:0 6px 18px rgba(90,60,20,.15)}
+.plan.best{border-color:var(--gold);background:#fbf3dd;box-shadow:inset 0 0 0 1px var(--gold)}
+.plan-tag{
+  position:absolute;top:-10px;left:50%;transform:translateX(-50%);
+  background:var(--maroon);color:var(--paper);font-size:10px;letter-spacing:1px;
+  padding:3px 10px;border-radius:10px;white-space:nowrap;
+}
+.plan-price{font-family:var(--display);font-size:27px;font-weight:700;color:var(--maroon)}
+.plan-price span{font-size:13px;font-weight:400;color:var(--ink-faint)}
+.plan-credits{font-size:15px;color:var(--ink);margin-top:2px}
+.plan-note{font-size:11.5px;color:var(--ink-faint);font-style:italic;margin:6px 0 12px;line-height:1.4}
+.plan-btn{
+  width:100%;font-family:var(--display);font-weight:700;font-size:14px;cursor:pointer;
+  background:linear-gradient(180deg,var(--leather-2),var(--leather));color:#f3e6c8;
+  border:1px solid var(--gold-soft);border-radius:6px;padding:9px 0;transition:all .15s ease;
+}
+.plan-btn:hover{transform:translateY(-1px)}
+.pay-fine{font-size:12px;color:var(--ink-faint);font-style:italic;line-height:1.5}
+.pay-toast{
+  position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);
+  background:var(--leather);color:#f3e6c8;border:1px solid var(--gold-soft);
+  border-radius:8px;padding:12px 20px;font-size:14px;max-width:90vw;text-align:center;
+  opacity:0;pointer-events:none;transition:all .3s ease;z-index:60;box-shadow:0 10px 30px rgba(0,0,0,.4);
+}
+.pay-toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 .del-btn{
   background:none;border:none;cursor:pointer;color:var(--ink-faint);
   font-size:14px;line-height:1;padding:4px 6px;border-radius:4px;flex-shrink:0;transition:all .15s ease;
@@ -387,7 +431,10 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
     <button class="lang-tab" data-lang="hi">हिंदी</button>
     <button class="lang-tab" data-lang="te">తెలుగు</button>
   </div>
-  <div class="key-btn engine-badge" id="engineBadge">…</div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <button class="credit-badge" id="creditBadge" style="display:none"></button>
+    <div class="key-btn engine-badge" id="engineBadge">…</div>
+  </div>
 </div>
 
 <main class="book">
@@ -555,7 +602,182 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   <span data-i18n="footer">7Solve — every doubt deserves a good answer. Free forever, from 7By.in. · AI-generated — please verify before your exam.</span>
 </footer>
 
+<script>window.__APP_ID='7solve'; window.__APP_NAME='7Solve';</script>
 <script src="config.js"></script>
+<script>
+/* ============================================================
+   7By PAYWALL (client)
+   ------------------------------------------------------------
+   This file only DISPLAYS the plan and opens checkout.
+   Every credit decision is made server-side in api.php/billing.php,
+   so editing anything here cannot grant free usage.
+
+   Needs: window.QB_CONFIG/DS_CONFIG .proxy  → paywall is active
+          (no proxy = direct keys = personal use, paywall off)
+   ============================================================ */
+(function () {
+  const CFG = window.QB_CONFIG || window.DS_CONFIG || {};
+  const PROXY = (CFG.proxy || '').trim();
+  const APP_NAME = window.__APP_NAME || '7By';
+  const LS_PASS = 'sevenby_pass_' + (window.__APP_ID || 'app');
+
+  const Pay = window.Pay = {
+    status: null,          // {plan, credits, free_left, free_limit, paid, plans, pay_url}
+    token: localStorage.getItem(LS_PASS) || '',
+    active: !!PROXY,       // no proxy → no paywall
+  };
+
+  const money = p => '₹' + (p / 100).toFixed(0);
+
+  /* ---------- talk to the server ---------- */
+  Pay.refresh = async function () {
+    if (!Pay.active) return null;
+    try {
+      const r = await fetch(PROXY + '?action=me', { headers: Pay.headers() });
+      Pay.status = await r.json();
+    } catch (e) { Pay.status = null; }
+    Pay.renderBadge();
+    return Pay.status;
+  };
+  Pay.headers = () => Pay.token ? { 'X-7By-Pass': Pay.token } : {};
+
+  /* ---------- after 7Pay sends the buyer back with ?paid=ORDER ---------- */
+  Pay.claimIfPaid = async function () {
+    if (!Pay.active) return;
+    const u = new URL(location.href);
+    const order = u.searchParams.get('paid');
+    if (!order) return;
+    try {
+      const r = await fetch(PROXY + '?action=claim&order=' + encodeURIComponent(order));
+      const j = await r.json();
+      if (j.token) {
+        Pay.token = j.token;
+        localStorage.setItem(LS_PASS, j.token);
+        await Pay.refresh();
+        Pay.toast('✅ ' + (Pay.T('paidOk') || 'Payment successful — your credits are ready!'));
+      } else {
+        Pay.toast('⏳ ' + (Pay.T('paidPending') || 'Payment is still being confirmed. Refresh in a minute.'));
+      }
+    } catch (e) {}
+    u.searchParams.delete('paid');
+    history.replaceState(null, '', u.pathname + (u.search || '') + u.hash);
+  };
+
+  /* ---------- small helpers the apps can override for i18n ---------- */
+  Pay.T = k => (window.t ? window.t(k) : null);
+
+  Pay.toast = function (msg) {
+    let el = document.getElementById('payToast');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'payToast';
+      el.className = 'pay-toast';
+      document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    el.classList.add('on');
+    setTimeout(() => el.classList.remove('on'), 4000);
+  };
+
+  /* ---------- the little "credits left" chip ---------- */
+  Pay.renderBadge = function () {
+    const el = document.getElementById('creditBadge');
+    if (!el) return;
+    if (!Pay.active || !Pay.status || Pay.status.plan === 'off') { el.style.display = 'none'; return; }
+    el.style.display = '';
+    const s = Pay.status;
+    if (s.paid) {
+      el.textContent = '💎 ' + s.credits + ' ' + (Pay.T('credits') || 'credits');
+      el.className = 'credit-badge paid';
+    } else {
+      el.textContent = '🎟️ ' + s.free_left + '/' + s.free_limit + ' ' + (Pay.T('freeToday') || 'free today');
+      el.className = 'credit-badge' + (s.free_left === 0 ? ' out' : '');
+    }
+    el.onclick = () => Pay.open();
+  };
+
+  /* ---------- the paywall / pricing modal ---------- */
+  Pay.open = function (reason) {
+    const s = Pay.status || {};
+    const plans = s.plans || {};
+    const bg = document.getElementById('payModal') || (() => {
+      const d = document.createElement('div');
+      d.id = 'payModal'; d.className = 'modal-bg';
+      document.body.appendChild(d);
+      d.addEventListener('click', e => { if (e.target === d) d.classList.remove('on'); });
+      return d;
+    })();
+
+    const head = reason === 'out'
+      ? (Pay.T('payOutTitle') || 'You’ve used today’s free questions')
+      : (Pay.T('payTitle') || 'Get more questions');
+    const sub = reason === 'out'
+      ? (Pay.T('payOutSub') || 'Come back tomorrow for more free ones — or unlock now and keep going.')
+      : (Pay.T('paySub') || 'Free every day. Unlock more whenever you need them.');
+
+    const order = ['monthly', 'pack_150', 'pack_50'];
+    const cards = order.filter(k => plans[k]).map(k => {
+      const p = plans[k];
+      const best = k === 'monthly';
+      return `<div class="plan${best ? ' best' : ''}" data-plan="${k}">
+        ${best ? `<div class="plan-tag">${Pay.T('bestValue') || 'BEST VALUE'}</div>` : ''}
+        <div class="plan-price">${money(p.amount)}${best ? `<span>/${Pay.T('month') || 'month'}</span>` : ''}</div>
+        <div class="plan-credits">${p.credits} ${Pay.T('credits') || 'credits'}</div>
+        <div class="plan-note">${best ? (Pay.T('planMonthlyNote') || 'Renews monthly · cancel anytime')
+                                       : (Pay.T('planPackNote') || 'One-time · valid 1 year')}</div>
+        <button class="plan-btn">${Pay.T('choose') || 'Choose'}</button>
+      </div>`;
+    }).join('');
+
+    bg.innerHTML = `<div class="modal pay-modal">
+      <h3>${head}</h3>
+      <p class="pay-sub">${sub}</p>
+      <div class="plan-grid">${cards || '<p>' + (Pay.T('noPlans') || 'Plans are not configured yet.') + '</p>'}</div>
+      <p class="pay-fine">${Pay.T('payFine') || 'One credit = one AI answer. Answers already asked by other students are free and never use a credit.'}</p>
+      <div class="m-actions">
+        <button class="mini-btn" id="payClose">${Pay.T('close') || 'Close'}</button>
+      </div>
+    </div>`;
+    bg.classList.add('on');
+    bg.querySelector('#payClose').onclick = () => bg.classList.remove('on');
+    bg.querySelectorAll('.plan').forEach(card => {
+      card.querySelector('.plan-btn').onclick = () => Pay.checkout(card.dataset.plan);
+    });
+  };
+
+  /* ---------- send the buyer to 7Pay ---------- */
+  Pay.checkout = function (planKey) {
+    const s = Pay.status || {};
+    const p = (s.plans || {})[planKey];
+    if (!p) return;
+    if (!s.pay_url) { Pay.toast(Pay.T('payNotReady') || 'Payments are not switched on yet — please try again later.'); return; }
+    const back = location.origin + location.pathname;
+    const url = s.pay_url
+      + (s.pay_url.includes('?') ? '&' : '?')
+      + 'app=' + encodeURIComponent(s.app || '')
+      + '&plan=' + encodeURIComponent(planKey)
+      + '&amount=' + encodeURIComponent(p.amount)
+      + '&label=' + encodeURIComponent(APP_NAME + ' — ' + p.label)
+      + '&return=' + encodeURIComponent(back);
+    location.href = url;
+  };
+
+  /* ---------- called by the apps when the server says 402 ---------- */
+  Pay.handle402 = async function (body) {
+    if (body && body.billing) { Pay.status = Object.assign(Pay.status || {}, body.billing); Pay.renderBadge(); }
+    await Pay.refresh();
+    Pay.open('out');
+  };
+
+  /* ---------- boot ---------- */
+  Pay.init = async function () {
+    if (!Pay.active) { const el = document.getElementById('creditBadge'); if (el) el.style.display = 'none'; return; }
+    await Pay.claimIfPaid();
+    await Pay.refresh();
+  };
+})();
+
+</script>
 <script>
 /* ================= DATA: levels, courses, subjects ================= */
 const LEVELS = [
@@ -641,6 +863,13 @@ const I18N = {
     ch3:'The Answer', copy:'Copy answer', followup:'Ask my own follow-up', newDoubt:'New doubt',
     hint:'Give me a hint', hintTitle:'Hint — try it yourself first', hintSolve:'Show me the full solution',
     share:'Share', exportPdf:'Export PDF', close:'Close',
+    credits:'credits', freeToday:'free today', month:'month', bestValue:'BEST VALUE', choose:'Choose',
+    payTitle:'Get more questions', paySub:'Free every day. Unlock more whenever you need them.',
+    payOutTitle:'You’ve used today’s free questions', payOutSub:'Come back tomorrow for more free ones — or unlock now and keep going.',
+    planMonthlyNote:'Renews monthly · cancel anytime', planPackNote:'One-time · valid 1 year',
+    payFine:'One credit = one AI answer. Answers already asked by other students are free and never use a credit.',
+    payNotReady:'Payments are not switched on yet — please try again later.', noPlans:'Plans are not configured yet.',
+    paidOk:'Payment successful — your credits are ready!', paidPending:'Payment is still being confirmed. Refresh in a minute.',
     del:'Delete', clearAll:'Clear all', clearConfirm:'Delete all saved doubts from this device?',
     grpLearn:'📚 Learn More', grpPractice:'📝 Practice', grpExplore:'🔄 Explore', grpSmart:'🎯 Smart Tutor',
     eli10:"🧒 Explain like I'm 10", explainSimply:'💡 Explain more simply', detailSteps:'🔍 Each step in detail',
@@ -673,6 +902,13 @@ const I18N = {
     ch3:'उत्तर', copy:'उत्तर कॉपी करें', followup:'अपना सवाल पूछें', newDoubt:'नया डाउट',
     hint:'मुझे संकेत दें', hintTitle:'संकेत — पहले खुद कोशिश करें', hintSolve:'पूरा हल दिखाएँ',
     share:'शेयर करें', exportPdf:'PDF सेव करें', close:'बंद करें',
+    credits:'क्रेडिट', freeToday:'आज फ्री', month:'माह', bestValue:'सबसे बढ़िया', choose:'चुनें',
+    payTitle:'और प्रश्न पाएँ', paySub:'हर दिन फ्री। जब चाहें और अनलॉक करें।',
+    payOutTitle:'आज के फ्री प्रश्न पूरे हो गए', payOutSub:'कल फिर फ्री मिलेंगे — या अभी अनलॉक करके जारी रखें।',
+    planMonthlyNote:'हर माह रिन्यू · कभी भी बंद करें', planPackNote:'एक बार · 1 साल वैध',
+    payFine:'1 क्रेडिट = 1 AI उत्तर। जो प्रश्न पहले पूछे जा चुके हैं वे फ्री हैं, क्रेडिट नहीं लगता।',
+    payNotReady:'भुगतान अभी चालू नहीं है — बाद में कोशिश करें।', noPlans:'प्लान अभी सेट नहीं हैं।',
+    paidOk:'भुगतान सफल — आपके क्रेडिट तैयार हैं!', paidPending:'भुगतान की पुष्टि हो रही है। एक मिनट बाद रिफ्रेश करें।',
     del:'हटाएँ', clearAll:'सभी हटाएँ', clearConfirm:'इस डिवाइस से सभी सेव किए डाउट हटा दें?',
     grpLearn:'📚 और सीखें', grpPractice:'📝 अभ्यास', grpExplore:'🔄 और जानें', grpSmart:'🎯 स्मार्ट ट्यूटर',
     eli10:'🧒 10 साल के बच्चे जैसा समझाएँ', explainSimply:'💡 आसान भाषा में समझाएँ', detailSteps:'🔍 हर चरण विस्तार से',
@@ -705,6 +941,13 @@ const I18N = {
     ch3:'సమాధానం', copy:'సమాధానం కాపీ', followup:'నా ప్రశ్న అడగండి', newDoubt:'కొత్త డౌట్',
     hint:'ఒక సూచన ఇవ్వండి', hintTitle:'సూచన — ముందు మీరే ప్రయత్నించండి', hintSolve:'పూర్తి సాధన చూపించండి',
     share:'షేర్ చేయండి', exportPdf:'PDF సేవ్', close:'మూసివేయండి',
+    credits:'క్రెడిట్లు', freeToday:'ఈరోజు ఫ్రీ', month:'నెల', bestValue:'బెస్ట్ వాల్యూ', choose:'ఎంచుకోండి',
+    payTitle:'మరిన్ని ప్రశ్నలు పొందండి', paySub:'ప్రతిరోజూ ఫ్రీ. కావలసినప్పుడు అన్‌లాక్ చేయండి.',
+    payOutTitle:'ఈరోజు ఫ్రీ ప్రశ్నలు అయిపోయాయి', payOutSub:'రేపు మళ్లీ ఫ్రీ — లేదా ఇప్పుడే అన్‌లాక్ చేసి కొనసాగండి.',
+    planMonthlyNote:'ప్రతి నెలా రెన్యూ · ఎప్పుడైనా ఆపవచ్చు', planPackNote:'ఒకసారి · 1 సంవత్సరం చెల్లుతుంది',
+    payFine:'1 క్రెడిట్ = 1 AI సమాధానం. ఇతర విద్యార్థులు ఇప్పటికే అడిగిన ప్రశ్నలు ఫ్రీ, క్రెడిట్ ఖర్చు కాదు.',
+    payNotReady:'చెల్లింపులు ఇంకా ప్రారంభం కాలేదు — తర్వాత ప్రయత్నించండి.', noPlans:'ప్లాన్లు ఇంకా సెట్ కాలేదు.',
+    paidOk:'చెల్లింపు విజయవంతం — మీ క్రెడిట్లు సిద్ధం!', paidPending:'చెల్లింపు నిర్ధారణ జరుగుతోంది. ఒక నిమిషంలో రిఫ్రెష్ చేయండి.',
     del:'తొలగించు', clearAll:'అన్నీ తొలగించు', clearConfirm:'ఈ డివైస్ నుండి సేవ్ చేసిన అన్ని డౌట్లను తొలగించాలా?',
     grpLearn:'📚 ఇంకా నేర్చుకోండి', grpPractice:'📝 ప్రాక్టీస్', grpExplore:'🔄 అన్వేషించండి', grpSmart:'🎯 స్మార్ట్ ట్యూటర్',
     eli10:'🧒 10 ఏళ్ల పిల్లాడికిలా వివరించండి', explainSimply:'💡 సులభంగా వివరించండి', detailSteps:'🔍 ప్రతి దశ వివరంగా',
@@ -990,6 +1233,11 @@ const CONTINUE_MSG = 'Continue EXACTLY from where your previous message stopped.
 // thrown when a model replies with no usable text — the caller retries it without thinking
 const noTextErr = why => Object.assign(new Error(why), { noText:true });
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+// proxy requests carry the pass token so the server knows the plan/credits
+const proxyHeaders = () => Object.assign({'Content-Type':'application/json'}, (window.Pay && Pay.headers()) || {});
+// server said 'out of credits' (402) — stop the whole chain, no other engine will help
+const payWallErr = data => Object.assign(new Error('PAYWALL'), { paywall:true, body:data });
+function isPaywall(e){ return !!(e && e.paywall); }
 async function callGeminiModel(model, sys, userText, img, prior, apiKey, noThink){
   const parts = [];
   if(img) parts.push({ inline_data:{ mime_type:img.mime, data:img.b64 } });
@@ -1006,12 +1254,13 @@ async function callGeminiModel(model, sys, userText, img, prior, apiKey, noThink
   const payload = { system_instruction:{parts:[{text:sys}]}, contents, generationConfig:genCfg };
   // proxy mode → the server adds the key and returns the provider's reply unchanged
   const res = PROXY
-    ? await fetch(PROXY, { method:'POST', headers:{'Content-Type':'application/json'},
+    ? await fetch(PROXY, { method:'POST', headers:proxyHeaders(),
         body: JSON.stringify({ provider:'gemini', model, payload }) })
     : await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,{
         method:'POST', headers:{'Content-Type':'application/json','x-goog-api-key':apiKey||key('gemini')},
         body: JSON.stringify(payload) });
   const data = await res.json();
+  if(res.status === 402) throw payWallErr(data);
   if(!res.ok) throw new Error(data.error?.message || ('HTTP '+res.status));
   const cand = data.candidates?.[0];
   const txt = stripThink(cand?.content?.parts?.map(p=>p.text||'').join('') || '');
@@ -1029,10 +1278,11 @@ async function callOpenAICompat(id, model, sys, userText, img, prior, apiKey){
   if(id==='openrouter') headers['X-Title'] = '7Solve';
   // proxy mode → the server adds the key and returns the provider's reply unchanged
   const res = PROXY
-    ? await fetch(PROXY, { method:'POST', headers:{'Content-Type':'application/json'},
+    ? await fetch(PROXY, { method:'POST', headers:proxyHeaders(),
         body: JSON.stringify({ provider:id, model, payload }) })
     : await fetch(OA_BASE[id], { method:'POST', headers, body: JSON.stringify(payload) });
   const data = await res.json();
+  if(res.status === 402) throw payWallErr(data);
   if(!res.ok) throw new Error(data.error?.message || data.error || ('HTTP '+res.status));
   const ch = data.choices?.[0];
   const txt = stripThink(ch?.message?.content || '');
@@ -1087,7 +1337,7 @@ async function getAnswer(userText, img, opts){
       if(!fallback) fallback = {text:txt, via:a};    // keep first response as a last resort
       lastErr = new Error('BAD_FORMAT');
     }
-    catch(e){ lastErr = e; }
+    catch(e){ if(isPaywall(e)) throw e; lastErr = e; }   // out of credits → stop now
   }
   if(fallback) return fallback;   // every engine returned an odd shape — show the best we got, don't dead-end
   throw lastErr || new Error('All engines failed');
@@ -1151,11 +1401,15 @@ async function solve(extraQuestion){
     showAnswer(text);
     saveToNotebook((extraQuestion!==undefined ? '↪ ' : '') + (typed || '📷 ' + t('imgAttached')), text, state.lastVia);
   }catch(err){
-    const m = err.message;
-    const msg = m==='NO_VISION' ? t('errNoVision') : m==='NO_ENGINE' ? t('errNoEngine') : t('errApi') + '  [' + m + ']';
-    $('errMsg').textContent = msg;
+    if(isPaywall(err)){ Pay.handle402(err.body); }    // out of credits → show plans, not an error
+    else {
+      const m = err.message;
+      const msg = m==='NO_VISION' ? t('errNoVision') : m==='NO_ENGINE' ? t('errNoEngine') : t('errApi') + '  [' + m + ']';
+      $('errMsg').textContent = msg;
+    }
   }finally{
     state.busy = false; $('solveBtn').disabled = false; $('hintBtn').disabled = false; $('quill').classList.remove('on');
+    if(window.Pay && Pay.active) Pay.refresh();       // keep the credit chip in sync
   }
 }
 $('solveBtn').onclick = ()=> solve();
@@ -1465,7 +1719,8 @@ function mdToHtml(md){
 
 /* ================= init ================= */
 applyLang();
-initProxy();   // proxy mode: ask the server which engines it has keys for
+initProxy();
+if(window.Pay) Pay.init();   // paywall: claim a fresh payment, then show credits left   // proxy mode: ask the server which engines it has keys for
 </script>
 </body>
 </html>

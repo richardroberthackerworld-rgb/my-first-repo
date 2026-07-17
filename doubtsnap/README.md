@@ -84,3 +84,35 @@ traffic, and making repeat questions feel instant.
 - **Errors and empty replies are never cached** — only genuinely good answers
 - Clicking **"More questions"** always generates fresh ones (it tells the AI what was already asked)
 - Response header `X-7By-Cache: HIT|MISS` lets you confirm it's working
+## 💳 Paywall — free tier, credits, ₹99/month
+
+**Enforced on the server** (`billing.php`, called from `api.php`). The browser only holds an opaque
+pass token — editing the page cannot grant anyone credits.
+
+| Plan | Price | Credits |
+|---|---|---|
+| Free | ₹0 | **5 per day**, resets daily |
+| Monthly | **₹99** | 500 credits / 30 days |
+| 150 pack | ₹49 | 150 credits, valid 1 year |
+| 50 pack | ₹20 | 50 credits, valid 1 year |
+
+- **1 credit = 1 AI answer.** Cached answers (already asked by another student) are **free** — they
+  cost you no quota, so they cost the student no credit.
+- **Even paid plans use credits**, so one heavy user can never drain your API quota.
+- **A failed AI call is refunded** — students are never charged for an error.
+- **7Solve and 7Q bill separately** — a 7Q pass gives no credits on 7Solve.
+
+### Switching it on
+1. In `keys.php` set `'app' => '7solve'`, a long random `'billing_secret'`, and your
+   `'pay_url'` (your 7Pay checkout page).
+2. Tune `'free_per_day'` and `'plans'` to taste. `'billing_off' => true` disables the paywall entirely.
+
+### What 7Pay must do after a successful payment
+1. **Webhook** (server→server): `POST api.php?action=activate` with
+   `{"secret":"<billing_secret>","order_id":"<id>","app":"7q","plan":"monthly","email":"..."}`
+   → responds `{"token":"..."}`. Retries are safe: the same order always returns the same token and
+   never double-credits.
+2. **Redirect** the buyer back to the site with `?paid=<order_id>` — the page swaps that for their
+   pass token automatically and the credits appear.
+
+The checkout button already sends `app`, `plan`, `amount`, `label` and `return` to your `pay_url`.
