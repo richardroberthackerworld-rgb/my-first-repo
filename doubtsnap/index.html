@@ -668,10 +668,14 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
 
   Pay.hubApi = async function (action, body, method) {
     if (!Pay.hub) throw new Error('accounts off');
-    const h = { 'Content-Type': 'application/json' };
+    method = method || (body ? 'POST' : 'GET');
+    const h = {};
+    // Only add Content-Type when there IS a body. On a bodyless GET it would
+    // force a CORS preflight (OPTIONS) and break the request ("Failed to fetch").
+    if (body) h['Content-Type'] = 'application/json';
     if (Pay.hubToken) h['Authorization'] = 'Bearer ' + Pay.hubToken;
     const r = await fetch(Pay.hub + '/api.php?action=' + action, {
-      method: method || 'POST', headers: h, credentials: 'include',
+      method: method, headers: h, credentials: 'include',
       body: body ? JSON.stringify(body) : undefined
     });
     const d = await r.json().catch(() => ({}));
@@ -986,6 +990,10 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   Pay.init = async function () {
     const cb = document.getElementById('creditBadge'); if (cb && !Pay.active) cb.style.display = 'none';
     if (!Pay.active && !Pay.hub) return;   // neither billing nor accounts configured
+    // Google client id: config.js wins, else fetch it once from the hub (set it there for all tools)
+    if (!Pay.googleId && Pay.hub) {
+      try { const d = await Pay.hubApi('public_config', null, 'GET'); if (d && d.google_client_id) Pay.googleId = d.google_client_id; } catch (e) {}
+    }
     if (Pay.active) await Pay.claimIfPaid();
     await Pay.refresh();
   };
