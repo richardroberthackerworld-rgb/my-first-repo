@@ -15,6 +15,17 @@ $GLOBALS['__RAW_IN'] = $in;   // lets current_user() find a {"token":...} in the
 
 switch ($action) {
 
+	/* ---- public settings a tool needs to render its sign-in box ----
+	        Just the Google client id (a PUBLIC value). Set it once here and
+	        every tool shows the Google button — no per-tool config needed. ---- */
+	case 'public_config': {
+		global $CFG;
+		$gid = $CFG['google']['client_id'] ?? '';
+		if (strpos($gid, 'TODO') === 0) $gid = '';   // not filled in yet
+		json_out(array('ok' => true, 'google_client_id' => $gid));
+		break;
+	}
+
 	/* ---- who am I (includes the tools this account has unlocked) ---- */
 	case 'me': {
 		$u = current_user();
