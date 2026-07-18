@@ -638,7 +638,9 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   Pay.hubToken = localStorage.getItem(LS_HUB) || '';
   // hub url is a PUBLIC address (no secret) — set it in config.js so the
   // sign-in button works even when the billing proxy is off.
-  Pay.hub = (CFG.hub || '').trim();
+  // Default to the shared account hub so the Sign in button is there out of the box.
+  // Set  hub: ''  in config.js to hide accounts, or point it at a different hub.
+  Pay.hub = (CFG.hub !== undefined ? String(CFG.hub) : 'https://account.7by.in').trim();
 
   Pay.authHeaders = function () {
     const h = {};
