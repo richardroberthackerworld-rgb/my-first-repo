@@ -69,9 +69,22 @@ function bill_free_used(array $CFG, string $app): int {
     $f = bill_free_file($CFG, $app);
     return ($f && is_file($f)) ? (int)@file_get_contents($f) : 0;
 }
+// free CREDITS per device per day (50 by default). credits, not calls.
 function bill_free_limit(array $CFG, string $app): int {
     $per = $CFG['free_per_day'] ?? [];
-    return (int)($per[$app] ?? $CFG['free_per_day_default'] ?? 5);
+    return (int)($per[$app] ?? $CFG['free_per_day_default'] ?? 50);
+}
+// credits one AI action costs (10 by default) — same for solve, paper, hint, each follow-up.
+function bill_cost(array $CFG): int {
+    return max(1, (int)($CFG['credits_per_call'] ?? 10));
+}
+/* The "big" models are expensive and have small free quotas. Free-tier users can only
+   use the cheap/basic models; a hard question that routes to a big model needs Premium. */
+function bill_is_premium_model(string $model): bool {
+    return (bool)preg_match(
+        '/gemini-2\.5-pro|deepseek|phi-4|nemotron-3-ultra|nemotron-3-super|tencent\/hy3|gpt-oss-120b|gpt-4o|llama-3\.3-70b-instruct/i',
+        $model
+    );
 }
 
 /* ---------- what does this visitor currently have? ---------- */
@@ -138,52 +151,57 @@ function hub_me(array $CFG, string $userToken): ?array {
    call never costs the student anything and no refund path is needed (the hub's
    consume clamps count to >= 1, so a "negative refund" would charge again). */
 function hub_spend(array $CFG, string $app, string $userToken): array {
-    $r = hub_call($CFG, 'consume', $userToken, ['count' => 1, 'product' => $app]);
+    $r = hub_call($CFG, 'consume', $userToken, ['count' => bill_cost($CFG), 'product' => $app]);
     if (!$r) return [false, 'hub_unreachable'];
     if (!empty($r['body']['ok'])) return [true, (int)($r['body']['credits'] ?? 0)];
     return [false, (string)($r['body']['error'] ?? 'hub_error')];
 }
 
-/* ---------- spend one credit. Returns [ok, status] ----------
-   Paid credits are used first; otherwise the daily free allowance. */
-function bill_charge(array $CFG, string $app, string $token): array {
+/* ---------- spend credits for one action. Returns [ok, status_or_reason] ----------
+   $premium = this request routes to a big/expensive model.
+   Paid credits are used first; otherwise the daily free allowance — but the free
+   allowance may only buy BASIC calls, so a premium call by a free user is refused. */
+function bill_charge(array $CFG, string $app, string $token, bool $premium = false): array {
     if (!empty($CFG['billing_off'])) return [true, ['plan' => 'off', 'credits' => 0, 'free_left' => 999, 'free_limit' => 999, 'paid' => true]];
+    $cost = bill_cost($CFG);
 
     $pass = $token ? bill_read_pass($CFG, $token) : null;
     if ($pass && ($pass['app'] ?? '') === $app) {
         $live = empty($pass['expires']) || $pass['expires'] >= time();
-        if ($live && (int)($pass['credits'] ?? 0) > 0) {
-            $pass['credits'] = (int)$pass['credits'] - 1;
-            $pass['used']    = (int)($pass['used'] ?? 0) + 1;
+        if ($live && (int)($pass['credits'] ?? 0) >= $cost) {
+            $pass['credits'] = (int)$pass['credits'] - $cost;   // paid credits work for basic AND premium
+            $pass['used']    = (int)($pass['used'] ?? 0) + $cost;
             bill_write_pass($CFG, $token, $pass);
             return [true, bill_status($CFG, $app, $token)];
         }
     }
-    // fall back to the free daily allowance
+    // free daily allowance — cheap models only
+    if ($premium) return [false, ['reason' => 'premium'] + bill_status($CFG, $app, $token)];
     $limit = bill_free_limit($CFG, $app);
     $used  = bill_free_used($CFG, $app);
-    if ($used >= $limit) return [false, bill_status($CFG, $app, $token)];
+    if ($used + $cost > $limit) return [false, ['reason' => 'no_credits'] + bill_status($CFG, $app, $token)];
     $f = bill_free_file($CFG, $app);
-    if ($f) @file_put_contents($f, (string)($used + 1), LOCK_EX);
+    if ($f) @file_put_contents($f, (string)($used + $cost), LOCK_EX);
     if (mt_rand(1, 50) === 1) {   // sweep yesterday's counters
         foreach ((array)@glob(bill_dir($CFG) . '/free_*.txt') as $g) if (@filemtime($g) < time() - 172800) @unlink($g);
     }
     return [true, bill_status($CFG, $app, $token)];
 }
 
-/* ---------- give the credit back when the AI failed (never charge for an error) ---------- */
+/* ---------- give the credits back when the AI failed (never charge for an error) ---------- */
 function bill_refund(array $CFG, string $app, string $token): void {
     if (!empty($CFG['billing_off'])) return;
+    $cost = bill_cost($CFG);
     $pass = $token ? bill_read_pass($CFG, $token) : null;
-    if ($pass && ($pass['app'] ?? '') === $app && (int)($pass['used'] ?? 0) > 0) {
-        $pass['credits'] = (int)($pass['credits'] ?? 0) + 1;
-        $pass['used']    = (int)$pass['used'] - 1;
+    if ($pass && ($pass['app'] ?? '') === $app && (int)($pass['used'] ?? 0) >= $cost) {
+        $pass['credits'] = (int)($pass['credits'] ?? 0) + $cost;
+        $pass['used']    = (int)$pass['used'] - $cost;
         bill_write_pass($CFG, $token, $pass);
         return;
     }
     $f = bill_free_file($CFG, $app);
     $used = bill_free_used($CFG, $app);
-    if ($f && $used > 0) @file_put_contents($f, (string)($used - 1), LOCK_EX);
+    if ($f && $used >= $cost) @file_put_contents($f, (string)($used - $cost), LOCK_EX);
 }
 
 /* ============================================================

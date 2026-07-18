@@ -362,6 +362,8 @@ textarea#qtext::placeholder{color:var(--ink-faint);font-style:italic}
 }
 .pay-toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 
+.g-signin{margin:6px 0 2px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.auth-or{font-size:12px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:1px}
 .auth-modal{max-width:420px}
 .auth-modal input{
   width:100%;font-family:var(--serif);font-size:15px;padding:11px 13px;margin:7px 0;
@@ -428,6 +430,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   .answer-sheet::before{display:none}
 }
 </style>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8250159057339426" crossorigin="anonymous"></script>
 </head>
 <body>
 
@@ -654,6 +657,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   // Default to the shared account hub so the Sign in button is there out of the box.
   // Set  hub: ''  in config.js to hide accounts, or point it at a different hub.
   Pay.hub = (CFG.hub !== undefined ? String(CFG.hub) : 'https://account.7by.in').trim();
+  Pay.googleId = (CFG.google_client_id || '').trim();
 
   Pay.authHeaders = function () {
     const h = {};
@@ -706,6 +710,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
           <input id="aEmail" type="email" placeholder="${T('emailPh')}" autocomplete="email">
           <input id="aPass" type="password" placeholder="${T('passPh')}" autocomplete="${isUp ? 'new-password' : 'current-password'}">
         `}
+        ${step !== 'otp' && Pay.googleId ? `<div class="g-signin" id="gWrap"><div id="gBtn"></div><div class="auth-or">${T('orText')||'or'}</div></div>` : ''}
         <div class="auth-err" id="aErr"></div>
         <button class="solve-btn auth-go" id="aGo">${step === 'otp' ? T('verify') : (isUp ? T('signUpBtn') : T('signInBtn'))}</button>
         <div class="auth-switch">
@@ -742,6 +747,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
           }
         } catch (e) { err(e.message || T('authFail')); go.disabled = false; }
       };
+      if (step !== 'otp' && Pay.googleId) Pay.renderGoogle(bg.querySelector('#gBtn'), thenBuy);
       const inp = bg.querySelector('input'); if (inp) setTimeout(() => inp.focus(), 50);
       bg.querySelectorAll('input').forEach(i => i.addEventListener('keydown', e => { if (e.key === 'Enter') go.click(); }));
     };
@@ -756,6 +762,37 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
     if (thenBuy) Pay.open();
   };
 
+
+  /* ---------- Google Sign-In ---------- */
+  Pay.googleId = ""; // set from server (?action=me hub_google) or config
+  Pay._gsiLoaded = false;
+  Pay.loadGsi = function () {
+    return new Promise((res) => {
+      if (window.google && google.accounts) { Pay._gsiLoaded = true; return res(true); }
+      const sc = document.createElement("script");
+      sc.src = "https://accounts.google.com/gsi/client"; sc.async = true; sc.defer = true;
+      sc.onload = () => { Pay._gsiLoaded = true; res(true); };
+      sc.onerror = () => res(false);
+      document.head.appendChild(sc);
+    });
+  };
+  Pay.renderGoogle = async function (mount, thenBuy) {
+    if (!Pay.googleId || !mount) return;
+    const ok = await Pay.loadGsi();
+    if (!ok || !window.google) return;
+    google.accounts.id.initialize({
+      client_id: Pay.googleId,
+      callback: async (resp) => {
+        try {
+          const d = await Pay.hubApi("google", { credential: resp.credential });
+          const bg = document.getElementById("authModal");
+          await Pay.afterAuth(d, bg, thenBuy);
+        } catch (e) { Pay.toast((e && e.message) || (Pay.T("authFail") || "Sign in failed")); }
+      }
+    });
+    google.accounts.id.renderButton(mount, { theme: "outline", size: "large", width: 300, text: "continue_with" });
+  };
+
   /* ---------- talk to the server ---------- */
   Pay.refresh = async function () {
     if (Pay.active) {
@@ -764,6 +801,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
         const r = await fetch(PROXY + '?action=me', { headers: Pay.headers() });
         Pay.status = await r.json();
         if (Pay.status && Pay.status.hub) Pay.hub = Pay.status.hub;
+        if (Pay.status && Pay.status.hub_google) Pay.googleId = Pay.status.hub_google;
         if (Pay.status && Pay.status.stale_token) { Pay.hubToken = ''; localStorage.removeItem(LS_HUB); }
       } catch (e) { Pay.status = null; }
     } else if (Pay.hub) {
@@ -866,14 +904,19 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
       return d;
     })();
 
-    const head = reason === 'out'
+    const head = reason === 'premium'
+      ? (Pay.T('premTitle') || '⭐ This needs Premium AI')
+      : reason === 'out'
       ? (Pay.T('payOutTitle') || 'You’ve used today’s free questions')
       : (Pay.T('payTitle') || 'Get more questions');
-    const sub = reason === 'out'
+    const sub = reason === 'premium'
+      ? (Pay.T('premSub') || 'Hard questions use the most powerful AI models. Upgrade to unlock them.')
+      : reason === 'out'
       ? (Pay.T('payOutSub') || 'Come back tomorrow for more free ones — or unlock now and keep going.')
       : (Pay.T('paySub') || 'Free every day. Unlock more whenever you need them.');
 
-    const order = ['monthly', 'pack_150', 'pack_50'];
+    const order = Object.keys(plans).sort((a, b) =>
+      (a === 'monthly' ? -1 : b === 'monthly' ? 1 : (plans[b].amount - plans[a].amount)));
     const cards = order.filter(k => plans[k]).map(k => {
       const p = plans[k];
       const best = k === 'monthly';
@@ -932,7 +975,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   Pay.handle402 = async function (body) {
     if (body && body.billing) { Pay.status = Object.assign(Pay.status || {}, body.billing); Pay.renderBadge(); }
     await Pay.refresh();
-    Pay.open('out');
+    Pay.open(body && body.needsPremium ? 'premium' : 'out');
   };
 
   /* ---------- boot ---------- */
@@ -1038,7 +1081,7 @@ const I18N = {
     haveAcct:'Already have an account?', noAcct:'New here?', authFail:'Could not sign you in — please try again.',
     signInToBuy:'Please sign in first so your credits are saved to your account.',
     credits:'credits', freeToday:'free today', month:'month', bestValue:'BEST VALUE', choose:'Choose',
-    payTitle:'Get more questions', paySub:'Free every day. Unlock more whenever you need them.',
+    premTitle:'⭐ This needs Premium AI', premSub:'Hard questions use the most powerful AI models. Upgrade to unlock them.', orText:'or', payTitle:'Get more questions', paySub:'Free every day. Unlock more whenever you need them.',
     payOutTitle:'You’ve used today’s free questions', payOutSub:'Come back tomorrow for more free ones — or unlock now and keep going.',
     planMonthlyNote:'Renews monthly · cancel anytime', planPackNote:'One-time · valid 1 year',
     payFine:'One credit = one AI answer. Answers already asked by other students are free and never use a credit.',
@@ -1084,7 +1127,7 @@ const I18N = {
     haveAcct:'पहले से खाता है?', noAcct:'नए हैं?', authFail:'साइन इन नहीं हो सका — फिर कोशिश करें।',
     signInToBuy:'पहले साइन इन करें ताकि क्रेडिट आपके खाते में सेव हों।',
     credits:'क्रेडिट', freeToday:'आज फ्री', month:'माह', bestValue:'सबसे बढ़िया', choose:'चुनें',
-    payTitle:'और प्रश्न पाएँ', paySub:'हर दिन फ्री। जब चाहें और अनलॉक करें।',
+    premTitle:'⭐ इसके लिए प्रीमियम AI चाहिए', premSub:'कठिन प्रश्न सबसे शक्तिशाली AI मॉडल इस्तेमाल करते हैं। अनलॉक करने के लिए अपग्रेड करें।', orText:'या', payTitle:'और प्रश्न पाएँ', paySub:'हर दिन फ्री। जब चाहें और अनलॉक करें।',
     payOutTitle:'आज के फ्री प्रश्न पूरे हो गए', payOutSub:'कल फिर फ्री मिलेंगे — या अभी अनलॉक करके जारी रखें।',
     planMonthlyNote:'हर माह रिन्यू · कभी भी बंद करें', planPackNote:'एक बार · 1 साल वैध',
     payFine:'1 क्रेडिट = 1 AI उत्तर। जो प्रश्न पहले पूछे जा चुके हैं वे फ्री हैं, क्रेडिट नहीं लगता।',
@@ -1130,7 +1173,7 @@ const I18N = {
     haveAcct:'ఇప్పటికే ఖాతా ఉందా?', noAcct:'కొత్తవారా?', authFail:'సైన్ ఇన్ కాలేదు — మళ్లీ ప్రయత్నించండి.',
     signInToBuy:'ముందు సైన్ ఇన్ చేయండి, తద్వారా క్రెడిట్లు మీ ఖాతాలో సేవ్ అవుతాయి.',
     credits:'క్రెడిట్లు', freeToday:'ఈరోజు ఫ్రీ', month:'నెల', bestValue:'బెస్ట్ వాల్యూ', choose:'ఎంచుకోండి',
-    payTitle:'మరిన్ని ప్రశ్నలు పొందండి', paySub:'ప్రతిరోజూ ఫ్రీ. కావలసినప్పుడు అన్‌లాక్ చేయండి.',
+    premTitle:'⭐ దీనికి ప్రీమియం AI అవసరం', premSub:'కఠిన ప్రశ్నలు అత్యంత శక్తివంతమైన AI మోడల్స్ వాడతాయి. అన్‌లాక్ చేయడానికి అప్‌గ్రేడ్ చేయండి.', orText:'లేదా', payTitle:'మరిన్ని ప్రశ్నలు పొందండి', paySub:'ప్రతిరోజూ ఫ్రీ. కావలసినప్పుడు అన్‌లాక్ చేయండి.',
     payOutTitle:'ఈరోజు ఫ్రీ ప్రశ్నలు అయిపోయాయి', payOutSub:'రేపు మళ్లీ ఫ్రీ — లేదా ఇప్పుడే అన్‌లాక్ చేసి కొనసాగండి.',
     planMonthlyNote:'ప్రతి నెలా రెన్యూ · ఎప్పుడైనా ఆపవచ్చు', planPackNote:'ఒకసారి · 1 సంవత్సరం చెల్లుతుంది',
     payFine:'1 క్రెడిట్ = 1 AI సమాధానం. ఇతర విద్యార్థులు ఇప్పటికే అడిగిన ప్రశ్నలు ఫ్రీ, క్రెడిట్ ఖర్చు కాదు.',

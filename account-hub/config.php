@@ -42,8 +42,11 @@ return array(
 	'allowed_origins' => array(
 		'https://removebg.7by.in',
 		'https://vocalremover.7by.in',
+		'https://qbank.7by.in',     // 7Q
+		'https://doubtsnap.7by.in', // 7Solve
 		// add more tools here...
 		'http://localhost:3061', // local dev
+		'http://localhost:3050', // local dev (7Q / 7Solve)
 	),
 
 	// ---- Payment gateway: 'sevenpay' (our own, at pay.7by.in) or 'razorpay' ----
@@ -77,6 +80,10 @@ return array(
 	),
 
 	// Free credits granted on signup so new users can try the tools.
-	// 30 credits = 3 uses at the standard 10-credits-per-action. Set 0 to disable.
-	'free_signup_credits' => 30,
+	// 100 credits = 10 uses at the standard 10-credits-per-action. Set 0 to disable.
+	'free_signup_credits' => 100,   // one-time welcome bonus (10 free actions)
+
+	// Only allow these email domains to sign up. Empty array = allow any.
+	// e.g. ['gmail.com'] to accept only @gmail.com addresses.
+	'allowed_email_domains' => array('gmail.com'),
 );

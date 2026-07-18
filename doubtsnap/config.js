@@ -65,6 +65,10 @@ window.DS_CONFIG = {
   // to hide accounts. Example: "https://account.7by.in"
   hub: "https://account.7by.in",
 
+  // Google Sign-In client id (Google Cloud Console → OAuth Web client).
+  // Public value; safe in the browser. Empty = no Google button.
+  google_client_id: "",
+
   keys: {
     gemini:     "",   // AIza...
     groq:       "",   // gsk_...

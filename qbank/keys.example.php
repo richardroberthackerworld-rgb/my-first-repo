@@ -59,16 +59,24 @@ return [
        (they bill SEPARATELY — a 7Q pass does not work on 7Solve) */
     'app' => '7q',
 
-    /* Free credits per DEVICE per DAY (resets at midnight).
-       Students get this much without paying anything. */
-    'free_per_day' => ['7q' => 5, '7solve' => 5],
+    /* Each AI action (solve, paper, hint, each follow-up button) costs this
+       many credits. 10 = the default. */
+    'credits_per_call' => 10,
 
-    /* Plans. amount is in PAISE (9900 = ₹99). Even paid plans use
-       credits, so one heavy user can never drain your API quota. */
+    /* Free CREDITS per DEVICE per DAY (resets at midnight). 50 credits at
+       10/call = 5 free actions a day. Free credits work on the BASIC (cheap,
+       high-limit) AI only — hard questions that need the big models require a
+       paid plan (Premium). */
+    'free_per_day' => ['7q' => 50, '7solve' => 50],
+
+    /* Plans. amount is in PAISE (9900 = ₹99). Even paid plans use credits, so
+       one heavy user can never drain your API quota. Paid credits unlock the
+       big "Premium" models too. */
     'plans' => [
-        'monthly'  => ['label' => 'Monthly ₹99',  'amount' => 9900, 'credits' => 500, 'days' => 30],
-        'pack_50'  => ['label' => '50 credits',   'amount' => 2000, 'credits' => 50,  'days' => 365],
-        'pack_150' => ['label' => '150 credits',  'amount' => 4900, 'credits' => 150, 'days' => 365],
+        // credits shown = credits given. At 10/action: 3000 = 300 questions, etc.
+        'monthly'  => ['label' => 'Monthly',    'amount' => 9900, 'credits' => 3000, 'days' => 30],
+        'pack_big' => ['label' => 'Value pack', 'amount' => 4900, 'credits' => 1500, 'days' => 365],
+        'pack_sm'  => ['label' => 'Starter',    'amount' => 2000, 'credits' => 500,  'days' => 365],
     ],
 
     /* ---- ACCOUNTS (account.7by.in) — sign in / sign up ----
