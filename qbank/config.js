@@ -66,7 +66,7 @@ window.QB_CONFIG = {
   // Accounts (sign in / sign up). Set this to your account hub URL to show the
   // Sign in button — it is a PUBLIC address, safe in the browser. Leave empty
   // to hide accounts. Example: "https://account.7by.in"
-  hub: "",
+  hub: "https://account.7by.in",
 
   keys: {
     gemini:     "",   // AIza...
