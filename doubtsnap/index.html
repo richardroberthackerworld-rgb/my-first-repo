@@ -764,7 +764,6 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
 
 
   /* ---------- Google Sign-In ---------- */
-  Pay.googleId = ""; // set from server (?action=me hub_google) or config
   Pay._gsiLoaded = false;
   Pay.loadGsi = function () {
     return new Promise((res) => {
@@ -790,7 +789,12 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
         } catch (e) { Pay.toast((e && e.message) || (Pay.T("authFail") || "Sign in failed")); }
       }
     });
-    google.accounts.id.renderButton(mount, { theme: "outline", size: "large", width: 300, text: "continue_with" });
+    try {
+      google.accounts.id.renderButton(mount, { theme: "outline", size: "large", width: 260, text: "continue_with" });
+    } catch (e) {
+      // GIS refused (e.g. origin not authorised in Google Cloud) — hide the empty slot + "or"
+      const wrap = document.getElementById("gWrap"); if (wrap) wrap.style.display = "none";
+    }
   };
 
   /* ---------- talk to the server ---------- */
