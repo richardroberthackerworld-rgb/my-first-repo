@@ -665,7 +665,10 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   // Default to the shared account hub so the Sign in button is there out of the box.
   // Set  hub: ''  in config.js to hide accounts, or point it at a different hub.
   Pay.hub = (CFG.hub !== undefined ? String(CFG.hub) : 'https://account.7by.in').trim();
-  Pay.googleId = (CFG.google_client_id || '').trim();
+  // Google client id is PUBLIC (it ships to every browser anyway). Baking the real
+  // id in as the default means the Google button shows even if config.js is the old
+  // one and even if the hub's public_config endpoint isn't deployed yet.
+  Pay.googleId = (CFG.google_client_id || '795705423816-2ffl53j83vir4mvau9mo4883afqc8khp.apps.googleusercontent.com').trim();
 
   Pay.authHeaders = function () {
     const h = {};
