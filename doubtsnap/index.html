@@ -364,7 +364,7 @@ textarea#qtext::placeholder{color:var(--ink-faint);font-style:italic}
 
 .g-signin{margin:6px 0 2px;display:flex;flex-direction:column;align-items:center;gap:8px}
 .auth-or{font-size:12px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:1px}
-.auth-modal{max-width:420px}
+.modal.auth-modal{max-width:420px}
 .auth-modal input{
   width:100%;font-family:var(--serif);font-size:15px;padding:11px 13px;margin:7px 0;
   border:1px solid var(--rule);border-radius:6px;background:var(--paper-2);color:var(--ink);
@@ -375,6 +375,8 @@ textarea#qtext::placeholder{color:var(--ink-faint);font-style:italic}
 .auth-modal .m-actions{margin-top:18px}
 .auth-switch{text-align:center;font-size:13.5px;color:var(--ink-soft);margin-top:12px}
 .auth-switch a{color:var(--maroon);font-weight:600;cursor:pointer;text-decoration:underline}
+.auth-forgot{text-align:right;margin:-2px 0 2px}
+.auth-forgot a{color:var(--maroon);font-size:12.5px;cursor:pointer;text-decoration:underline}
 .auth-otp-note{font-size:14px;color:var(--ink-soft);margin:4px 0 8px}
 .del-btn{
   background:none;border:none;cursor:pointer;color:var(--ink-faint);
@@ -712,55 +714,76 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
     const T = k => Pay.T(k) || k;
     const draw = (m, step, email) => {
       const isUp = m === 'up';
-      bg.innerHTML = `<div class="modal auth-modal">
-        <h3>${isUp ? T('signUpTitle') : T('signInTitle')}</h3>
-        <p class="pay-sub">${isUp ? T('signUpSub') : T('signInSub')}</p>
-        ${step === 'otp' ? `
-          <p class="auth-otp-note">${T('otpSent')} <b>${email}</b></p>
+      const isReset = m === 'reset';
+      const heading = isReset ? T('resetTitle') : (isUp ? T('signUpTitle') : T('signInTitle'));
+      const sub     = isReset ? T('resetSub')   : (isUp ? T('signUpSub')   : T('signInSub'));
+      let body, goLabel, switchHtml;
+      if (isReset && step === 'otp') {
+        body = `<p class="auth-otp-note">${T('otpSent')} <b>${email}</b></p>
           <input id="aOtp" inputmode="numeric" maxlength="6" placeholder="${T('otpPh')}">
-        ` : `
-          ${Pay.googleId ? `<div class="g-signin" id="gWrap"><div id="gBtn"></div><div class="auth-or">${T('orText')||'or'}</div></div>` : ''}
+          <input id="aPass" type="password" placeholder="${T('newPassPh')}" autocomplete="new-password">`;
+        goLabel = T('resetBtn');
+        switchHtml = `${T('rememberQ')} <a id="aSwitch">${T('signInTitle')}</a>`;
+      } else if (isReset) {
+        body = `<input id="aEmail" type="email" placeholder="${T('emailPh')}" autocomplete="email">`;
+        goLabel = T('resetSendBtn');
+        switchHtml = `${T('rememberQ')} <a id="aSwitch">${T('signInTitle')}</a>`;
+      } else if (step === 'otp') {
+        body = `<p class="auth-otp-note">${T('otpSent')} <b>${email}</b></p>
+          <input id="aOtp" inputmode="numeric" maxlength="6" placeholder="${T('otpPh')}">`;
+        goLabel = T('verify');
+        switchHtml = '';
+      } else {
+        body = `${Pay.googleId ? `<div class="g-signin" id="gWrap"><div id="gBtn"></div><div class="auth-or">${T('orText')||'or'}</div></div>` : ''}
           ${isUp ? `<input id="aName" placeholder="${T('namePh')}" autocomplete="name">` : ''}
           <input id="aEmail" type="email" placeholder="${T('emailPh')}" autocomplete="email">
           <input id="aPass" type="password" placeholder="${T('passPh')}" autocomplete="${isUp ? 'new-password' : 'current-password'}">
-        `}
+          ${!isUp ? `<div class="auth-forgot"><a id="aForgot">${T('forgotQ')}</a></div>` : ''}`;
+        goLabel = isUp ? T('signUpBtn') : T('signInBtn');
+        switchHtml = isUp
+          ? `${T('haveAcct')} <a id="aSwitch">${T('signInTitle')}</a>`
+          : `${T('noAcct')} <a id="aSwitch">${T('signUpTitle')}</a>`;
+      }
+      bg.innerHTML = `<div class="modal auth-modal">
+        <h3>${heading}</h3>
+        <p class="pay-sub">${sub}</p>
+        ${body}
         <div class="auth-err" id="aErr"></div>
-        <button class="solve-btn auth-go" id="aGo">${step === 'otp' ? T('verify') : (isUp ? T('signUpBtn') : T('signInBtn'))}</button>
-        <div class="auth-switch">
-          ${step === 'otp' ? '' : (isUp
-            ? `${T('haveAcct')} <a id="aSwitch">${T('signInTitle')}</a>`
-            : `${T('noAcct')} <a id="aSwitch">${T('signUpTitle')}</a>`)}
-        </div>
+        <button class="solve-btn auth-go" id="aGo">${goLabel}</button>
+        <div class="auth-switch">${switchHtml}</div>
         <div class="m-actions"><button class="mini-btn" id="aClose">${T('close')}</button></div>
       </div>`;
       bg.classList.add('on');
       bg.querySelector('#aClose').onclick = () => bg.classList.remove('on');
-      const sw = bg.querySelector('#aSwitch'); if (sw) sw.onclick = () => draw(isUp ? 'in' : 'up', 'form', '');
+      const sw = bg.querySelector('#aSwitch'); if (sw) sw.onclick = () => draw((isReset || isUp) ? 'in' : 'up', 'form', '');
+      const fp = bg.querySelector('#aForgot'); if (fp) fp.onclick = () => draw('reset', 'form', '');
       const err = t => { const e = bg.querySelector('#aErr'); e.textContent = t; e.style.display = 'block'; };
       const go = bg.querySelector('#aGo');
       go.onclick = async () => {
         go.disabled = true;
         try {
-          if (step === 'otp') {
+          if (isReset && step === 'otp') {
+            await Pay.hubApi('reset_verify', { email, code: bg.querySelector('#aOtp').value.trim(), password: bg.querySelector('#aPass').value });
+            Pay.toast('✅ ' + (T('resetDone') || 'Password changed — please sign in.'));
+            draw('in', 'form', email);
+          } else if (isReset) {
+            const em = bg.querySelector('#aEmail').value.trim();
+            await Pay.hubApi('reset_start', { email: em });
+            draw('reset', 'otp', em);
+          } else if (step === 'otp') {
             const d = await Pay.hubApi('signup_verify', { email, code: bg.querySelector('#aOtp').value.trim() });
             await Pay.afterAuth(d, bg, thenBuy);
           } else if (isUp) {
             const em = bg.querySelector('#aEmail').value.trim();
-            await Pay.hubApi('signup_start', {
-              name: bg.querySelector('#aName').value.trim(), email: em,
-              password: bg.querySelector('#aPass').value
-            });
+            await Pay.hubApi('signup_start', { name: bg.querySelector('#aName').value.trim(), email: em, password: bg.querySelector('#aPass').value });
             draw('up', 'otp', em);
           } else {
-            const d = await Pay.hubApi('login', {
-              email: bg.querySelector('#aEmail').value.trim(),
-              password: bg.querySelector('#aPass').value
-            });
+            const d = await Pay.hubApi('login', { email: bg.querySelector('#aEmail').value.trim(), password: bg.querySelector('#aPass').value });
             await Pay.afterAuth(d, bg, thenBuy);
           }
         } catch (e) { err(e.message || T('authFail')); go.disabled = false; }
       };
-      if (step !== 'otp' && Pay.googleId) Pay.renderGoogle(bg.querySelector('#gBtn'), thenBuy);
+      if (!isReset && step !== 'otp' && Pay.googleId) Pay.renderGoogle(bg.querySelector('#gBtn'), thenBuy);
       const inp = bg.querySelector('input'); if (inp) setTimeout(() => inp.focus(), 50);
       bg.querySelectorAll('input').forEach(i => i.addEventListener('keydown', e => { if (e.key === 'Enter') go.click(); }));
     };
@@ -1100,6 +1123,9 @@ const I18N = {
     namePh:'Your name', emailPh:'Email address', passPh:'Password (min 6 characters)', otpPh:'6-digit code',
     otpSent:'We emailed a 6-digit code to', verify:'Verify', signInBtn:'Sign in', signUpBtn:'Create account',
     haveAcct:'Already have an account?', noAcct:'New here?', authFail:'Could not sign you in — please try again.',
+    forgotQ:'Forgot password?', rememberQ:'Remembered it?', resetTitle:'Reset password',
+    resetSub:'Enter your email and we will send you a reset code.', resetSendBtn:'Send reset code',
+    resetBtn:'Set new password', newPassPh:'New password (min 6 characters)', resetDone:'Password changed — please sign in.',
     signInToBuy:'Please sign in first so your credits are saved to your account.',
     credits:'credits', freeToday:'free today', month:'month', bestValue:'BEST VALUE', choose:'Choose',
     premTitle:'⭐ This needs Premium AI', premSub:'Hard questions use the most powerful AI models. Upgrade to unlock them.', orText:'or', payTitle:'Get more questions', paySub:'Free every day. Unlock more whenever you need them.',
@@ -1146,6 +1172,9 @@ const I18N = {
     namePh:'आपका नाम', emailPh:'ईमेल', passPh:'पासवर्ड (कम से कम 6 अक्षर)', otpPh:'6 अंकों का कोड',
     otpSent:'हमने 6 अंकों का कोड भेजा है', verify:'सत्यापित करें', signInBtn:'साइन इन', signUpBtn:'खाता बनाएँ',
     haveAcct:'पहले से खाता है?', noAcct:'नए हैं?', authFail:'साइन इन नहीं हो सका — फिर कोशिश करें।',
+    forgotQ:'पासवर्ड भूल गए?', rememberQ:'याद आ गया?', resetTitle:'पासवर्ड रीसेट करें',
+    resetSub:'अपना ईमेल डालें, हम रीसेट कोड भेजेंगे।', resetSendBtn:'रीसेट कोड भेजें',
+    resetBtn:'नया पासवर्ड सेट करें', newPassPh:'नया पासवर्ड (कम से कम 6 अक्षर)', resetDone:'पासवर्ड बदल गया — कृपया साइन इन करें।',
     signInToBuy:'पहले साइन इन करें ताकि क्रेडिट आपके खाते में सेव हों।',
     credits:'क्रेडिट', freeToday:'आज फ्री', month:'माह', bestValue:'सबसे बढ़िया', choose:'चुनें',
     premTitle:'⭐ इसके लिए प्रीमियम AI चाहिए', premSub:'कठिन प्रश्न सबसे शक्तिशाली AI मॉडल इस्तेमाल करते हैं। अनलॉक करने के लिए अपग्रेड करें।', orText:'या', payTitle:'और प्रश्न पाएँ', paySub:'हर दिन फ्री। जब चाहें और अनलॉक करें।',
@@ -1192,6 +1221,9 @@ const I18N = {
     namePh:'మీ పేరు', emailPh:'ఈమెయిల్', passPh:'పాస్‌వర్డ్ (కనీసం 6 అక్షరాలు)', otpPh:'6 అంకెల కోడ్',
     otpSent:'6 అంకెల కోడ్ పంపాము', verify:'ధృవీకరించండి', signInBtn:'సైన్ ఇన్', signUpBtn:'ఖాతా సృష్టించండి',
     haveAcct:'ఇప్పటికే ఖాతా ఉందా?', noAcct:'కొత్తవారా?', authFail:'సైన్ ఇన్ కాలేదు — మళ్లీ ప్రయత్నించండి.',
+    forgotQ:'పాస్‌వర్డ్ మర్చిపోయారా?', rememberQ:'గుర్తొచ్చిందా?', resetTitle:'పాస్‌వర్డ్ రీసెట్ చేయండి',
+    resetSub:'మీ ఇమెయిల్ ఇవ్వండి, రీసెట్ కోడ్ పంపుతాం.', resetSendBtn:'రీసెట్ కోడ్ పంపండి',
+    resetBtn:'కొత్త పాస్‌వర్డ్ సెట్ చేయండి', newPassPh:'కొత్త పాస్‌వర్డ్ (కనీసం 6 అక్షరాలు)', resetDone:'పాస్‌వర్డ్ మారింది — దయచేసి సైన్ ఇన్ చేయండి.',
     signInToBuy:'ముందు సైన్ ఇన్ చేయండి, తద్వారా క్రెడిట్లు మీ ఖాతాలో సేవ్ అవుతాయి.',
     credits:'క్రెడిట్లు', freeToday:'ఈరోజు ఫ్రీ', month:'నెల', bestValue:'బెస్ట్ వాల్యూ', choose:'ఎంచుకోండి',
     premTitle:'⭐ దీనికి ప్రీమియం AI అవసరం', premSub:'కఠిన ప్రశ్నలు అత్యంత శక్తివంతమైన AI మోడల్స్ వాడతాయి. అన్‌లాక్ చేయడానికి అప్‌గ్రేడ్ చేయండి.', orText:'లేదా', payTitle:'మరిన్ని ప్రశ్నలు పొందండి', paySub:'ప్రతిరోజూ ఫ్రీ. కావలసినప్పుడు అన్‌లాక్ చేయండి.',
