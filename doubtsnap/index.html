@@ -374,6 +374,10 @@ textarea#qtext::placeholder{color:var(--ink-faint);font-style:italic}
 .auth-go{width:100%;margin-top:10px}
 .auth-switch{text-align:center;font-size:13.5px;color:var(--ink-soft);margin-top:12px}
 .auth-switch a{color:var(--maroon);font-weight:600;cursor:pointer;text-decoration:underline}
+.auth-tabs{display:flex;gap:8px;margin:2px 0 14px}
+.auth-tab{flex:1;font-family:var(--serif);font-size:15px;padding:10px 0;cursor:pointer;
+  border:1px solid var(--rule);border-radius:6px;background:var(--paper-2);color:var(--ink-soft);font-weight:600;transition:all .15s ease}
+.auth-tab.on{background:var(--maroon);color:#fff;border-color:var(--maroon)}
 .auth-otp-note{font-size:14px;color:var(--ink-soft);margin:4px 0 8px}
 .del-btn{
   background:none;border:none;cursor:pointer;color:var(--ink-faint);
@@ -417,6 +421,9 @@ footer{
   padding:0 20px 40px;
 }
 footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-bottom:6px}
+.footer-credit{display:block;margin-top:10px;font-style:normal;font-size:12px;letter-spacing:.5px;color:#b39b6e}
+.footer-credit a{color:var(--gold-soft,#c9a24a);font-weight:600;text-decoration:none}
+.footer-credit a:hover{text-decoration:underline}
 
 /* print / Export PDF: only the answer sheet */
 @media print{
@@ -482,7 +489,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
       <h2><span data-i18n="ch2">Ask your doubt</span></h2>
       <span class="line"></span>
     </div>
-    <p class="hint" data-i18n="ch2hint">Type your question, snap a photo of it, or do both. Handwritten and printed questions both work.</p>
+    <p class="hint" data-i18n="ch2hint">Upload photos of your doubt, or just explain your problem here — you can do both.</p>
 
     <div class="ask-wrap">
       <div>
@@ -616,6 +623,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
 <footer>
   <span class="fleuron">❦</span>
   <span data-i18n="footer">7Solve — every doubt deserves a good answer. Free forever, from 7By.in. · AI-generated — please verify before your exam.</span>
+  <span class="footer-credit">Designed by <a href="https://7by.in" target="_blank" rel="noopener">7By.in</a></span>
 </footer>
 
 <script>window.__APP_ID='7solve'; window.__APP_NAME='7Solve';</script>
@@ -710,23 +718,23 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
           <p class="auth-otp-note">${T('otpSent')} <b>${email}</b></p>
           <input id="aOtp" inputmode="numeric" maxlength="6" placeholder="${T('otpPh')}">
         ` : `
+          <div class="auth-tabs">
+            <button type="button" class="auth-tab ${!isUp ? 'on' : ''}" id="tabIn">${T('signInTitle')}</button>
+            <button type="button" class="auth-tab ${isUp ? 'on' : ''}" id="tabUp">${T('signUpTitle')}</button>
+          </div>
+          ${Pay.googleId ? `<div class="g-signin" id="gWrap"><div id="gBtn"></div><div class="auth-or">${T('orText')||'or'}</div></div>` : ''}
           ${isUp ? `<input id="aName" placeholder="${T('namePh')}" autocomplete="name">` : ''}
           <input id="aEmail" type="email" placeholder="${T('emailPh')}" autocomplete="email">
           <input id="aPass" type="password" placeholder="${T('passPh')}" autocomplete="${isUp ? 'new-password' : 'current-password'}">
         `}
-        ${step !== 'otp' && Pay.googleId ? `<div class="g-signin" id="gWrap"><div id="gBtn"></div><div class="auth-or">${T('orText')||'or'}</div></div>` : ''}
         <div class="auth-err" id="aErr"></div>
         <button class="solve-btn auth-go" id="aGo">${step === 'otp' ? T('verify') : (isUp ? T('signUpBtn') : T('signInBtn'))}</button>
-        <div class="auth-switch">
-          ${step === 'otp' ? '' : (isUp
-            ? `${T('haveAcct')} <a id="aSwitch">${T('signInTitle')}</a>`
-            : `${T('noAcct')} <a id="aSwitch">${T('signUpTitle')}</a>`)}
-        </div>
         <div class="m-actions"><button class="mini-btn" id="aClose">${T('close')}</button></div>
       </div>`;
       bg.classList.add('on');
       bg.querySelector('#aClose').onclick = () => bg.classList.remove('on');
-      const sw = bg.querySelector('#aSwitch'); if (sw) sw.onclick = () => draw(isUp ? 'in' : 'up', 'form', '');
+      const ti = bg.querySelector('#tabIn'); if (ti) ti.onclick = () => draw('in', 'form', '');
+      const tu = bg.querySelector('#tabUp'); if (tu) tu.onclick = () => draw('up', 'form', '');
       const err = t => { const e = bg.querySelector('#aErr'); e.textContent = t; e.style.display = 'block'; };
       const go = bg.querySelector('#aGo');
       go.onclick = async () => {
@@ -1078,7 +1086,7 @@ const I18N = {
     taglineSub:'Class 1–10 · Intermediate (MPC · BiPC · CEC · MEC) · Degree · CA · CMA · US CMA · Jobs & Current Affairs',
     setKey:'Set free AI key', keySet:'AI key connected', ch1:'What are you studying?',
     lblCourse:'Class / Course', lblSubject:'Subject', ch2:'Ask your doubt',
-    ch2hint:'Type your question, snap a photo of it, or do both. Handwritten and printed questions both work.',
+    ch2hint:'Upload photos of your doubt, or just explain your problem here — you can do both.',
     qPlaceholder:'Write your doubt here… e.g. “Solve x² − 5x + 6 = 0” or “Explain photosynthesis”',
     pbTitle:'Snap or upload the question', pbSub:'tap here · drag & drop · or paste (Ctrl+V)',
     camera:'Camera', gallery:'Gallery', solve:'Solve my doubt', thinking:'Your teacher is writing the answer…',

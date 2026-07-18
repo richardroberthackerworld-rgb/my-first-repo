@@ -72,7 +72,7 @@ return array(
 	// ---- Google Sign-In (Google Cloud Console → OAuth client, type "Web") ----
 	// Authorised JavaScript origin must include https://account.7by.in
 	'google' => array(
-		'client_id' => 'TODO_xxxxx.apps.googleusercontent.com',
+		'client_id' => '795705423816-2ffl53j83vir4mvau9mo4883afqc8khp.apps.googleusercontent.com',
 	),
 
 	// ---- Plans: price (INR) → credits + validity days ----
