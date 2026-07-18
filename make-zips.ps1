@@ -74,6 +74,17 @@ function New-AppZip {
 New-AppZip -AppDir (Join-Path $base 'qbank')     -Zip (Join-Path $base 'qbank-site.zip')
 New-AppZip -AppDir (Join-Path $base 'doubtsnap') -Zip (Join-Path $base 'doubtsnap-site.zip')
 
+# 3b) Account hub UPDATE bundle — everything EXCEPT config.php.
+#     config.php holds the live DB password + secrets on the server, so we never
+#     ship it: the user drops these files in, then hand-edits only config.php.
+$hubDir = Join-Path $base 'account-hub'
+if (Test-Path -LiteralPath $hubDir) {
+  $hubRoots = Get-ChildItem -LiteralPath $hubDir -Force |
+    Where-Object { $_.Name -ne 'config.php' -and $_.Name -notlike '*.db' -and $_.Name -ne '.git' } |
+    Select-Object -ExpandProperty FullName
+  New-Zip -Zip (Join-Path $base 'account-hub-update.zip') -Roots $hubRoots -ExcludeExt @('.js')
+}
+
 # 4) Backend (no node_modules / db.json / logs)
 $srvRoots = Get-ChildItem -LiteralPath (Join-Path $base 'server') -Force |
   Where-Object { $_.Name -notin @('node_modules','db.json') -and $_.Name -notlike '*.log' } |
