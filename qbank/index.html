@@ -651,8 +651,9 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   // hub url is a PUBLIC address (no secret) — set it in config.js so the
   // sign-in button works even when the billing proxy is off.
   // Default to the shared account hub so the Sign in button is there out of the box.
-  // Set  hub: ''  in config.js to hide accounts, or point it at a different hub.
-  Pay.hub = (CFG.hub !== undefined ? String(CFG.hub) : 'https://account.7by.in').trim();
+  // A blank/absent hub (incl. an old config.js with hub:'') falls back to the default,
+  // so the Sign in button always appears. Point hub at a different hub to override.
+  Pay.hub = (String(CFG.hub || '').trim() || 'https://account.7by.in');
   // Google client id is PUBLIC (it ships to every browser anyway). Baking the real
   // id in as the default means the Google button shows even if config.js is the old
   // one and even if the hub's public_config endpoint isn't deployed yet.
