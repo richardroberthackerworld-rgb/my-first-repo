@@ -364,7 +364,7 @@ textarea#qtext::placeholder{color:var(--ink-faint);font-style:italic}
 
 .g-signin{margin:6px 0 2px;display:flex;flex-direction:column;align-items:center;gap:8px}
 .auth-or{font-size:12px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:1px}
-.modal.auth-modal{max-width:420px}
+.modal.auth-modal{max-width:560px}
 .auth-modal input{
   width:100%;font-family:var(--serif);font-size:15px;padding:11px 13px;margin:7px 0;
   border:1px solid var(--rule);border-radius:6px;background:var(--paper-2);color:var(--ink);
@@ -377,6 +377,12 @@ textarea#qtext::placeholder{color:var(--ink-faint);font-style:italic}
 .auth-switch a{color:var(--maroon);font-weight:600;cursor:pointer;text-decoration:underline}
 .auth-forgot{text-align:right;margin:-2px 0 2px}
 .auth-forgot a{color:var(--maroon);font-size:12.5px;cursor:pointer;text-decoration:underline}
+.pw-wrap{position:relative;margin:7px 0}
+.pw-wrap input{margin:0 !important;padding-right:46px !important}
+.pw-eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;
+  cursor:pointer;font-size:17px;line-height:1;padding:4px 6px;opacity:.6}
+.pw-eye:hover{opacity:1}
+.acct-credits{font-size:16px;color:var(--maroon);font-weight:600;margin:4px 0 10px}
 .auth-otp-note{font-size:14px;color:var(--ink-soft);margin:4px 0 8px}
 .del-btn{
   background:none;border:none;cursor:pointer;color:var(--ink-faint);
@@ -685,8 +691,11 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
     // force a CORS preflight (OPTIONS) and break the request ("Failed to fetch").
     if (body) h['Content-Type'] = 'application/json';
     if (Pay.hubToken) h['Authorization'] = 'Bearer ' + Pay.hubToken;
+    // credentials:'omit' — do NOT send the shared *.7by.in session cookie. Each tool
+    // authenticates only with its own token in its own (per-origin) localStorage, so
+    // signing into 7Q does not sign you into 7Solve. They are fully separate logins.
     const r = await fetch(Pay.hub + '/api.php?action=' + action, {
-      method: method, headers: h, credentials: 'include',
+      method: method, headers: h, credentials: 'omit',
       body: body ? JSON.stringify(body) : undefined
     });
     const d = await r.json().catch(() => ({}));
@@ -699,6 +708,46 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
     Pay.hubToken = ''; localStorage.removeItem(LS_HUB);
     await Pay.refresh();
     Pay.toast(Pay.T('signedOut') || 'Signed out.');
+  };
+
+  /* ---------- password show/hide eye ---------- */
+  Pay.addPwToggles = function (root) {
+    root.querySelectorAll('input[type="password"]').forEach(function (inp) {
+      if (inp.parentElement && inp.parentElement.classList.contains('pw-wrap')) return;
+      const wrap = document.createElement('div'); wrap.className = 'pw-wrap';
+      inp.parentNode.insertBefore(wrap, inp); wrap.appendChild(inp);
+      const eye = document.createElement('button');
+      eye.type = 'button'; eye.className = 'pw-eye'; eye.textContent = '👁'; eye.tabIndex = -1;
+      eye.setAttribute('aria-label', 'Show or hide password');
+      eye.onclick = function () {
+        const show = inp.type === 'password';
+        inp.type = show ? 'text' : 'password';
+        eye.textContent = show ? '🙈' : '👁';
+        inp.focus();
+      };
+      wrap.appendChild(eye);
+    });
+  };
+
+  /* ---------- account card (shown when signed in) ---------- */
+  Pay.account = function () {
+    const s = Pay.status || {}; const u = s.user || {}; const T = k => Pay.T(k) || k;
+    const bg = document.getElementById('authModal') || (() => {
+      const d = document.createElement('div'); d.id = 'authModal'; d.className = 'modal-bg';
+      document.body.appendChild(d);
+      d.addEventListener('click', e => { if (e.target === d) d.classList.remove('on'); });
+      return d;
+    })();
+    bg.innerHTML = `<div class="modal auth-modal">
+      <h3>${T('account')}</h3>
+      <p class="pay-sub">${u.name ? '<b>' + u.name + '</b> · ' : ''}${u.email || ''}</p>
+      ${typeof s.credits !== 'undefined' ? `<p class="acct-credits">💎 ${s.credits || 0} ${T('credits') || 'credits'}</p>` : ''}
+      <button class="solve-btn auth-go" id="acOut">${T('signOut') || 'Sign out'}</button>
+      <div class="m-actions"><button class="mini-btn" id="acClose">${T('close')}</button></div>
+    </div>`;
+    bg.classList.add('on');
+    bg.querySelector('#acClose').onclick = () => bg.classList.remove('on');
+    bg.querySelector('#acOut').onclick = async () => { bg.classList.remove('on'); await Pay.signOut(); };
   };
 
   /* ---------- sign in / sign up modal ---------- */
@@ -754,6 +803,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
         <div class="m-actions"><button class="mini-btn" id="aClose">${T('close')}</button></div>
       </div>`;
       bg.classList.add('on');
+      Pay.addPwToggles(bg);
       bg.querySelector('#aClose').onclick = () => bg.classList.remove('on');
       const sw = bg.querySelector('#aSwitch'); if (sw) sw.onclick = () => draw((isReset || isUp) ? 'in' : 'up', 'form', '');
       const fp = bg.querySelector('#aForgot'); if (fp) fp.onclick = () => draw('reset', 'form', '');
@@ -910,7 +960,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
         if (s.signed_in) {
           const nm = (s.user && (s.user.name || s.user.email)) || "";
           ab.textContent = "👤 " + ((nm.split(" ")[0]) || (Pay.T("account") || "Account"));
-          ab.onclick = () => { if (confirm((Pay.T("signOutQ") || "Sign out?"))) Pay.signOut(); };
+          ab.onclick = () => Pay.account();
         } else {
           ab.textContent = "👤 " + (Pay.T("signIn") || "Sign in");
           ab.onclick = () => Pay.auth("in");
@@ -1117,7 +1167,7 @@ const I18N = {
     ch3:'The Answer', copy:'Copy answer', followup:'Ask my own follow-up', newDoubt:'New doubt',
     hint:'Give me a hint', hintTitle:'Hint — try it yourself first', hintSolve:'Show me the full solution',
     share:'Share', exportPdf:'Export PDF', close:'Close',
-    signIn:'Sign in / up', account:'Account', signedOut:'Signed out.', signOutQ:'Sign out?', welcome:'Signed in',
+    signIn:'Sign in / up', account:'Account', signOut:'Sign out', signedOut:'Signed out.', signOutQ:'Sign out?', welcome:'Signed in',
     signInTitle:'Sign in', signUpTitle:'Create account',
     signInSub:'Sign in so your credits work on every device.', signUpSub:'Free to join — your credits stay with your account.',
     namePh:'Your name', emailPh:'Email address', passPh:'Password (min 6 characters)', otpPh:'6-digit code',
@@ -1166,7 +1216,7 @@ const I18N = {
     ch3:'उत्तर', copy:'उत्तर कॉपी करें', followup:'अपना सवाल पूछें', newDoubt:'नया डाउट',
     hint:'मुझे संकेत दें', hintTitle:'संकेत — पहले खुद कोशिश करें', hintSolve:'पूरा हल दिखाएँ',
     share:'शेयर करें', exportPdf:'PDF सेव करें', close:'बंद करें',
-    signIn:'साइन इन / अप', account:'खाता', signedOut:'साइन आउट हो गए।', signOutQ:'साइन आउट करें?', welcome:'साइन इन हो गए',
+    signIn:'साइन इन / अप', account:'खाता', signOut:'साइन आउट', signedOut:'साइन आउट हो गए।', signOutQ:'साइन आउट करें?', welcome:'साइन इन हो गए',
     signInTitle:'साइन इन', signUpTitle:'खाता बनाएँ',
     signInSub:'साइन इन करें ताकि आपके क्रेडिट हर डिवाइस पर चलें।', signUpSub:'जुड़ना फ्री है — क्रेडिट आपके खाते में सुरक्षित रहते हैं।',
     namePh:'आपका नाम', emailPh:'ईमेल', passPh:'पासवर्ड (कम से कम 6 अक्षर)', otpPh:'6 अंकों का कोड',
@@ -1215,7 +1265,7 @@ const I18N = {
     ch3:'సమాధానం', copy:'సమాధానం కాపీ', followup:'నా ప్రశ్న అడగండి', newDoubt:'కొత్త డౌట్',
     hint:'ఒక సూచన ఇవ్వండి', hintTitle:'సూచన — ముందు మీరే ప్రయత్నించండి', hintSolve:'పూర్తి సాధన చూపించండి',
     share:'షేర్ చేయండి', exportPdf:'PDF సేవ్', close:'మూసివేయండి',
-    signIn:'సైన్ ఇన్ / అప్', account:'ఖాతా', signedOut:'సైన్ అవుట్ అయ్యారు.', signOutQ:'సైన్ అవుట్ చేయాలా?', welcome:'సైన్ ఇన్ అయ్యారు',
+    signIn:'సైన్ ఇన్ / అప్', account:'ఖాతా', signOut:'సైన్ అవుట్', signedOut:'సైన్ అవుట్ అయ్యారు.', signOutQ:'సైన్ అవుట్ చేయాలా?', welcome:'సైన్ ఇన్ అయ్యారు',
     signInTitle:'సైన్ ఇన్', signUpTitle:'ఖాతా సృష్టించండి',
     signInSub:'సైన్ ఇన్ చేస్తే మీ క్రెడిట్లు అన్ని డివైస్‌లలో పనిచేస్తాయి.', signUpSub:'చేరడం ఉచితం — క్రెడిట్లు మీ ఖాతాలో ఉంటాయి.',
     namePh:'మీ పేరు', emailPh:'ఈమెయిల్', passPh:'పాస్‌వర్డ్ (కనీసం 6 అక్షరాలు)', otpPh:'6 అంకెల కోడ్',
