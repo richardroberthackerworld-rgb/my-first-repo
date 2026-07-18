@@ -164,3 +164,11 @@ and every other 7By tool.
 - **Signed in** → the account's credits are used. **Signed out** → the per-device daily free tier
 - A credit is spent **only after the AI actually answers** — a failed call costs nothing
 - Buying requires signing in first, so credits attach to the person, not the browser
+
+### Credits, free tier & Premium (current defaults)
+- **10 credits = 1 action** (solve, paper, hint, each follow-up button…).
+- **50 free credits/day** = 5 actions, on the **basic** (cheap, high-limit) AI only.
+- **Hard questions that need the big models are Premium** — a free user is shown an upgrade prompt (`needsPremium`), a paid user's credits cover them.
+- **Sign up = @gmail.com only** (`allowed_email_domains` in account-hub/config.php) + a **100-credit welcome bonus** (`free_signup_credits`).
+- **Google Sign-In**: set `google_client_id` in config.js and `google.client_id` in account-hub.
+- All amounts live in `keys.php` (`credits_per_call`, `free_per_day`, `plans`).

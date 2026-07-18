@@ -40,6 +40,7 @@ switch ($action) {
 		$pass  = (string)($in['password'] ?? '');
 		if ($name === '') fail('Please enter your name.');
 		if (!filter_var($email, FILTER_VALIDATE_EMAIL)) fail('Please enter a valid email.');
+		if (!email_domain_ok($email)) fail(email_domain_msg());
 		if (strlen($pass) < 6) fail('Password must be at least 6 characters.');
 		$exists = db()->prepare('SELECT id FROM users WHERE email = ?');
 		$exists->execute(array($email));
@@ -119,6 +120,7 @@ switch ($action) {
 		$st = db()->prepare('SELECT * FROM users WHERE email = ? OR google_id = ?');
 		$st->execute(array($email, $g['sub']));
 		$u = $st->fetch();
+		if (!$u && !email_domain_ok($email)) fail(email_domain_msg());   // new Google users must match the domain rule
 		if (!$u) {
 			$ins = db()->prepare('INSERT INTO users (name, email, google_id, credits) VALUES (?,?,?,?)');
 			$ins->execute(array($g['name'] ?? '', $email, $g['sub'], (int)$CFG['free_signup_credits']));

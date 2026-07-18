@@ -329,6 +329,23 @@ function api_token_from_request() {
 	return '';
 }
 
+// Only allow sign-ups from configured email domains (e.g. gmail.com). Empty = any.
+function email_domain_ok($email) {
+	global $CFG;
+	$allow = $CFG['allowed_email_domains'] ?? array();
+	if (!$allow) return true;
+	$dom = strtolower(substr(strrchr((string)$email, '@'), 1));
+	foreach ($allow as $a) if (strcasecmp($dom, ltrim((string)$a, '@')) === 0) return true;
+	return false;
+}
+function email_domain_msg() {
+	global $CFG;
+	$allow = $CFG['allowed_email_domains'] ?? array();
+	return $allow
+		? 'Please sign up with a ' . implode(' or ', array_map(function ($d) { return '@' . ltrim($d, '@'); }, $allow)) . ' email.'
+		: 'Please use a valid email.';
+}
+
 // Issue (or reuse) a long-lived API token for this user. Only the HASH is stored.
 function issue_api_token($userId) {
 	$plain = bin2hex(random_bytes(24));

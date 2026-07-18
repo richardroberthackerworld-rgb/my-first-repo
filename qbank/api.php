@@ -240,9 +240,13 @@ if ($cacheable) {
     if ($hit !== null) { header('X-7By-Cache: HIT'); echo $hit; exit; }
 }
 
-/* ---------- billing gate: only a REAL AI call costs a credit ----------
+/* ---------- billing gate: only a REAL AI call costs credits ----------
    Signed-in student → their ACCOUNT's credits (checked now, spent only if the
-   AI actually answers). Guest → the per-device daily free allowance.          */
+   AI actually answers). Guest → the per-device daily free allowance.
+   A "premium" request (big/expensive model) is only for PAID users — a free
+   user who hits one is asked to upgrade instead of being answered.            */
+$premium = bill_is_premium_model($model);
+$cost    = bill_cost($CFG);
 $hubUser = (hub_on($CFG) && $hubTok !== '') ? hub_me($CFG, $hubTok) : null;
 $useHub  = $hubUser !== null;
 $billStatus = null;
@@ -250,15 +254,24 @@ $billStatus = null;
 if (!empty($CFG['billing_off'])) {
     // paywall disabled — everything free
 } elseif ($useHub) {
-    if ((int)($hubUser['credits'] ?? 0) <= 0) {
+    $bal  = (int)($hubUser['credits'] ?? 0);
+    $paid = ($hubUser['plan'] ?? 'none') !== 'none' || $bal >= $cost;
+    if ($bal < $cost) {
         out(402, ['error' => ['message' => 'Out of credits'], 'needsPlan' => true,
-                  'billing' => ['signed_in' => true, 'credits' => 0, 'paid' => false]]);
+                  'billing' => ['signed_in' => true, 'credits' => $bal, 'paid' => false]]);
     }
-    header('X-7By-Credits: ' . (int)$hubUser['credits']);
+    // signed-in users spend account credits, which cover premium too — no extra gate here
+    header('X-7By-Credits: ' . $bal);
 } else {
-    list($okToSpend, $billStatus) = bill_charge($CFG, $APP, $passTok);
+    list($okToSpend, $billStatus) = bill_charge($CFG, $APP, $passTok, $premium);
     if (!$okToSpend) {
-        out(402, ['error' => ['message' => 'Free limit reached'], 'needsPlan' => true, 'billing' => $billStatus]);
+        $isPremium = ($billStatus['reason'] ?? '') === 'premium';
+        out(402, [
+            'error'       => ['message' => $isPremium ? 'Premium required' : 'Free limit reached'],
+            'needsPlan'   => true,
+            'needsPremium'=> $isPremium,
+            'billing'     => $billStatus,
+        ]);
     }
     header('X-7By-Credits: ' . (int)($billStatus['credits'] ?? 0));
     header('X-7By-Free-Left: ' . (int)($billStatus['free_left'] ?? 0));
