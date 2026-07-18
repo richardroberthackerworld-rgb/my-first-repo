@@ -375,10 +375,6 @@ textarea#qtext::placeholder{color:var(--ink-faint);font-style:italic}
 .auth-modal .m-actions{margin-top:18px}
 .auth-switch{text-align:center;font-size:13.5px;color:var(--ink-soft);margin-top:12px}
 .auth-switch a{color:var(--maroon);font-weight:600;cursor:pointer;text-decoration:underline}
-.auth-tabs{display:flex;gap:8px;margin:2px 0 14px}
-.auth-tab{flex:1;font-family:var(--serif);font-size:15px;padding:10px 0;cursor:pointer;
-  border:1px solid var(--rule);border-radius:6px;background:var(--paper-2);color:var(--ink-soft);font-weight:600;transition:all .15s ease}
-.auth-tab.on{background:var(--maroon);color:#fff;border-color:var(--maroon)}
 .auth-otp-note{font-size:14px;color:var(--ink-soft);margin:4px 0 8px}
 .del-btn{
   background:none;border:none;cursor:pointer;color:var(--ink-faint);
@@ -723,10 +719,6 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
           <p class="auth-otp-note">${T('otpSent')} <b>${email}</b></p>
           <input id="aOtp" inputmode="numeric" maxlength="6" placeholder="${T('otpPh')}">
         ` : `
-          <div class="auth-tabs">
-            <button type="button" class="auth-tab ${!isUp ? 'on' : ''}" id="tabIn">${T('signInTitle')}</button>
-            <button type="button" class="auth-tab ${isUp ? 'on' : ''}" id="tabUp">${T('signUpTitle')}</button>
-          </div>
           ${Pay.googleId ? `<div class="g-signin" id="gWrap"><div id="gBtn"></div><div class="auth-or">${T('orText')||'or'}</div></div>` : ''}
           ${isUp ? `<input id="aName" placeholder="${T('namePh')}" autocomplete="name">` : ''}
           <input id="aEmail" type="email" placeholder="${T('emailPh')}" autocomplete="email">
@@ -734,12 +726,16 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
         `}
         <div class="auth-err" id="aErr"></div>
         <button class="solve-btn auth-go" id="aGo">${step === 'otp' ? T('verify') : (isUp ? T('signUpBtn') : T('signInBtn'))}</button>
+        <div class="auth-switch">
+          ${step === 'otp' ? '' : (isUp
+            ? `${T('haveAcct')} <a id="aSwitch">${T('signInTitle')}</a>`
+            : `${T('noAcct')} <a id="aSwitch">${T('signUpTitle')}</a>`)}
+        </div>
         <div class="m-actions"><button class="mini-btn" id="aClose">${T('close')}</button></div>
       </div>`;
       bg.classList.add('on');
       bg.querySelector('#aClose').onclick = () => bg.classList.remove('on');
-      const ti = bg.querySelector('#tabIn'); if (ti) ti.onclick = () => draw('in', 'form', '');
-      const tu = bg.querySelector('#tabUp'); if (tu) tu.onclick = () => draw('up', 'form', '');
+      const sw = bg.querySelector('#aSwitch'); if (sw) sw.onclick = () => draw(isUp ? 'in' : 'up', 'form', '');
       const err = t => { const e = bg.querySelector('#aErr'); e.textContent = t; e.style.display = 'block'; };
       const go = bg.querySelector('#aGo');
       go.onclick = async () => {
@@ -1098,7 +1094,7 @@ const I18N = {
     ch3:'The Answer', copy:'Copy answer', followup:'Ask my own follow-up', newDoubt:'New doubt',
     hint:'Give me a hint', hintTitle:'Hint — try it yourself first', hintSolve:'Show me the full solution',
     share:'Share', exportPdf:'Export PDF', close:'Close',
-    signIn:'Sign in', account:'Account', signedOut:'Signed out.', signOutQ:'Sign out?', welcome:'Signed in',
+    signIn:'Sign in / up', account:'Account', signedOut:'Signed out.', signOutQ:'Sign out?', welcome:'Signed in',
     signInTitle:'Sign in', signUpTitle:'Create account',
     signInSub:'Sign in so your credits work on every device.', signUpSub:'Free to join — your credits stay with your account.',
     namePh:'Your name', emailPh:'Email address', passPh:'Password (min 6 characters)', otpPh:'6-digit code',
@@ -1144,7 +1140,7 @@ const I18N = {
     ch3:'उत्तर', copy:'उत्तर कॉपी करें', followup:'अपना सवाल पूछें', newDoubt:'नया डाउट',
     hint:'मुझे संकेत दें', hintTitle:'संकेत — पहले खुद कोशिश करें', hintSolve:'पूरा हल दिखाएँ',
     share:'शेयर करें', exportPdf:'PDF सेव करें', close:'बंद करें',
-    signIn:'साइन इन', account:'खाता', signedOut:'साइन आउट हो गए।', signOutQ:'साइन आउट करें?', welcome:'साइन इन हो गए',
+    signIn:'साइन इन / अप', account:'खाता', signedOut:'साइन आउट हो गए।', signOutQ:'साइन आउट करें?', welcome:'साइन इन हो गए',
     signInTitle:'साइन इन', signUpTitle:'खाता बनाएँ',
     signInSub:'साइन इन करें ताकि आपके क्रेडिट हर डिवाइस पर चलें।', signUpSub:'जुड़ना फ्री है — क्रेडिट आपके खाते में सुरक्षित रहते हैं।',
     namePh:'आपका नाम', emailPh:'ईमेल', passPh:'पासवर्ड (कम से कम 6 अक्षर)', otpPh:'6 अंकों का कोड',
@@ -1190,7 +1186,7 @@ const I18N = {
     ch3:'సమాధానం', copy:'సమాధానం కాపీ', followup:'నా ప్రశ్న అడగండి', newDoubt:'కొత్త డౌట్',
     hint:'ఒక సూచన ఇవ్వండి', hintTitle:'సూచన — ముందు మీరే ప్రయత్నించండి', hintSolve:'పూర్తి సాధన చూపించండి',
     share:'షేర్ చేయండి', exportPdf:'PDF సేవ్', close:'మూసివేయండి',
-    signIn:'సైన్ ఇన్', account:'ఖాతా', signedOut:'సైన్ అవుట్ అయ్యారు.', signOutQ:'సైన్ అవుట్ చేయాలా?', welcome:'సైన్ ఇన్ అయ్యారు',
+    signIn:'సైన్ ఇన్ / అప్', account:'ఖాతా', signedOut:'సైన్ అవుట్ అయ్యారు.', signOutQ:'సైన్ అవుట్ చేయాలా?', welcome:'సైన్ ఇన్ అయ్యారు',
     signInTitle:'సైన్ ఇన్', signUpTitle:'ఖాతా సృష్టించండి',
     signInSub:'సైన్ ఇన్ చేస్తే మీ క్రెడిట్లు అన్ని డివైస్‌లలో పనిచేస్తాయి.', signUpSub:'చేరడం ఉచితం — క్రెడిట్లు మీ ఖాతాలో ఉంటాయి.',
     namePh:'మీ పేరు', emailPh:'ఈమెయిల్', passPh:'పాస్‌వర్డ్ (కనీసం 6 అక్షరాలు)', otpPh:'6 అంకెల కోడ్',
