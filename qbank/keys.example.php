@@ -31,7 +31,7 @@ return [
     ],
 
     /* ---- only these sites may use the proxy (stops others stealing your quota) ---- */
-    'allow_origins' => ['qbank.7by.in', 'doubtsnap.7by.in', '7by.in', 'www.7by.in', 'localhost:3050'],
+    'allow_origins' => ['7q.7by.in', '7solve.7by.in', 'qbank.7by.in', 'doubtsnap.7by.in', '7by.in', 'www.7by.in', 'localhost:3050'],
 
     /* Some in-app browsers (Instagram/Facebook) strip the Origin header.
        true  = still allow those users (slightly weaker protection)
@@ -97,8 +97,8 @@ return [
     'app_label'          => '7Q', // shown on the checkout page
 
     /* In 7Pay's dashboard set this merchant's Webhook URL to:
-         https://qbank.7by.in/api.php?action=webhook
-       (7Solve → https://doubtsnap.7by.in/api.php?action=webhook)
+         https://7q.7by.in/api.php?action=webhook
+       (7Solve → https://7solve.7by.in/api.php?action=webhook)
        That is what actually grants the credits. Nothing else is needed —
        7Pay redirects the buyer back with ?sevenpay_order_id=… and the page
        picks the pass up automatically. */

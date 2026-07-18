@@ -33,7 +33,7 @@ Open **`config.js`** and paste your free keys between the quotes. If you already
 
 **Minimum recommended:** add **Gemini** (for photos) + **Groq** (for fast text).
 
-Visitors see a site tagline in the top-right. **Owner view:** open the site with `?owner=1` (e.g. `https://qbank.7by.in/?owner=1`) to see the real engine status badge and which model generated each paper. All keys stay in `config.js` on your own site — the app calls the providers directly from the browser.
+Visitors see a site tagline in the top-right. **Owner view:** open the site with `?owner=1` (e.g. `https://7q.7by.in/?owner=1`) to see the real engine status badge and which model generated each paper. All keys stay in `config.js` on your own site — the app calls the providers directly from the browser.
 
 ## How the app chooses a model (automatic)
 - **Hard difficulty, or CA · CMA · Professional level (automatic)** → Gemini 2.5 Pro → DeepSeek-R1 + Phi-4-Reasoning (GitHub Models) → Nemotron 3 Ultra 555B → Hy3 295B → gpt-oss-120b → then the normal chain below
@@ -55,17 +55,17 @@ npx serve qbank
 
 No build step, no dependencies.
 
-## Deploy — launch on `qbank.7by.in` (cPanel)
+## Deploy — launch on `7q.7by.in` (cPanel)
 
-The homepage tool card and footer already link to `https://qbank.7by.in`, so going live is just:
+The homepage tool card and footer already link to `https://7q.7by.in`, so going live is just:
 
-1. cPanel → **Domains → Create A New Domain** → `qbank.7by.in`. Uncheck "share document root"; let it create `/home/USER/qbank.7by.in` as the document root.
+1. cPanel → **Domains → Create A New Domain** → `7q.7by.in`. Uncheck "share document root"; let it create `/home/USER/7q.7by.in` as the document root.
 2. **File Manager** → open that folder → upload **`qbank-site.zip`** (from the repo root) → **Extract**. The files must sit directly in the document root.
 3. **Rename `config.js.txt` → `config.js`** (right-click → Rename), then **Edit** it and paste your API keys. *(The zip ships it as `.txt` because cPanel's virus scanner false-positives on any zip containing `.js` files — "Foxhole.JS_Zip". It's not a real virus.)*
-4. cPanel → **SSL/TLS Status → Run AutoSSL** so `https://qbank.7by.in` is secure.
+4. cPanel → **SSL/TLS Status → Run AutoSSL** so `https://7q.7by.in` is secure.
 5. Also re-upload the updated main-site `index.html` (or `vocalremover-app.zip`) so the homepage 7Q card shows the new name.
 
-Visit `https://qbank.7by.in` — the ⚙️ badge at the top-right should show your active engines. If it says "No AI key set", `config.js` on the server still has empty keys.
+Visit `https://7q.7by.in` — the ⚙️ badge at the top-right should show your active engines. If it says "No AI key set", `config.js` on the server still has empty keys.
 
 ## 🔒 Hide your keys (do this before a public launch)
 
