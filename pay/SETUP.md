@@ -96,10 +96,12 @@ itself — far more reliable than bank alerts, and the money still goes
    (e.g. `PHONPE`) as well as your bank — both feed the same webhook, and
    duplicates are harmless (UTR dedupe).
 
-Note: PhonePe Business does **not** send per-payment emails — only SMS,
-voice, and in-app alerts. So the email poller below listens to your *bank's*
-credit-alert emails, and the phone (any spare Android on Wi-Fi) remains the
-carrier for PhonePe's SMS signal.
+**Fully phone-free with PhonePe:** the app also has
+**Add Notification Receiver → Email** (under notification settings). Point
+it at the poller's mailbox (e.g. `upi-alerts@7by.in`) and PhonePe emails
+every received payment — the poller below picks it up with **no phone
+involved at all**, and the signal comes from the UPI rails, not your bank's
+flaky alerts. This is the recommended setup.
 
 ## Phone-free fallback: bank-email poller
 
