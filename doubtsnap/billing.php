@@ -188,6 +188,24 @@ function bill_charge(array $CFG, string $app, string $token, bool $premium = fal
     return [true, bill_status($CFG, $app, $token)];
 }
 
+/* ---------- can this visitor afford ONE action? (no spend) ----------
+   Used to GATE the AI call. The real spend happens in bill_charge only AFTER the
+   browser confirms a good answer, so failed / retried AI calls never charge. */
+function bill_check(array $CFG, string $app, string $token, bool $premium = false): array {
+    if (!empty($CFG['billing_off'])) return [true, ['plan' => 'off', 'credits' => 0, 'free_left' => 999, 'free_limit' => 999, 'paid' => true]];
+    $cost = bill_cost($CFG);
+    $pass = $token ? bill_read_pass($CFG, $token) : null;
+    if ($pass && ($pass['app'] ?? '') === $app) {
+        $live = empty($pass['expires']) || $pass['expires'] >= time();
+        if ($live && (int)($pass['credits'] ?? 0) >= $cost) return [true, bill_status($CFG, $app, $token)];
+    }
+    if ($premium) return [false, ['reason' => 'premium'] + bill_status($CFG, $app, $token)];
+    $limit = bill_free_limit($CFG, $app);
+    $used  = bill_free_used($CFG, $app);
+    if ($used + $cost > $limit) return [false, ['reason' => 'no_credits'] + bill_status($CFG, $app, $token)];
+    return [true, bill_status($CFG, $app, $token)];
+}
+
 /* ---------- give the credits back when the AI failed (never charge for an error) ---------- */
 function bill_refund(array $CFG, string $app, string $token): void {
     if (!empty($CFG['billing_off'])) return;

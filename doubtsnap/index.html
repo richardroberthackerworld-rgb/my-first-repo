@@ -354,6 +354,7 @@ textarea#qtext::placeholder{color:var(--ink-faint);font-style:italic}
 }
 .plan-btn:hover{transform:translateY(-1px)}
 .pay-fine{font-size:12px;color:var(--ink-faint);font-style:italic;line-height:1.5}
+.pay-topup{font-size:12.5px;color:var(--maroon);text-align:center;margin:2px 0 10px;font-weight:600;line-height:1.4}
 .pay-toast{
   position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);
   background:var(--leather);color:#f3e6c8;border:1px solid var(--gold-soft);
@@ -440,6 +441,24 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   #answerPage .chapter{display:none}
   .answer-sheet{border:none;box-shadow:none;padding:0}
   .answer-sheet::before{display:none}
+}
+/* ---- compact on phones / small screens — placed last so it wins (usable on every device) ---- */
+@media (max-width:600px){
+  .modal-bg{padding:10px}
+  .modal{padding:22px 16px !important;border-radius:8px;max-height:94vh}
+  .modal h3{font-size:19px}
+  .pay-sub{font-size:13.5px;margin-bottom:12px !important}
+  .plan-grid{grid-template-columns:1fr 1fr;gap:9px;margin:12px 0}
+  .plan{padding:14px 10px}
+  .plan-price{font-size:22px}
+  .plan-credits{font-size:14px}
+  .plan-note{font-size:11px}
+  .auth-modal input,.modal input{font-size:14px;padding:10px 12px}
+  .pay-toast{font-size:13px;padding:10px 14px;bottom:14px;max-width:94vw}
+}
+@media (max-width:380px){
+  .plan-grid{grid-template-columns:1fr}
+  .modal h3{font-size:18px}
 }
 </style>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8250159057339426" crossorigin="anonymous"></script>
@@ -694,6 +713,20 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
     if (Pay.token) h['X-7By-Pass'] = Pay.token;
     if (Pay.hubToken) h['X-7By-Hub'] = Pay.hubToken;
     return h;
+  };
+
+  /* ---------- charge for ONE delivered answer ----------
+     Called exactly once by the app AFTER it has a validated answer on screen.
+     The AI requests themselves don't charge, so a failed/retried question never
+     costs a credit. No-ops when the billing proxy is off. */
+  Pay.charge = async function () {
+    if (!Pay.active) return;
+    try {
+      const r = await fetch(PROXY + '?action=charge', { method: 'POST', headers: Pay.authHeaders() });
+      const j = await r.json().catch(() => ({}));
+      if (j && typeof j.credits !== 'undefined' && Pay.status) { Pay.status.credits = j.credits; Pay.renderBadge(); }
+      else { Pay.refresh(); }
+    } catch (e) {}
   };
 
   Pay.hubApi = async function (action, body, method) {
@@ -1084,6 +1117,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
       <h3>${head}</h3>
       <p class="pay-sub">${sub}</p>
       <div class="plan-grid">${cards || '<p>' + (Pay.T('noPlans') || 'Plans are not configured yet.') + '</p>'}</div>
+      <p class="pay-topup">🔁 ${Pay.T('payTopup') || 'Need more later? Buy any plan again — new credits add on top of your balance.'}</p>
       <p class="pay-fine">${Pay.T('payFine') || '10 credits = one AI answer. Every question uses credits.'}</p>
       <div class="m-actions">
         <button class="mini-btn" id="payClose">${Pay.T('close') || 'Close'}</button>
@@ -1272,6 +1306,7 @@ const I18N = {
     premTitle:'⭐ This needs Premium AI', premSub:'Hard questions use the most powerful AI models. Upgrade to unlock them.', orText:'or', payTitle:'Get more questions', paySub:'Free every day. Unlock more whenever you need them.',
     payOutTitle:'You’ve used today’s free questions', payOutSub:'Come back tomorrow for more free ones — or unlock now and keep going.',
     planMonthlyNote:'Renews monthly · cancel anytime', planPackNote:'One-time · valid 1 year',
+    payTopup:'Need more later? Buy any plan again — new credits add on top of your balance.',
     payFine:'10 credits = one AI answer. Every question uses credits.',
     payNotReady:'Payments are not switched on yet — please try again later.', noPlans:'Plans are not configured yet.',
     paidOk:'Payment successful — your credits are ready!', paidPending:'Payment is still being confirmed. Refresh in a minute.',
@@ -1321,6 +1356,7 @@ const I18N = {
     premTitle:'⭐ इसके लिए प्रीमियम AI चाहिए', premSub:'कठिन प्रश्न सबसे शक्तिशाली AI मॉडल इस्तेमाल करते हैं। अनलॉक करने के लिए अपग्रेड करें।', orText:'या', payTitle:'और प्रश्न पाएँ', paySub:'हर दिन फ्री। जब चाहें और अनलॉक करें।',
     payOutTitle:'आज के फ्री प्रश्न पूरे हो गए', payOutSub:'कल फिर फ्री मिलेंगे — या अभी अनलॉक करके जारी रखें।',
     planMonthlyNote:'हर माह रिन्यू · कभी भी बंद करें', planPackNote:'एक बार · 1 साल वैध',
+    payTopup:'बाद में और चाहिए? कोई भी प्लान दोबारा खरीदें — नए क्रेडिट आपके बैलेंस में जुड़ जाते हैं।',
     payFine:'10 क्रेडिट = 1 AI उत्तर। हर प्रश्न पर क्रेडिट लगते हैं।',
     payNotReady:'भुगतान अभी चालू नहीं है — बाद में कोशिश करें।', noPlans:'प्लान अभी सेट नहीं हैं।',
     paidOk:'भुगतान सफल — आपके क्रेडिट तैयार हैं!', paidPending:'भुगतान की पुष्टि हो रही है। एक मिनट बाद रिफ्रेश करें।',
@@ -1370,6 +1406,7 @@ const I18N = {
     premTitle:'⭐ దీనికి ప్రీమియం AI అవసరం', premSub:'కఠిన ప్రశ్నలు అత్యంత శక్తివంతమైన AI మోడల్స్ వాడతాయి. అన్‌లాక్ చేయడానికి అప్‌గ్రేడ్ చేయండి.', orText:'లేదా', payTitle:'మరిన్ని ప్రశ్నలు పొందండి', paySub:'ప్రతిరోజూ ఫ్రీ. కావలసినప్పుడు అన్‌లాక్ చేయండి.',
     payOutTitle:'ఈరోజు ఫ్రీ ప్రశ్నలు అయిపోయాయి', payOutSub:'రేపు మళ్లీ ఫ్రీ — లేదా ఇప్పుడే అన్‌లాక్ చేసి కొనసాగండి.',
     planMonthlyNote:'ప్రతి నెలా రెన్యూ · ఎప్పుడైనా ఆపవచ్చు', planPackNote:'ఒకసారి · 1 సంవత్సరం చెల్లుతుంది',
+    payTopup:'తర్వాత ఇంకా కావాలా? ఏదైనా ప్లాన్ మళ్లీ కొనండి — కొత్త క్రెడిట్లు మీ బ్యాలెన్స్‌కు జోడించబడతాయి.',
     payFine:'10 క్రెడిట్‌లు = 1 AI సమాధానం. ప్రతి ప్రశ్నకు క్రెడిట్లు ఖర్చవుతాయి.',
     payNotReady:'చెల్లింపులు ఇంకా ప్రారంభం కాలేదు — తర్వాత ప్రయత్నించండి.', noPlans:'ప్లాన్లు ఇంకా సెట్ కాలేదు.',
     paidOk:'చెల్లింపు విజయవంతం — మీ క్రెడిట్లు సిద్ధం!', paidPending:'చెల్లింపు నిర్ధారణ జరుగుతోంది. ఒక నిమిషంలో రిఫ్రెష్ చేయండి.',
@@ -1758,14 +1795,14 @@ async function getAnswer(userText, img, opts){
   for(const a of attempts){
     try{
       const txt = await runAttempt(a, sysText, userText, img);
-      if(validate(txt)) return {text:txt, via:a};   // well-formed → done
+      if(validate(txt)){ if(window.Pay) Pay.charge(); return {text:txt, via:a}; }   // well-formed → charge once, done
       if(!fallback) fallback = {text:txt, via:a};    // keep first response as a last resort
       lastErr = new Error('BAD_FORMAT');
     }
     catch(e){ if(isPaywall(e)) throw e; lastErr = e; }   // out of credits → stop now
   }
-  if(fallback) return fallback;   // every engine returned an odd shape — show the best we got, don't dead-end
-  throw lastErr || new Error('All engines failed');
+  if(fallback){ if(window.Pay) Pay.charge(); return fallback; }   // odd shape but something to show → charge once
+  throw lastErr || new Error('All engines failed');   // nothing to show → NO charge
 }
 const sys = () => state.hintMode ? buildHintPrompt() : buildSystemPrompt();
 function buildHintPrompt(){

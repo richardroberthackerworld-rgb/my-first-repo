@@ -206,6 +206,21 @@ if ($action === 'claim') {
     out(200, $r);
 }
 
+/* ---------- POST ?action=charge → spend for ONE delivered answer ----------
+   The browser calls this ONCE, only after it has a validated answer on screen.
+   The AI requests themselves no longer charge, so a failed or retried question
+   never costs the student a credit (fixes "charged but got no answer"). */
+if ($action === 'charge') {
+    if (!origin_allowed($CFG)) out(403, ['error' => ['message' => 'Origin not allowed']]);
+    if (!empty($CFG['billing_off'])) out(200, ['ok' => true, 'credits' => 0]);
+    if (hub_on($CFG) && $hubTok !== '') {
+        list($ok, $left) = hub_spend($CFG, $APP, $hubTok);   // signed-in: spend account credits
+        out(200, ['ok' => (bool)$ok, 'credits' => is_int($left) ? $left : 0]);
+    }
+    list($ok, $st) = bill_charge($CFG, $APP, $passTok, false);   // guest: spend the daily free allowance
+    out($ok ? 200 : 402, ['ok' => (bool)$ok, 'billing' => is_array($st) ? $st : null]);
+}
+
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') out(405, ['error' => ['message' => 'POST only']]);
 if (!origin_allowed($CFG)) out(403, ['error' => ['message' => 'Origin not allowed']]);
 if (!rate_ok($CFG))        out(429, ['error' => ['message' => 'Too many requests from this device — please wait a while and try again.']]);
@@ -256,7 +271,9 @@ if (!empty($CFG['billing_off'])) {
     }
     header('X-7By-Credits: ' . $bal);
 } else {
-    list($okToSpend, $billStatus) = bill_charge($CFG, $APP, $passTok, $premium);
+    // CHECK ONLY — do not spend here. The browser spends once (?action=charge)
+    // after it has a good answer, so retries/failures never cost a credit.
+    list($okToSpend, $billStatus) = bill_check($CFG, $APP, $passTok, $premium);
     if (!$okToSpend) {
         $isPremium = ($billStatus['reason'] ?? '') === 'premium';
         out(402, [
@@ -270,19 +287,12 @@ if (!empty($CFG['billing_off'])) {
     header('X-7By-Free-Left: ' . (int)($billStatus['free_left'] ?? 0));
 }
 
-/* ---------- same question already answered? serve it instantly (still charged) ----------
-   The student has been charged above; a cached hit just saves OUR AI quota. */
+/* ---------- same question already answered? serve it instantly ----------
+   No charge here — the browser charges once for the delivered answer, and a
+   cache hit costs US no AI quota. */
 if ($cacheable) {
     $hit = cache_get($cDir, $cKey, $cacheHours);
-    if ($hit !== null) {
-        // signed-in student: spend the account credits now (guest already spent at the gate)
-        if (empty($CFG['billing_off']) && $useHub) {
-            list($ok, $left) = hub_spend($CFG, $APP, $hubTok);
-            if ($ok) header('X-7By-Credits: ' . (int)$left);
-        }
-        header('X-7By-Cache: HIT');
-        echo $hit; exit;
-    }
+    if ($hit !== null) { header('X-7By-Cache: HIT'); echo $hit; exit; }
 }
 
 /* ---------- call the provider; rotate keys when one is rate-limited ---------- */
@@ -329,14 +339,8 @@ if ($last['code'] === 200 && strlen($last['text']) > 40) {
 // only cache a genuinely good answer — never an error or an empty reply
 if ($cacheable && $gotAnswer) cache_put($cDir, $cKey, $last['text']);
 
-if (empty($CFG['billing_off'])) {
-    if ($useHub) {
-        // signed in: charge the ACCOUNT only now that we know it answered
-        if ($gotAnswer) { list($ok, $left) = hub_spend($CFG, $APP, $hubTok); if ($ok) header('X-7By-Credits: ' . (int)$left); }
-    } elseif (!$gotAnswer) {
-        bill_refund($CFG, $APP, $passTok);   // guest: the AI failed → give the free use back
-    }
-}
+// NOTE: no charge here. The browser calls ?action=charge exactly once after it
+// has a validated answer on screen, so failed/retried AI calls cost nothing.
 
 header('X-7By-Cache: MISS');
 http_response_code($last['code']);
