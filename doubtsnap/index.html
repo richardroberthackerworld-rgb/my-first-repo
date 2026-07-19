@@ -1084,7 +1084,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
       <h3>${head}</h3>
       <p class="pay-sub">${sub}</p>
       <div class="plan-grid">${cards || '<p>' + (Pay.T('noPlans') || 'Plans are not configured yet.') + '</p>'}</div>
-      <p class="pay-fine">${Pay.T('payFine') || '10 credits = one AI answer. Answers already asked by other students are free and never use a credit.'}</p>
+      <p class="pay-fine">${Pay.T('payFine') || '10 credits = one AI answer. Every question uses credits.'}</p>
       <div class="m-actions">
         <button class="mini-btn" id="payClose">${Pay.T('close') || 'Close'}</button>
       </div>
@@ -1272,7 +1272,7 @@ const I18N = {
     premTitle:'⭐ This needs Premium AI', premSub:'Hard questions use the most powerful AI models. Upgrade to unlock them.', orText:'or', payTitle:'Get more questions', paySub:'Free every day. Unlock more whenever you need them.',
     payOutTitle:'You’ve used today’s free questions', payOutSub:'Come back tomorrow for more free ones — or unlock now and keep going.',
     planMonthlyNote:'Renews monthly · cancel anytime', planPackNote:'One-time · valid 1 year',
-    payFine:'10 credits = one AI answer. Answers already asked by other students are free and never use a credit.',
+    payFine:'10 credits = one AI answer. Every question uses credits.',
     payNotReady:'Payments are not switched on yet — please try again later.', noPlans:'Plans are not configured yet.',
     paidOk:'Payment successful — your credits are ready!', paidPending:'Payment is still being confirmed. Refresh in a minute.',
     del:'Delete', clearAll:'Clear all', clearConfirm:'Delete all saved doubts from this device?',
@@ -1321,7 +1321,7 @@ const I18N = {
     premTitle:'⭐ इसके लिए प्रीमियम AI चाहिए', premSub:'कठिन प्रश्न सबसे शक्तिशाली AI मॉडल इस्तेमाल करते हैं। अनलॉक करने के लिए अपग्रेड करें।', orText:'या', payTitle:'और प्रश्न पाएँ', paySub:'हर दिन फ्री। जब चाहें और अनलॉक करें।',
     payOutTitle:'आज के फ्री प्रश्न पूरे हो गए', payOutSub:'कल फिर फ्री मिलेंगे — या अभी अनलॉक करके जारी रखें।',
     planMonthlyNote:'हर माह रिन्यू · कभी भी बंद करें', planPackNote:'एक बार · 1 साल वैध',
-    payFine:'10 क्रेडिट = 1 AI उत्तर। जो प्रश्न पहले पूछे जा चुके हैं वे फ्री हैं, क्रेडिट नहीं लगता।',
+    payFine:'10 क्रेडिट = 1 AI उत्तर। हर प्रश्न पर क्रेडिट लगते हैं।',
     payNotReady:'भुगतान अभी चालू नहीं है — बाद में कोशिश करें।', noPlans:'प्लान अभी सेट नहीं हैं।',
     paidOk:'भुगतान सफल — आपके क्रेडिट तैयार हैं!', paidPending:'भुगतान की पुष्टि हो रही है। एक मिनट बाद रिफ्रेश करें।',
     del:'हटाएँ', clearAll:'सभी हटाएँ', clearConfirm:'इस डिवाइस से सभी सेव किए डाउट हटा दें?',
@@ -1370,7 +1370,7 @@ const I18N = {
     premTitle:'⭐ దీనికి ప్రీమియం AI అవసరం', premSub:'కఠిన ప్రశ్నలు అత్యంత శక్తివంతమైన AI మోడల్స్ వాడతాయి. అన్‌లాక్ చేయడానికి అప్‌గ్రేడ్ చేయండి.', orText:'లేదా', payTitle:'మరిన్ని ప్రశ్నలు పొందండి', paySub:'ప్రతిరోజూ ఫ్రీ. కావలసినప్పుడు అన్‌లాక్ చేయండి.',
     payOutTitle:'ఈరోజు ఫ్రీ ప్రశ్నలు అయిపోయాయి', payOutSub:'రేపు మళ్లీ ఫ్రీ — లేదా ఇప్పుడే అన్‌లాక్ చేసి కొనసాగండి.',
     planMonthlyNote:'ప్రతి నెలా రెన్యూ · ఎప్పుడైనా ఆపవచ్చు', planPackNote:'ఒకసారి · 1 సంవత్సరం చెల్లుతుంది',
-    payFine:'10 క్రెడిట్‌లు = 1 AI సమాధానం. ఇతర విద్యార్థులు ఇప్పటికే అడిగిన ప్రశ్నలు ఫ్రీ, క్రెడిట్ ఖర్చు కాదు.',
+    payFine:'10 క్రెడిట్‌లు = 1 AI సమాధానం. ప్రతి ప్రశ్నకు క్రెడిట్లు ఖర్చవుతాయి.',
     payNotReady:'చెల్లింపులు ఇంకా ప్రారంభం కాలేదు — తర్వాత ప్రయత్నించండి.', noPlans:'ప్లాన్లు ఇంకా సెట్ కాలేదు.',
     paidOk:'చెల్లింపు విజయవంతం — మీ క్రెడిట్లు సిద్ధం!', paidPending:'చెల్లింపు నిర్ధారణ జరుగుతోంది. ఒక నిమిషంలో రిఫ్రెష్ చేయండి.',
     del:'తొలగించు', clearAll:'అన్నీ తొలగించు', clearConfirm:'ఈ డివైస్ నుండి సేవ్ చేసిన అన్ని డౌట్లను తొలగించాలా?',

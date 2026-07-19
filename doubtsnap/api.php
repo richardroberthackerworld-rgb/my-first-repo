@@ -229,22 +229,17 @@ if ($model === '' || strlen($model) > 100 ||
 $keys = keys_for($CFG, $provider);
 if (!$keys) out(503, ['error' => ['message' => 'No key configured for ' . $provider]]);
 
-/* ---------- serve from cache when the same question was already answered ---------- */
+/* ---------- cache key (has this same question been answered before?) ---------- */
 $cacheHours = (int)($CFG['cache_hours'] ?? 168);              // 168h = 7 days; 0 disables
 $cDir  = cache_dir($CFG);
 $cKey  = hash('sha256', $provider . '|' . $model . '|' . json_encode($payload));
 $cacheable = $cDir && !has_image($payload);                    // never cache photo questions
-if ($cacheable) {
-    $hit = cache_get($cDir, $cKey, $cacheHours);
-    // A cache hit costs you no AI quota, so it costs the student no credit either.
-    if ($hit !== null) { header('X-7By-Cache: HIT'); echo $hit; exit; }
-}
 
-/* ---------- billing gate: only a REAL AI call costs credits ----------
-   Signed-in student → their ACCOUNT's credits (checked now, spent only if the
-   AI actually answers). Guest → the per-device daily free allowance.
-   A "premium" request (big/expensive model) is only for PAID users — a free
-   user who hits one is asked to upgrade instead of being answered.            */
+/* ---------- billing gate: EVERY answer costs credits (fresh OR cached) --------
+   Signed-in student → their ACCOUNT's credits. Guest → the per-device daily
+   free allowance. A "premium" request (big/expensive model) is PAID-only.
+   A repeat question is served instantly from cache and STILL costs the student
+   credits — it just costs US no AI quota (that saving is ours to keep).        */
 $premium = bill_is_premium_model($model);
 $cost    = bill_cost($CFG);
 $hubUser = (hub_on($CFG) && $hubTok !== '') ? hub_me($CFG, $hubTok) : null;
@@ -254,13 +249,11 @@ $billStatus = null;
 if (!empty($CFG['billing_off'])) {
     // paywall disabled — everything free
 } elseif ($useHub) {
-    $bal  = (int)($hubUser['credits'] ?? 0);
-    $paid = ($hubUser['plan'] ?? 'none') !== 'none' || $bal >= $cost;
+    $bal = (int)($hubUser['credits'] ?? 0);
     if ($bal < $cost) {
         out(402, ['error' => ['message' => 'Out of credits'], 'needsPlan' => true,
                   'billing' => ['signed_in' => true, 'credits' => $bal, 'paid' => false]]);
     }
-    // signed-in users spend account credits, which cover premium too — no extra gate here
     header('X-7By-Credits: ' . $bal);
 } else {
     list($okToSpend, $billStatus) = bill_charge($CFG, $APP, $passTok, $premium);
@@ -275,6 +268,21 @@ if (!empty($CFG['billing_off'])) {
     }
     header('X-7By-Credits: ' . (int)($billStatus['credits'] ?? 0));
     header('X-7By-Free-Left: ' . (int)($billStatus['free_left'] ?? 0));
+}
+
+/* ---------- same question already answered? serve it instantly (still charged) ----------
+   The student has been charged above; a cached hit just saves OUR AI quota. */
+if ($cacheable) {
+    $hit = cache_get($cDir, $cKey, $cacheHours);
+    if ($hit !== null) {
+        // signed-in student: spend the account credits now (guest already spent at the gate)
+        if (empty($CFG['billing_off']) && $useHub) {
+            list($ok, $left) = hub_spend($CFG, $APP, $hubTok);
+            if ($ok) header('X-7By-Credits: ' . (int)$left);
+        }
+        header('X-7By-Cache: HIT');
+        echo $hit; exit;
+    }
 }
 
 /* ---------- call the provider; rotate keys when one is rate-limited ---------- */
