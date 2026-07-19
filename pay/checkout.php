@@ -81,7 +81,7 @@ function e($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
   .co-close:hover { background: rgba(255,255,255,0.3); }
   .co-merchant { display: flex; align-items: center; gap: 12px; }
   .co-avatar { width: 42px; height: 42px; border-radius: var(--r-md); background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.25); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 19px; overflow: hidden; }
-  .co-avatar img { width: 100%; height: 100%; object-fit: cover; background: #fff; border-radius: inherit; }
+  .co-avatar img { width: 100%; height: 100%; object-fit: contain; background: #fff; border-radius: inherit; padding: 6px; box-sizing: border-box; }
   .co-mname { font-weight: 700; font-size: 17px; line-height: 1.25; }
   .co-desc { font-size: 12.5px; opacity: 0.78; }
   .co-amount { margin-top: 14px; display: flex; align-items: baseline; justify-content: space-between; }
