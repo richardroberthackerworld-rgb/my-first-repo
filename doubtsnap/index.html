@@ -742,11 +742,13 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
       <h3>${T('account')}</h3>
       <p class="pay-sub">${u.name ? '<b>' + u.name + '</b> · ' : ''}${u.email || ''}</p>
       ${typeof s.credits !== 'undefined' ? `<p class="acct-credits">💎 ${s.credits || 0} ${T('credits') || 'credits'}</p>` : ''}
-      <button class="solve-btn auth-go" id="acOut">${T('signOut') || 'Sign out'}</button>
+      <button class="solve-btn auth-go" id="acBuy">💎 ${T('getCredits') || 'Get more credits'}</button>
+      <div class="auth-switch"><a id="acOut">${T('signOut') || 'Sign out'}</a></div>
       <div class="m-actions"><button class="mini-btn" id="acClose">${T('close')}</button></div>
     </div>`;
     bg.classList.add('on');
     bg.querySelector('#acClose').onclick = () => bg.classList.remove('on');
+    bg.querySelector('#acBuy').onclick = () => { bg.classList.remove('on'); Pay.open(); };
     bg.querySelector('#acOut').onclick = async () => { bg.classList.remove('on'); await Pay.signOut(); };
   };
 
@@ -918,10 +920,35 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
 
   /* ---------- after 7Pay sends the buyer back with ?paid=ORDER ---------- */
   Pay.claimIfPaid = async function () {
-    if (!Pay.active) return;
     const u = new URL(location.href);
     const order = u.searchParams.get('sevenpay_order_id') || u.searchParams.get('paid');
     if (!order) return;
+    const clean = () => {
+      ['paid','sevenpay_order_id','sevenpay_payment_id','sevenpay_signature'].forEach(k => u.searchParams.delete(k));
+      history.replaceState(null, '', u.pathname + (u.search || '') + u.hash);
+    };
+    // Accounts-hub path: verify the signature with the hub, which grants the credits.
+    if (Pay.hub) {
+      try {
+        await Pay.hubApi('verify', {
+          sevenpay_order_id: order,
+          sevenpay_payment_id: u.searchParams.get('sevenpay_payment_id') || '',
+          sevenpay_signature: u.searchParams.get('sevenpay_signature') || '',
+          plan: sessionStorage.getItem('pay_plan') || ''
+        });
+        sessionStorage.removeItem('pay_plan');
+        await Pay.refresh();
+        Pay.toast('✅ ' + (Pay.T('paidOk') || 'Payment successful — your credits are ready!'));
+      } catch (e) {
+        // Signature not confirmed yet (or webhook still landing) — refresh anyway.
+        await Pay.refresh();
+        Pay.toast('⏳ ' + (Pay.T('paidPending') || 'Payment is still being confirmed. Refresh in a minute.'));
+      }
+      clean();
+      return;
+    }
+    // Legacy proxy path.
+    if (!Pay.active) { clean(); return; }
     try {
       const r = await fetch(PROXY + '?action=claim&order=' + encodeURIComponent(order));
       const j = await r.json();
@@ -934,8 +961,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
         Pay.toast('⏳ ' + (Pay.T('paidPending') || 'Payment is still being confirmed. Refresh in a minute.'));
       }
     } catch (e) {}
-    ['paid','sevenpay_order_id','sevenpay_payment_id','sevenpay_signature'].forEach(k=>u.searchParams.delete(k));
-    history.replaceState(null, '', u.pathname + (u.search || '') + u.hash);
+    clean();
   };
 
   /* ---------- small helpers the apps can override for i18n ---------- */
@@ -993,7 +1019,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   /* ---------- the paywall / pricing modal ---------- */
   Pay.open = function (reason) {
     const s = Pay.status || {};
-    const plans = s.plans || {};
+    const plans = s.plans || Pay._plans || {};
     const bg = document.getElementById('payModal') || (() => {
       const d = document.createElement('div');
       d.id = 'payModal'; d.className = 'modal-bg';
@@ -1047,7 +1073,8 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   /* ---------- send the buyer to 7Pay (order is created server-side) ---------- */
   Pay.checkout = async function (planKey) {
     const s = Pay.status || {};
-    if (!(s.plans || {})[planKey]) return;
+    const plans = s.plans || Pay._plans || {};
+    if (!plans[planKey]) return;
     // must be signed in first, or the credits would be stuck on this one browser
     if (Pay.hub && !s.signed_in) {
       const bg = document.getElementById('payModal'); if (bg) bg.classList.remove('on');
@@ -1056,6 +1083,29 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
       return;
     }
     Pay.toast(Pay.T('payStarting') || 'Opening secure checkout…');
+    // Accounts-hub path (the tools run proxy-off): create the order on the hub,
+    // then hand the buyer to the 7Pay hosted checkout page.
+    if (Pay.hub) {
+      try {
+        const ret = location.origin + location.pathname;
+        const d = await Pay.hubApi('order', { plan: planKey, product: (window.__APP_ID || ''), return: ret });
+        if ((d.gateway === 'sevenpay' || Pay._gateway === 'sevenpay') && d.sevenpay_base && d.order_id) {
+          const base = String(d.sevenpay_base).replace(/\/+$/, '');
+          const url = base + '/checkout.php?order_id=' + encodeURIComponent(d.order_id)
+            + '&key_id=' + encodeURIComponent(d.key_id || '')
+            + (d.email ? '&email=' + encodeURIComponent(d.email) : '')
+            + '&description=' + encodeURIComponent((window.__APP_NAME || '7By') + ' · ' + (plans[planKey].label || planKey));
+          sessionStorage.setItem('pay_plan', planKey);   // remembered for verify on return
+          location.href = url;
+          return;
+        }
+        Pay.toast(Pay.T('payNotReady') || 'Payments are not switched on yet.');
+      } catch (e) {
+        Pay.toast((e && e.message) || Pay.T('payNotReady') || 'Could not open checkout — please try again.');
+      }
+      return;
+    }
+    // Legacy proxy path (if a tool still runs its own api.php).
     try {
       const r = await fetch(PROXY + '?action=checkout', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -1080,11 +1130,19 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   Pay.init = async function () {
     const cb = document.getElementById('creditBadge'); if (cb && !Pay.active) cb.style.display = 'none';
     if (!Pay.active && !Pay.hub) return;   // neither billing nor accounts configured
-    // Google client id: config.js wins, else fetch it once from the hub (set it there for all tools)
-    if (!Pay.googleId && Pay.hub) {
-      try { const d = await Pay.hubApi('public_config', null, 'GET'); if (d && d.google_client_id) Pay.googleId = d.google_client_id; } catch (e) {}
+    // Pull public config from the hub: the Google client id (if config.js didn't
+    // set one) AND the pricing plans for the visitor's currency.
+    if (Pay.hub) {
+      try {
+        const d = await Pay.hubApi('public_config', null, 'GET');
+        if (d) {
+          if (!Pay.googleId && d.google_client_id) Pay.googleId = d.google_client_id;
+          if (d.plans) Pay._plans = d.plans;
+          if (d.gateway) Pay._gateway = d.gateway;
+        }
+      } catch (e) {}
     }
-    if (Pay.active) await Pay.claimIfPaid();
+    await Pay.claimIfPaid();
     await Pay.refresh();
   };
 })();
@@ -1175,7 +1233,7 @@ const I18N = {
     ch3:'The Answer', copy:'Copy answer', followup:'Ask my own follow-up', newDoubt:'New doubt',
     hint:'Give me a hint', hintTitle:'Hint — try it yourself first', hintSolve:'Show me the full solution',
     share:'Share', exportPdf:'Export PDF', close:'Close',
-    signIn:'Sign in / up', account:'Account', signOut:'Sign out', signedOut:'Signed out.', signOutQ:'Sign out?', welcome:'Signed in',
+    signIn:'Sign in / up', account:'Account', signOut:'Sign out', getCredits:'Get more credits', signedOut:'Signed out.', signOutQ:'Sign out?', welcome:'Signed in',
     signInTitle:'Sign in', signUpTitle:'Create account',
     signInSub:'Sign in so your credits work on every device.', signUpSub:'Free to join — your credits stay with your account.',
     namePh:'Your name', emailPh:'Email address', passPh:'Password (min 6 characters)', otpPh:'6-digit code',
@@ -1224,7 +1282,7 @@ const I18N = {
     ch3:'उत्तर', copy:'उत्तर कॉपी करें', followup:'अपना सवाल पूछें', newDoubt:'नया डाउट',
     hint:'मुझे संकेत दें', hintTitle:'संकेत — पहले खुद कोशिश करें', hintSolve:'पूरा हल दिखाएँ',
     share:'शेयर करें', exportPdf:'PDF सेव करें', close:'बंद करें',
-    signIn:'साइन इन / अप', account:'खाता', signOut:'साइन आउट', signedOut:'साइन आउट हो गए।', signOutQ:'साइन आउट करें?', welcome:'साइन इन हो गए',
+    signIn:'साइन इन / अप', account:'खाता', signOut:'साइन आउट', getCredits:'और क्रेडिट लें', signedOut:'साइन आउट हो गए।', signOutQ:'साइन आउट करें?', welcome:'साइन इन हो गए',
     signInTitle:'साइन इन', signUpTitle:'खाता बनाएँ',
     signInSub:'साइन इन करें ताकि आपके क्रेडिट हर डिवाइस पर चलें।', signUpSub:'जुड़ना फ्री है — क्रेडिट आपके खाते में सुरक्षित रहते हैं।',
     namePh:'आपका नाम', emailPh:'ईमेल', passPh:'पासवर्ड (कम से कम 6 अक्षर)', otpPh:'6 अंकों का कोड',
@@ -1273,7 +1331,7 @@ const I18N = {
     ch3:'సమాధానం', copy:'సమాధానం కాపీ', followup:'నా ప్రశ్న అడగండి', newDoubt:'కొత్త డౌట్',
     hint:'ఒక సూచన ఇవ్వండి', hintTitle:'సూచన — ముందు మీరే ప్రయత్నించండి', hintSolve:'పూర్తి సాధన చూపించండి',
     share:'షేర్ చేయండి', exportPdf:'PDF సేవ్', close:'మూసివేయండి',
-    signIn:'సైన్ ఇన్ / అప్', account:'ఖాతా', signOut:'సైన్ అవుట్', signedOut:'సైన్ అవుట్ అయ్యారు.', signOutQ:'సైన్ అవుట్ చేయాలా?', welcome:'సైన్ ఇన్ అయ్యారు',
+    signIn:'సైన్ ఇన్ / అప్', account:'ఖాతా', signOut:'సైన్ అవుట్', getCredits:'మరిన్ని క్రెడిట్లు పొందండి', signedOut:'సైన్ అవుట్ అయ్యారు.', signOutQ:'సైన్ అవుట్ చేయాలా?', welcome:'సైన్ ఇన్ అయ్యారు',
     signInTitle:'సైన్ ఇన్', signUpTitle:'ఖాతా సృష్టించండి',
     signInSub:'సైన్ ఇన్ చేస్తే మీ క్రెడిట్లు అన్ని డివైస్‌లలో పనిచేస్తాయి.', signUpSub:'చేరడం ఉచితం — క్రెడిట్లు మీ ఖాతాలో ఉంటాయి.',
     namePh:'మీ పేరు', emailPh:'ఈమెయిల్', passPh:'పాస్‌వర్డ్ (కనీసం 6 అక్షరాలు)', otpPh:'6 అంకెల కోడ్',

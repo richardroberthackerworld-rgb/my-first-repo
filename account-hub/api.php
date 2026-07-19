@@ -22,7 +22,20 @@ switch ($action) {
 		global $CFG;
 		$gid = $CFG['google']['client_id'] ?? '';
 		if (strpos($gid, 'TODO') === 0) $gid = '';   // not filled in yet
-		json_out(array('ok' => true, 'google_client_id' => $gid));
+		// Plans for the visitor's currency, formatted for the pricing modal.
+		$P = hub_pricing();
+		$plans = array();
+		foreach (array_keys($P['plans']) as $k) {
+			$d = plan_details($k);
+			if ($d) $plans[$k] = array(
+				'amount'  => $d['amount_minor'],   // minor units (paise/cents) — client shows amount/100
+				'credits' => $d['credits'],
+				'label'   => $d['label'],
+				'days'    => $d['days'],
+				'symbol'  => $d['symbol'],
+			);
+		}
+		json_out(array('ok' => true, 'google_client_id' => $gid, 'plans' => $plans, 'gateway' => ($CFG['gateway'] ?? 'razorpay')));
 		break;
 	}
 
@@ -162,9 +175,16 @@ switch ($action) {
 		$d = plan_details($plan, $product);
 		if (!$d) fail('Unknown plan.');
 		$gateway = ($CFG['gateway'] ?? 'razorpay');
+		// Where 7Pay sends the buyer back after a successful payment. Only allow
+		// a return URL on one of our own tool origins (no open redirect).
+		$ret = (string)($in['return'] ?? '');
+		$origins = $CFG['allowed_origins'] ?? array();
+		$retOk = '';
+		foreach ($origins as $o) { if ($ret !== '' && strpos($ret, rtrim($o, '/')) === 0) { $retOk = $ret; break; } }
 		$payload = array(
 			'amount' => $d['amount_minor'], 'currency' => $d['currency'],
 			'receipt' => 'u' . $u['id'] . '-' . time(),
+			'callback_url' => $retOk,   // 7Pay redirects here with ?sevenpay_order_id=... on success
 			'notes' => array('user_id' => (string)$u['id'], 'plan' => $plan, 'product' => $product, 'credits' => (string)$d['credits']),
 		);
 		if ($gateway === 'sevenpay') {
