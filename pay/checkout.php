@@ -80,7 +80,8 @@ function e($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
   .co-close { position: absolute; top: 14px; right: 14px; width: 30px; height: 30px; border-radius: 50%; border: 0; background: rgba(255,255,255,0.18); color: #fff; font-size: 15px; line-height: 1; cursor: pointer; }
   .co-close:hover { background: rgba(255,255,255,0.3); }
   .co-merchant { display: flex; align-items: center; gap: 12px; }
-  .co-avatar { width: 42px; height: 42px; border-radius: var(--r-md); background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.25); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 19px; }
+  .co-avatar { width: 42px; height: 42px; border-radius: var(--r-md); background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.25); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 19px; overflow: hidden; }
+  .co-avatar img { width: 100%; height: 100%; object-fit: cover; background: #fff; border-radius: inherit; }
   .co-mname { font-weight: 700; font-size: 17px; line-height: 1.25; }
   .co-desc { font-size: 12.5px; opacity: 0.78; }
   .co-amount { margin-top: 14px; display: flex; align-items: baseline; justify-content: space-between; }
@@ -162,7 +163,7 @@ function e($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 	<div class="co-head">
 		<?php if ($embed): ?><button class="co-close" id="closeBtn" aria-label="Close">✕</button><?php endif; ?>
 		<div class="co-merchant">
-			<div class="co-avatar"><?php echo e($initial); ?></div>
+			<div class="co-avatar"><?php if (file_exists(__DIR__ . '/logo.png')): ?><img src="logo.png" alt="<?php echo e($mName); ?>"><?php else: echo e($initial); endif; ?></div>
 			<div>
 				<div class="co-mname"><?php echo e($mName); ?></div>
 				<div class="co-desc"><?php echo e($desc ?: 'Secure checkout'); ?></div>
@@ -213,7 +214,7 @@ function e($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 		<div class="panel<?php if ($defaultTab !== 'upi') echo ' hidden'; ?>" data-panel="upi">
 			<div class="upi-live-box">
 				<div id="qrBox"><span class="mono-label">QR</span></div>
-				<div class="vpa-line"><?php echo e($upiVpa); ?></div>
+				<div class="vpa-line">🔒 7Pay · Secure UPI</div>
 				<?php if ($upiAuto && !$isTest): ?>
 				<div style="font-family:var(--font-mono);font-size:13.5px;font-weight:600;color:var(--accent);margin:-4px 0 10px">Pay exactly <?php echo e($upiAmountText); ?></div>
 				<?php endif; ?>
