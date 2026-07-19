@@ -58,6 +58,34 @@ return array(
 		'unique_paise'   => false,
 	),
 
+	// ---- Phone-free auto-detect: bank credit-alert EMAILS ----
+	// Works with any bank that emails you a credit alert (enable it in your
+	// bank's netbanking → alerts). Steps:
+	//   1. cPanel → Email Accounts → create a dedicated mailbox,
+	//      e.g. upi-alerts@7by.in (never reuse a personal inbox).
+	//   2. In your bank, set credit alerts to email that address.
+	//   3. Fill this block, set enabled => true.
+	//   4. cPanel → Cron Jobs → every minute:
+	//        php -q /home/USER/path-to/pay/mail-poller.php
+	//      (or, if CLI cron is unavailable, hit over HTTPS:
+	//        https://pay.7by.in/mail-poller.php?token=UPI_AUTO_TOKEN)
+	// The poller reads UNSEEN mails, forwards the text to the same upi.credit
+	// matcher the SMS forwarder uses, and marks the mail read once delivered.
+	// 'upi_auto' above must be enabled (it provides the webhook + token).
+	'upi_mail' => array(
+		'enabled'         => false,
+		'host'            => 'localhost',      // cPanel mail host; often 'mail.7by.in'
+		'port'            => 993,
+		'ssl'             => true,
+		'user'            => 'TODO_upi-alerts@7by.in',
+		'pass'            => 'TODO_mailbox_password',
+		// Only process mail whose From contains one of these (empty = any sender).
+		// e.g. array('@icicibank.com', '@hdfcbank.net', 'alerts@axisbank.com')
+		'allowed_senders' => array(),
+		'max_age_hours'   => 24,               // ignore alerts older than this
+		'self_url'        => 'https://pay.7by.in', // where 7Pay's api.php lives (no trailing slash)
+	),
+
 	// ---- Live-mode international payments (PayPal) ----
 	// Non-INR buyers pay through your PayPal.me link; they paste the PayPal
 	// Transaction ID and the payment stays "pending" until you approve it in

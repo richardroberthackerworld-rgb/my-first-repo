@@ -261,7 +261,7 @@ function gw_parse_credit_text($text) {
 		$amt = (int)round(((float)str_replace(',', '', $m[1])) * 100);
 	}
 	$utr = '';
-	if (preg_match('/(?:ref(?:erence)?(?:\s*no)?\.?\s*:?\s*)(\d{10,16})/i', $t, $m)) $utr = $m[1];
+	if (preg_match('/(?:(?:utr|ref(?:erence)?|txn(?:\s*id)?)(?:\s*no)?\.?\s*:?\s*)(\d{10,16})/i', $t, $m)) $utr = $m[1];
 	elseif (preg_match('/\b(\d{12})\b/', $t, $m)) $utr = $m[1]; // bare 12-digit UPI ref
 	return array($amt, $utr);
 }
