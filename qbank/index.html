@@ -809,11 +809,12 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
         <div class="auth-err" id="aErr"></div>
         <button class="solve-btn auth-go" id="aGo">${goLabel}</button>
         <div class="auth-switch">${switchHtml}</div>
-        <div class="m-actions"><button class="mini-btn" id="aClose">${T('close')}</button></div>
+        <div class="m-actions">${step === 'otp' ? `<button class="mini-btn" id="aBack">← ${T('backBtn')}</button>` : ''}<button class="mini-btn" id="aClose">${T('close')}</button></div>
       </div>`;
       bg.classList.add('on');
       Pay.addPwToggles(bg);
       bg.querySelector('#aClose').onclick = () => bg.classList.remove('on');
+      const bk = bg.querySelector('#aBack'); if (bk) bk.onclick = () => draw(isReset ? 'reset' : 'up', 'form', '');
       const sw = bg.querySelector('#aSwitch'); if (sw) sw.onclick = () => draw((isReset || isUp) ? 'in' : 'up', 'form', '');
       const fp = bg.querySelector('#aForgot'); if (fp) fp.onclick = () => draw('reset', 'form', '');
       const err = t => { const e = bg.querySelector('#aErr'); e.textContent = t; e.style.display = 'block'; };
@@ -851,9 +852,16 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
 
   Pay.afterAuth = async function (d, bg, thenBuy) {
     if (d.token) { Pay.hubToken = d.token; localStorage.setItem(LS_HUB, d.token); }
+    // Sign in immediately from the auth response (login/signup_verify/google all
+    // return the user + token), so the name shows right away — no need to wait on
+    // a follow-up 'me' call and no need to click Sign in again after the OTP.
+    if (d.user) {
+      Pay.status = { signed_in: true, user: d.user, credits: (d.user.credits || 0), plan: (d.user.plan || 'none'), paid: !!(d.user.credits) };
+      Pay.renderBadge();
+    }
     if (bg) bg.classList.remove('on');
-    await Pay.refresh();
     Pay.toast('✅ ' + (Pay.T('welcome') || 'Signed in') + (d.user && d.user.name ? ', ' + d.user.name : '') + '!');
+    try { await Pay.refresh(); } catch (e) {}   // background sync of credits/plan
     if (thenBuy) Pay.open();
   };
 
@@ -1208,7 +1216,7 @@ const I18N = {
     namePh:'Your name', emailPh:'Email address', passPh:'Password (min 6 characters)', otpPh:'6-digit code',
     otpSent:'We emailed a 6-digit code to', verify:'Verify', signInBtn:'Sign in', signUpBtn:'Create account',
     haveAcct:'Already have an account?', noAcct:'New here?', authFail:'Could not sign you in — please try again.',
-    forgotQ:'Forgot password?', rememberQ:'Remembered it?', resetTitle:'Reset password',
+    forgotQ:'Forgot password?', rememberQ:'Remembered it?', backBtn:'Back', resetTitle:'Reset password',
     resetSub:'Enter your email and we will send you a reset code.', resetSendBtn:'Send reset code',
     resetBtn:'Set new password', newPassPh:'New password (min 6 characters)', resetDone:'Password changed — please sign in.',
     signInToBuy:'Please sign in first so your credits are saved to your account.',
@@ -1263,7 +1271,7 @@ const I18N = {
     namePh:'आपका नाम', emailPh:'ईमेल', passPh:'पासवर्ड (कम से कम 6 अक्षर)', otpPh:'6 अंकों का कोड',
     otpSent:'हमने 6 अंकों का कोड भेजा है', verify:'सत्यापित करें', signInBtn:'साइन इन', signUpBtn:'खाता बनाएँ',
     haveAcct:'पहले से खाता है?', noAcct:'नए हैं?', authFail:'साइन इन नहीं हो सका — फिर कोशिश करें।',
-    forgotQ:'पासवर्ड भूल गए?', rememberQ:'याद आ गया?', resetTitle:'पासवर्ड रीसेट करें',
+    forgotQ:'पासवर्ड भूल गए?', rememberQ:'याद आ गया?', backBtn:'वापस', resetTitle:'पासवर्ड रीसेट करें',
     resetSub:'अपना ईमेल डालें, हम रीसेट कोड भेजेंगे।', resetSendBtn:'रीसेट कोड भेजें',
     resetBtn:'नया पासवर्ड सेट करें', newPassPh:'नया पासवर्ड (कम से कम 6 अक्षर)', resetDone:'पासवर्ड बदल गया — कृपया साइन इन करें।',
     signInToBuy:'पहले साइन इन करें ताकि क्रेडिट आपके खाते में सेव हों।',
@@ -1318,7 +1326,7 @@ const I18N = {
     namePh:'మీ పేరు', emailPh:'ఈమెయిల్', passPh:'పాస్‌వర్డ్ (కనీసం 6 అక్షరాలు)', otpPh:'6 అంకెల కోడ్',
     otpSent:'6 అంకెల కోడ్ పంపాము', verify:'ధృవీకరించండి', signInBtn:'సైన్ ఇన్', signUpBtn:'ఖాతా సృష్టించండి',
     haveAcct:'ఇప్పటికే ఖాతా ఉందా?', noAcct:'కొత్తవారా?', authFail:'సైన్ ఇన్ కాలేదు — మళ్లీ ప్రయత్నించండి.',
-    forgotQ:'పాస్‌వర్డ్ మర్చిపోయారా?', rememberQ:'గుర్తొచ్చిందా?', resetTitle:'పాస్‌వర్డ్ రీసెట్ చేయండి',
+    forgotQ:'పాస్‌వర్డ్ మర్చిపోయారా?', rememberQ:'గుర్తొచ్చిందా?', backBtn:'వెనుకకు', resetTitle:'పాస్‌వర్డ్ రీసెట్ చేయండి',
     resetSub:'మీ ఇమెయిల్ ఇవ్వండి, రీసెట్ కోడ్ పంపుతాం.', resetSendBtn:'రీసెట్ కోడ్ పంపండి',
     resetBtn:'కొత్త పాస్‌వర్డ్ సెట్ చేయండి', newPassPh:'కొత్త పాస్‌వర్డ్ (కనీసం 6 అక్షరాలు)', resetDone:'పాస్‌వర్డ్ మారింది — దయచేసి సైన్ ఇన్ చేయండి.',
     signInToBuy:'ముందు సైన్ ఇన్ చేయండి, తద్వారా క్రెడిట్లు మీ ఖాతాలో సేవ్ అవుతాయి.',
