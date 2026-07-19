@@ -663,8 +663,21 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
      ACCOUNTS (account.7by.in) — sign in so credits follow the
      student across devices instead of living on one browser.
      ============================================================ */
-  const LS_HUB = 'sevenby_hub_token';        // shared by 7Q + 7Solve: one account, one sign-in
+  const LS_HUB = 'sevenby_hub_token';        // per-origin (7Q and 7Solve keep separate stores)
+  const LS_USER = 'sevenby_user';            // cache last signed-in user for an INSTANT name on reload
   Pay.hubToken = localStorage.getItem(LS_HUB) || '';
+  // Paint the signed-in name immediately from cache so it doesn't appear 4-5s
+  // later once the network 'me' call returns. refresh() corrects it right after.
+  Pay.hydrateFromCache = function () {
+    if (!Pay.hubToken) return;
+    try {
+      const u = JSON.parse(localStorage.getItem(LS_USER) || 'null');
+      if (u && u.email) {
+        Pay.status = { signed_in: true, user: u, credits: (u.credits || 0), plan: (u.plan || 'none'), paid: !!(u.credits) };
+        Pay.renderBadge();
+      }
+    } catch (e) {}
+  };
   // hub url is a PUBLIC address (no secret) — set it in config.js so the
   // sign-in button works even when the billing proxy is off.
   // Default to the shared account hub so the Sign in button is there out of the box.
@@ -705,7 +718,8 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
 
   Pay.signOut = async function () {
     try { await Pay.hubApi('logout', {}); } catch (e) {}
-    Pay.hubToken = ''; localStorage.removeItem(LS_HUB);
+    Pay.hubToken = ''; localStorage.removeItem(LS_HUB); localStorage.removeItem(LS_USER);
+    Pay.status = { signed_in: false };
     await Pay.refresh();
     Pay.toast(Pay.T('signedOut') || 'Signed out.');
   };
@@ -850,6 +864,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
     // a follow-up 'me' call and no need to click Sign in again after the OTP.
     if (d.user) {
       Pay.status = { signed_in: true, user: d.user, credits: (d.user.credits || 0), plan: (d.user.plan || 'none'), paid: !!(d.user.credits) };
+      try { localStorage.setItem(LS_USER, JSON.stringify(d.user)); } catch (e) {}
       Pay.renderBadge();
     }
     if (bg) bg.classList.remove('on');
@@ -911,6 +926,10 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
         Pay.status = d.authed
           ? { signed_in: true, user: d.user, credits: (d.user && d.user.credits) || 0, plan: (d.user && d.user.plan) || 'none', paid: !!(d.user && d.user.credits) }
           : { signed_in: false };
+        try {
+          if (d.authed && d.user) localStorage.setItem(LS_USER, JSON.stringify(d.user));
+          else localStorage.removeItem(LS_USER);   // token no longer valid → drop the cached name
+        } catch (e) {}
       } catch (e) { Pay.status = { signed_in: false }; }
     }
     Pay.renderBadge();
@@ -1004,9 +1023,14 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
     // ---- credit chip: only meaningful when the billing proxy is on ----
     const el = document.getElementById("creditBadge");
     if (!el) return;
-    if (!Pay.active || Pay.status === null || Pay.status.plan === "off") { el.style.display = "none"; return; }
+    const hubSignedIn = !Pay.active && Pay.hub && s.signed_in;   // signed in via hub, no billing proxy
+    if ((!Pay.active && !hubSignedIn) || Pay.status === null || Pay.status.plan === "off") { el.style.display = "none"; return; }
     el.style.display = "";
-    if (s.signed_in || s.paid) {
+    if (hubSignedIn) {
+      // header "Get Pro" chip beside the name: shows credits + opens the pricing modal
+      el.textContent = "💎 " + (s.credits || 0) + " · " + (Pay.T("getPro") || "Get Pro");
+      el.className = "credit-badge paid";
+    } else if (s.signed_in || s.paid) {
       el.textContent = "💎 " + (s.credits || 0) + " " + (Pay.T("credits") || "credits");
       el.className = "credit-badge paid";
     } else {
@@ -1043,13 +1067,15 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
       (a === 'monthly' ? -1 : b === 'monthly' ? 1 : (plans[b].amount - plans[a].amount)));
     const cards = order.filter(k => plans[k]).map(k => {
       const p = plans[k];
-      const best = k === 'monthly';
+      const best = k === 'yearly';               // BEST VALUE on the yearly plan
+      const isMonthly = k === 'monthly';
+      const per = isMonthly ? (Pay.T('month') || 'month') : (Pay.T('year') || 'year');
       return `<div class="plan${best ? ' best' : ''}" data-plan="${k}">
         ${best ? `<div class="plan-tag">${Pay.T('bestValue') || 'BEST VALUE'}</div>` : ''}
-        <div class="plan-price">${money(p.amount)}${best ? `<span>/${Pay.T('month') || 'month'}</span>` : ''}</div>
+        <div class="plan-price">${money(p.amount)}<span>/${per}</span></div>
         <div class="plan-credits">${p.credits} ${Pay.T('credits') || 'credits'}</div>
-        <div class="plan-note">${best ? (Pay.T('planMonthlyNote') || 'Renews monthly · cancel anytime')
-                                       : (Pay.T('planPackNote') || 'One-time · valid 1 year')}</div>
+        <div class="plan-note">${isMonthly ? (Pay.T('planMonthlyNote') || 'Renews monthly · cancel anytime')
+                                            : (Pay.T('planYearlyNote') || 'Best price · billed yearly')}</div>
         <button class="plan-btn">${Pay.T('choose') || 'Choose'}</button>
       </div>`;
     }).join('');
@@ -1058,7 +1084,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
       <h3>${head}</h3>
       <p class="pay-sub">${sub}</p>
       <div class="plan-grid">${cards || '<p>' + (Pay.T('noPlans') || 'Plans are not configured yet.') + '</p>'}</div>
-      <p class="pay-fine">${Pay.T('payFine') || 'One credit = one AI answer. Answers already asked by other students are free and never use a credit.'}</p>
+      <p class="pay-fine">${Pay.T('payFine') || '10 credits = one AI answer. Answers already asked by other students are free and never use a credit.'}</p>
       <div class="m-actions">
         <button class="mini-btn" id="payClose">${Pay.T('close') || 'Close'}</button>
       </div>
@@ -1130,20 +1156,19 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   Pay.init = async function () {
     const cb = document.getElementById('creditBadge'); if (cb && !Pay.active) cb.style.display = 'none';
     if (!Pay.active && !Pay.hub) return;   // neither billing nor accounts configured
-    // Pull public config from the hub: the Google client id (if config.js didn't
-    // set one) AND the pricing plans for the visitor's currency.
-    if (Pay.hub) {
-      try {
-        const d = await Pay.hubApi('public_config', null, 'GET');
-        if (d) {
-          if (!Pay.googleId && d.google_client_id) Pay.googleId = d.google_client_id;
-          if (d.plans) Pay._plans = d.plans;
-          if (d.gateway) Pay._gateway = d.gateway;
-        }
-      } catch (e) {}
-    }
+    Pay.hydrateFromCache();   // instant name from the last session (refresh corrects it below)
+    // Pull public config (google id + pricing plans) in the BACKGROUND so it never
+    // delays showing the signed-in name.
+    const cfgP = Pay.hub ? Pay.hubApi('public_config', null, 'GET').then(d => {
+      if (d) {
+        if (!Pay.googleId && d.google_client_id) Pay.googleId = d.google_client_id;
+        if (d.plans) Pay._plans = d.plans;
+        if (d.gateway) Pay._gateway = d.gateway;
+      }
+    }).catch(() => {}) : Promise.resolve();
     await Pay.claimIfPaid();
-    await Pay.refresh();
+    await Pay.refresh();   // real signed-in state — no longer waits on public_config
+    await cfgP;            // make sure plans are ready before the user opens the pricing modal
   };
 })();
 
@@ -1233,7 +1258,7 @@ const I18N = {
     ch3:'The Answer', copy:'Copy answer', followup:'Ask my own follow-up', newDoubt:'New doubt',
     hint:'Give me a hint', hintTitle:'Hint — try it yourself first', hintSolve:'Show me the full solution',
     share:'Share', exportPdf:'Export PDF', close:'Close',
-    signIn:'Sign in / up', account:'Account', signOut:'Sign out', getCredits:'Get more credits', signedOut:'Signed out.', signOutQ:'Sign out?', welcome:'Signed in',
+    signIn:'Sign in / up', account:'Account', signOut:'Sign out', getCredits:'Get more credits', getPro:'Get Pro', year:'year', planYearlyNote:'Best price · billed yearly', signInToUse:'Please sign in or sign up to use.', signedOut:'Signed out.', signOutQ:'Sign out?', welcome:'Signed in',
     signInTitle:'Sign in', signUpTitle:'Create account',
     signInSub:'Sign in so your credits work on every device.', signUpSub:'Free to join — your credits stay with your account.',
     namePh:'Your name', emailPh:'Email address', passPh:'Password (min 6 characters)', otpPh:'6-digit code',
@@ -1247,7 +1272,7 @@ const I18N = {
     premTitle:'⭐ This needs Premium AI', premSub:'Hard questions use the most powerful AI models. Upgrade to unlock them.', orText:'or', payTitle:'Get more questions', paySub:'Free every day. Unlock more whenever you need them.',
     payOutTitle:'You’ve used today’s free questions', payOutSub:'Come back tomorrow for more free ones — or unlock now and keep going.',
     planMonthlyNote:'Renews monthly · cancel anytime', planPackNote:'One-time · valid 1 year',
-    payFine:'One credit = one AI answer. Answers already asked by other students are free and never use a credit.',
+    payFine:'10 credits = one AI answer. Answers already asked by other students are free and never use a credit.',
     payNotReady:'Payments are not switched on yet — please try again later.', noPlans:'Plans are not configured yet.',
     paidOk:'Payment successful — your credits are ready!', paidPending:'Payment is still being confirmed. Refresh in a minute.',
     del:'Delete', clearAll:'Clear all', clearConfirm:'Delete all saved doubts from this device?',
@@ -1282,7 +1307,7 @@ const I18N = {
     ch3:'उत्तर', copy:'उत्तर कॉपी करें', followup:'अपना सवाल पूछें', newDoubt:'नया डाउट',
     hint:'मुझे संकेत दें', hintTitle:'संकेत — पहले खुद कोशिश करें', hintSolve:'पूरा हल दिखाएँ',
     share:'शेयर करें', exportPdf:'PDF सेव करें', close:'बंद करें',
-    signIn:'साइन इन / अप', account:'खाता', signOut:'साइन आउट', getCredits:'और क्रेडिट लें', signedOut:'साइन आउट हो गए।', signOutQ:'साइन आउट करें?', welcome:'साइन इन हो गए',
+    signIn:'साइन इन / अप', account:'खाता', signOut:'साइन आउट', getCredits:'और क्रेडिट लें', getPro:'प्रो लें', year:'साल', planYearlyNote:'सबसे अच्छी कीमत · सालाना', signInToUse:'उपयोग के लिए कृपया साइन इन या साइन अप करें।', signedOut:'साइन आउट हो गए।', signOutQ:'साइन आउट करें?', welcome:'साइन इन हो गए',
     signInTitle:'साइन इन', signUpTitle:'खाता बनाएँ',
     signInSub:'साइन इन करें ताकि आपके क्रेडिट हर डिवाइस पर चलें।', signUpSub:'जुड़ना फ्री है — क्रेडिट आपके खाते में सुरक्षित रहते हैं।',
     namePh:'आपका नाम', emailPh:'ईमेल', passPh:'पासवर्ड (कम से कम 6 अक्षर)', otpPh:'6 अंकों का कोड',
@@ -1296,7 +1321,7 @@ const I18N = {
     premTitle:'⭐ इसके लिए प्रीमियम AI चाहिए', premSub:'कठिन प्रश्न सबसे शक्तिशाली AI मॉडल इस्तेमाल करते हैं। अनलॉक करने के लिए अपग्रेड करें।', orText:'या', payTitle:'और प्रश्न पाएँ', paySub:'हर दिन फ्री। जब चाहें और अनलॉक करें।',
     payOutTitle:'आज के फ्री प्रश्न पूरे हो गए', payOutSub:'कल फिर फ्री मिलेंगे — या अभी अनलॉक करके जारी रखें।',
     planMonthlyNote:'हर माह रिन्यू · कभी भी बंद करें', planPackNote:'एक बार · 1 साल वैध',
-    payFine:'1 क्रेडिट = 1 AI उत्तर। जो प्रश्न पहले पूछे जा चुके हैं वे फ्री हैं, क्रेडिट नहीं लगता।',
+    payFine:'10 क्रेडिट = 1 AI उत्तर। जो प्रश्न पहले पूछे जा चुके हैं वे फ्री हैं, क्रेडिट नहीं लगता।',
     payNotReady:'भुगतान अभी चालू नहीं है — बाद में कोशिश करें।', noPlans:'प्लान अभी सेट नहीं हैं।',
     paidOk:'भुगतान सफल — आपके क्रेडिट तैयार हैं!', paidPending:'भुगतान की पुष्टि हो रही है। एक मिनट बाद रिफ्रेश करें।',
     del:'हटाएँ', clearAll:'सभी हटाएँ', clearConfirm:'इस डिवाइस से सभी सेव किए डाउट हटा दें?',
@@ -1331,7 +1356,7 @@ const I18N = {
     ch3:'సమాధానం', copy:'సమాధానం కాపీ', followup:'నా ప్రశ్న అడగండి', newDoubt:'కొత్త డౌట్',
     hint:'ఒక సూచన ఇవ్వండి', hintTitle:'సూచన — ముందు మీరే ప్రయత్నించండి', hintSolve:'పూర్తి సాధన చూపించండి',
     share:'షేర్ చేయండి', exportPdf:'PDF సేవ్', close:'మూసివేయండి',
-    signIn:'సైన్ ఇన్ / అప్', account:'ఖాతా', signOut:'సైన్ అవుట్', getCredits:'మరిన్ని క్రెడిట్లు పొందండి', signedOut:'సైన్ అవుట్ అయ్యారు.', signOutQ:'సైన్ అవుట్ చేయాలా?', welcome:'సైన్ ఇన్ అయ్యారు',
+    signIn:'సైన్ ఇన్ / అప్', account:'ఖాతా', signOut:'సైన్ అవుట్', getCredits:'మరిన్ని క్రెడిట్లు పొందండి', getPro:'ప్రో పొందండి', year:'సంవత్సరం', planYearlyNote:'ఉత్తమ ధర · వార్షికం', signInToUse:'ఉపయోగించడానికి దయచేసి సైన్ ఇన్ లేదా సైన్ అప్ చేయండి.', signedOut:'సైన్ అవుట్ అయ్యారు.', signOutQ:'సైన్ అవుట్ చేయాలా?', welcome:'సైన్ ఇన్ అయ్యారు',
     signInTitle:'సైన్ ఇన్', signUpTitle:'ఖాతా సృష్టించండి',
     signInSub:'సైన్ ఇన్ చేస్తే మీ క్రెడిట్లు అన్ని డివైస్‌లలో పనిచేస్తాయి.', signUpSub:'చేరడం ఉచితం — క్రెడిట్లు మీ ఖాతాలో ఉంటాయి.',
     namePh:'మీ పేరు', emailPh:'ఈమెయిల్', passPh:'పాస్‌వర్డ్ (కనీసం 6 అక్షరాలు)', otpPh:'6 అంకెల కోడ్',
@@ -1345,7 +1370,7 @@ const I18N = {
     premTitle:'⭐ దీనికి ప్రీమియం AI అవసరం', premSub:'కఠిన ప్రశ్నలు అత్యంత శక్తివంతమైన AI మోడల్స్ వాడతాయి. అన్‌లాక్ చేయడానికి అప్‌గ్రేడ్ చేయండి.', orText:'లేదా', payTitle:'మరిన్ని ప్రశ్నలు పొందండి', paySub:'ప్రతిరోజూ ఫ్రీ. కావలసినప్పుడు అన్‌లాక్ చేయండి.',
     payOutTitle:'ఈరోజు ఫ్రీ ప్రశ్నలు అయిపోయాయి', payOutSub:'రేపు మళ్లీ ఫ్రీ — లేదా ఇప్పుడే అన్‌లాక్ చేసి కొనసాగండి.',
     planMonthlyNote:'ప్రతి నెలా రెన్యూ · ఎప్పుడైనా ఆపవచ్చు', planPackNote:'ఒకసారి · 1 సంవత్సరం చెల్లుతుంది',
-    payFine:'1 క్రెడిట్ = 1 AI సమాధానం. ఇతర విద్యార్థులు ఇప్పటికే అడిగిన ప్రశ్నలు ఫ్రీ, క్రెడిట్ ఖర్చు కాదు.',
+    payFine:'10 క్రెడిట్‌లు = 1 AI సమాధానం. ఇతర విద్యార్థులు ఇప్పటికే అడిగిన ప్రశ్నలు ఫ్రీ, క్రెడిట్ ఖర్చు కాదు.',
     payNotReady:'చెల్లింపులు ఇంకా ప్రారంభం కాలేదు — తర్వాత ప్రయత్నించండి.', noPlans:'ప్లాన్లు ఇంకా సెట్ కాలేదు.',
     paidOk:'చెల్లింపు విజయవంతం — మీ క్రెడిట్లు సిద్ధం!', paidPending:'చెల్లింపు నిర్ధారణ జరుగుతోంది. ఒక నిమిషంలో రిఫ్రెష్ చేయండి.',
     del:'తొలగించు', clearAll:'అన్నీ తొలగించు', clearConfirm:'ఈ డివైస్ నుండి సేవ్ చేసిన అన్ని డౌట్లను తొలగించాలా?',
@@ -1784,6 +1809,12 @@ async function solve(extraQuestion){
   $('errMsg').textContent='';
   const typed = (extraQuestion!==undefined ? extraQuestion : $('qtext').value.trim());
   if(!typed && !state.imageData){ $('errMsg').textContent = t('errNoQ'); return; }
+  // Accounts on: require sign in / sign up before using the tool.
+  if(window.Pay && Pay.hub && Pay.status && !Pay.status.signed_in){
+    Pay.toast(Pay.T('signInToUse') || 'Please sign in or sign up to use.');
+    Pay.auth('in');
+    return;
+  }
   if(!anyEngine()){ $('errMsg').textContent = t('errNoEngine'); updateEngineBadge(); return; }
   $('hintBox').style.display='none';   // full solution supersedes any hint
 

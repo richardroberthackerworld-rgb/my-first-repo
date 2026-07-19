@@ -12,7 +12,7 @@
 return array(
 
 	'currencies' => array(
-		'INR' => array('symbol' => '₹', 'monthly' => 27,  'yearly' => 299),
+		'INR' => array('symbol' => '₹', 'monthly' => 47,  'yearly' => 499),
 		'USD' => array('symbol' => '$', 'monthly' => 1.5, 'yearly' => 6),
 	),
 
