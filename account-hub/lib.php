@@ -395,6 +395,11 @@ function grant_plan($userId, $planKey, $credits = null, $days = null) {
 	$p = isset($plans['plans'][$planKey]) ? $plans['plans'][$planKey] : array('credits' => 0, 'days' => 30);
 	if ($credits === null) $credits = $p['credits'];
 	if ($days === null) $days = $p['days'];
+	// Expiry = purchase moment + plan length, at the SAME clock time it was
+	// bought (monthly: 30 days later; yearly: 365 days later). A top-up bought
+	// some days later starts a fresh period from THAT purchase's date & time —
+	// remaining credits stack on top. On expiry refresh_plan() wipes leftover
+	// paid credits, drops Pro, and the account returns to the free 30/day.
 	$expires = date('Y-m-d H:i:s', time() + $days * 86400);
 	// Add credits (stack if they buy again) and set the new expiry.
 	db()->prepare("UPDATE users SET credits = credits + ?, plan = ?, plan_expires = ? WHERE id = ?")
