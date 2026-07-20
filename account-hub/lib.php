@@ -47,6 +47,8 @@ function db() {
 	// existing installs: add the token column if it isn't there yet
 	try { $pdo->exec("ALTER TABLE users ADD COLUMN api_token VARCHAR(64) NULL"); } catch (Exception $e) {}
 	try { $pdo->exec("CREATE INDEX idx_users_api_token ON users (api_token)"); } catch (Exception $e) {}
+	// daily free-credit top-up bookkeeping
+	try { $pdo->exec("ALTER TABLE users ADD COLUMN daily_at DATE NULL"); } catch (Exception $e) {}
 	$pdo->exec("CREATE TABLE IF NOT EXISTS transactions (
 		id INT AUTO_INCREMENT PRIMARY KEY,
 		user_id INT NOT NULL,
@@ -356,9 +358,23 @@ function issue_api_token($userId) {
 
 // Expire the plan (and its credits) once past plan_expires.
 function refresh_plan($u) {
+	global $CFG;
 	if ($u['plan'] !== 'none' && $u['plan_expires'] && strtotime($u['plan_expires']) < time()) {
 		db()->prepare("UPDATE users SET plan='none', plan_expires=NULL, credits=0 WHERE id=?")->execute(array($u['id']));
 		$u['plan'] = 'none'; $u['plan_expires'] = null; $u['credits'] = 0;
+	}
+	// Daily free credits: FREE accounts are topped up to this many credits once a
+	// day (never stacked, never reduced — a fuller balance is left alone). Paid
+	// plans are untouched: their bought credits simply spend down.
+	$daily = (int)($CFG['free_daily_credits'] ?? 30);
+	if ($daily > 0 && $u['plan'] === 'none') {
+		$today = date('Y-m-d');
+		if (($u['daily_at'] ?? null) !== $today) {
+			$newBal = max((int)$u['credits'], $daily);
+			db()->prepare("UPDATE users SET credits = ?, daily_at = ? WHERE id = ?")
+				->execute(array($newBal, $today, $u['id']));
+			$u['credits'] = $newBal; $u['daily_at'] = $today;
+		}
 	}
 	return $u;
 }

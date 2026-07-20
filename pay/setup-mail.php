@@ -91,6 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ?><!doctype html>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>7Pay — email poller setup</title>
+<link rel="icon" type="image/png" href="favicon.png">
 <style>
 	body{font-family:system-ui,sans-serif;background:#f6f1e7;color:#2b2117;margin:0;padding:24px}
 	.card{max-width:560px;margin:40px auto;background:#fffdf7;border:1px solid #d9c9a3;border-radius:10px;padding:28px;box-shadow:0 12px 40px rgba(60,40,10,.12)}

@@ -85,6 +85,10 @@ return array(
 	// 100 credits = 10 uses at the standard 10-credits-per-action. Set 0 to disable.
 	'free_signup_credits' => 100,   // one-time welcome bonus (10 free actions)
 
+	// FREE accounts are topped up to this many credits once per day (3 answers
+	// at 10 credits each). Never stacks; paid plans are unaffected. 0 = off.
+	'free_daily_credits' => 30,
+
 	// Only allow these email domains to sign up. Empty array = allow any.
 	// e.g. ['gmail.com'] to accept only @gmail.com addresses.
 	'allowed_email_domains' => array('gmail.com'),

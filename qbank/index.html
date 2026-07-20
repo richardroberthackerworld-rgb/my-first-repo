@@ -34,6 +34,21 @@
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
+html,body{overflow-x:hidden;max-width:100%}
+.toolbar-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;min-width:0}
+.menu-btn{font-size:16px;line-height:1;padding:5px 11px}
+.menu-pop{
+  display:none;position:fixed;top:56px;right:12px;z-index:70;min-width:230px;
+  background:var(--paper);border:1px solid var(--gold-soft);border-radius:8px;
+  box-shadow:0 18px 50px rgba(0,0,0,.4);padding:6px;flex-direction:column;
+}
+.menu-pop.on{display:flex}
+.menu-pop a{
+  color:var(--ink);text-decoration:none;font-size:14.5px;padding:10px 14px;
+  border-radius:6px;border-bottom:1px solid var(--rule);
+}
+.menu-pop a:last-child{border-bottom:none}
+.menu-pop a:hover{background:var(--paper-2);color:var(--maroon)}
 body{
   font-family:var(--serif);
   color:var(--ink);
@@ -444,6 +459,9 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
 .footer-credit{display:block;margin-top:10px;font-style:normal;font-size:12px;letter-spacing:.5px;color:#b39b6e}
 .footer-credit a{color:var(--gold-soft,#c9a24a);font-weight:600;text-decoration:none}
 .footer-credit a:hover{text-decoration:underline}
+.footer-links{margin-top:10px;font-style:normal;font-size:11.5px;letter-spacing:.4px;line-height:2}
+.footer-links a{color:#b39b6e;text-decoration:none}
+.footer-links a:hover{color:var(--gold-soft,#c9a24a);text-decoration:underline}
 
 /* ---------- print: only the question paper ---------- */
 @media print{
@@ -469,6 +487,8 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   .plan-note{font-size:11px}
   .auth-modal input,.modal input{font-size:14px;padding:10px 12px}
   .pay-toast{font-size:13px;padding:10px 14px;bottom:14px;max-width:94vw}
+  .engine-badge{max-width:42vw}
+  .credit-badge{font-size:12px;padding:5px 10px}
 }
 @media (max-width:380px){
   .plan-grid{grid-template-columns:1fr}
@@ -491,12 +511,29 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
     <button class="lang-tab" data-lang="hi">हिंदी</button>
     <button class="lang-tab" data-lang="te">తెలుగు</button>
   </div>
-  <div style="display:flex;gap:8px;align-items:center">
+  <div class="toolbar-right">
     <button class="credit-badge" id="authBadge" style="display:none"></button>
     <button class="credit-badge" id="creditBadge" style="display:none"></button>
     <div class="key-btn engine-badge" id="engineBadge">…</div>
+    <button class="credit-badge menu-btn" id="menuBtn" aria-label="Menu">☰</button>
   </div>
 </div>
+<div class="menu-pop" id="menuPop">
+  <a href="https://7by.in">🏠 Home — 7By.in</a>
+  <a href="https://7solve.7by.in">✅ 7Solve — Doubt solver</a>
+  <a href="https://7by.in/blog/">📝 Blog</a>
+  <a href="https://7by.in/about.html">👤 About</a>
+  <a href="https://7by.in/contact.html">📧 Contact</a>
+  <a href="https://7by.in/privacy-policy.html">🔒 Privacy Policy</a>
+  <a href="https://7by.in/terms-of-service.html">📋 Terms</a>
+</div>
+<script>
+(function(){
+  var b = document.getElementById('menuBtn'), p = document.getElementById('menuPop');
+  b.onclick = function(e){ e.stopPropagation(); p.classList.toggle('on'); };
+  document.addEventListener('click', function(e){ if(!p.contains(e.target) && e.target !== b) p.classList.remove('on'); });
+})();
+</script>
 
 <main class="book">
 
@@ -657,6 +694,16 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   <span class="fleuron">❦</span>
   <span data-i18n="footer">7Q — practice makes rank. Free forever, from 7By.in. · AI-generated — please verify answers before your exam.</span>
   <span class="footer-credit">Designed by <a href="https://7by.in" target="_blank" rel="noopener">7By.in</a></span>
+  <nav class="footer-links">
+    <a href="https://7by.in/about.html">About</a> ·
+    <a href="https://7by.in/blog/">Blog</a> ·
+    <a href="https://7by.in/contact.html">Contact</a> ·
+    <a href="https://7by.in/privacy-policy.html">Privacy Policy</a> ·
+    <a href="https://7by.in/terms-of-service.html">Terms</a> ·
+    <a href="https://7by.in/disclaimer.html">Disclaimer</a> ·
+    <a href="https://7by.in/cookie-policy.html">Cookies</a> ·
+    <a href="https://7by.in/dmca.html">DMCA</a>
+  </nav>
 </footer>
 
 <script>window.__APP_ID='7q'; window.__APP_NAME='7Q';</script>
@@ -729,13 +776,35 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
      The AI requests themselves don't charge, so a failed/retried question never
      costs a credit. No-ops when the billing proxy is off. */
   Pay.charge = async function () {
-    if (!Pay.active) return;
-    try {
-      const r = await fetch(PROXY + '?action=charge', { method: 'POST', headers: Pay.authHeaders() });
-      const j = await r.json().catch(() => ({}));
-      if (j && typeof j.credits !== 'undefined' && Pay.status) { Pay.status.credits = j.credits; Pay.renderBadge(); }
-      else { Pay.refresh(); }
-    } catch (e) {}
+    if (Pay.active) {
+      // billing proxy on: the proxy already gated the call, just record the spend
+      try {
+        const r = await fetch(PROXY + '?action=charge', { method: 'POST', headers: Pay.authHeaders() });
+        const j = await r.json().catch(() => ({}));
+        if (j && typeof j.credits !== 'undefined' && Pay.status) { Pay.status.credits = j.credits; Pay.renderBadge(); }
+        else { Pay.refresh(); }
+      } catch (e) {}
+      return;
+    }
+    // hub mode (no proxy): every paper — big or small — costs 10 account credits
+    if (Pay.hub && Pay.status && Pay.status.signed_in) {
+      try {
+        const d = await Pay.hubApi('consume', { count: 10, product: (window.__APP_ID || 'app') });
+        if (typeof d.credits !== 'undefined') {
+          Pay.status.credits = d.credits;
+          if (Pay.status.user) Pay.status.user.credits = d.credits;
+          try { localStorage.setItem(LS_USER, JSON.stringify(Pay.status.user)); } catch (e) {}
+          Pay.renderBadge();
+        }
+      } catch (e) {
+        if (/no_credits/.test((e && e.message) || '')) { Pay.status.credits = 0; Pay.renderBadge(); }
+      }
+    }
+  };
+
+  /* true when the signed-in student can't afford one more paper */
+  Pay.broke = function () {
+    return !Pay.active && Pay.hub && Pay.status && Pay.status.signed_in && (Pay.status.credits || 0) < 10;
   };
 
   Pay.hubApi = async function (action, body, method) {
@@ -1971,6 +2040,7 @@ async function generate(more){
     Pay.auth('in');
     return;
   }
+  if(window.Pay && Pay.broke && Pay.broke()){ Pay.open('out'); return; }   // fewer than 10 credits left
   if(!anyEngine()){ $('errMsg').textContent = t('errNoEngine'); updateEngineBadge(); return; }
 
   let userText = topic
