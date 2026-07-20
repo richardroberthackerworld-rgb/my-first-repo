@@ -474,8 +474,14 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   .plan-note{font-size:11px}
   .auth-modal input,.modal input{font-size:14px;padding:10px 12px}
   .pay-toast{font-size:13px;padding:10px 14px;bottom:14px;max-width:94vw}
-  .engine-badge{max-width:42vw}
   .credit-badge{font-size:12px;padding:5px 10px}
+  /* small screens: languages centred, then Home·name·credits centred,
+     then the engine line stretched edge-to-edge beside the ☰ menu */
+  .toolbar{justify-content:center}
+  .lang-tabs{width:100%;justify-content:center}
+  .toolbar-right{width:100%;justify-content:center}
+  .engine-badge{order:5;flex:1 1 calc(100% - 52px);max-width:none;text-align:center}
+  .menu-btn{order:6}
 }
 @media (max-width:380px){
   .plan-grid{grid-template-columns:1fr}
