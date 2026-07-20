@@ -51,8 +51,8 @@ return array(
 		'http://localhost:3050', // local dev (7Q / 7Solve)
 	),
 
-	// ---- Payment gateway: 'sevenpay' (our own, at pay.7by.in) or 'razorpay' ----
-	'gateway' => 'sevenpay',
+	// ---- Payment gateway: 'razorpay' (live) or 'sevenpay' (our own, retired) ----
+	'gateway' => 'razorpay',
 
 	// ---- 7Pay (our own gateway — see the pay/ folder, deployed at pay.7by.in) ----
 	'sevenpay' => array(

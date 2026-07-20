@@ -184,10 +184,10 @@ switch ($action) {
 		$payload = array(
 			'amount' => $d['amount_minor'], 'currency' => $d['currency'],
 			'receipt' => 'u' . $u['id'] . '-' . time(),
-			'callback_url' => $retOk,   // 7Pay redirects here with ?sevenpay_order_id=... on success
 			'notes' => array('user_id' => (string)$u['id'], 'plan' => $plan, 'product' => $product, 'credits' => (string)$d['credits']),
 		);
 		if ($gateway === 'sevenpay') {
+			$payload['callback_url'] = $retOk;   // 7Pay redirects here on success (Razorpay's API rejects extra fields)
 			list($code, $order) = sevenpay_api('order.create', $payload);
 		} else {
 			list($code, $order) = rzp_request('POST', '/orders', $payload);

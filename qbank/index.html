@@ -1222,7 +1222,20 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
     });
   };
 
-  /* ---------- send the buyer to 7Pay (order is created server-side) ---------- */
+  /* ---------- Razorpay checkout script (popup) ---------- */
+  Pay._rzpLoaded = false;
+  Pay.loadRzp = function () {
+    return new Promise((res) => {
+      if (window.Razorpay) { Pay._rzpLoaded = true; return res(true); }
+      const sc = document.createElement('script');
+      sc.src = 'https://checkout.razorpay.com/v1/checkout.js'; sc.async = true;
+      sc.onload = () => { Pay._rzpLoaded = true; res(true); };
+      sc.onerror = () => res(false);
+      document.head.appendChild(sc);
+    });
+  };
+
+  /* ---------- checkout (order is created server-side on the hub) ---------- */
   Pay.checkout = async function (planKey) {
     const s = Pay.status || {};
     const plans = s.plans || Pay._plans || {};
@@ -1241,6 +1254,37 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
       try {
         const ret = location.origin + location.pathname;
         const d = await Pay.hubApi('order', { plan: planKey, product: (window.__APP_ID || ''), return: ret });
+        // Razorpay: popup checkout — pay in place, verify with the hub, credits
+        // appear instantly. No redirects anywhere.
+        if (d.gateway === 'razorpay' && d.order_id && d.key_id) {
+          const ok = await Pay.loadRzp();
+          if (!ok || !window.Razorpay) { Pay.toast(Pay.T('payNotReady') || 'Could not open checkout — please try again.'); return; }
+          new Razorpay({
+            key: d.key_id,
+            order_id: d.order_id,
+            amount: d.amount, currency: d.currency || 'INR',
+            name: '7By', description: (window.__APP_NAME || '7By') + ' · ' + (plans[planKey].label || planKey),
+            image: 'https://7by.in/assets/favicon.png',
+            prefill: { name: d.name || '', email: d.email || '' },
+            theme: { color: '#7b2d26' },
+            handler: async function (resp) {
+              try {
+                await Pay.hubApi('verify', {
+                  razorpay_order_id: resp.razorpay_order_id,
+                  razorpay_payment_id: resp.razorpay_payment_id,
+                  razorpay_signature: resp.razorpay_signature,
+                  plan: planKey
+                });
+                await Pay.refresh();
+                Pay.toast('✅ ' + (Pay.T('paidOk') || 'Payment successful — your credits are ready!'));
+              } catch (e) {
+                await Pay.refresh();
+                Pay.toast('⏳ ' + (Pay.T('paidPending') || 'Payment is still being confirmed. Refresh in a minute.'));
+              }
+            }
+          }).open();
+          return;
+        }
         if ((d.gateway === 'sevenpay' || Pay._gateway === 'sevenpay') && d.sevenpay_base && d.order_id) {
           const base = String(d.sevenpay_base).replace(/\/+$/, '');
           const url = base + '/checkout.php?order_id=' + encodeURIComponent(d.order_id)
