@@ -37,6 +37,7 @@ html{scroll-behavior:smooth}
 html,body{overflow-x:hidden;max-width:100%}
 .toolbar-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;min-width:0}
 .menu-btn{font-size:16px;line-height:1;padding:5px 11px}
+a.home-btn{text-decoration:none;display:inline-flex;align-items:center;gap:4px}
 .menu-pop{
   display:none;position:fixed;top:56px;right:12px;z-index:70;min-width:230px;
   background:var(--paper);border:1px solid var(--gold-soft);border-radius:8px;
@@ -512,6 +513,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
     <button class="lang-tab" data-lang="te">తెలుగు</button>
   </div>
   <div class="toolbar-right">
+    <a class="credit-badge home-btn" href="https://7by.in" aria-label="Home">🏠 Home</a>
     <button class="credit-badge" id="authBadge" style="display:none"></button>
     <button class="credit-badge" id="creditBadge" style="display:none"></button>
     <div class="key-btn engine-badge" id="engineBadge">…</div>
@@ -805,6 +807,11 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   /* true when the signed-in student can't afford one more paper */
   Pay.broke = function () {
     return !Pay.active && Pay.hub && Pay.status && Pay.status.signed_in && (Pay.status.credits || 0) < 10;
+  };
+
+  /* paid plan (monthly/yearly)? free accounts get the basic AI only */
+  Pay.isPaid = function () {
+    return !!(Pay.status && Pay.status.signed_in && (Pay.status.plan || 'none') !== 'none');
   };
 
   Pay.hubApi = async function (action, body, method) {
@@ -1407,7 +1414,7 @@ const I18N = {
     resetBtn:'Set new password', newPassPh:'New password (min 6 characters)', resetDone:'Password changed — please sign in.',
     signInToBuy:'Please sign in first so your credits are saved to your account.',
     credits:'credits', freeToday:'free today', month:'month', bestValue:'BEST VALUE', choose:'Choose',
-    premTitle:'⭐ This needs Premium AI', premSub:'Hard questions use the most powerful AI models. Upgrade to unlock them.', orText:'or', payTitle:'Get more questions', paySub:'Free every day. Unlock more whenever you need them.',
+    premTitle:'⭐ This needs Premium AI', premSub:'Hard questions use the most powerful AI models. Upgrade to unlock them.', orText:'or', payTitle:'Get more questions', paySub:'Free every day — 30 free credits daily. Unlock more whenever you need them.',
     payOutTitle:'You’ve used today’s free questions', payOutSub:'Come back tomorrow for more free ones — or unlock now and keep going.',
     planMonthlyNote:'Renews monthly · cancel anytime', planPackNote:'One-time · valid 1 year',
     payTopup:'Need more later? Buy any plan again — new credits add on top of your balance.',
@@ -1463,7 +1470,7 @@ const I18N = {
     resetBtn:'नया पासवर्ड सेट करें', newPassPh:'नया पासवर्ड (कम से कम 6 अक्षर)', resetDone:'पासवर्ड बदल गया — कृपया साइन इन करें।',
     signInToBuy:'पहले साइन इन करें ताकि क्रेडिट आपके खाते में सेव हों।',
     credits:'क्रेडिट', freeToday:'आज फ्री', month:'माह', bestValue:'सबसे बढ़िया', choose:'चुनें',
-    premTitle:'⭐ इसके लिए प्रीमियम AI चाहिए', premSub:'कठिन प्रश्न सबसे शक्तिशाली AI मॉडल इस्तेमाल करते हैं। अनलॉक करने के लिए अपग्रेड करें।', orText:'या', payTitle:'और प्रश्न पाएँ', paySub:'हर दिन फ्री। जब चाहें और अनलॉक करें।',
+    premTitle:'⭐ इसके लिए प्रीमियम AI चाहिए', premSub:'कठिन प्रश्न सबसे शक्तिशाली AI मॉडल इस्तेमाल करते हैं। अनलॉक करने के लिए अपग्रेड करें।', orText:'या', payTitle:'और प्रश्न पाएँ', paySub:'हर दिन फ्री — रोज़ 30 फ्री क्रेडिट। जब चाहें और अनलॉक करें।',
     payOutTitle:'आज के फ्री प्रश्न पूरे हो गए', payOutSub:'कल फिर फ्री मिलेंगे — या अभी अनलॉक करके जारी रखें।',
     planMonthlyNote:'हर माह रिन्यू · कभी भी बंद करें', planPackNote:'एक बार · 1 साल वैध',
     payTopup:'बाद में और चाहिए? कोई भी प्लान दोबारा खरीदें — नए क्रेडिट आपके बैलेंस में जुड़ जाते हैं।',
@@ -1519,7 +1526,7 @@ const I18N = {
     resetBtn:'కొత్త పాస్‌వర్డ్ సెట్ చేయండి', newPassPh:'కొత్త పాస్‌వర్డ్ (కనీసం 6 అక్షరాలు)', resetDone:'పాస్‌వర్డ్ మారింది — దయచేసి సైన్ ఇన్ చేయండి.',
     signInToBuy:'ముందు సైన్ ఇన్ చేయండి, తద్వారా క్రెడిట్లు మీ ఖాతాలో సేవ్ అవుతాయి.',
     credits:'క్రెడిట్లు', freeToday:'ఈరోజు ఫ్రీ', month:'నెల', bestValue:'బెస్ట్ వాల్యూ', choose:'ఎంచుకోండి',
-    premTitle:'⭐ దీనికి ప్రీమియం AI అవసరం', premSub:'కఠిన ప్రశ్నలు అత్యంత శక్తివంతమైన AI మోడల్స్ వాడతాయి. అన్‌లాక్ చేయడానికి అప్‌గ్రేడ్ చేయండి.', orText:'లేదా', payTitle:'మరిన్ని ప్రశ్నలు పొందండి', paySub:'ప్రతిరోజూ ఫ్రీ. కావలసినప్పుడు అన్‌లాక్ చేయండి.',
+    premTitle:'⭐ దీనికి ప్రీమియం AI అవసరం', premSub:'కఠిన ప్రశ్నలు అత్యంత శక్తివంతమైన AI మోడల్స్ వాడతాయి. అన్‌లాక్ చేయడానికి అప్‌గ్రేడ్ చేయండి.', orText:'లేదా', payTitle:'మరిన్ని ప్రశ్నలు పొందండి', paySub:'ప్రతిరోజూ ఫ్రీ — రోజుకు 30 ఫ్రీ క్రెడిట్లు. కావలసినప్పుడు అన్‌లాక్ చేయండి.',
     payOutTitle:'ఈరోజు ఫ్రీ ప్రశ్నలు అయిపోయాయి', payOutSub:'రేపు మళ్లీ ఫ్రీ — లేదా ఇప్పుడే అన్‌లాక్ చేసి కొనసాగండి.',
     planMonthlyNote:'ప్రతి నెలా రెన్యూ · ఎప్పుడైనా ఆపవచ్చు', planPackNote:'ఒకసారి · 1 సంవత్సరం చెల్లుతుంది',
     payTopup:'తర్వాత ఇంకా కావాలా? ఏదైనా ప్లాన్ మళ్లీ కొనండి — కొత్త క్రెడిట్లు మీ బ్యాలెన్స్‌కు జోడించబడతాయి.',
@@ -2041,6 +2048,12 @@ async function generate(more){
     return;
   }
   if(window.Pay && Pay.broke && Pay.broke()){ Pay.open('out'); return; }   // fewer than 10 credits left
+  // Hard papers, practical (numerical) papers and CA · CMA · Professional level
+  // need the premium AI models — free accounts get BASIC papers only.
+  if(window.Pay && Pay.hub && !Pay.active && Pay.status && Pay.status.signed_in && !Pay.isPaid()
+     && ($('diffSel').value === 'hard' || $('kindSel').value === 'practical' || state.level === 'prof')){
+    Pay.open('premium'); return;
+  }
   if(!anyEngine()){ $('errMsg').textContent = t('errNoEngine'); updateEngineBadge(); return; }
 
   let userText = topic
