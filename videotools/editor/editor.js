@@ -160,6 +160,7 @@ function importFiles(files) {
     if (!kind) return;
     const m = { id: uid(), kind, name: file.name, url, duration: 0, el: null, thumb: null };
     media.push(m);
+    persistAsset(m, file);   // keep the bytes so the project survives a reload
     if (kind === 'video') {
       const v = document.createElement('video');
       v.src = url; v.preload = 'metadata'; v.muted = true; v.playsInline = true;
@@ -254,6 +255,7 @@ function addMediaToTimeline(m) {
     select('v', c);
   }
   renderTimeline(); renderInspector(); needsRedraw = true;
+  commit();
 }
 
 function makeVideoClip(m, inPoint = 0, dur = null) {
@@ -1046,6 +1048,7 @@ function addGfxClip(preset) {
   select('g', c);
   renderTimeline(); renderInspector();
   needsRedraw = true;
+  commit();
 }
 
 function renderGfxPresets() {
@@ -1329,6 +1332,8 @@ function tplPlaceholderMedia(i, tpl) {
   const img = new Image(); img.src = url;
   const m = { id: uid(), kind: 'image', name: 'Placeholder ' + (i + 1), url, duration: 4, el: img, thumb: url };
   media.push(m);
+  // placeholders are persisted too, so a restored template project still renders
+  fetch(url).then(r => r.blob()).then(b => persistAsset(m, b)).catch(() => {});
   return m;
 }
 
@@ -1385,6 +1390,7 @@ function applyTemplate(tpl) {
   seek(0);
   renderTimeline(); renderInspector();
   needsRedraw = true;
+  commit();
   play();
 }
 
@@ -1694,6 +1700,217 @@ function tick() {
 }
 
 /* ============================================================
+   HISTORY (undo / redo) + AUTOSAVE
+   Snapshots are JSON of the four tracks. Live DOM elements (video /
+   audio / image) and per-frame scratch fields are stripped out and
+   rebuilt from the media library on restore, so a snapshot stays a
+   plain serialisable object that can also go straight to IndexedDB.
+   ============================================================ */
+const HISTORY_LIMIT = 80;
+let history = [], histIndex = -1, histLock = false;
+
+const snapReplacer = (k, v) =>
+  (k === 'el' || k === 'bbox' || k.charAt(0) === '_') ? undefined : v;
+
+function snapshot() {
+  return JSON.stringify({
+    v: vTrack, t: tTrack, g: gTrack, a: aTrack,
+    aspect: curAspect, quality: curQuality, name: $('projectName').value,
+  }, snapReplacer);
+}
+
+function commit() {
+  if (histLock) return;
+  const snap = snapshot();
+  if (history[histIndex] === snap) return;   // nothing actually changed
+  history.splice(histIndex + 1);             // drop the redo branch
+  history.push(snap);
+  if (history.length > HISTORY_LIMIT) history.shift();
+  histIndex = history.length - 1;
+  updateHistoryUI();
+  scheduleAutosave();
+}
+
+/* give a restored clip its media element back */
+function rehydrateClip(c) {
+  const m = media.find(x => x.id === c.mediaId);
+  if (!m) return false;                      // asset is gone — drop the clip
+  if (c.kind === 'video') {
+    const v = document.createElement('video');
+    v.src = m.url; v.preload = 'auto'; v.playsInline = true;
+    v.addEventListener('seeked', () => { needsRedraw = true; });
+    v.addEventListener('loadeddata', () => { needsRedraw = true; });
+    c.el = v;
+    hookClipAudio(c);
+  } else if (c.kind === 'audio') {
+    const a = document.createElement('audio');
+    a.src = m.url; a.preload = 'auto';
+    c.el = a;
+    hookClipAudio(c);
+  } else {
+    c.el = m.el;
+  }
+  return true;
+}
+
+function applySnapshot(json) {
+  const s = JSON.parse(json);
+  histLock = true;
+  stopPlayback();
+  vTrack.length = 0; tTrack.length = 0; gTrack.length = 0; aTrack.length = 0;
+  (s.v || []).forEach(c => { if (rehydrateClip(c)) vTrack.push(c); });
+  (s.a || []).forEach(c => { if (rehydrateClip(c)) aTrack.push(c); });
+  (s.t || []).forEach(c => tTrack.push(c));
+  (s.g || []).forEach(c => gTrack.push(c));
+  if (s.aspect) { curAspect = s.aspect; $('aspectSelect').value = s.aspect; }
+  if (s.quality) { curQuality = s.quality; $('qualitySelect').value = String(s.quality); }
+  if (s.name) $('projectName').value = s.name;
+  applyResolution();
+  deselect();
+  renderTimeline(); renderInspector();
+  seek(Math.min(playhead, totalDuration()));
+  needsRedraw = true;
+  histLock = false;
+}
+
+function undo() {
+  if (histIndex <= 0) return;
+  histIndex--;
+  applySnapshot(history[histIndex]);
+  updateHistoryUI();
+  scheduleAutosave();
+}
+function redo() {
+  if (histIndex >= history.length - 1) return;
+  histIndex++;
+  applySnapshot(history[histIndex]);
+  updateHistoryUI();
+  scheduleAutosave();
+}
+function updateHistoryUI() {
+  const u = $('undoBtn'), r = $('redoBtn');
+  if (u) u.disabled = histIndex <= 0;
+  if (r) r.disabled = histIndex >= history.length - 1;
+}
+
+/* ---------- IndexedDB: assets + the current project ---------- */
+const DB_NAME = 'clipcut-editor', DB_VER = 1;
+let _dbp = null;
+function db() {
+  if (_dbp) return _dbp;
+  _dbp = new Promise((res, rej) => {
+    const rq = indexedDB.open(DB_NAME, DB_VER);
+    rq.onupgradeneeded = () => {
+      const d = rq.result;
+      if (!d.objectStoreNames.contains('assets')) d.createObjectStore('assets', { keyPath: 'id' });
+      if (!d.objectStoreNames.contains('project')) d.createObjectStore('project');
+    };
+    rq.onsuccess = () => res(rq.result);
+    rq.onerror = () => rej(rq.error);
+  });
+  return _dbp;
+}
+function idbRun(store, mode, fn) {
+  return db().then(d => new Promise((res, rej) => {
+    const tx = d.transaction(store, mode);
+    const rq = fn(tx.objectStore(store));
+    rq.onsuccess = () => res(rq.result);
+    rq.onerror = () => rej(rq.error);
+  }));
+}
+const idbPut = (store, val, key) => idbRun(store, 'readwrite', s => key !== undefined ? s.put(val, key) : s.put(val));
+const idbGet = (store, key) => idbRun(store, 'readonly', s => s.get(key));
+const idbAll = (store) => idbRun(store, 'readonly', s => s.getAll());
+const idbClear = (store) => idbRun(store, 'readwrite', s => s.clear());
+
+/* keep the original bytes so a project survives a reload: blob: URLs die
+   with the page, so the file itself has to be stored, not the URL */
+async function persistAsset(m, blob) {
+  try {
+    await idbPut('assets', {
+      id: m.id, kind: m.kind, name: m.name, duration: m.duration || 0,
+      thumb: (m.thumb && m.thumb.startsWith('data:')) ? m.thumb : null, blob,
+    });
+  } catch (_) { /* private mode or out of quota — editing still works */ }
+}
+
+let saveTimer = null;
+function scheduleAutosave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(doAutosave, 1200);
+}
+async function doAutosave() {
+  try {
+    await idbPut('project', { tracks: snapshot(), savedAt: Date.now() }, 'current');
+    flashSaved();
+  } catch (_) { /* best effort */ }
+}
+function flashSaved() {
+  const el = $('saveState');
+  if (!el) return;
+  el.textContent = 'SAVED';
+  el.classList.add('on');
+  clearTimeout(flashSaved._t);
+  flashSaved._t = setTimeout(() => el.classList.remove('on'), 1400);
+}
+
+async function restoreAssets() {
+  const rows = await idbAll('assets');
+  rows.forEach(r => {
+    if (media.some(m => m.id === r.id)) return;
+    const url = URL.createObjectURL(r.blob);
+    const m = { id: r.id, kind: r.kind, name: r.name, url, duration: r.duration || 0, el: null, thumb: r.thumb };
+    if (r.kind === 'image') {
+      const img = new Image(); img.src = url; m.el = img;
+      m.duration = r.duration || 4;
+      if (!m.thumb) m.thumb = url;
+    } else if (r.kind === 'video') {
+      const v = document.createElement('video');
+      v.src = url; v.preload = 'metadata'; v.muted = true; v.playsInline = true;
+      m.el = v;
+      v.addEventListener('loadeddata', () => { needsRedraw = true; });
+    } else {
+      const a = document.createElement('audio');
+      a.src = url; a.preload = 'metadata'; m.el = a;
+    }
+    media.push(m);
+  });
+  renderMediaGrid();
+}
+
+/* offer the last project back rather than silently loading it */
+async function offerRestore() {
+  let proj;
+  try { proj = await idbGet('project', 'current'); } catch (_) { return; }
+  if (!proj || !proj.tracks) return;
+  let s;
+  try { s = JSON.parse(proj.tracks); } catch (_) { return; }
+  const clips = (s.v || []).length + (s.t || []).length + (s.g || []).length + (s.a || []).length;
+  if (!clips) return;
+
+  const when = new Date(proj.savedAt || Date.now());
+  const bar = document.createElement('div');
+  bar.className = 'restore-bar';
+  bar.innerHTML = `<span class="rb-text"><b>Restore your last project?</b>
+      <span class="rb-meta mono">${clips} CLIP${clips > 1 ? 'S' : ''} · ${when.toLocaleDateString()} ${when.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></span>
+    <button class="btn btn-primary btn-sm" id="rbYes">Restore</button>
+    <button class="btn btn-ghost btn-sm" id="rbNo">Start fresh</button>`;
+  document.body.appendChild(bar);
+  requestAnimationFrame(() => bar.classList.add('show'));
+
+  bar.querySelector('#rbYes').addEventListener('click', async () => {
+    bar.remove();
+    await restoreAssets();
+    applySnapshot(proj.tracks);
+    history = [snapshot()]; histIndex = 0; updateHistoryUI();
+  });
+  bar.querySelector('#rbNo').addEventListener('click', async () => {
+    bar.remove();
+    try { await idbClear('project'); await idbClear('assets'); } catch (_) {}
+  });
+}
+
+/* ============================================================
    TIMELINE UI
    ============================================================ */
 const tlScroll = $('tlScroll'), tlInner = $('tlInner');
@@ -1817,6 +2034,7 @@ function clipPointerDown(e, c, type, el) {
     }
     renderTimeline(); renderInspector();
     needsRedraw = true;
+    commit();
   };
 
   window.addEventListener('pointermove', onMove);
@@ -1890,6 +2108,7 @@ function deleteSelected() {
   selected = null;
   renderTimeline(); renderInspector();
   needsRedraw = true;
+  commit();
 }
 
 function splitAtPlayhead() {
@@ -1937,6 +2156,7 @@ function splitAtPlayhead() {
   }
   renderTimeline(); renderInspector();
   needsRedraw = true;
+  commit();
 }
 
 function duplicateSelected() {
@@ -1948,6 +2168,11 @@ function duplicateSelected() {
     c2.speed = clip.speed; c2.volume = clip.volume;
     c2.grade = { ...clip.grade }; c2.effect = clip.effect;
     c2.transition = { ...clip.transition };
+    // framing and motion are part of the look too — a duplicate that
+    // silently loses the crop is worse than no duplicate
+    c2.motion = clip.motion; c2.fit = clip.fit;
+    c2.crop = { ...(clip.crop || { l: 0, t: 0, r: 0, b: 0 }) };
+    c2.humanFx = clip.humanFx; c2.humanColor = clip.humanColor;
     vTrack.splice(vTrack.indexOf(clip) + 1, 0, c2);
     select('v', c2);
   } else if (type === 't') {
@@ -1968,6 +2193,7 @@ function duplicateSelected() {
   }
   renderTimeline(); renderInspector();
   needsRedraw = true;
+  commit();
 }
 
 /* ============================================================
@@ -1985,6 +2211,7 @@ function addTextClip(preset) {
   select('t', c);
   renderTimeline(); renderInspector();
   needsRedraw = true;
+  commit();
 }
 
 function renderTextPresets() {
@@ -2118,6 +2345,7 @@ function sliderRow(parent, label, value, min, max, step, fmt, oninput) {
     oninput(v);
     needsRedraw = true;
   });
+  input.addEventListener('change', () => commit());
   row.appendChild(input);
   parent.appendChild(row);
   return input;
@@ -2130,7 +2358,7 @@ function chipGrid(parent, options, isActive, onpick, cyan) {
     const b = document.createElement('button');
     b.className = 'chip' + (isActive(op) ? (cyan ? ' active active-cyan' : ' active') : '');
     b.textContent = op.name || op;
-    b.addEventListener('click', () => { onpick(op); needsRedraw = true; renderInspector(); });
+    b.addEventListener('click', () => { onpick(op); needsRedraw = true; renderInspector(); commit(); });
     grid.appendChild(b);
   });
   parent.appendChild(grid);
@@ -2208,6 +2436,7 @@ function buildHumanTab(body, clip) {
     const cp = document.createElement('input');
     cp.type = 'color'; cp.value = clip.humanColor;
     cp.addEventListener('input', () => { clip.humanColor = cp.value; needsRedraw = true; });
+    cp.addEventListener('change', () => commit());
     row.appendChild(cp);
     body.appendChild(row);
   }
@@ -2251,6 +2480,7 @@ function buildGfxTab(body, clip) {
     const cp = document.createElement('input');
     cp.type = 'color'; cp.value = clip.color;
     cp.addEventListener('input', () => { clip.color = cp.value; needsRedraw = true; });
+    cp.addEventListener('change', () => commit());
     row.appendChild(cp);
     body.appendChild(row);
   }
@@ -2304,6 +2534,7 @@ function buildTextTab(body, clip) {
   ta.className = 'insp-textarea';
   ta.value = clip.text;
   ta.addEventListener('input', () => { clip.text = ta.value || ' '; needsRedraw = true; renderTimeline(); });
+  ta.addEventListener('change', () => commit());
   body.appendChild(ta);
   sliderRow(body, 'Position X', Math.round(clip.x * 100), 0, 100, 1, v => v + '%', v => { clip.x = v / 100; });
   sliderRow(body, 'Position Y', Math.round(clip.y * 100), 0, 100, 1, v => v + '%', v => { clip.y = v / 100; });
@@ -2333,6 +2564,7 @@ function buildTextStyleTab(body, clip) {
   const cp = document.createElement('input');
   cp.type = 'color'; cp.value = clip.color;
   cp.addEventListener('input', () => { clip.color = cp.value; needsRedraw = true; });
+    cp.addEventListener('change', () => commit());
   colorRow.appendChild(cp);
   body.appendChild(colorRow);
   sectionLabel(body, '// Extras');
@@ -2507,16 +2739,29 @@ $('zoomSlider').addEventListener('input', e => {
 $('aspectSelect').addEventListener('change', e => {
   curAspect = e.target.value;
   applyResolution();
+  commit();
 });
 
 $('qualitySelect').addEventListener('change', e => {
   curQuality = parseInt(e.target.value, 10);
   applyResolution();
+  commit();
 });
+
+$('projectName').addEventListener('change', () => commit());
+$('undoBtn').addEventListener('click', undo);
+$('redoBtn').addEventListener('click', redo);
 
 window.addEventListener('keydown', e => {
   const tag = (e.target.tagName || '').toLowerCase();
-  if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+  const typing = tag === 'input' || tag === 'textarea' || tag === 'select';
+  // undo/redo work even while a field has focus, like every other editor
+  if ((e.ctrlKey || e.metaKey) && !e.altKey) {
+    const k = e.key.toLowerCase();
+    if (k === 'z' && !e.shiftKey) { e.preventDefault(); undo(); return; }
+    if (k === 'y' || (k === 'z' && e.shiftKey)) { e.preventDefault(); redo(); return; }
+  }
+  if (typing) return;
   if (e.code === 'Space') { e.preventDefault(); playing ? stopPlayback() : play(); }
   else if (e.key === 'Delete' || e.key === 'Backspace') deleteSelected();
   else if (e.key === 's' || e.key === 'S') splitAtPlayhead();
@@ -2538,4 +2783,7 @@ renderTemplates();
 renderMediaGrid();
 renderTimeline();
 renderInspector();
+commit();          // history[0] is the empty project, so undo can reach it
+updateHistoryUI();
+offerRestore();    // ask before bringing the last session back
 requestAnimationFrame(tick);

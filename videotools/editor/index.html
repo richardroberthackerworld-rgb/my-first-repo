@@ -18,6 +18,7 @@
     <a class="logo" href="../index.html"><span class="logo-mark">✂</span> Clip<b>Cut</b> <span class="logo-sub">by 7by.in</span></a>
     <a class="btn btn-ghost" href="../index.html" style="text-decoration:none">🏠 Home</a>
     <input id="projectName" class="project-name" value="Untitled project" spellcheck="false">
+    <span id="saveState" class="save-state mono">SAVED</span>
     <div class="topbar-right">
       <label class="aspect-label mono">CANVAS</label>
       <select id="aspectSelect" class="select">
@@ -107,6 +108,9 @@
   <!-- ============ TIMELINE ============ -->
   <footer class="timeline-area">
     <div class="tl-toolbar">
+      <button class="tlbtn" id="undoBtn" title="Undo (Ctrl+Z)" disabled>↶ Undo</button>
+      <button class="tlbtn" id="redoBtn" title="Redo (Ctrl+Y)" disabled>↷ Redo</button>
+      <span class="tl-sep"></span>
       <button class="tlbtn" id="splitBtn" title="Split clip at playhead (S)">✂ Split</button>
       <button class="tlbtn" id="dupBtn" title="Duplicate selected clip (D)">⧉ Duplicate</button>
       <button class="tlbtn tlbtn-danger" id="delBtn" title="Delete selected (Del)">🗑 Delete</button>
