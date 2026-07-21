@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>How Mid-Side Processing Works in Audio Engineering | 7By.in Blog</title>
+<link rel="icon" type="image/png" href="/assets/favicon.png">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<link rel="apple-touch-icon" href="/assets/favicon.png">
+<meta name="description" content="Mid-Side (M/S) processing is the technique behind vocal removal. Learn the mathematics, applications, and limitations of M/S audio processing.">
+<link rel="canonical" href="https://7by.in/blog/mid-side-processing">
+<link rel="stylesheet" href="../assets/style.css?v=202607052329">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8250159057339426" crossorigin="anonymous"></script>
+</head>
+<body>
+<div class="page-wrap">
+<section style="padding:100px 0 40px">
+  <div class="container" style="max-width:760px">
+    <a href="./" style="color:var(--mut);font-size:13px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;margin-bottom:24px">← Back to Blog</a>
+    <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;font-weight:600;color:var(--ok);margin-bottom:12px">Technical</div>
+    <h1 style="font-size:clamp(28px,4vw,44px);line-height:1.2;margin-bottom:16px">How Mid-Side Processing Works in Audio Engineering</h1>
+    <div style="color:var(--dim);font-size:13px;font-family:'JetBrains Mono',monospace;margin-bottom:32px">July 1, 2026 · 7 min read · by Shirandasu Sandeep</div>
+  </div>
+</section>
+<section style="padding:40px 0 80px">
+  <div class="container" style="max-width:760px">
+    <div class="blog-content">
+      <p class="lead" style="font-size:18px;color:var(--mut);line-height:1.8;margin-bottom:32px">Mid-Side (M/S) processing is one of the most powerful — and often misunderstood — techniques in audio engineering. It's also the core technology behind free browser-based vocal removal tools like 7By.in.</p>
+
+      <h2>The Stereo Field Explained</h2>
+      <p>A standard stereo audio file has two channels: <strong>Left (L)</strong> and <strong>Right (R)</strong>. When you listen through headphones or speakers, the relative level of each channel creates the impression of sound coming from different positions — left, right, or centre.</p>
+      <p>In most commercial music:</p>
+      <ul>
+        <li><strong>Lead vocals</strong> are panned to the centre (equal in L and R)</li>
+        <li><strong>Kick drum and bass</strong> are centred</li>
+        <li><strong>Guitars, keyboards, synths</strong> are panned left and right</li>
+        <li><strong>Reverb and spatial effects</strong> tend to be wide and stereo</li>
+      </ul>
+
+      <h2>The M/S Matrix</h2>
+      <p>Mid-Side processing converts the traditional L/R representation into two new signals:</p>
+      <div style="background:#0a0a12;border:1px solid var(--bord);border-radius:16px;padding:24px;font-family:'JetBrains Mono',monospace;font-size:14px;margin:20px 0">
+        <div style="color:#00D4FF;margin-bottom:8px">Mid (M) = (L + R) / 2</div>
+        <div style="color:#FF006E">Side (S) = (L - R) / 2</div>
+      </div>
+      <p>The <strong>Mid signal</strong> captures everything that is identical in both channels — i.e., everything centred in the mix. For most songs, this is primarily the lead vocal.</p>
+      <p>The <strong>Side signal</strong> captures everything that differs between channels — i.e., everything panned off-centre. This is primarily instruments, backing tracks, reverb tails, and stereo effects.</p>
+
+      <h2>Converting Back to L/R</h2>
+      <p>To return from M/S back to stereo:</p>
+      <div style="background:#0a0a12;border:1px solid var(--bord);border-radius:16px;padding:24px;font-family:'JetBrains Mono',monospace;font-size:14px;margin:20px 0">
+        <div style="color:#00D4FF;margin-bottom:8px">Left  = M + S</div>
+        <div style="color:#FF006E">Right = M - S</div>
+      </div>
+      <p>This round-trip is perfectly lossless — no audio information is lost in the conversion.</p>
+
+      <h2>How Vocal Removal Uses M/S</h2>
+      <p>The trick is simple: to remove vocals, discard the Mid channel and reconstruct stereo using only the Side channel:</p>
+      <div style="background:#0a0a12;border:1px solid var(--bord);border-radius:16px;padding:24px;font-family:'JetBrains Mono',monospace;font-size:14px;margin:20px 0">
+        <div style="color:#00C896;margin-bottom:4px">// Vocal removal (keep Side only)</div>
+        <div style="color:#FFB800;margin-bottom:8px">Instrumental_L = +Side</div>
+        <div style="color:#FFB800">Instrumental_R = -Side</div>
+      </div>
+      <p>To isolate vocals, keep only the Mid channel:</p>
+      <div style="background:#0a0a12;border:1px solid var(--bord);border-radius:16px;padding:24px;font-family:'JetBrains Mono',monospace;font-size:14px;margin:20px 0">
+        <div style="color:#00C896;margin-bottom:4px">// Vocal isolation (keep Mid only)</div>
+        <div style="color:#FFB800;margin-bottom:8px">Vocals_L = Mid</div>
+        <div style="color:#FFB800">Vocals_R = Mid</div>
+      </div>
+
+      <h2>Professional Uses of M/S Processing</h2>
+      <p>Beyond vocal removal, M/S processing is used throughout professional audio:</p>
+      <ul>
+        <li><strong>Mastering</strong> — compress or EQ the Mid and Side channels independently. Boost mid-range in the Mid for vocal clarity; cut low-end in the Side to tighten the low end.</li>
+        <li><strong>Width control</strong> — reduce the Side level to narrow a too-wide mix; increase it to widen a mono-ish recording</li>
+        <li><strong>M/S microphone recording</strong> — a cardioid mic (Mid) + figure-8 mic (Side) captures a stereo field that can be adjusted in post</li>
+        <li><strong>Noise reduction</strong> — unwanted noise often appears in both channels equally (Mid). Targeted reduction in the Mid can reduce hiss without affecting stereo content.</li>
+      </ul>
+
+      <h2>Limitations</h2>
+      <p>M/S separation isn't magic. It fails when:</p>
+      <ul>
+        <li>Bass guitar and kick drum are also centred (they get removed too)</li>
+        <li>Vocals are doubled and panned (common in modern pop — they appear in the Side)</li>
+        <li>Heavy reverb on the vocals bleeds into the Side signal</li>
+        <li>The mix is mono (L = R, so Side = 0 and the whole track is "Mid")</li>
+      </ul>
+
+      <h2>How 7By.in Uses M/S Processing</h2>
+      <p>7By.in's <a href="https://7by.in/tools/vocal-remover">Vocal Remover</a> and <a href="https://7by.in/tools/stem-splitter">Stem Splitter</a> implement M/S matrix processing using the Web Audio API's <code>OfflineAudioContext</code>. This allows the computation to happen entirely in your browser — no server required, no uploads, no privacy compromise.</p>
+
+      <div style="background:var(--surf);border:1px solid var(--bord);border-radius:20px;padding:24px;margin-top:40px;text-align:center">
+        <h3 style="margin-bottom:8px">See M/S Processing in Action</h3>
+        <p style="color:var(--mut);margin-bottom:16px">Try our free vocal remover — powered by M/S matrix processing.</p>
+        <a href="../tools/vocal-remover" class="btn btn-m">Try Vocal Remover →</a>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+<script src="../assets/layout.js?v=202607052329"></script>
+<script src="../assets/app.js?v=202607052329"></script>
+<script>injectLayout('../');</script>
+</body>
+</html>

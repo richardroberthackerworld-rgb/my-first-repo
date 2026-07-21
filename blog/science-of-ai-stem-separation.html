@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>The Science Behind AI Stem Separation Technology | 7By.in Blog</title>
+<link rel="icon" type="image/png" href="/assets/favicon.png">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<link rel="apple-touch-icon" href="/assets/favicon.png">
+<meta name="description" content="A deep dive into how AI stem separation actually works — from signal processing to deep learning, spectrograms to U-Net architectures.">
+<link rel="canonical" href="https://7by.in/blog/science-of-ai-stem-separation">
+<link rel="stylesheet" href="../assets/style.css?v=202607052329">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8250159057339426" crossorigin="anonymous"></script>
+</head>
+<body>
+<div class="page-wrap">
+<section style="padding:100px 0 40px">
+  <div class="container" style="max-width:760px">
+    <a href="./" style="color:var(--mut);font-size:13px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;margin-bottom:24px">← Back to Blog</a>
+    <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;font-weight:600;color:var(--mag);margin-bottom:12px">Technical</div>
+    <h1 style="font-size:clamp(28px,4vw,44px);line-height:1.2;margin-bottom:16px">The Science Behind AI Stem Separation Technology</h1>
+    <div style="color:var(--dim);font-size:13px;font-family:'JetBrains Mono',monospace;margin-bottom:32px">July 1, 2026 · 8 min read · by Shirandasu Sandeep</div>
+  </div>
+</section>
+<section style="padding:40px 0 80px">
+  <div class="container" style="max-width:760px">
+    <div class="blog-content">
+      <p class="lead" style="font-size:18px;color:var(--mut);line-height:1.8;margin-bottom:32px">Separating a mixed song into individual instruments sounds like magic. But it's actually a combination of clever signal processing and pattern-recognition AI trained on millions of examples. Here's how it works.</p>
+
+      <h2>The Core Problem: Cocktail Party Effect</h2>
+      <p>Humans are remarkably good at focusing on one voice in a noisy room — the "cocktail party effect." Our brains perform unconscious source separation in real time. Getting computers to do the same thing is called the "cocktail party problem" in signal processing, and it's been unsolved for decades.</p>
+      <p>Audio mixing makes this problem harder: when a producer mixes a song, all the instruments are summed together into a single waveform. The mixing process is inherently information-destroying — you can always add two signals together, but unambiguously separating them is not always possible.</p>
+
+      <h2>Approach 1: Signal Processing (Filter Banks)</h2>
+      <p>The simplest approach exploits the known frequency characteristics of different instruments:</p>
+      <ul>
+        <li>Bass guitar and kick drum: dominant below 200 Hz</li>
+        <li>Vocals: most energy between 300 Hz and 3 kHz</li>
+        <li>Hi-hats and cymbals: above 6 kHz</li>
+        <li>Guitar: 80 Hz to 6 kHz</li>
+      </ul>
+      <p>By applying bandpass filters tuned to these ranges, you can extract approximate stems. This is fast, runs in any browser, and requires no training data. The limitation: frequency ranges overlap significantly, so bleed between sources is high.</p>
+      <p>This is the approach used by <a href="https://7by.in/assets/7by-ai-engine.js?v=202607052329" download>7By AI Engine</a> for browser-based processing — it's deterministic, lightweight, and needs no GPU.</p>
+
+      <h2>Approach 2: Mid-Side Matrix (for Vocals)</h2>
+      <p>As covered in our <a href="mid-side-processing">Mid-Side Processing article</a>, this exploits stereo positioning. Vocals centred in the mix are captured in the Mid (L+R) channel; panned instruments appear in the Side (L−R) channel.</p>
+      <p>Simple, elegant, and surprisingly effective on commercial recordings — but fails when instruments share the centre position (bass, kick) or when vocals are multi-tracked and panned.</p>
+
+      <h2>Approach 3: Spectrogram Masking (The AI Way)</h2>
+      <p>Modern deep learning approaches work on spectrograms — 2D representations of audio where the x-axis is time, y-axis is frequency, and brightness is amplitude. A spectrogram turns audio into an image.</p>
+      <p>The algorithm:</p>
+      <ol>
+        <li><strong>Convert</strong> the audio to a spectrogram using Short-Time Fourier Transform (STFT)</li>
+        <li><strong>Feed</strong> the spectrogram to a neural network</li>
+        <li><strong>The network predicts a mask</strong> — a spectrogram-shaped matrix of values 0–1 indicating "how much of this time-frequency bin belongs to source X"</li>
+        <li><strong>Multiply</strong> the original spectrogram by the mask to extract each source</li>
+        <li><strong>Convert back</strong> to audio with Inverse STFT</li>
+      </ol>
+
+      <h2>U-Net: The Architecture Behind Modern Separation</h2>
+      <p>The most successful neural network architecture for audio separation is the <strong>U-Net</strong>, originally developed for medical image segmentation. It has an encoder-decoder structure with skip connections:</p>
+      <ul>
+        <li><strong>Encoder</strong> — progressively compresses the spectrogram, learning higher-level patterns</li>
+        <li><strong>Bottleneck</strong> — captures the most abstract representation of the audio</li>
+        <li><strong>Decoder</strong> — reconstructs the mask at full resolution</li>
+        <li><strong>Skip connections</strong> — pass high-resolution details from encoder to decoder, preserving fine-grained frequency information</li>
+      </ul>
+      <p>Deezer's Spleeter and Meta's Demucs both use variants of this architecture, trained on proprietary datasets of songs with their original multitrack stems.</p>
+
+      <h2>Training Data: The Secret Ingredient</h2>
+      <p>What makes modern neural separation so powerful is training data. Models like Demucs are trained on thousands of songs where the unmixed stems are known — the exact vocal track, drum track, and bass track used in production.</p>
+      <p>During training, the model sees the mixed audio and tries to predict the individual stems. The difference between prediction and ground truth is the loss, which is minimised through backpropagation over millions of examples.</p>
+      <p>This is why neural approaches generalise better than filter banks — they've learned the acoustic signatures of real instruments across a huge variety of musical styles and production techniques.</p>
+
+      <h2>Why Browser-Based Tools Use Signal Processing</h2>
+      <p>Running a U-Net in the browser is possible in principle (TensorFlow.js exists), but the model file sizes (100MB–1GB) and compute requirements make it impractical for real-time use without a GPU. Signal processing approaches run in milliseconds on any device.</p>
+      <p>The trade-off: signal processing is faster and private; neural network approaches produce better quality. 7By.in chose browser-first signal processing for the privacy and accessibility benefits — and the downloadable <a href="../download-ai">7By AI Engine</a> is open source so developers can extend it.</p>
+
+      <div style="background:var(--surf);border:1px solid var(--bord);border-radius:20px;padding:24px;margin-top:40px;text-align:center">
+        <h3 style="margin-bottom:8px">Try Stem Separation in Your Browser</h3>
+        <p style="color:var(--mut);margin-bottom:16px">No upload. No GPU. Free for two songs per day.</p>
+        <a href="../tools/stem-splitter" class="btn btn-m">Open Stem Splitter →</a>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+<script src="../assets/layout.js?v=202607052329"></script>
+<script src="../assets/app.js?v=202607052329"></script>
+<script>injectLayout('../');</script>
+</body>
+</html>

@@ -85,6 +85,23 @@ if (Test-Path -LiteralPath $hubDir) {
   New-Zip -Zip (Join-Path $base 'account-hub-update.zip') -Roots $hubRoots -ExcludeExt @('.js')
 }
 
+# 3c) Main-site pages + blog for 7by.in root (public_html). Fixes the 404s:
+#     about/privacy/terms/etc + the whole blog (incl. admin.php uploader).
+#     A staged assets/ carries only the stylesheet + icons the pages need.
+$pgStage = Join-Path $env:TEMP 'pageszip-assets'
+Remove-Item -Recurse -Force $pgStage -ErrorAction SilentlyContinue
+New-Item -ItemType Directory -Force (Join-Path $pgStage 'assets') | Out-Null
+foreach ($a in @('style.css','favicon.png','favicon.svg','apple-touch-icon.png','logo-mark.png')) {
+  $src = Join-Path $base ("assets\" + $a)
+  if (Test-Path -LiteralPath $src) { Copy-Item $src (Join-Path $pgStage 'assets') }
+}
+$pageRoots = @('about.html','privacy-policy.html','terms-of-service.html','disclaimer.html',
+               'cookie-policy.html','dmca.html','contact.html','index.html') |
+  ForEach-Object { Join-Path $base $_ } | Where-Object { Test-Path -LiteralPath $_ }
+$pageRoots += (Join-Path $base 'blog')
+$pageRoots += (Join-Path $pgStage 'assets')
+New-Zip -Zip (Join-Path $base '7by-pages.zip') -Roots $pageRoots
+
 # 4) Backend (no node_modules / db.json / logs)
 $srvRoots = Get-ChildItem -LiteralPath (Join-Path $base 'server') -Force |
   Where-Object { $_.Name -notin @('node_modules','db.json') -and $_.Name -notlike '*.log' } |

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>What is Stem Separation? AI Music Technology Explained | 7By.in Blog</title>
+<link rel="icon" type="image/png" href="/assets/favicon.png">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<link rel="apple-touch-icon" href="/assets/favicon.png">
+<meta name="description" content="Stem separation splits a song into individual components — vocals, drums, bass, and other instruments. Learn how AI makes this possible in your browser.">
+<link rel="canonical" href="https://7by.in/blog/what-is-stem-separation">
+<link rel="stylesheet" href="../assets/style.css?v=202607052329">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8250159057339426" crossorigin="anonymous"></script>
+</head>
+<body>
+<div class="page-wrap">
+<section style="padding:100px 0 40px">
+  <div class="container" style="max-width:760px">
+    <a href="./" style="color:var(--mut);font-size:13px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;margin-bottom:24px">← Back to Blog</a>
+    <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;font-weight:600;color:var(--mag);margin-bottom:12px">Explainer</div>
+    <h1 style="font-size:clamp(28px,4vw,44px);line-height:1.2;margin-bottom:16px">What is Stem Separation? AI Music Technology Explained</h1>
+    <div style="color:var(--dim);font-size:13px;font-family:'JetBrains Mono',monospace;margin-bottom:32px">July 1, 2026 · 6 min read · by Shirandasu Sandeep</div>
+  </div>
+</section>
+<section style="padding:40px 0 80px">
+  <div class="container" style="max-width:760px">
+    <div class="blog-content">
+      <p class="lead" style="font-size:18px;color:var(--mut);line-height:1.8;margin-bottom:32px">Stem separation — also called source separation — is the process of breaking a finished, mixed song into its individual audio components. Think of it as unmixing a smoothie back into its individual fruits.</p>
+
+      <h2>What Is a "Stem" in Music?</h2>
+      <p>In music production, a <strong>stem</strong> is a sub-mix of related tracks exported as a single audio file. A typical set of stems from a pop song might include:</p>
+      <ul>
+        <li><strong>Vocals</strong> — lead vocal, harmonies, backing vocals</li>
+        <li><strong>Drums</strong> — kick, snare, hi-hats, cymbals</li>
+        <li><strong>Bass</strong> — bass guitar or synth bass</li>
+        <li><strong>Other</strong> — guitars, keys, synths, strings, everything else</li>
+      </ul>
+      <p>When a producer finishes a song, they mix these stems together into a single stereo file — the song you hear on Spotify. Stem separation tries to reverse this process.</p>
+
+      <h2>How Does AI Stem Separation Work?</h2>
+      <h3>Method 1: Signal Processing (Filter Banks)</h3>
+      <p>This approach uses the known frequency ranges of instruments to separate them:</p>
+      <ul>
+        <li><strong>Bass</strong> typically lives below 300 Hz → apply a low-pass filter</li>
+        <li><strong>Drums</strong> have transient energy at 60–150 Hz (kick/snare) and 3 kHz+ (hi-hats)</li>
+        <li><strong>Vocals</strong> sit in the 300 Hz – 3 kHz range</li>
+      </ul>
+      <p>This is what <a href="https://7by.in/tools/stem-splitter">7By.in's Stem Splitter</a> uses. It runs in your browser instantly with no upload needed.</p>
+      <h3>Method 2: Deep Learning (Neural Networks)</h3>
+      <p>Systems like Meta's <strong>Demucs</strong> and Deezer's <strong>Spleeter</strong> are trained on thousands of songs where the original stems are known. The model learns to predict which frequencies belong to which source. These produce higher quality results but require significant GPU compute — usually a server.</p>
+
+      <h2>2-Stem vs 4-Stem Separation</h2>
+      <div style="background:var(--surf);border:1px solid var(--bord);border-radius:16px;overflow:hidden;margin:20px 0">
+        <table style="width:100%;border-collapse:collapse">
+          <thead><tr style="background:var(--s2)"><th style="padding:12px 16px;text-align:left;font-size:12px;color:var(--mut)">Mode</th><th style="padding:12px 16px;text-align:left;font-size:12px;color:var(--mut)">Outputs</th><th style="padding:12px 16px;text-align:left;font-size:12px;color:var(--mut)">Best For</th></tr></thead>
+          <tbody>
+            <tr style="border-top:1px solid var(--bord)"><td style="padding:12px 16px;font-weight:600">2-Stem</td><td style="padding:12px 16px;color:var(--mut)">Vocals + Instrumental</td><td style="padding:12px 16px;color:var(--mut)">Karaoke, singing practice</td></tr>
+            <tr style="border-top:1px solid var(--bord)"><td style="padding:12px 16px;font-weight:600">4-Stem</td><td style="padding:12px 16px;color:var(--mut)">Vocals + Drums + Bass + Other</td><td style="padding:12px 16px;color:var(--mut)">Remixing, music study, production</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>What Are Stems Used For?</h2>
+      <ul>
+        <li><strong>Remixing</strong> — use isolated drums or bass from a song in your own production</li>
+        <li><strong>Music learning</strong> — isolate a guitar riff to learn it by ear</li>
+        <li><strong>Karaoke</strong> — remove vocals to sing along</li>
+        <li><strong>Podcasting</strong> — extract a specific instrument as background music</li>
+        <li><strong>Film scoring</strong> — study how arrangements work in finished recordings</li>
+      </ul>
+
+      <h2>Limitations of Stem Separation</h2>
+      <p>No tool can perfectly separate all songs. Common challenges:</p>
+      <ul>
+        <li>Instruments that share frequency ranges bleed into each other</li>
+        <li>Heavy reverb and compression make separation harder</li>
+        <li>Mono recordings have no stereo information to exploit</li>
+        <li>Dense arrangements are harder than sparse ones</li>
+      </ul>
+
+      <div style="background:var(--surf);border:1px solid var(--bord);border-radius:20px;padding:24px;margin-top:40px;text-align:center">
+        <h3 style="margin-bottom:8px">Try Stem Splitting Free</h3>
+        <p style="color:var(--mut);margin-bottom:16px">Two free splits per day. Runs entirely in your browser.</p>
+        <a href="../tools/stem-splitter" class="btn btn-m">Open Stem Splitter →</a>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+<script src="../assets/layout.js?v=202607052329"></script>
+<script src="../assets/app.js?v=202607052329"></script>
+<script>injectLayout('../');</script>
+</body>
+</html>
