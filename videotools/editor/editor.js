@@ -1780,17 +1780,17 @@ function drawRuler(width) {
   ruler.height = 26;
   const rc = ruler.getContext('2d');
   rc.clearRect(0, 0, width, 26);
-  rc.fillStyle = 'rgba(240,240,248,0.3)';
+  rc.fillStyle = 'rgba(20,20,31,0.45)';
   rc.font = '9px "JetBrains Mono", monospace';
   const labelEvery = [1, 2, 5, 10, 30].find(v => v * pps >= 64) || 60;
   const secs = Math.ceil(width / pps);
   for (let s = 0; s <= secs; s++) {
     const x = s * pps;
     const isLabel = s % labelEvery === 0;
-    rc.fillStyle = isLabel ? 'rgba(240,240,248,0.35)' : 'rgba(240,240,248,0.12)';
+    rc.fillStyle = isLabel ? 'rgba(20,20,31,0.42)' : 'rgba(20,20,31,0.16)';
     rc.fillRect(x, isLabel ? 12 : 18, 1, isLabel ? 14 : 8);
     if (isLabel) {
-      rc.fillStyle = 'rgba(240,240,248,0.4)';
+      rc.fillStyle = 'rgba(20,20,31,0.5)';
       rc.fillText(fmtTime(s).slice(0, 5), x + 4, 9);
     }
   }
