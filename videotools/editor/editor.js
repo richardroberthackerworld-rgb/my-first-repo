@@ -236,8 +236,16 @@ function renderMediaGrid() {
       media.splice(media.indexOf(m), 1);
       renderMediaGrid();
     });
+    // drag straight onto a timeline track to place it exactly
+    item.draggable = true;
+    item.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('text/plain', 'clipcut:' + m.id);
+      e.dataTransfer.effectAllowed = 'copy';
+    });
     (m.kind === 'audio' ? agrid : grid).appendChild(item);
   });
+  // the big import prompt collapses to a strip once the library has media
+  $('dropzone').classList.toggle('compact', media.length > 0);
 }
 
 function escapeHtml(s) { return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
@@ -2280,6 +2288,8 @@ function tabsFor(type) {
 }
 
 function renderInspector() {
+  // keep the browse galleries' active highlights in step with the selection
+  if (typeof renderBrowsePanels === 'function' && $('fxGrid')) renderBrowsePanels();
   if (!selected) {
     inspector.innerHTML = `<div class="inspector-empty"><div class="ie-icon">✦</div>
       <p>Select a clip on the timeline to edit its <b>color grade</b>, <b>effects</b>, <b>transition</b>, speed and volume.</p></div>`;
@@ -2706,6 +2716,256 @@ $('exportCancel').addEventListener('click', () => {
 });
 
 /* ============================================================
+   BROWSE PANELS — stickers, effects, transitions, filters
+   Same libraries the inspector uses, surfaced as galleries so a look
+   is one click away instead of buried behind a selection.
+   ============================================================ */
+const note = m => (typeof toastError === 'function' ? toastError(m) : alert(m));
+
+const STICKERS = ['😀','😂','😍','🤩','😎','🥳','😭','😱','🤯','🥰','🔥','✨','⭐','💥','💯','👍','👏','🙌','🤝','❤️',
+                  '💔','🎉','🎊','🏆','🎯','💡','⚡','🚀','🌈','☀️','🌙','⏰','📌','📢','🔔','💬','❓','❗','✅','❌'];
+
+const FX_ICONS = {
+  none: '⊘', glitch: '⚡', vhs: '📼', chromatic: '🌈', grain: '🎞️', dreamy: '💭', pixelate: '🔲',
+  scanlines: '📺', invert: '🔃', mirror: '🪞', kaleido: '❄️', zoomblur: '💫', oldfilm: '🎬',
+  duotone: '🎨', rgbwave: '🌊', cinebars: '🎥', strobe: '💡', retrowave: '🌆',
+};
+const TRANS_ICONS = {
+  none: '⊘', fade: '◐', fadeblack: '⬛', fadewhite: '⬜', wipeleft: '⇤', wiperight: '⇥',
+  wipeup: '⤒', wipedown: '⤓', slideleft: '⬅️', slideright: '➡️', circleopen: '⊙',
+  circleclose: '⊗', zoomin: '🔍', blurwarp: '🌀',
+};
+const swatch = i => {
+  const pal = TPL_PALETTES[i % TPL_PALETTES.length];
+  return `linear-gradient(135deg, ${pal[0]}, ${pal[1]})`;
+};
+
+/* the clip a browse-panel click should act on: the selection, else
+   whatever sits under the playhead, else the first clip */
+function targetVideoClip() {
+  if (selected && selected.type === 'v') return selected.clip;
+  return activeVideoAt(playhead)[0] || vTrack[0] || null;
+}
+
+function addSticker(emoji) {
+  const gp = GFX_PRESETS.find(p => p.id === 'sticker');
+  const c = {
+    id: uid(), kind: 'gfx', preset: 'sticker', name: gp.icon + ' Sticker',
+    start: playhead, dur: 3, x: 0.5, y: 0.5, scale: 1, speed: 1, density: 40,
+    color: '#00D4FF', text: '', text2: '', emoji,
+  };
+  gTrack.push(c);
+  select('g', c);
+  renderTimeline(); renderInspector();
+  needsRedraw = true;
+  commit();
+}
+
+function renderStickers() {
+  const wrap = $('stickerGrid');
+  wrap.innerHTML = '';
+  STICKERS.forEach(e => {
+    const b = document.createElement('div');
+    b.className = 'sticker';
+    b.textContent = e;
+    b.title = 'Add to timeline';
+    b.addEventListener('click', () => addSticker(e));
+    wrap.appendChild(b);
+  });
+}
+
+function renderBrowsePanels() {
+  const cur = targetVideoClip();
+
+  const fx = $('fxGrid');
+  fx.innerHTML = '';
+  EFFECTS.forEach((op, i) => {
+    const card = document.createElement('div');
+    card.className = 'fx-card' + (cur && cur.effect === op.id ? ' on' : '');
+    card.innerHTML = `<div class="fx-prev" style="background:${swatch(i)}">${FX_ICONS[op.id] || '✦'}</div>
+      <div class="fx-name">${op.name}</div>`;
+    card.addEventListener('click', () => {
+      const c = targetVideoClip();
+      if (!c) { note('Add a clip to the timeline first.'); return; }
+      c.effect = op.id;
+      select('v', c);
+      needsRedraw = true; renderInspector(); renderBrowsePanels(); commit();
+    });
+    fx.appendChild(card);
+  });
+
+  const tr = $('transGrid');
+  tr.innerHTML = '';
+  TRANSITIONS.forEach((op, i) => {
+    const card = document.createElement('div');
+    card.className = 'fx-card' + (cur && cur.transition && cur.transition.type === op.id ? ' on' : '');
+    card.innerHTML = `<div class="fx-prev" style="background:${swatch(i + 2)}">${TRANS_ICONS[op.id] || '⇄'}</div>
+      <div class="fx-name">${op.name}</div>`;
+    card.addEventListener('click', () => {
+      const c = targetVideoClip();
+      if (!c) { note('Add a clip to the timeline first.'); return; }
+      c.transition = { type: op.id, dur: (c.transition && c.transition.dur) || 0.8 };
+      select('v', c);
+      needsRedraw = true; renderTimeline(); renderInspector(); renderBrowsePanels(); commit();
+    });
+    tr.appendChild(card);
+  });
+
+  const fl = $('filterGrid');
+  fl.innerHTML = '';
+  Object.keys(GRADE_PRESETS).forEach((name, i) => {
+    const card = document.createElement('div');
+    card.className = 'fx-card' + (cur && cur.grade && cur.grade.preset === name ? ' on' : '');
+    card.innerHTML = `<div class="fx-prev" style="background:${swatch(i + 4)}">🎨</div>
+      <div class="fx-name">${name}</div>`;
+    card.addEventListener('click', () => {
+      const c = targetVideoClip();
+      if (!c) { note('Add a clip to the timeline first.'); return; }
+      const fresh = defaultGrade();
+      Object.assign(fresh, GRADE_PRESETS[name], { preset: name });
+      c.grade = fresh;
+      select('v', c);
+      needsRedraw = true; renderInspector(); renderBrowsePanels(); commit();
+    });
+    fl.appendChild(card);
+  });
+}
+
+/* ============================================================
+   CUT LEFT / CUT RIGHT  (CapCut-style trim to playhead)
+   ============================================================ */
+function cutSide(side) {
+  layout();
+  let type = 'v', c = null;
+  if (selected) { type = selected.type; c = selected.clip; }
+  else { c = activeVideoAt(playhead)[0]; }
+  if (!c) { note('Select a clip on the timeline first.'); return; }
+
+  const lt = playhead - c.start;
+  if (lt <= 0.03 || lt >= c.dur - 0.03) {
+    note('Put the playhead inside the clip, then cut.');
+    return;
+  }
+  if (side === 'left') {
+    // video/audio also advance their source in-point, images have none
+    if (c.kind === 'video' || type === 'a') c.in += lt;
+    c.dur -= lt;
+    if (type !== 'v') c.start = playhead;   // v track re-flows in layout()
+  } else {
+    c.dur = lt;
+  }
+  select(type, c);
+  renderTimeline(); renderInspector();
+  needsRedraw = true;
+  commit();
+}
+
+/* ============================================================
+   DRAG MEDIA ONTO THE TIMELINE
+   ============================================================ */
+function dropMediaAt(m, t) {
+  if (m.kind === 'audio') {
+    const c = { id: uid(), mediaId: m.id, kind: 'audio', name: m.name, start: Math.max(0, t), in: 0, dur: m.duration || 5, volume: 1 };
+    c.el = document.createElement('audio'); c.el.src = m.url; c.el.preload = 'auto';
+    hookClipAudio(c);
+    aTrack.push(c);
+    select('a', c);
+  } else {
+    const c = makeVideoClip(m);
+    layout();
+    let idx = vTrack.length;
+    for (let i = 0; i < vTrack.length; i++) {
+      if (t < vTrack[i].start + vTrack[i].dur / 2) { idx = i; break; }
+    }
+    vTrack.splice(idx, 0, c);
+    select('v', c);
+  }
+  renderTimeline(); renderInspector();
+  needsRedraw = true;
+  commit();
+}
+
+function wireTimelineDrop() {
+  [trackVideo, trackAudio, trackText, trackGfx].forEach(el => {
+    el.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+      el.classList.add('drop-hint');
+    });
+    el.addEventListener('dragleave', () => el.classList.remove('drop-hint'));
+    el.addEventListener('drop', e => {
+      e.preventDefault();
+      el.classList.remove('drop-hint');
+      const rect = tlInner.getBoundingClientRect();
+      const t = Math.max(0, (e.clientX - rect.left - 34) / pps);
+      if (e.dataTransfer.files && e.dataTransfer.files.length) { importFiles(e.dataTransfer.files); return; }
+      const raw = e.dataTransfer.getData('text/plain') || '';
+      if (!raw.startsWith('clipcut:')) return;
+      const m = media.find(x => x.id === raw.slice(8));
+      if (m) dropMediaAt(m, t);
+    });
+  });
+}
+
+/* ============================================================
+   RESIZABLE PANELS
+   ============================================================ */
+const LAYOUT_KEY = 'clipcut-layout-v1';
+function applyLayout(l) {
+  const left = document.querySelector('.panel-left');
+  const right = document.querySelector('.panel-right');
+  const tl = document.querySelector('.timeline-area');
+  if (l.left) { left.style.width = l.left + 'px'; left.style.flexBasis = l.left + 'px'; }
+  if (l.right) { right.style.width = l.right + 'px'; right.style.flexBasis = l.right + 'px'; }
+  if (l.timeline) { tl.style.height = l.timeline + 'px'; }
+}
+function readLayout() {
+  try { return JSON.parse(localStorage.getItem(LAYOUT_KEY)) || {}; } catch (_) { return {}; }
+}
+function saveLayout() {
+  const left = document.querySelector('.panel-left').getBoundingClientRect().width;
+  const right = document.querySelector('.panel-right').getBoundingClientRect().width;
+  const timeline = document.querySelector('.timeline-area').getBoundingClientRect().height;
+  try { localStorage.setItem(LAYOUT_KEY, JSON.stringify({ left: Math.round(left), right: Math.round(right), timeline: Math.round(timeline) })); } catch (_) {}
+}
+function wireResizers() {
+  applyLayout(readLayout());
+  const start = (handle, onMove) => {
+    handle.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      handle.classList.add('active');
+      const move = ev => { onMove(ev); needsRedraw = true; };
+      const up = () => {
+        handle.classList.remove('active');
+        window.removeEventListener('pointermove', move);
+        window.removeEventListener('pointerup', up);
+        saveLayout();
+        renderTimeline();
+        needsRedraw = true;
+      };
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerup', up);
+    });
+  };
+  const left = document.querySelector('.panel-left');
+  const right = document.querySelector('.panel-right');
+  const tl = document.querySelector('.timeline-area');
+
+  start($('resizeLeft'), ev => {
+    const w = clamp(ev.clientX, 190, Math.min(460, innerWidth - 520));
+    left.style.width = w + 'px'; left.style.flexBasis = w + 'px';
+  });
+  start($('resizeRight'), ev => {
+    const w = clamp(innerWidth - ev.clientX, 220, Math.min(520, innerWidth - 520));
+    right.style.width = w + 'px'; right.style.flexBasis = w + 'px';
+  });
+  start($('resizeTimeline'), ev => {
+    const h = clamp(innerHeight - ev.clientY, 150, Math.max(180, innerHeight - 260));
+    tl.style.height = h + 'px';
+  });
+}
+
+/* ============================================================
    WIRING
    ============================================================ */
 $('fileInput').addEventListener('change', e => { importFiles(e.target.files); e.target.value = ''; });
@@ -2751,6 +3011,8 @@ $('qualitySelect').addEventListener('change', e => {
 $('projectName').addEventListener('change', () => commit());
 $('undoBtn').addEventListener('click', undo);
 $('redoBtn').addEventListener('click', redo);
+$('cutLeftBtn').addEventListener('click', () => cutSide('left'));
+$('cutRightBtn').addEventListener('click', () => cutSide('right'));
 
 window.addEventListener('keydown', e => {
   const tag = (e.target.tagName || '').toLowerCase();
@@ -2766,6 +3028,8 @@ window.addEventListener('keydown', e => {
   else if (e.key === 'Delete' || e.key === 'Backspace') deleteSelected();
   else if (e.key === 's' || e.key === 'S') splitAtPlayhead();
   else if (e.key === 'd' || e.key === 'D') duplicateSelected();
+  else if (e.key === 'q' || e.key === 'Q') cutSide('left');
+  else if (e.key === 'w' || e.key === 'W') cutSide('right');
   else if (e.key === 'Home') seek(0);
   else if (e.key === 'End') seek(totalDuration());
   else if (e.key === 'ArrowLeft') seek(playhead - (e.shiftKey ? 1 : 1 / 30));
@@ -2780,9 +3044,13 @@ applyResolution();
 renderTextPresets();
 renderGfxPresets();
 renderTemplates();
+renderStickers();
+renderBrowsePanels();
 renderMediaGrid();
 renderTimeline();
 renderInspector();
+wireTimelineDrop();
+wireResizers();
 commit();          // history[0] is the empty project, so undo can reach it
 updateHistoryUI();
 offerRestore();    // ask before bringing the last session back

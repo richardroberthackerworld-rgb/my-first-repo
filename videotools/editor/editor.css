@@ -205,24 +205,90 @@ input, select { font-family: inherit; }
 
 .panel-tabs {
   display: flex;
+  flex-wrap: wrap;
   border-bottom: 1px solid var(--border);
   flex: 0 0 auto;
+  background: var(--surface2);
 }
 .ptab {
-  flex: 1;
+  flex: 0 0 20%;
   background: transparent;
   border: none;
   color: var(--muted);
   font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 1px;
+  font-size: 8.5px;
+  letter-spacing: 0.4px;
   text-transform: uppercase;
-  padding: 12px 0;
+  padding: 8px 0 7px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
   border-bottom: 2px solid transparent;
-  transition: color 200ms ease, border-color 200ms ease;
+  transition: color 200ms ease, border-color 200ms ease, background 200ms ease;
 }
-.ptab:hover { color: var(--text); }
-.ptab.active { color: var(--magenta-text); border-bottom-color: var(--magenta); }
+.pt-ico { font-size: 15px; line-height: 1; }
+.ptab:hover { color: var(--text); background: rgba(255,0,110,0.05); }
+.ptab.active { color: var(--magenta-text); border-bottom-color: var(--magenta); background: var(--surface); }
+
+/* galleries for stickers / effects / transitions / filters */
+.sticker-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.sticker {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 150ms ease, border-color 150ms ease;
+}
+.sticker:hover { transform: translateY(-2px) scale(1.06); border-color: rgba(255,0,110,0.45); }
+
+.fx-grid, .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.fx-card {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--surface2);
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+.fx-card:hover { transform: translateY(-2px); border-color: rgba(255,0,110,0.45); box-shadow: 0 8px 20px rgba(255,0,110,0.12); }
+.fx-card.on { border-color: var(--magenta); box-shadow: 0 0 0 1px var(--magenta); }
+.fx-prev { height: 46px; display: grid; place-items: center; font-size: 17px; color: #fff; }
+.fx-name {
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 5px 6px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* drag-to-resize handles */
+.resizer { flex: 0 0 5px; position: relative; z-index: 25; }
+.resizer-v { cursor: col-resize; }
+.resizer-h { cursor: row-resize; height: 5px; flex: 0 0 5px; width: 100%; }
+.resizer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  transition: background 150ms ease;
+}
+.resizer:hover::after, .resizer.active::after { background: rgba(255,0,110,0.45); }
+
+/* timeline drop target */
+.tl-track.drop-hint {
+  background: rgba(255,0,110,0.10);
+  box-shadow: inset 0 0 0 1.5px rgba(255,0,110,0.55);
+}
 
 .ptab-page { flex: 1; overflow-y: auto; padding: 14px; }
 .panel-hint { color: var(--muted); font-size: 12.5px; line-height: 1.5; margin-bottom: 12px; }
@@ -241,6 +307,12 @@ input, select { font-family: inherit; }
   border-color: var(--magenta);
   background: rgba(255,0,110,0.07);
 }
+/* once media exists the import box shrinks to a strip, giving the
+   library the space instead of repeating the big empty prompt */
+.dropzone.compact { padding: 9px 12px; display: flex; align-items: center; gap: 10px; text-align: left; }
+.dropzone.compact .dz-icon { font-size: 15px; margin: 0; }
+.dropzone.compact .dz-title { font-size: 12.5px; }
+.dropzone.compact .dz-sub, .dropzone.compact .dz-formats { display: none; }
 .dz-icon { font-size: 26px; margin-bottom: 6px; }
 .dz-title { font-weight: 700; font-size: 15px; }
 .dz-sub { color: var(--muted); font-size: 12.5px; margin-top: 2px; }

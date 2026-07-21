@@ -44,11 +44,15 @@
     <!-- Left panel: media + text -->
     <aside class="panel panel-left">
       <div class="panel-tabs">
-        <button class="ptab active" data-tab="media">Media</button>
-        <button class="ptab" data-tab="tpl">Templates</button>
-        <button class="ptab" data-tab="text">Text</button>
-        <button class="ptab" data-tab="gfx">FX</button>
-        <button class="ptab" data-tab="audio">Audio</button>
+        <button class="ptab active" data-tab="media"><span class="pt-ico">🎬</span>Media</button>
+        <button class="ptab" data-tab="tpl"><span class="pt-ico">✨</span>Templates</button>
+        <button class="ptab" data-tab="text"><span class="pt-ico">🅣</span>Text</button>
+        <button class="ptab" data-tab="stickers"><span class="pt-ico">😎</span>Stickers</button>
+        <button class="ptab" data-tab="fx"><span class="pt-ico">⚡</span>Effects</button>
+        <button class="ptab" data-tab="trans"><span class="pt-ico">⇄</span>Transition</button>
+        <button class="ptab" data-tab="filters"><span class="pt-ico">🎨</span>Filters</button>
+        <button class="ptab" data-tab="gfx"><span class="pt-ico">💫</span>Motion</button>
+        <button class="ptab" data-tab="audio"><span class="pt-ico">🎵</span>Audio</button>
       </div>
 
       <div class="ptab-page" id="page-media">
@@ -72,6 +76,26 @@
         <div class="text-presets" id="textPresets"></div>
       </div>
 
+      <div class="ptab-page hidden" id="page-stickers">
+        <div class="panel-hint">Click a sticker to drop it on the timeline, then drag it on the preview.</div>
+        <div class="sticker-grid" id="stickerGrid"></div>
+      </div>
+
+      <div class="ptab-page hidden" id="page-fx">
+        <div class="panel-hint">Select a clip on the timeline, then click an effect to apply it.</div>
+        <div class="fx-grid" id="fxGrid"></div>
+      </div>
+
+      <div class="ptab-page hidden" id="page-trans">
+        <div class="panel-hint">Select a clip, then pick the transition that plays into the next one.</div>
+        <div class="fx-grid" id="transGrid"></div>
+      </div>
+
+      <div class="ptab-page hidden" id="page-filters">
+        <div class="panel-hint">Select a clip, then click a look to grade it instantly.</div>
+        <div class="filter-grid" id="filterGrid"></div>
+      </div>
+
       <div class="ptab-page hidden" id="page-gfx">
         <div class="panel-hint">Motion graphics overlays — click to add at the playhead, then tune position, colors and speed in the inspector.</div>
         <div class="gfx-presets" id="gfxPresets"></div>
@@ -82,6 +106,8 @@
         <div class="media-grid" id="audioGrid"></div>
       </div>
     </aside>
+
+    <div class="resizer resizer-v" id="resizeLeft" title="Drag to resize"></div>
 
     <!-- Center: preview -->
     <section class="stage">
@@ -96,6 +122,8 @@
       </div>
     </section>
 
+    <div class="resizer resizer-v" id="resizeRight" title="Drag to resize"></div>
+
     <!-- Right panel: inspector -->
     <aside class="panel panel-right" id="inspector">
       <div class="inspector-empty">
@@ -107,11 +135,14 @@
 
   <!-- ============ TIMELINE ============ -->
   <footer class="timeline-area">
+    <div class="resizer resizer-h" id="resizeTimeline" title="Drag to resize"></div>
     <div class="tl-toolbar">
       <button class="tlbtn" id="undoBtn" title="Undo (Ctrl+Z)" disabled>↶ Undo</button>
       <button class="tlbtn" id="redoBtn" title="Redo (Ctrl+Y)" disabled>↷ Redo</button>
       <span class="tl-sep"></span>
       <button class="tlbtn" id="splitBtn" title="Split clip at playhead (S)">✂ Split</button>
+      <button class="tlbtn" id="cutLeftBtn" title="Delete the part before the playhead (Q)">⇤ Cut left</button>
+      <button class="tlbtn" id="cutRightBtn" title="Delete the part after the playhead (W)">⇥ Cut right</button>
       <button class="tlbtn" id="dupBtn" title="Duplicate selected clip (D)">⧉ Duplicate</button>
       <button class="tlbtn tlbtn-danger" id="delBtn" title="Delete selected (Del)">🗑 Delete</button>
       <div class="tl-spacer"></div>
