@@ -12,3 +12,9 @@ keys.php
 
 # Node
 node_modules/
+
+# build output for the videotools subdomain packages
+dist/
+*.tar.gz
+video-subdomain*.zip
+main-site-addons*.zip

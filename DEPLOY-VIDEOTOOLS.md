@@ -1,13 +1,19 @@
 # Publishing VidLab / ClipCut on a subdomain
 
-Two zips are in this folder. **Both are needed.**
+Two archives are in this folder. **Both are needed.**
 
-| Zip | Goes where |
+| File | Goes where |
 |---|---|
-| `video-subdomain.zip` (521 KB) | the **subdomain** document root |
-| `main-site-addons.zip` (18 KB) | `public_html` of **7by.in** |
+| `video-subdomain.tar.gz` (506 KB) | the **subdomain** document root |
+| `main-site-addons.tar.gz` (16 KB) | `public_html` of **7by.in** |
 
 Neither one overwrites an existing page on your main site.
+
+> **Why .tar.gz and not .zip?** cPanel's virus scanner flags *any* ZIP
+> containing `.js` files as `Sanesecurity.Foxhole.JS_Zip`. It is a well-known
+> false positive — there is no virus, it simply distrusts JavaScript inside a
+> zip. The `.tar.gz` format is not affected. cPanel's File Manager extracts
+> `.tar.gz` exactly the same way (right-click → Extract).
 
 The subdomain is set to **`video.7by.in`**. To use a different name, run
 `.\make-videotools-zip.ps1 -Subdomain clip.7by.in` and re-upload.
@@ -25,15 +31,32 @@ The subdomain is set to **`video.7by.in`**. To use a different name, run
 ## Step 2 — Upload the site
 
 1. **File Manager** → open the new `video.7by.in` folder.
-2. **Upload** `video-subdomain.zip`.
+2. **Upload** `video-subdomain.tar.gz`.
 3. Right-click it → **Extract** → into that same folder.
-4. Delete the zip.
+4. Delete the archive.
 
 ## Step 3 — Upload the main-site files
 
 1. **File Manager** → open `public_html`.
-2. **Upload** `main-site-addons.zip` → **Extract** there.
-3. Delete the zip.
+2. **Upload** `main-site-addons.tar.gz` → **Extract** there.
+3. Delete the archive.
+
+### If the upload is still refused
+
+Use the `-nojs.zip` versions instead, then add the JavaScript files by hand
+(the scanner only objects to `.js` *inside an archive* — uploading them
+loose is fine):
+
+1. Upload and extract `video-subdomain-nojs.zip` / `main-site-addons-nojs.zip`.
+2. From the `dist\subdomain\` folder on your PC, upload these 5 files to the
+   matching folders on the subdomain:
+   `app.js` → root, `editor\editor.js` → `editor/`,
+   `assets\credits.js`, `assets\layout.js`, `assets\app.js` → `assets/`
+3. From `dist\mainsite\assets\`, upload `credits.js`, `layout.js`, `app.js`
+   into `public_html/assets/`.
+
+`dist\` mirrors the exact final folder structure, so you can always compare
+against it.
 
 This adds `ads.txt` (AdSense reads it from the **root** domain, even for
 subdomain traffic — this is required), fixes `https://7by.in/pricing`
