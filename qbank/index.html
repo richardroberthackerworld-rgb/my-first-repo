@@ -7,7 +7,18 @@
 <meta name="description" content="7Q — select a subject & topic or upload photos of your textbook/notes, and generate a full question bank: theory or practical, long answers, short answers, MCQs, fill in the blanks, true/false — with answer key — for Class 1 to 10, Inter, Degree, CA/CMA, Jobs & Current Affairs, in English, Hindi or Telugu.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="favicon.svg">
-<meta name="theme-color" content="#3B37F5">
+<meta name="theme-color" content="#4a2e1c">
+<!-- PWA / Play Store (TWA) -->
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="7Q">
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+}
+</script>
 <link rel="canonical" href="https://7q.7by.in/">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="keywords" content="7Q, 7q, question paper generator, question bank, practice papers, MCQ generator, CA CMA question paper, sample papers, 7by">

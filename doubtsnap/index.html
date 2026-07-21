@@ -7,7 +7,18 @@
 <meta name="description" content="7Solve — take a photo of any question from Class 1 to 10, Inter (MPC/BiPC/CEC/MEC), Degree, CA/CMA/US CMA, Jobs & Current Affairs, and get the exact answer with a step-by-step explanation in English, Hindi or Telugu.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="favicon.svg">
-<meta name="theme-color" content="#3B37F5">
+<meta name="theme-color" content="#4a2e1c">
+<!-- PWA / Play Store (TWA) -->
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="7Solve">
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+}
+</script>
 <link rel="canonical" href="https://7solve.7by.in/">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="keywords" content="7Solve, 7solve, AI doubt solver, doubt solver, homework help, CA CMA solver, maths solver, snap and solve, 7by">

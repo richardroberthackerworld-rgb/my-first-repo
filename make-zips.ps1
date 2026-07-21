@@ -63,12 +63,22 @@ New-Zip -Zip (Join-Path $base 'vocalremover-app.zip') -Roots $appRoots
 function New-AppZip {
   param([string]$AppDir, [string]$Zip)
   $stage = Join-Path $env:TEMP ("appzip-" + (Split-Path $AppDir -Leaf))
+  Remove-Item -Recurse -Force $stage -ErrorAction SilentlyContinue
   New-Item -ItemType Directory -Force $stage | Out-Null
   Copy-Item (Join-Path $AppDir 'config.js') (Join-Path $stage 'config.js.txt') -Force
+  # sw.js is the PWA service worker (needed for the Play Store app). Like
+  # config.js it ships as .txt because cPanel's ClamAV false-positives any
+  # zip containing .js — RENAME IT BACK to sw.js after extracting.
+  $sw = Join-Path $AppDir 'sw.js'
+  if (Test-Path -LiteralPath $sw) { Copy-Item $sw (Join-Path $stage 'sw.js.txt') -Force }
   $roots = Get-ChildItem -LiteralPath $AppDir -File |
     Where-Object { $_.Extension -ne '.js' -and $_.Name -ne 'keys.php' } |
     Select-Object -ExpandProperty FullName
   $roots += (Join-Path $stage 'config.js.txt')
+  if (Test-Path -LiteralPath (Join-Path $stage 'sw.js.txt')) { $roots += (Join-Path $stage 'sw.js.txt') }
+  # .well-known/assetlinks.json — links the site to the Android app (kills the URL bar)
+  $wk = Join-Path $AppDir '.well-known'
+  if (Test-Path -LiteralPath $wk) { $roots += $wk }
   New-Zip -Zip $Zip -Roots $roots
 }
 New-AppZip -AppDir (Join-Path $base 'qbank')     -Zip (Join-Path $base 'qbank-site.zip')
