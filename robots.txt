@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /blog/admin.php
+
+Sitemap: https://7by.in/sitemap.xml

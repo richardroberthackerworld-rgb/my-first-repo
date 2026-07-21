@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://7q.7by.in/sitemap.xml

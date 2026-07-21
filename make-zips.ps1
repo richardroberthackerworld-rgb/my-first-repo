@@ -96,7 +96,8 @@ foreach ($a in @('style.css','favicon.png','favicon.svg','apple-touch-icon.png',
   if (Test-Path -LiteralPath $src) { Copy-Item $src (Join-Path $pgStage 'assets') }
 }
 $pageRoots = @('about.html','privacy-policy.html','terms-of-service.html','disclaimer.html',
-               'cookie-policy.html','dmca.html','contact.html','index.html') |
+               'cookie-policy.html','dmca.html','contact.html','index.html',
+               'robots.txt','sitemap.xml') |
   ForEach-Object { Join-Path $base $_ } | Where-Object { Test-Path -LiteralPath $_ }
 $pageRoots += (Join-Path $base 'blog')
 $pageRoots += (Join-Path $pgStage 'assets')
