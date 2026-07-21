@@ -1433,13 +1433,62 @@ function render(t) {
 }
 
 function drawEmptyState() {
-  ctx.fillStyle = 'rgba(240,240,248,0.28)';
-  ctx.font = `700 ${PH * 0.045}px Outfit, sans-serif`;
+  const cx = PW / 2, cy = PH / 2;
+  const u = Math.min(PW, PH) / 100;   // one unit, so it scales to every aspect ratio
+
+  // deep backdrop with a soft brand glow instead of flat black
+  const bg = ctx.createLinearGradient(0, 0, PW, PH);
+  bg.addColorStop(0, '#16161F');
+  bg.addColorStop(1, '#0E0E15');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, PW, PH);
+
+  const glow = ctx.createRadialGradient(cx, cy - u * 6, u * 2, cx, cy, Math.max(PW, PH) * 0.62);
+  glow.addColorStop(0, 'rgba(255,0,110,0.16)');
+  glow.addColorStop(0.55, 'rgba(124,58,237,0.07)');
+  glow.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, PW, PH);
+
+  // film-strip mark
+  const fw = u * 34, fh = u * 21, fx = cx - fw / 2, fy = cy - u * 19;
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+  ctx.lineWidth = Math.max(1, u * 0.5);
+  roundRect(ctx, fx, fy, fw, fh, u * 2);
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,0.13)';
+  const ph = u * 2.4, pw = u * 2.4, gap = (fh - ph * 4) / 5;
+  for (let i = 0; i < 4; i++) {
+    const py = fy + gap + i * (ph + gap);
+    roundRect(ctx, fx + u * 1.6, py, pw, ph, u * 0.6); ctx.fill();
+    roundRect(ctx, fx + fw - u * 1.6 - pw, py, pw, ph, u * 0.6); ctx.fill();
+  }
+  // play triangle
+  ctx.fillStyle = 'rgba(255,0,110,0.9)';
+  const tw = u * 6.4, th = u * 7.4, tx = cx - tw * 0.3, ty = cy - u * 8.5;
+  ctx.beginPath();
+  ctx.moveTo(tx, ty - th / 2); ctx.lineTo(tx + tw, ty); ctx.lineTo(tx, ty + th / 2);
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText('Import media to get started', PW / 2, PH / 2 - PH * 0.03);
-  ctx.fillStyle = 'rgba(240,240,248,0.16)';
-  ctx.font = `400 ${PH * 0.026}px Outfit, sans-serif`;
-  ctx.fillText('Drop a video on the left panel, then click it to add it to the timeline', PW / 2, PH / 2 + PH * 0.03);
+  ctx.fillStyle = 'rgba(255,255,255,0.92)';
+  ctx.font = `700 ${u * 6.4}px Outfit, sans-serif`;
+  ctx.fillText('Start your video', cx, cy + u * 9);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.font = `500 ${u * 3.5}px Outfit, sans-serif`;
+  ctx.fillText('Import media on the left — or open Templates for a ready-made style', cx, cy + u * 17);
+
+  // aspect badge, so the current canvas shape is always obvious
+  const label = curAspect + '  ·  ' + PW + 'x' + PH;
+  ctx.font = `500 ${u * 2.8}px "JetBrains Mono", monospace`;
+  const bw = ctx.measureText(label).width + u * 5, bh = u * 6.4;
+  ctx.fillStyle = 'rgba(255,255,255,0.07)';
+  roundRect(ctx, cx - bw / 2, cy + u * 22, bw, bh, bh / 2); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  ctx.fillText(label, cx, cy + u * 22 + bh / 2);
 }
 
 /* ============================================================

@@ -401,6 +401,7 @@ input, select { font-family: inherit; }
 .stage {
   flex: 1 1 auto;
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background:
@@ -409,11 +410,17 @@ input, select { font-family: inherit; }
     var(--bg);
 }
 
+/* flex (not grid) centring on purpose: a grid row is auto-sized, so the
+   canvas's max-height:100% could not resolve and it overflowed the stage,
+   covering the transport controls. A flex container has a definite cross
+   size, so the percentage resolves and the canvas letterboxes correctly at
+   every aspect ratio. */
 .preview-wrap {
   flex: 1;
   min-height: 0;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 18px;
 }
 #preview {
@@ -817,6 +824,15 @@ input[type="color"] {
   transition: width 200ms ease;
 }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.modal-credit {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  color: var(--dim);
+}
 
 /* Scrollbars */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
