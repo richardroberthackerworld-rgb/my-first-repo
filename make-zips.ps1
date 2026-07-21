@@ -100,6 +100,10 @@ $pageRoots = @('about.html','privacy-policy.html','terms-of-service.html','discl
   ForEach-Object { Join-Path $base $_ } | Where-Object { Test-Path -LiteralPath $_ }
 $pageRoots += (Join-Path $base 'blog')
 $pageRoots += (Join-Path $pgStage 'assets')
+# .htaccess carries the clean-URL rewrite (/blog/post -> post.html) — without it
+# every blog link 404s, since the cards link without the .html extension.
+$pgHt = Join-Path $base '.htaccess'
+if (Test-Path -LiteralPath $pgHt) { $pageRoots += $pgHt }
 New-Zip -Zip (Join-Path $base '7by-pages.zip') -Roots $pageRoots
 
 # 4) Backend (no node_modules / db.json / logs)
