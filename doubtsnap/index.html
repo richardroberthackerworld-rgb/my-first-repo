@@ -810,12 +810,13 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
      costs a credit. No-ops when the billing proxy is off. */
   Pay.charge = async function () {
     if (Pay.active) {
-      // billing proxy on: the proxy already gated the call, just record the spend
+      // Proxy mode: the AI call itself only CHECKS the balance (bill_check, no
+      // spend), so this is the single place an answer is actually paid for.
       try {
-        const r = await fetch(PROXY + '?action=charge', { method: 'POST', headers: Pay.authHeaders() });
+        const r = await fetch(PROXY + "?action=charge", { method: "POST", headers: Pay.authHeaders() });
         const j = await r.json().catch(() => ({}));
-        if (j && typeof j.credits !== 'undefined' && Pay.status) { Pay.status.credits = j.credits; Pay.renderBadge(); }
-        else { Pay.refresh(); }
+        if (j && typeof j.credits !== "undefined" && Pay.status) { Pay.status.credits = j.credits; Pay.renderBadge(); }
+        else { await Pay.refresh(); }
       } catch (e) {}
       return;
     }
@@ -852,7 +853,11 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
     // Only add Content-Type when there IS a body. On a bodyless GET it would
     // force a CORS preflight (OPTIONS) and break the request ("Failed to fetch").
     if (body) h['Content-Type'] = 'application/json';
-    if (Pay.hubToken) h['Authorization'] = 'Bearer ' + Pay.hubToken;
+    if (Pay.hubToken) {
+      h['Authorization'] = 'Bearer ' + Pay.hubToken;
+      // Some hosts strip Authorization before PHP sees it; the hub accepts this too.
+      h['X-7By-Token'] = Pay.hubToken;
+    }
     // credentials:'omit' — do NOT send the shared *.7by.in session cookie. Each tool
     // authenticates only with its own token in its own (per-origin) localStorage, so
     // signing into 7Marks does not sign you into 7Solve. They are fully separate logins.

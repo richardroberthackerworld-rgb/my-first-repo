@@ -134,7 +134,9 @@ function hub_call(array $CFG, string $action, string $userToken, array $body = [
     $opts = [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_TIMEOUT        => 15,
-        CURLOPT_HTTPHEADER     => ['Content-Type: application/json', 'Authorization: Bearer ' . $userToken],
+        // X-7By-Token as well as Bearer: some hosts strip Authorization entirely,
+        // and the hub accepts either. Sending both makes this work everywhere.
+        CURLOPT_HTTPHEADER     => ['Content-Type: application/json', 'Authorization: Bearer ' . $userToken, 'X-7By-Token: ' . $userToken],
     ];
     if ($method === 'POST') { $opts[CURLOPT_POST] = true; $opts[CURLOPT_POSTFIELDS] = json_encode($body); }
     curl_setopt_array($ch, $opts);

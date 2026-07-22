@@ -215,7 +215,13 @@ if ($action === 'charge') {
     if (!empty($CFG['billing_off'])) out(200, ['ok' => true, 'credits' => 0]);
     if (hub_on($CFG) && $hubTok !== '') {
         list($ok, $left) = hub_spend($CFG, $APP, $hubTok);   // signed-in: spend account credits
-        out(200, ['ok' => (bool)$ok, 'credits' => is_int($left) ? $left : 0]);
+        if ($ok) out(200, ['ok' => true, 'credits' => is_int($left) ? $left : 0]);
+        // Hub unreachable or token rejected. Do NOT hand out free answers and do
+        // NOT fail silently — fall back to the device allowance and say so, so a
+        // broken hub link shows up instead of looking like credits never move.
+        list($ok2, $st2) = bill_charge($CFG, $APP, $passTok, false);
+        out(200, ['ok' => (bool)$ok2, 'hub_error' => is_string($left) ? $left : 'hub_spend_failed',
+                  'billing' => is_array($st2) ? $st2 : null]);
     }
     list($ok, $st) = bill_charge($CFG, $APP, $passTok, false);   // guest: spend the daily free allowance
     out($ok ? 200 : 402, ['ok' => (bool)$ok, 'billing' => is_array($st) ? $st : null]);
