@@ -42,7 +42,18 @@ switch ($action) {
 	/* ---- who am I (includes the tools this account has unlocked) ---- */
 	case 'me': {
 		$u = current_user();
-		json_out(array('ok' => true, 'authed' => (bool)$u, 'user' => public_user($u),
+		$pu = public_user($u);
+		// A tool asks for ITS OWN balance (?tool=7q / 7solve). 7Marks and 7Solve
+		// are separate products, so each reports its own credits and plan.
+		$tool = tool_key((string)($_GET['tool'] ?? ($in['tool'] ?? '')));
+		if ($u && $pu && $tool !== '') {
+			$w = tool_wallet((int)$u['id'], $tool);
+			$pu['credits'] = (int)$w['credits'];
+			$pu['plan']    = (string)$w['plan'];
+			$pu['expires'] = $w['plan_expires'];
+			$pu['tool']    = $tool;
+		}
+		json_out(array('ok' => true, 'authed' => (bool)$u, 'user' => $pu,
 			'tools' => $u ? user_tools($u['id']) : array()));
 		break;
 	}
@@ -270,8 +281,17 @@ switch ($action) {
 	case 'consume': {
 		$u = current_user();
 		if (!$u) json_out(array('ok' => false, 'error' => 'not_authed'), 401);
-		$count = max(1, (int)($in['count'] ?? 1));
+		$count   = max(1, (int)($in['count'] ?? 1));
 		$product = substr((string)($in['product'] ?? 'tool'), 0, 40);
+		$tool    = tool_key($product);
+		// Per-tool wallet: spending in 7Solve must never touch 7Marks credits.
+		if ($tool !== '') {
+			list($ok, $left) = tool_spend((int)$u['id'], $tool, $count);
+			if (!$ok) json_out(array('ok' => false, 'error' => 'no_credits', 'credits' => $left, 'tool' => $tool), 402);
+			db()->prepare('INSERT INTO usage_log (user_id, product, credits) VALUES (?,?,?)')->execute(array($u['id'], $product, $count));
+			json_out(array('ok' => true, 'credits' => $left, 'tool' => $tool));
+		}
+		// No product named (legacy caller) — fall back to the shared balance.
 		if ((int)$u['credits'] < $count) {
 			json_out(array('ok' => false, 'error' => 'no_credits', 'credits' => (int)$u['credits']), 402);
 		}

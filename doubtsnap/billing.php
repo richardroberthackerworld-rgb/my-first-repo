@@ -126,10 +126,10 @@ function bill_status(array $CFG, string $app, string $token): array {
 function hub_url(array $CFG): string { return rtrim((string)($CFG['hub_base'] ?? ''), '/'); }
 function hub_on(array $CFG): bool { return hub_url($CFG) !== ''; }
 
-function hub_call(array $CFG, string $action, string $userToken, array $body = [], string $method = 'POST') {
+function hub_call(array $CFG, string $action, string $userToken, array $body = [], string $method = 'POST', string $query = '') {
     $base = hub_url($CFG);
     if ($base === '' || $userToken === '') return null;
-    $url = $base . '/api.php?action=' . rawurlencode($action);
+    $url = $base . '/api.php?action=' . rawurlencode($action) . $query;
     $ch = curl_init($url);
     $opts = [
         CURLOPT_RETURNTRANSFER => true,
@@ -148,8 +148,10 @@ function hub_call(array $CFG, string $action, string $userToken, array $body = [
 }
 
 /* Who is this student, per the hub? null when signed out / hub off. */
-function hub_me(array $CFG, string $userToken): ?array {
-    $r = hub_call($CFG, 'me', $userToken, [], 'GET');
+function hub_me(array $CFG, string $userToken, string $app = ''): ?array {
+    // ask for THIS tool's wallet — 7Marks and 7Solve have separate balances
+    $q = $app !== '' ? '&tool=' . rawurlencode($app) : '';
+    $r = hub_call($CFG, 'me', $userToken, [], 'GET', $q);
     if (!$r || empty($r['body']['authed'])) return null;
     return $r['body']['user'] ?? null;
 }

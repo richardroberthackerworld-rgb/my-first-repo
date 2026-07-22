@@ -49,6 +49,18 @@ function db() {
 	try { $pdo->exec("CREATE INDEX idx_users_api_token ON users (api_token)"); } catch (Exception $e) {}
 	// daily free-credit top-up bookkeeping
 	try { $pdo->exec("ALTER TABLE users ADD COLUMN daily_at DATE NULL"); } catch (Exception $e) {}
+	// PER-TOOL wallets: 7Marks and 7Solve are separate products with separate
+	// prices, so they must have separate balances. One row per (user, tool).
+	$pdo->exec("CREATE TABLE IF NOT EXISTS tool_credits (
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		user_id INT NOT NULL,
+		tool VARCHAR(24) NOT NULL,
+		credits INT NOT NULL DEFAULT 0,
+		plan VARCHAR(20) NOT NULL DEFAULT 'none',
+		plan_expires DATETIME NULL,
+		daily_at DATE NULL,
+		UNIQUE KEY uniq_user_tool (user_id, tool)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 	$pdo->exec("CREATE TABLE IF NOT EXISTS transactions (
 		id INT AUTO_INCREMENT PRIMARY KEY,
 		user_id INT NOT NULL,
@@ -473,8 +485,97 @@ function user_tools($userId) {
 
 /** Grant whatever a paid transaction promised — a tool unlock or a credit plan. */
 function grant_from_tx($tx) {
-	if (!empty($tx['tool'])) grant_tool($tx['user_id'], $tx['tool']);
-	else grant_plan($tx['user_id'], $tx['plan'], isset($tx['credits']) ? (int)$tx['credits'] : null);
+	if (!empty($tx['tool'])) { grant_tool($tx['user_id'], $tx['tool']); return; }
+	// Credit the wallet of the product that was actually bought, so a 7Marks
+	// purchase never tops up 7Solve. 'product' is stored on the transaction.
+	$prod = tool_key((string)($tx['product'] ?? ''));
+	if ($prod !== '') {
+		tool_grant($tx['user_id'], $prod, (int)($tx['credits'] ?? 0), (string)($tx['plan'] ?? 'monthly'));
+		return;
+	}
+	grant_plan($tx['user_id'], $tx['plan'], isset($tx['credits']) ? (int)$tx['credits'] : null);
+}
+
+/* ================= PER-TOOL WALLETS =================================
+   7Marks and 7Solve are separate products, bought separately, so each
+   keeps its own balance, its own plan and its own daily free credits.
+   Everything below is keyed on (user_id, tool).
+   ================================================================== */
+
+/** Normalise a product/tool name ('7q' = 7Marks, '7solve'). '' if unknown. */
+function tool_key(string $t): string {
+	$t = strtolower(preg_replace('/[^a-z0-9]/i', '', $t));
+	if ($t === '' || $t === 'tool') return '';
+	return substr($t, 0, 24);
+}
+
+/**
+ * This user's wallet for one tool. Creates it on first use, expires a finished
+ * plan (clearing leftover paid credits) and tops a FREE wallet up to the daily
+ * allowance once per day — the same rules as the old single balance, but per
+ * tool. Always returns an array with credits/plan/plan_expires.
+ */
+function tool_wallet(int $userId, string $tool): array {
+	global $CFG;
+	$tool = tool_key($tool);
+	if ($tool === '') return array('credits' => 0, 'plan' => 'none', 'plan_expires' => null);
+
+	$st = db()->prepare('SELECT * FROM tool_credits WHERE user_id = ? AND tool = ?');
+	$st->execute(array($userId, $tool));
+	$w = $st->fetch();
+	if (!$w) {
+		db()->prepare('INSERT INTO tool_credits (user_id, tool, credits, plan) VALUES (?,?,0,?)')
+			->execute(array($userId, $tool, 'none'));
+		$st->execute(array($userId, $tool));
+		$w = $st->fetch();
+	}
+
+	// plan finished -> drop to free and clear any leftover paid credits
+	if (($w['plan'] ?? 'none') !== 'none' && !empty($w['plan_expires']) && strtotime($w['plan_expires']) < time()) {
+		db()->prepare("UPDATE tool_credits SET plan='none', plan_expires=NULL, credits=0 WHERE id=?")
+			->execute(array($w['id']));
+		$w['plan'] = 'none'; $w['plan_expires'] = null; $w['credits'] = 0;
+	}
+
+	// free wallets are topped UP to the daily allowance once a day (never stacked)
+	$daily = (int)($CFG['free_daily_credits'] ?? 30);
+	if ($daily > 0 && ($w['plan'] ?? 'none') === 'none') {
+		$today = date('Y-m-d');
+		if (($w['daily_at'] ?? null) !== $today) {
+			$newBal = max((int)$w['credits'], $daily);
+			db()->prepare('UPDATE tool_credits SET credits = ?, daily_at = ? WHERE id = ?')
+				->execute(array($newBal, $today, $w['id']));
+			$w['credits'] = $newBal; $w['daily_at'] = $today;
+		}
+	}
+	return $w;
+}
+
+/** Spend credits from ONE tool's wallet. Returns [ok, creditsLeft]. */
+function tool_spend(int $userId, string $tool, int $count): array {
+	$tool = tool_key($tool);
+	if ($tool === '' || $count < 1) return array(false, 0);
+	$w = tool_wallet($userId, $tool);
+	$have = (int)$w['credits'];
+	if ($have < $count) return array(false, $have);
+	// guarded update: a concurrent request can't take the balance negative
+	$st = db()->prepare('UPDATE tool_credits SET credits = credits - ? WHERE user_id = ? AND tool = ? AND credits >= ?');
+	$st->execute(array($count, $userId, $tool, $count));
+	if ($st->rowCount() === 0) return array(false, $have);
+	return array(true, $have - $count);
+}
+
+/** Add bought credits to ONE tool's wallet and start/extend its plan. */
+function tool_grant(int $userId, string $tool, int $credits, string $plan = 'monthly', ?int $days = null): void {
+	$tool = tool_key($tool);
+	if ($tool === '') return;
+	$plans = hub_pricing();
+	if ($days === null) $days = (int)($plans['plans'][$plan]['days'] ?? 30);
+	if ($credits <= 0) $credits = (int)($plans['plans'][$plan]['credits'] ?? 0);
+	tool_wallet($userId, $tool);   // make sure the row exists
+	$expires = date('Y-m-d H:i:s', time() + $days * 86400);
+	db()->prepare('UPDATE tool_credits SET credits = credits + ?, plan = ?, plan_expires = ? WHERE user_id = ? AND tool = ?')
+		->execute(array($credits, $plan, $expires, $userId, $tool));
 }
 
 /* ---------------- Pricing / currency / products ---------------- */

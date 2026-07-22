@@ -146,7 +146,7 @@ if ($action === 'me') {
     $st['hub_google']= $CFG['hub_google_client_id'] ?? '';
     // signed in? then the account's credits are what count
     if (hub_on($CFG) && $hubTok !== '') {
-        $me = hub_me($CFG, $hubTok);
+        $me = hub_me($CFG, $hubTok, $APP);
         if ($me) {
             $st['signed_in'] = true;
             $st['user']      = ['name' => $me['name'] ?? '', 'email' => $me['email'] ?? ''];
@@ -263,7 +263,7 @@ $cacheable = $cDir && !has_image($payload);                    // never cache ph
    credits — it just costs US no AI quota (that saving is ours to keep).        */
 $premium = bill_is_premium_model($model);
 $cost    = bill_cost($CFG);
-$hubUser = (hub_on($CFG) && $hubTok !== '') ? hub_me($CFG, $hubTok) : null;
+$hubUser = (hub_on($CFG) && $hubTok !== '') ? hub_me($CFG, $hubTok, $APP) : null;
 $useHub  = $hubUser !== null;
 $billStatus = null;
 

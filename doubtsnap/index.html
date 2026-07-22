@@ -1081,7 +1081,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
         // credits still show instead of falling back to the guest counter.
         if (Pay.status && !Pay.status.signed_in && Pay.hubToken && Pay.hub) {
           try {
-            const d = await Pay.hubApi('me', null, 'GET');
+            const d = await Pay.hubApi('me&tool=' + (window.__APP_ID || ''), null, 'GET');
             if (d && d.authed && d.user) {
               Pay.status.signed_in = true;
               Pay.status.user    = d.user;
@@ -1096,7 +1096,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
     } else if (Pay.hub) {
       // proxy off but accounts on: ask the hub directly just for signed-in state
       try {
-        const d = await Pay.hubApi('me', null, 'GET');
+        const d = await Pay.hubApi('me&tool=' + (window.__APP_ID || ''), null, 'GET');
         Pay.status = d.authed
           ? { signed_in: true, user: d.user, credits: (d.user && d.user.credits) || 0, plan: (d.user && d.user.plan) || 'none', paid: !!(d.user && d.user.credits) }
           : { signed_in: false };
