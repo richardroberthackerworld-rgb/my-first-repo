@@ -1206,20 +1206,12 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
     // ---- credit chip: only meaningful when the billing proxy is on ----
     const el = document.getElementById("creditBadge");
     if (!el) return;
-    const hubSignedIn = !Pay.active && Pay.hub && s.signed_in;   // signed in via hub, no billing proxy
-    if ((!Pay.active && !hubSignedIn) || Pay.status === null || Pay.status.plan === "off") { el.style.display = "none"; return; }
+    // Signing in is required to use the tool, so the ACCOUNT balance is the only
+    // number that means anything. The old guest "x/50 free today" chip is gone.
+    if (!s.signed_in || Pay.status === null || Pay.status.plan === "off") { el.style.display = "none"; return; }
     el.style.display = "";
-    if (hubSignedIn) {
-      // header "Get Pro" chip beside the name: shows credits + opens the pricing modal
-      el.textContent = "💎 " + (s.credits || 0) + " · " + (Pay.T("getPro") || "Get Pro");
-      el.className = "credit-badge paid";
-    } else if (s.signed_in || s.paid) {
-      el.textContent = "💎 " + (s.credits || 0) + " " + (Pay.T("credits") || "credits");
-      el.className = "credit-badge paid";
-    } else {
-      el.textContent = "🎟️ " + (s.free_left || 0) + "/" + (s.free_limit || 0) + " " + (Pay.T("freeToday") || "free today");
-      el.className = "credit-badge" + (s.free_left === 0 ? " out" : "");
-    }
+    el.textContent = "💎 " + (s.credits || 0) + " · " + (Pay.T("getPro") || "Get Pro");
+    el.className = "credit-badge paid" + ((s.credits || 0) < 10 ? " out" : "");
     el.onclick = () => Pay.open();
   };
 

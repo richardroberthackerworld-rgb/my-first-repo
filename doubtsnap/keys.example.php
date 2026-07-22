@@ -63,11 +63,12 @@ return [
        many credits. 10 = the default. */
     'credits_per_call' => 10,
 
-    /* Free CREDITS per DEVICE per DAY (resets at midnight). 50 credits at
-       10/call = 5 free actions a day. Free credits work on the BASIC (cheap,
-       high-limit) AI only — hard questions that need the big models require a
-       paid plan (Premium). */
-    'free_per_day' => ['7q' => 50, '7solve' => 50],
+    /* FALLBACK allowance per DEVICE per day, used only when the account hub is
+       unreachable. 30 credits at 10/call = 3 actions — the SAME number as the
+       hub's free_daily_credits, so students never see two different figures.
+       Free credits work on the BASIC (cheap, high-limit) AI only — hard
+       questions that need the big models require a paid plan (Premium). */
+    'free_per_day' => ['7q' => 30, '7solve' => 30],   // matches the hub's 30 free credits/day
 
     /* Plans. amount is in PAISE (9900 = ₹99). Even paid plans use credits, so
        one heavy user can never drain your API quota. Paid credits unlock the
