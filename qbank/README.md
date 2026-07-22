@@ -1,6 +1,6 @@
-# 7Q 💯
+# 7Marks 💯
 
-Pick a subject & topic — or snap photos of your textbook / notes — and generate a full **question bank**: theory or practical, long answer, short answer, very short answer, MCQs, fill in the blanks, and true/false — with an optional answer key. The sister app of [7Solve](../doubtsnap/) (7Solve answers *your* questions; 7Q *asks you* questions).
+Pick a subject & topic — or snap photos of your textbook / notes — and generate a full **question bank**: theory or practical, long answer, short answer, very short answer, MCQs, fill in the blanks, and true/false — with an optional answer key. The sister app of [7Solve](../doubtsnap/) (7Solve answers *your* questions; 7Marks *asks you* questions).
 
 ## Features
 - 📷 **Photo material** — upload up to **5 photos** of textbook pages or class notes (camera, gallery, drag & drop, paste Ctrl+V). Questions are generated **only from that material**. Handwritten and printed pages both work.
@@ -63,7 +63,7 @@ The homepage tool card and footer already link to `https://7q.7by.in`, so going 
 2. **File Manager** → open that folder → upload **`qbank-site.zip`** (from the repo root) → **Extract**. The files must sit directly in the document root.
 3. **Rename `config.js.txt` → `config.js`** (right-click → Rename), then **Edit** it and paste your API keys. *(The zip ships it as `.txt` because cPanel's virus scanner false-positives on any zip containing `.js` files — "Foxhole.JS_Zip". It's not a real virus.)*
 4. cPanel → **SSL/TLS Status → Run AutoSSL** so `https://7q.7by.in` is secure.
-5. Also re-upload the updated main-site `index.html` (or `vocalremover-app.zip`) so the homepage 7Q card shows the new name.
+5. Also re-upload the updated main-site `index.html` (or `vocalremover-app.zip`) so the homepage 7Marks card shows the new name.
 
 Visit `https://7q.7by.in` — the ⚙️ badge at the top-right should show your active engines. If it says "No AI key set", `config.js` on the server still has empty keys.
 
@@ -118,7 +118,7 @@ pass token — editing the page cannot grant anyone credits.
   cost you no quota, so they cost the student no credit.
 - **Even paid plans use credits**, so one heavy user can never drain your API quota.
 - **A failed AI call is refunded** — students are never charged for an error.
-- **7Q and 7Solve bill separately** — a 7Q pass gives no credits on 7Solve.
+- **7Marks and 7Solve bill separately** — a 7Marks pass gives no credits on 7Solve.
 
 ### Switching it on
 1. In `keys.php` set `'app' => '7q'` and your 7Pay credentials (see *Wiring 7Pay* below).
@@ -150,7 +150,7 @@ Without an account, credits live in **one browser**: pay on a phone and they are
 laptop (or when the student clears their browser). With accounts on, **credits live on the
 account** and follow the student everywhere.
 
-Powered by your existing **account-hub** (account.7by.in) — one account works across 7Q, 7Solve
+Powered by your existing **account-hub** (account.7by.in) — one account works across 7Marks, 7Solve
 and every other 7By tool.
 
 ### Switching it on

@@ -100,7 +100,7 @@ pass token — editing the page cannot grant anyone credits.
   cost you no quota, so they cost the student no credit.
 - **Even paid plans use credits**, so one heavy user can never drain your API quota.
 - **A failed AI call is refunded** — students are never charged for an error.
-- **7Solve and 7Q bill separately** — a 7Q pass gives no credits on 7Solve.
+- **7Solve and 7Marks bill separately** — a 7Marks pass gives no credits on 7Solve.
 
 ### Switching it on
 1. In  set  and your 7Pay credentials (see below).
@@ -132,7 +132,7 @@ Without an account, credits live in **one browser**: pay on a phone and they are
 laptop (or when the student clears their browser). With accounts on, **credits live on the
 account** and follow the student everywhere.
 
-Powered by your existing **account-hub** (account.7by.in) — one account works across 7Q, 7Solve
+Powered by your existing **account-hub** (account.7by.in) — one account works across 7Marks, 7Solve
 and every other 7By tool.
 
 ### Switching it on

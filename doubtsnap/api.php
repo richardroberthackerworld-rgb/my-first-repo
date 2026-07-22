@@ -27,7 +27,7 @@ if (!is_file($cfgFile)) out(500, ['error' => ['message' => 'Proxy not configured
 $CFG = require $cfgFile;
 require_once __DIR__ . '/billing.php';
 
-/* which app is billing this request (7Solve and 7Q bill separately) */
+/* which app is billing this request (7Solve and 7Marks bill separately) */
 $APP = $CFG['app'] ?? '7solve';
 
 /* ---------- where each provider lives (fixed — never built from user input) ---------- */

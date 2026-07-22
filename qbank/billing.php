@@ -13,7 +13,7 @@
    Credits are used (not "unlimited") so a single heavy user can
    never drain your whole API quota.
 
-   7Solve and 7Q bill SEPARATELY — a pass is tied to one app.
+   7Solve and 7Marks bill SEPARATELY — a pass is tied to one app.
 
    Data lives in a JSON file per pass. No database needed.
    ============================================================ */

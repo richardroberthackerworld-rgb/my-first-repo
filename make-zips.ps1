@@ -81,7 +81,7 @@ function New-AppZip {
   if (Test-Path -LiteralPath $wk) { $roots += $wk }
   New-Zip -Zip $Zip -Roots $roots
 }
-New-AppZip -AppDir (Join-Path $base 'qbank')     -Zip (Join-Path $base 'qbank-site.zip')
+New-AppZip -AppDir (Join-Path $base 'qbank')     -Zip (Join-Path $base '7marks-site.zip')
 New-AppZip -AppDir (Join-Path $base 'doubtsnap') -Zip (Join-Path $base 'doubtsnap-site.zip')
 
 # 3b) Account hub UPDATE bundle — everything EXCEPT config.php.

@@ -27,7 +27,7 @@ if (!is_file($cfgFile)) out(500, ['error' => ['message' => 'Proxy not configured
 $CFG = require $cfgFile;
 require_once __DIR__ . '/billing.php';
 
-/* which app is billing this request (7Solve and 7Q bill separately) */
+/* which app is billing this request (7Solve and 7Marks bill separately) */
 $APP = $CFG['app'] ?? '7q';
 
 /* ---------- where each provider lives (fixed — never built from user input) ---------- */
@@ -306,7 +306,7 @@ foreach ($keys as $k) {
         $headers[] = 'x-goog-api-key: ' . $k;
     } else {
         $headers[] = 'Authorization: Bearer ' . $k;
-        if ($provider === 'openrouter') $headers[] = 'X-Title: 7Q';
+        if ($provider === 'openrouter') $headers[] = 'X-Title: 7Marks';
     }
     $ch = curl_init($url);
     curl_setopt_array($ch, [

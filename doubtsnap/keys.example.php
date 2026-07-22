@@ -56,7 +56,7 @@ return [
        PAYWALL — free tier, credits, ₹99/month
        ============================================================
        Which app this folder is:  '7q'  or  '7solve'
-       (they bill SEPARATELY — a 7Q pass does not work on 7Solve) */
+       (they bill SEPARATELY — a 7Marks pass does not work on 7Solve) */
     'app' => '7solve',
 
     /* Each AI action (solve, paper, hint, each follow-up button) costs this

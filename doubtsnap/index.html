@@ -548,7 +548,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
 </div>
 <div class="menu-pop" id="menuPop">
   <a href="https://7by.in">🏠 Home — 7By.in</a>
-  <a href="https://7q.7by.in">💯 7Q — Question papers</a>
+  <a href="https://7q.7by.in">💯 7Marks — Question papers</a>
   <a href="https://7by.in/blog/">📝 Blog</a>
   <a href="https://7by.in/about.html">👤 About</a>
   <a href="https://7by.in/contact.html">📧 Contact</a>
@@ -771,7 +771,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
      ACCOUNTS (account.7by.in) — sign in so credits follow the
      student across devices instead of living on one browser.
      ============================================================ */
-  const LS_HUB = 'sevenby_hub_token';        // per-origin (7Q and 7Solve keep separate stores)
+  const LS_HUB = 'sevenby_hub_token';        // per-origin (7Marks and 7Solve keep separate stores)
   const LS_USER = 'sevenby_user';            // cache last signed-in user for an INSTANT name on reload
   Pay.hubToken = localStorage.getItem(LS_HUB) || '';
   // Paint the signed-in name immediately from cache so it doesn't appear 4-5s
@@ -855,7 +855,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
     if (Pay.hubToken) h['Authorization'] = 'Bearer ' + Pay.hubToken;
     // credentials:'omit' — do NOT send the shared *.7by.in session cookie. Each tool
     // authenticates only with its own token in its own (per-origin) localStorage, so
-    // signing into 7Q does not sign you into 7Solve. They are fully separate logins.
+    // signing into 7Marks does not sign you into 7Solve. They are fully separate logins.
     const r = await fetch(Pay.hub + '/api.php?action=' + action, {
       method: method, headers: h, credentials: 'omit',
       body: body ? JSON.stringify(body) : undefined

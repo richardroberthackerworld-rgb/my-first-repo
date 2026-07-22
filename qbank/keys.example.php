@@ -1,6 +1,6 @@
 <?php
 /* ============================================================
-   7Q — SERVER-SIDE API KEYS  (never sent to the browser)
+   7Marks — SERVER-SIDE API KEYS  (never sent to the browser)
    ------------------------------------------------------------
    1. Copy this file to  keys.php   (same folder)
    2. Paste your keys below
@@ -56,7 +56,7 @@ return [
        PAYWALL — free tier, credits, ₹99/month
        ============================================================
        Which app this folder is:  '7q'  or  '7solve'
-       (they bill SEPARATELY — a 7Q pass does not work on 7Solve) */
+       (they bill SEPARATELY — a 7Marks pass does not work on 7Solve) */
     'app' => '7q',
 
     /* Each AI action (solve, paper, hint, each follow-up button) costs this
@@ -94,7 +94,7 @@ return [
     'pay_key_id'         => '',   // 7Pay key_id
     'pay_key_secret'     => '',   // 7Pay key_secret  — server only, never in config.js
     'pay_webhook_secret' => '',   // 7Pay merchant webhook_secret (verifies payment.captured)
-    'app_label'          => '7Q', // shown on the checkout page
+    'app_label'          => '7Marks', // shown on the checkout page
 
     /* In 7Pay's dashboard set this merchant's Webhook URL to:
          https://7q.7by.in/api.php?action=webhook
