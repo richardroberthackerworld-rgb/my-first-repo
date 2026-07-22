@@ -73,10 +73,11 @@ return [
        one heavy user can never drain your API quota. Paid credits unlock the
        big "Premium" models too. */
     'plans' => [
-        // credits shown = credits given. At 10/action: 3000 = 300 questions, etc.
-        'monthly'  => ['label' => 'Monthly',    'amount' => 9900, 'credits' => 3000, 'days' => 30],
-        'pack_big' => ['label' => 'Value pack', 'amount' => 4900, 'credits' => 1500, 'days' => 365],
-        'pack_sm'  => ['label' => 'Starter',    'amount' => 2000, 'credits' => 500,  'days' => 365],
+        // MUST match account-hub/pricing.php — the HUB is what actually charges
+        // (Razorpay), so a mismatch here would show one price and charge another.
+        // amount is in PAISE: 4700 = ₹47. At 10 credits/answer: 1000 = 100 answers.
+        'monthly' => ['label' => 'Monthly', 'amount' => 4700,  'credits' => 1000,  'days' => 30],
+        'yearly'  => ['label' => 'Yearly',  'amount' => 49900, 'credits' => 20000, 'days' => 365],
     ],
 
     /* ---- ACCOUNTS (account.7by.in) — sign in / sign up ----

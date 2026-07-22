@@ -1071,6 +1071,22 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
         if (Pay.status && Pay.status.hub) Pay.hub = Pay.status.hub;
         if (Pay.status && Pay.status.hub_google) Pay.googleId = Pay.status.hub_google;
         if (Pay.status && Pay.status.stale_token) { Pay.hubToken = ''; localStorage.removeItem(LS_HUB); }
+        // The proxy can only see the account when keys.php has hub_base set. If
+        // it doesn't, ask the hub ourselves so the signed-in name and account
+        // credits still show instead of falling back to the guest counter.
+        if (Pay.status && !Pay.status.signed_in && Pay.hubToken && Pay.hub) {
+          try {
+            const d = await Pay.hubApi('me', null, 'GET');
+            if (d && d.authed && d.user) {
+              Pay.status.signed_in = true;
+              Pay.status.user    = d.user;
+              Pay.status.credits = d.user.credits || 0;
+              Pay.status.plan    = d.user.plan || 'none';
+              Pay.status.paid    = !!(d.user.credits);
+              try { localStorage.setItem(LS_USER, JSON.stringify(d.user)); } catch (e) {}
+            }
+          } catch (e) {}
+        }
       } catch (e) { Pay.status = null; }
     } else if (Pay.hub) {
       // proxy off but accounts on: ask the hub directly just for signed-in state
@@ -1196,7 +1212,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   /* ---------- the paywall / pricing modal ---------- */
   Pay.open = function (reason) {
     const s = Pay.status || {};
-    const plans = s.plans || Pay._plans || {};
+    const plans = (Pay.hub ? (Pay._plans || s.plans) : s.plans) || {};   // the hub does the charging, so its prices win
     const bg = document.getElementById('payModal') || (() => {
       const d = document.createElement('div');
       d.id = 'payModal'; d.className = 'modal-bg';
@@ -1266,7 +1282,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   /* ---------- checkout (order is created server-side on the hub) ---------- */
   Pay.checkout = async function (planKey) {
     const s = Pay.status || {};
-    const plans = s.plans || Pay._plans || {};
+    const plans = (Pay.hub ? (Pay._plans || s.plans) : s.plans) || {};   // the hub does the charging, so its prices win
     if (!plans[planKey]) return;
     // must be signed in first, or the credits would be stuck on this one browser
     if (Pay.hub && !s.signed_in) {
