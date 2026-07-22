@@ -4,9 +4,9 @@
 #
 # RUN THIS ONLY AFTER the PWA files are live on the sites, i.e. these
 # must all load in a browser:
-#     https://7solve.7by.in/manifest.json      https://7q.7by.in/manifest.json
-#     https://7solve.7by.in/sw.js              https://7q.7by.in/sw.js
-#     https://7solve.7by.in/icon-512.png       https://7q.7by.in/icon-512.png
+#     https://7solve.7by.in/manifest.json      https://7marks.7by.in/manifest.json
+#     https://7solve.7by.in/sw.js              https://7marks.7by.in/sw.js
+#     https://7solve.7by.in/icon-512.png       https://7marks.7by.in/icon-512.png
 #
 # Usage:   bash build-apps.sh            # both apps
 #          bash build-apps.sh 7solve     # just one

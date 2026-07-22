@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://7q.7by.in/sitemap.xml
+Sitemap: https://7marks.7by.in/sitemap.xml

@@ -31,7 +31,7 @@ return [
     ],
 
     /* ---- only these sites may use the proxy (stops others stealing your quota) ---- */
-    'allow_origins' => ['7q.7by.in', '7solve.7by.in', 'qbank.7by.in', 'doubtsnap.7by.in', '7by.in', 'www.7by.in', 'localhost:3050'],
+    'allow_origins' => ['7marks.7by.in', '7solve.7by.in', '7q.7by.in', 'qbank.7by.in', 'doubtsnap.7by.in', '7by.in', 'www.7by.in', 'localhost:3050'],
 
     /* Some in-app browsers (Instagram/Facebook) strip the Origin header.
        true  = still allow those users (slightly weaker protection)

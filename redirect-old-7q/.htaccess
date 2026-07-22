@@ -1,0 +1,27 @@
+# =====================================================================
+# 7Q -> 7Marks  domain move
+# ---------------------------------------------------------------------
+# Upload THIS FILE ONLY into the OLD subdomain folder (7q.7by.in).
+# It permanently forwards every old address to the new one, keeping the
+# path intact:
+#     7q.7by.in            ->  7marks.7by.in
+#     7q.7by.in/anything   ->  7marks.7by.in/anything
+#
+# 301 = "moved permanently", which tells Google to transfer the old
+# address's search history to the new one instead of treating 7Marks as
+# a brand-new site. Old bookmarks and links keep working forever.
+#
+# Do NOT delete the old subdomain in cPanel — if the folder disappears,
+# the redirect disappears with it and old links start 404ing.
+# =====================================================================
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTP_HOST} ^(www\.)?7q\.7by\.in$ [NC]
+  RewriteRule ^(.*)$ https://7marks.7by.in/$1 [R=301,L]
+</IfModule>
+
+# Fallback for servers without mod_rewrite
+<IfModule !mod_rewrite.c>
+  Redirect 301 / https://7marks.7by.in/
+</IfModule>

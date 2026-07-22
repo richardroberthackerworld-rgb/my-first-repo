@@ -42,9 +42,10 @@ return array(
 	'allowed_origins' => array(
 		'https://removebg.7by.in',
 		'https://vocalremover.7by.in',
-		'https://7q.7by.in',        // 7Q
+		'https://7marks.7by.in',    // 7Marks
 		'https://7solve.7by.in',    // 7Solve
-		'https://qbank.7by.in',     // 7Q (old)
+		'https://7q.7by.in',        // 7Marks (previous address — keep until the redirect is live)
+		'https://qbank.7by.in',     // 7Marks (older still)
 		'https://doubtsnap.7by.in', // 7Solve (old)
 		// add more tools here...
 		'http://localhost:3061', // local dev
