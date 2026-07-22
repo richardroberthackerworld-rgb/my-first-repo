@@ -21,11 +21,11 @@ plugins {
 }
 
 def twaManifest = [
-    applicationId: 'in.sevenby.solve',
-    hostName: '7solve.7by.in', // The domain being opened in the TWA.
+    applicationId: 'in.sevenby.q',
+    hostName: '7marks.7by.in', // The domain being opened in the TWA.
     launchUrl: '/', // The start path for the TWA. Must be relative to the domain.
-    name: '7Solve — AI Doubt Solver', // The application name.
-    launcherName: '7Solve', // The name shown on the Android Launcher.
+    name: '7Marks — Question Paper Generator', // The application name.
+    launcherName: '7Marks', // The name shown on the Android Launcher.
     themeColor: '#4A2E1C', // The color used for the status bar.
     themeColorDark: '#4A2E1C', // The color used for the dark status bar.
     navigationColor: '#4A2E1C', // The color used for the navigation bar.
@@ -52,9 +52,9 @@ def twaManifest = [
 
 android {
     compileSdkVersion 36
-    namespace "in.sevenby.solve"
+    namespace "in.sevenby.q"
     defaultConfig {
-        applicationId "in.sevenby.solve"
+        applicationId "in.sevenby.q"
         minSdkVersion 23
         targetSdkVersion 35
         versionCode 1
@@ -76,12 +76,12 @@ android {
             // The URL the Web Manifest for the Progressive Web App that the TWA points to. This
             // is used by Chrome OS and Meta Quest to open the Web version of the PWA instead of
             // the TWA, as it will probably give a better user experience for non-mobile devices.
-            resValue "string", "webManifestUrl", 'https://7solve.7by.in/manifest.json'
+            resValue "string", "webManifestUrl", 'https://7marks.7by.in/manifest.json'
         
 
         
             // This is used by Meta Quest.
-            resValue "string", "fullScopeUrl", 'https://7solve.7by.in/'
+            resValue "string", "fullScopeUrl", 'https://7marks.7by.in/'
         
 
         

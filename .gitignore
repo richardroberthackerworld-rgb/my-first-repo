@@ -25,3 +25,9 @@ android/*.jks
 android/**/app-release-*.aab
 android/**/app-release-*.apk
 android/**/build/
+
+# Built app bundles (rebuildable; keep out of the public repo)
+android/**/*.aab
+# Gradle build caches
+android/**/.gradle/
+android/**/build/
