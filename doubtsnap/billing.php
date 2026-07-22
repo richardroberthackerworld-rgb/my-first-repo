@@ -81,8 +81,13 @@ function bill_cost(array $CFG): int {
 /* The "big" models are expensive and have small free quotas. Free-tier users can only
    use the cheap/basic models; a hard question that routes to a big model needs Premium. */
 function bill_is_premium_model(string $model): bool {
+    // ONLY the deep-reasoning chain (planRoute's *.deep models) is Premium.
+    // Everyday text models must NOT be listed here or easy questions would ask
+    // free users to upgrade: nemotron-3-SUPER, llama-3.3-70b-instruct and
+    // gpt-4o are the normal text tier, and gemini-2.5-FLASH answers most
+    // questions and every photo.
     return (bool)preg_match(
-        '/gemini-2\.5-pro|deepseek|phi-4|nemotron-3-ultra|nemotron-3-super|tencent\/hy3|gpt-oss-120b|gpt-4o|llama-3\.3-70b-instruct/i',
+        '/gemini-2\.5-pro|deepseek-r1|nemotron-3-ultra|tencent\/hy3|gpt-oss-120b/i',
         $model
     );
 }

@@ -39,6 +39,11 @@ ServerSignature Off
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
     Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
     Header always set Permissions-Policy "geolocation=(), microphone=(), camera=(self), payment=(self)"
+    # Protects against tab-nabbing but still ALLOWS popups, which Google
+    # Sign-In and the Razorpay checkout both need ("same-origin" would break them).
+    Header always set Cross-Origin-Opener-Policy "same-origin-allow-popups"
+    # NOTE: screenshots and screen recording are deliberately NOT blocked —
+    # students are encouraged to save and share their answers.
     Header unset X-Powered-By
     Header unset Server
 </IfModule>
@@ -63,3 +68,18 @@ ServerSignature Off
     RewriteCond %{REQUEST_FILENAME}\.html -f
     RewriteRule ^(.*)$ $1.html [L]
 </IfModule>
+
+# The Play Store app verifies domain ownership by reading this file, which
+# must be public and served as JSON.
+<Files "assetlinks.json">
+    <IfModule mod_headers.c>
+        Header set Content-Type "application/json"
+    </IfModule>
+</Files>
+
+# Docs/readmes should not be browsable
+<FilesMatch "\.(md|markdown)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+</FilesMatch>
