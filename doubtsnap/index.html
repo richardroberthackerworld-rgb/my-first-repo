@@ -895,6 +895,10 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   /* ---------- account card (shown when signed in) ---------- */
   Pay.account = function () {
     const s = Pay.status || {}; const u = s.user || {}; const T = k => Pay.T(k) || k;
+    // never inject a user-controlled name/email as raw HTML
+    const esc = (v) => String(v == null ? '' : v)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     const bg = document.getElementById('authModal') || (() => {
       const d = document.createElement('div'); d.id = 'authModal'; d.className = 'modal-bg';
       document.body.appendChild(d);
@@ -903,7 +907,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
     })();
     bg.innerHTML = `<div class="modal auth-modal">
       <h3>${T('account')}</h3>
-      <p class="pay-sub">${u.name ? '<b>' + u.name + '</b> · ' : ''}${u.email || ''}</p>
+      <p class="pay-sub">${u.name ? '<b>' + esc(u.name) + '</b> · ' : ''}${esc(u.email || '')}</p>
       ${typeof s.credits !== 'undefined' ? `<p class="acct-credits">💎 ${s.credits || 0} ${T('credits') || 'credits'}</p>` : ''}
       <button class="solve-btn auth-go" id="acBuy">💎 ${T('getCredits') || 'Get more credits'}</button>
       <div class="auth-switch"><a id="acOut">${T('signOut') || 'Sign out'}</a></div>

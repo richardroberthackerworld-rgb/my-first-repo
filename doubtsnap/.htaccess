@@ -1,6 +1,7 @@
-# 7Solve — protect the server-side key file.
-# api.php is the only thing the browser may call; keys*.php must never be fetched.
+# 7Solve — security + clean URLs
 
+# ---- protect the server-side key file ----
+# api.php is the only thing the browser may call; keys*.php must never be fetched.
 <FilesMatch "^keys.*\.php$">
     <IfModule mod_authz_core.c>
         Require all denied
@@ -18,5 +19,47 @@
     </IfModule>
 </FilesMatch>
 
+# Block hidden/system files (.git, .env, backups) but ALLOW /.well-known/
+# which Android needs to verify the Play Store app owns this domain.
+RedirectMatch 404 /\.(?!well-known)
+<FilesMatch "\.(log|bak|old|sql|zip|env)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+</FilesMatch>
+
 # Don't list folder contents
 Options -Indexes
+ServerSignature Off
+
+# ---- security headers ----
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=(self), payment=(self)"
+    Header unset X-Powered-By
+    Header unset Server
+</IfModule>
+
+# ---- clean URLs: no .html, no /index.html in the address bar ----
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # force HTTPS
+    RewriteCond %{HTTPS} !=on
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+
+    # /index.html  ->  /        and  /page.html  ->  /page   (visible redirect)
+    RewriteCond %{THE_REQUEST} \s/+(.*/)?index\.html[\s?] [NC]
+    RewriteRule ^ /%1 [R=301,L]
+    RewriteCond %{THE_REQUEST} \s/+(.*)\.html[\s?] [NC]
+    RewriteRule ^ /%1 [R=301,L]
+
+    # serve the real .html file for a clean URL (address bar keeps the clean form)
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME}\.html -f
+    RewriteRule ^(.*)$ $1.html [L]
+</IfModule>
