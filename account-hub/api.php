@@ -169,6 +169,9 @@ switch ($action) {
 	}
 
 	case 'logout':
+		// Revoke ONLY the token that made this request, so signing out of one
+		// tool leaves your other tools and devices signed in.
+		revoke_api_token(api_token_from_request());
 		$_SESSION = array();
 		session_destroy();
 		json_out(array('ok' => true));

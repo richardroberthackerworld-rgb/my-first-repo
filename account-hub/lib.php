@@ -49,6 +49,16 @@ function db() {
 	try { $pdo->exec("CREATE INDEX idx_users_api_token ON users (api_token)"); } catch (Exception $e) {}
 	// daily free-credit top-up bookkeeping
 	try { $pdo->exec("ALTER TABLE users ADD COLUMN daily_at DATE NULL"); } catch (Exception $e) {}
+	// One row per ACTIVE LOGIN. The old single users.api_token column meant
+	// signing in anywhere overwrote it, instantly logging the user out of every
+	// other site/device. Each login now gets its own token and they coexist.
+	$pdo->exec("CREATE TABLE IF NOT EXISTS api_tokens (
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		user_id INT NOT NULL,
+		token_hash VARCHAR(64) NOT NULL UNIQUE,
+		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		KEY idx_tokens_user (user_id)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 	// PER-TOOL wallets: 7Marks and 7Solve are separate products with separate
 	// prices, so they must have separate balances. One row per (user, tool).
 	$pdo->exec("CREATE TABLE IF NOT EXISTS tool_credits (
@@ -324,8 +334,15 @@ function current_user() {
 	//    (a tool on another subdomain can't see our session cookie).
 	$tok = api_token_from_request();
 	if ($tok !== '') {
+		$h = hash('sha256', $tok);
+		// one row per active login — several sites/devices can be signed in at once
+		$st = db()->prepare('SELECT u.* FROM api_tokens t JOIN users u ON u.id = t.user_id WHERE t.token_hash = ?');
+		$st->execute(array($h));
+		$u = $st->fetch();
+		if ($u) return refresh_plan($u);
+		// tokens issued before the multi-login table existed still work
 		$st = db()->prepare('SELECT * FROM users WHERE api_token = ?');
-		$st->execute(array(hash('sha256', $tok)));
+		$st->execute(array($h));
 		$u = $st->fetch();
 		if ($u) return refresh_plan($u);
 	}
@@ -361,11 +378,30 @@ function email_domain_msg() {
 }
 
 // Issue (or reuse) a long-lived API token for this user. Only the HASH is stored.
+/**
+ * Give this login its OWN token. Existing tokens stay valid, so signing in on
+ * 7Marks does not sign you out of 7Solve (or your phone). Oldest tokens are
+ * pruned so the table can't grow forever.
+ */
 function issue_api_token($userId) {
 	$plain = bin2hex(random_bytes(24));
-	db()->prepare('UPDATE users SET api_token = ? WHERE id = ?')
-		->execute(array(hash('sha256', $plain), $userId));
+	db()->prepare('INSERT INTO api_tokens (user_id, token_hash) VALUES (?,?)')
+		->execute(array($userId, hash('sha256', $plain)));
+	// keep the 20 most recent logins for this account
+	try {
+		$st = db()->prepare('SELECT id FROM api_tokens WHERE user_id = ? ORDER BY id DESC LIMIT 1 OFFSET 20');
+		$st->execute(array($userId));
+		$cut = $st->fetchColumn();
+		if ($cut) db()->prepare('DELETE FROM api_tokens WHERE user_id = ? AND id <= ?')->execute(array($userId, (int)$cut));
+	} catch (Exception $e) { /* pruning is best-effort */ }
 	return $plain;
+}
+
+/** Sign out ONE login (the token presented), leaving other sites/devices alone. */
+function revoke_api_token(string $plain): void {
+	if ($plain === '') return;
+	try { db()->prepare('DELETE FROM api_tokens WHERE token_hash = ?')->execute(array(hash('sha256', $plain))); }
+	catch (Exception $e) {}
 }
 
 // Expire the plan (and its credits) once past plan_expires.
