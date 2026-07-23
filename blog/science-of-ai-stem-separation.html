@@ -6,10 +6,32 @@
 <link rel="icon" type="image/png" href="/assets/favicon.png">
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 <link rel="apple-touch-icon" href="/assets/favicon.png">
-<meta name="description" content="A deep dive into how AI stem separation actually works — from signal processing to deep learning, spectrograms to U-Net architectures.">
+<meta name="description" content="A deep dive into how AI stem separation actually works — from signal processing to deep learning, spectrograms to the model architectures.">
 <link rel="canonical" href="https://7by.in/blog/science-of-ai-stem-separation">
-<link rel="stylesheet" href="../assets/style.css?v=202607052329">
+<link rel="stylesheet" href="../assets/style.css?v=202607232006">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8250159057339426" crossorigin="anonymous"></script>
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="7By.in">
+<meta property="og:title" content="The Science Behind AI Stem Separation Technology">
+<meta property="og:description" content="A deep dive into how AI stem separation actually works — from signal processing to deep learning, spectrograms to the model architectures.">
+<meta property="og:url" content="https://7by.in/blog/science-of-ai-stem-separation">
+<meta property="og:image" content="https://7by.in/assets/favicon.png">
+<meta property="article:published_time" content="2026-07-01T09:00:00+05:30">
+<meta property="article:author" content="Shirandasu Sandeep">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="The Science Behind AI Stem Separation Technology">
+<meta name="twitter:description" content="A deep dive into how AI stem separation actually works — from signal processing to deep learning, spectrograms to the model architectures.">
+<meta name="twitter:image" content="https://7by.in/assets/favicon.png">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[
+{"@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https://7by.in/blog/science-of-ai-stem-separation"},"headline":"The Science Behind AI Stem Separation Technology","description":"A deep dive into how AI stem separation actually works — from signal processing to deep learning, spectrograms to the model architectures.","image":"https://7by.in/assets/favicon.png","datePublished":"2026-07-01T09:00:00+05:30","dateModified":"2026-07-01T09:00:00+05:30","author":{"@type":"Person","name":"Shirandasu Sandeep"},"publisher":{"@type":"Organization","name":"7By.in","logo":{"@type":"ImageObject","url":"https://7by.in/assets/favicon.png"}},"inLanguage":"en-IN"},
+{"@type":"BreadcrumbList","itemListElement":[
+{"@type":"ListItem","position":1,"name":"Home","item":"https://7by.in/"},
+{"@type":"ListItem","position":2,"name":"Blog","item":"https://7by.in/blog/"},
+{"@type":"ListItem","position":3,"name":"The Science Behind AI Stem Separation Technology","item":"https://7by.in/blog/science-of-ai-stem-separation"}]}
+]}
+</script>
 </head>
 <body>
 <div class="page-wrap">
@@ -39,7 +61,7 @@
         <li>Guitar: 80 Hz to 6 kHz</li>
       </ul>
       <p>By applying bandpass filters tuned to these ranges, you can extract approximate stems. This is fast, runs in any browser, and requires no training data. The limitation: frequency ranges overlap significantly, so bleed between sources is high.</p>
-      <p>This is the approach used by <a href="https://7by.in/assets/7by-ai-engine.js?v=202607052329" download>7By AI Engine</a> for browser-based processing — it's deterministic, lightweight, and needs no GPU.</p>
+      <p>This is the classic approach to browser-based processing — deterministic, lightweight, and it needs no GPU.</p>
 
       <h2>Approach 2: Mid-Side Matrix (for Vocals)</h2>
       <p>As covered in our <a href="mid-side-processing">Mid-Side Processing article</a>, this exploits stereo positioning. Vocals centred in the mix are captured in the Mid (L+R) channel; panned instruments appear in the Side (L−R) channel.</p>
@@ -56,8 +78,8 @@
         <li><strong>Convert back</strong> to audio with Inverse STFT</li>
       </ol>
 
-      <h2>U-Net: The Architecture Behind Modern Separation</h2>
-      <p>The most successful neural network architecture for audio separation is the <strong>U-Net</strong>, originally developed for medical image segmentation. It has an encoder-decoder structure with skip connections:</p>
+      <h2>the model: The Architecture Behind Modern Separation</h2>
+      <p>The most successful neural network architecture for audio separation is the <strong>the model</strong>, originally developed for medical image segmentation. It has an encoder-decoder structure with skip connections:</p>
       <ul>
         <li><strong>Encoder</strong> — progressively compresses the spectrogram, learning higher-level patterns</li>
         <li><strong>Bottleneck</strong> — captures the most abstract representation of the audio</li>
@@ -72,7 +94,7 @@
       <p>This is why neural approaches generalise better than filter banks — they've learned the acoustic signatures of real instruments across a huge variety of musical styles and production techniques.</p>
 
       <h2>Why Browser-Based Tools Use Signal Processing</h2>
-      <p>Running a U-Net in the browser is possible in principle (TensorFlow.js exists), but the model file sizes (100MB–1GB) and compute requirements make it impractical for real-time use without a GPU. Signal processing approaches run in milliseconds on any device.</p>
+      <p>Running a the model in the browser is possible in principle (TensorFlow.js exists), but the model file sizes (100MB–1GB) and compute requirements make it impractical for real-time use without a GPU. Signal processing approaches run in milliseconds on any device.</p>
       <p>The trade-off: signal processing is faster and private; neural network approaches produce better quality. 7By.in chose browser-first signal processing for the privacy and accessibility benefits — and the downloadable <a href="../download-ai">7By AI Engine</a> is open source so developers can extend it.</p>
 
       <div style="background:var(--surf);border:1px solid var(--bord);border-radius:20px;padding:24px;margin-top:40px;text-align:center">
@@ -83,9 +105,22 @@
     </div>
   </div>
 </section>
+<section style="padding:0 0 80px">
+  <div class="container" style="max-width:760px">
+    <div style="padding-top:24px;border-top:1px solid var(--bord)">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;font-weight:600;color:var(--dim);margin-bottom:16px">Related reading</div>
+      <ul style="list-style:none;padding:0;margin:0">
+        <li style="margin-bottom:10px"><a href="top-5-uses-vocal-remover" style="color:var(--ok);font-weight:600;text-decoration:none;font-size:15px">Top 5 Uses for Vocal Remover Tools You Didn&#039;t Know About &rarr;</a></li>
+        <li style="margin-bottom:10px"><a href="what-is-stem-separation" style="color:var(--ok);font-weight:600;text-decoration:none;font-size:15px">What Is Stem Separation? A Plain-English Explanation &rarr;</a></li>
+        <li style="margin-bottom:10px"><a href="10-uses-isolated-vocals" style="color:var(--ok);font-weight:600;text-decoration:none;font-size:15px">10 Creative Uses for Isolated Vocal Tracks &rarr;</a></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
 </div>
-<script src="../assets/layout.js?v=202607052329"></script>
-<script src="../assets/app.js?v=202607052329"></script>
+<script src="../assets/layout.js?v=202607232006"></script>
+<script src="../assets/app.js?v=202607232006"></script>
 <script>injectLayout('../');</script>
 </body>
 </html>
