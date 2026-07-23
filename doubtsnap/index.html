@@ -52,9 +52,9 @@ if ('serviceWorker' in navigator) {
   --paper:#ffffff;          /* cards / sheets */
   --paper-2:#eef6f4;        /* nested surface */
   --paper-aged:#e2f0ec;     /* subtle tint */
-  --ink:#0b1a15;            /* main text — near black, strong */
-  --ink-soft:#33474a;       /* secondary text — darker, readable */
-  --ink-faint:#6b7d80;      /* placeholder / meta */
+  --ink:#06120e;            /* main text — near black, strong */
+  --ink-soft:#1c332e;       /* secondary text — very dark, punchy */
+  --ink-faint:#42605b;      /* placeholder / meta — darkened */
   --leather:#0b5e57;        /* primary button (dark stop) */
   --leather-2:#0f9488;      /* primary button (light stop) */
   --maroon:#0b6b5f;         /* primary accent (deep teal) */
@@ -379,8 +379,32 @@ textarea#qtext::placeholder{color:var(--ink-faint);font-style:italic}
   border-radius:20px;padding:6px 13px;transition:all .2s ease;white-space:nowrap;
 }
 .credit-badge:hover{background:var(--paper-2);color:var(--ink)}
-.credit-badge.paid{color:#a8d49a;border-color:rgba(120,180,100,.6)}
-.credit-badge.out{color:#f0b3ad;border-color:rgba(200,90,80,.7);background:rgba(150,50,40,.25)}
+/* credits chip — dark, filled, punchy + gently pulsing to draw the eye */
+.credit-badge.paid{
+  color:#ffffff;font-weight:700;border:0;letter-spacing:.2px;
+  background:linear-gradient(135deg,#083f3a 0%,var(--leather) 45%,var(--leather-2) 105%);
+  box-shadow:0 3px 10px rgba(8,60,54,.34);
+  animation:creditPulse 2.4s ease-in-out infinite;
+}
+.credit-badge.paid:hover{color:#fff;background:linear-gradient(135deg,var(--leather) 0%,var(--leather-2) 60%,var(--gold-soft) 130%);filter:brightness(1.05);transform:translateY(-1px)}
+.credit-badge.out{
+  color:#ffffff;font-weight:700;border:0;letter-spacing:.2px;
+  background:linear-gradient(135deg,#7f1d1d 0%,#b91c1c 55%,#dc2626 110%);
+  box-shadow:0 3px 10px rgba(153,27,27,.36);
+  animation:creditPulseOut 1.3s ease-in-out infinite;
+}
+.credit-badge.out:hover{color:#fff;filter:brightness(1.06);transform:translateY(-1px)}
+@keyframes creditPulse{
+  0%,100%{box-shadow:0 3px 10px rgba(8,60,54,.32), 0 0 0 0 rgba(45,212,191,.5)}
+  50%{box-shadow:0 4px 15px rgba(8,60,54,.42), 0 0 0 7px rgba(45,212,191,0)}
+}
+@keyframes creditPulseOut{
+  0%,100%{box-shadow:0 3px 10px rgba(153,27,27,.34), 0 0 0 0 rgba(220,38,38,.55)}
+  50%{box-shadow:0 4px 15px rgba(153,27,27,.44), 0 0 0 7px rgba(220,38,38,0)}
+}
+@media (prefers-reduced-motion:reduce){
+  .credit-badge.paid,.credit-badge.out{animation:none}
+}
 .pay-modal{max-width:640px}
 .pay-sub{color:var(--ink-soft);margin-bottom:16px !important}
 .plan-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:16px 0}
