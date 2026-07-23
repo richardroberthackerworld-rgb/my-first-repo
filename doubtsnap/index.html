@@ -797,7 +797,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
      ACCOUNTS (account.7by.in) — sign in so credits follow the
      student across devices instead of living on one browser.
      ============================================================ */
-  const LS_HUB = 'sevenby_hub_token';        // per-origin (7Marks and 7Solve keep separate stores)
+  const LS_HUB = 'sevenby_hub_token_' + (window.__APP_ID || 'app');   // app-specific: 7Solve login is fully separate from 7Marks
   const LS_USER = 'sevenby_user';            // cache last signed-in user for an INSTANT name on reload
   Pay.hubToken = localStorage.getItem(LS_HUB) || '';
   // Paint the signed-in name immediately from cache so it doesn't appear 4-5s
