@@ -1,0 +1,713 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>7Hand — engine tests</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  :root { --bg:#F7F8FC; --fg:#101425; --muted:#5A6072; --ok:#059669; --bad:#DC2626; --line:#E2E6F0; --card:#fff; }
+  * { box-sizing:border-box }
+  body { margin:0; padding:32px 24px 64px; background:var(--bg); color:var(--fg);
+         font:15px/1.55 ui-sans-serif,system-ui,'Segoe UI',Roboto,sans-serif; }
+  .wrap { max-width:900px; margin:0 auto }
+  h1 { font-size:24px; letter-spacing:-.5px; margin:0 0 4px }
+  .sub { color:var(--muted); margin:0 0 24px }
+  #summary { position:sticky; top:0; z-index:2; padding:14px 18px; border-radius:10px; margin-bottom:20px;
+             font-weight:700; font-size:17px; background:var(--card); border:1px solid var(--line);
+             box-shadow:0 2px 10px rgba(16,20,37,.06) }
+  #summary.pass { color:var(--ok); border-color:#A7E3CE }
+  #summary.fail { color:var(--bad); border-color:#F3B7B7 }
+  h2 { font-size:13px; text-transform:uppercase; letter-spacing:1.5px; color:var(--muted);
+       margin:28px 0 8px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace }
+  .case { display:flex; gap:10px; padding:5px 0; border-bottom:1px solid var(--line); align-items:baseline }
+  .tag { flex:none; width:44px; font:600 11px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;
+         text-align:center; border-radius:4px; padding:1px 0 }
+  .tag.ok { color:var(--ok); background:#E6F7F1 } .tag.bad { color:var(--bad); background:#FDECEC }
+  .why { color:var(--bad); font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;
+         margin:2px 0 0 54px; white-space:pre-wrap }
+  .visual { display:flex; flex-wrap:wrap; gap:18px; margin-top:12px }
+  figure { margin:0; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px }
+  figcaption { font:11px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace; color:var(--muted); margin-top:8px; text-align:center }
+  svg { display:block; background:#fff }
+  .note { color:var(--muted); font-size:13px; margin:10px 0 0 }
+  code { font:12px ui-monospace,SFMono-Regular,Menlo,monospace; background:#EEF1F8; padding:1px 5px; border-radius:4px }
+</style>
+
+<div class="wrap">
+  <h1>7Hand engine tests</h1>
+  <p class="sub">T1 storage + T4 tracer. Open over http, not <code>file://</code> — ES modules need a real origin.</p>
+  <div id="summary">running…</div>
+  <div id="out"></div>
+  <h2>Visual check</h2>
+  <p class="note">Traced from the same bitmaps the tests assert on. Grey is the source pixel grid, black is the fitted vector.</p>
+  <div class="visual" id="visual"></div>
+</div>
+
+<script type="module">
+import {
+  encodeMask, decodeMask, measureInk, makeVariant, variantMask,
+  createStyle, addVariant, missingChars, incompleteGlyphs,
+  styleToJSON, styleFromJSON, ensureContours, dropContours, styleBytes
+} from './src/store.js';
+import {
+  traceContours, shoelace, rdp, findCorners, fitBeziers, beziersToPath, maskToPath, traceForStore
+} from './src/trace.js';
+
+/* ---------- tiny assertion harness ---------- */
+const out = document.getElementById('visual');
+const list = document.getElementById('out');
+let pass = 0, fail = 0;
+
+function section(name) {
+  const h = document.createElement('h2');
+  h.textContent = name;
+  list.appendChild(h);
+}
+function test(name, fn) {
+  let err = null;
+  try { fn(); } catch (e) { err = e; }
+  const row = document.createElement('div');
+  row.className = 'case';
+  row.innerHTML = `<span class="tag ${err ? 'bad' : 'ok'}">${err ? 'FAIL' : 'PASS'}</span><span>${name}</span>`;
+  list.appendChild(row);
+  if (err) {
+    fail++;
+    const why = document.createElement('div');
+    why.className = 'why';
+    why.textContent = (err.stack || String(err)).split('\n').slice(0, 3).join('\n');
+    list.appendChild(why);
+  } else pass++;
+}
+const eq = (a, b, m) => { if (a !== b) throw new Error((m || 'not equal') + `: got ${JSON.stringify(a)}, expected ${JSON.stringify(b)}`); };
+const ok = (v, m) => { if (!v) throw new Error(m || 'expected truthy'); };
+const near = (a, b, tol, m) => { if (Math.abs(a - b) > tol) throw new Error((m || 'not near') + `: got ${a}, expected ${b} ±${tol}`); };
+const throws = (fn, re, m) => {
+  let threw = null;
+  try { fn(); } catch (e) { threw = e; }
+  if (!threw) throw new Error((m || 'expected a throw') + ', but nothing was thrown');
+  if (re && !re.test(threw.message)) throw new Error(`wrong error: ${threw.message}`);
+};
+
+/* ASCII art to mask. '#' is ink, anything else is background. */
+function art(s) {
+  const rows = s.trim().split('\n').map(r => r.trim());
+  const w = Math.max(...rows.map(r => r.length));
+  const h = rows.length;
+  const mask = new Uint8Array(w * h);
+  rows.forEach((r, y) => { for (let x = 0; x < w; x++) if (r[x] === '#') mask[y * w + x] = 1; });
+  return { mask, w, h };
+}
+
+/* ================= T1: storage ================= */
+section('T1 — run-length encoding');
+
+test('round-trips a plain shape', () => {
+  const { mask, w, h } = art(`
+    ..##..
+    .####.
+    ######
+  `);
+  const rle = encodeMask(mask, w, h);
+  const back = decodeMask(rle, w, h);
+  eq(back.join(''), Array.from(mask).join(''), 'decoded mask differs');
+});
+
+test('handles a row that starts with ink (leading zero-length run)', () => {
+  const { mask, w, h } = art(`
+    ###...
+    ...###
+  `);
+  const rle = encodeMask(mask, w, h);
+  ok(rle.split(';')[0].startsWith('0,'), 'expected a leading 0 run, got ' + rle);
+  eq(decodeMask(rle, w, h).join(''), Array.from(mask).join(''));
+});
+
+test('handles all-background and all-ink rows', () => {
+  const { mask, w, h } = art(`
+    ......
+    ######
+    ......
+  `);
+  eq(decodeMask(encodeMask(mask, w, h), w, h).join(''), Array.from(mask).join(''));
+});
+
+test('rejects a truncated row instead of returning a wrong bitmap', () => {
+  throws(() => decodeMask('1,1;1,1', 6, 2), /covers 2 px, expected 6/);
+});
+
+test('rejects the wrong row count', () => {
+  throws(() => decodeMask('0,6', 6, 2), /got 1 rows, expected 2/);
+});
+
+test('rejects a non-numeric run', () => {
+  throws(() => decodeMask('0,zz!,1', 6, 1), /bad run|covers/);
+});
+
+section('T1 — metrics and blank cells');
+
+test('measureInk returns the ink box', () => {
+  const { mask, w, h } = art(`
+    ......
+    ..##..
+    ..##..
+    ......
+  `);
+  const box = measureInk(mask, w, h);
+  eq(box.ink, 4); eq(box.top, 1); eq(box.bottom, 2); eq(box.left, 2); eq(box.right, 3);
+  eq(box.width, 2); eq(box.height, 2);
+});
+
+test('measureInk returns null for a blank cell — no divide by zero', () => {
+  const { mask, w, h } = art(`
+    ....
+    ....
+  `);
+  eq(measureInk(mask, w, h), null);
+});
+
+test('makeVariant refuses a blank cell with an actionable message', () => {
+  const { mask, w, h } = art(`
+    ....
+    ....
+  `);
+  throws(() => makeVariant({ mask, w, h, baseline: 1, xheight: 1 }),
+    /blank .* report the missing letter/i);
+});
+
+test('makeVariant rejects a NaN baseline rather than storing it', () => {
+  const { mask, w, h } = art(`.##.\n.##.`);
+  throws(() => makeVariant({ mask, w, h, baseline: NaN, xheight: 1 }), /baseline must be a number/);
+});
+
+test('makeVariant crops to the ink and shifts the baseline with it', () => {
+  const { mask, w, h } = art(`
+    ........
+    ........
+    ...##...
+    ...##...
+    ........
+  `);
+  const v = makeVariant({ mask, w, h, baseline: 4, xheight: 2 });
+  eq(v.w, 4, 'cropped width (2 ink + 1px margin each side)');
+  eq(v.h, 4, 'cropped height');
+  eq(v.baseline, 3, 'baseline moved with the crop origin');
+  eq(v.ink, 4);
+  ok(v.adv > v.w, 'advance includes side bearings');
+});
+
+test('variantMask decodes back to the cropped ink', () => {
+  const { mask, w, h } = art(`
+    ......
+    ..##..
+    ..##..
+    ......
+  `);
+  const v = makeVariant({ mask, w, h, baseline: 3, xheight: 1 });
+  const m = variantMask(v);
+  eq(m.reduce((a, b) => a + b, 0), 4, 'ink pixel count survives the round trip');
+});
+
+section('T1 — style file');
+
+function demoStyle() {
+  const s = createStyle('Test donor', { id: 'style-test' });
+  const shapes = {
+    o: `.###.\n#...#\n#...#\n#...#\n.###.`,
+    i: `.##.\n....\n.##.\n.##.\n.##.`,
+    v: `#...#\n#...#\n.#.#.\n.#.#.\n..#..`
+  };
+  for (const [ch, a] of Object.entries(shapes)) {
+    const { mask, w, h } = art(a);
+    for (let k = 0; k < 5; k++) addVariant(s, ch, makeVariant({ mask, w, h, baseline: h - 1, xheight: 1 }));
+  }
+  return s;
+}
+
+test('round-trips through JSON', () => {
+  const s = demoStyle();
+  const s2 = styleFromJSON(styleToJSON(s));
+  eq(s2.name, s.name); eq(s2.id, s.id);
+  eq(Object.keys(s2.glyphs).sort().join(''), 'iov');
+  eq(s2.glyphs.o.length, 5);
+});
+
+test('rejects an unknown format instead of half-loading it', () => {
+  throws(() => styleFromJSON('{"format":"hand-style/99","glyphs":{}}'), /unsupported format/);
+});
+
+test('catches a corrupt bitmap at load, not at render time', () => {
+  const s = demoStyle();
+  const o = JSON.parse(styleToJSON(s));
+  o.glyphs.o[0].rle = '1,1;1,1;1,1;1,1;1,1';        // rows no longer cover the width
+  throws(() => styleFromJSON(JSON.stringify(o)), /covers .* expected/);
+});
+
+test('contours are excluded from the file by default', () => {
+  const s = demoStyle();
+  ensureContours(s, traceForStore);
+  ok(s.glyphs.o[0].contours, 'cache should be populated in memory');
+  ok(!('contours' in JSON.parse(styleToJSON(s)).glyphs.o[0]), 'cache must not be serialised by default');
+  ok('contours' in JSON.parse(styleToJSON(s, { includeContours: true })).glyphs.o[0], 'opt-in should include it');
+});
+
+test('contours rebuild after being dropped — the bitmap is the source of truth', () => {
+  const s = demoStyle();
+  eq(ensureContours(s, traceForStore), 15, 'builds 3 letters x 5 variants');
+  eq(ensureContours(s, traceForStore), 0, 'second call is a no-op');
+  dropContours(s);
+  ok(!s.glyphs.o[0].contours, 'cache cleared');
+  eq(ensureContours(s, traceForStore), 15, 'rebuilds from the stored bitmaps alone');
+});
+
+test('force rebuild re-runs an improved tracer over old glyphs', () => {
+  const s = demoStyle();
+  ensureContours(s, traceForStore);
+  eq(ensureContours(s, traceForStore, { force: true }), 15);
+});
+
+test('missingChars names characters the style cannot render', () => {
+  const s = demoStyle();
+  eq(missingChars(s, 'oiv').length, 0);
+  eq(missingChars(s, 'ox yz\nv').sort().join(''), 'xyz', 'spaces and newlines are not missing glyphs');
+});
+
+test('incompleteGlyphs flags letters the donor skipped', () => {
+  const s = demoStyle();
+  eq(incompleteGlyphs(s, 5).length, 0);
+  const { mask, w, h } = art(`##\n##`);
+  addVariant(s, 'q', makeVariant({ mask, w, h, baseline: 1, xheight: 0 }));
+  const bad = incompleteGlyphs(s, 5);
+  eq(bad.length, 1); eq(bad[0].ch, 'q'); eq(bad[0].have, 1);
+});
+
+test('a 5-variant style stays small on disk', () => {
+  const s = demoStyle();
+  const bytes = styleBytes(s);
+  ok(bytes < 4000, 'demo style is ' + bytes + ' bytes');
+  document.getElementById('size-note') && 0;
+});
+
+/* ================= T4: tracer ================= */
+section('T4 — contour extraction');
+
+test('a solid square yields one outer contour with the right area', () => {
+  const { mask, w, h } = art(`
+    ####
+    ####
+    ####
+  `);
+  const cs = traceContours(mask, w, h);
+  eq(cs.length, 1);
+  ok(cs[0].outer, 'should be an outer contour');
+  eq(cs[0].area, 12, 'signed area equals the filled pixel count');
+});
+
+test('a ring yields an outer contour and a hole with opposite winding', () => {
+  const { mask, w, h } = art(`
+    #####
+    #...#
+    #...#
+    #####
+  `);
+  const cs = traceContours(mask, w, h);
+  eq(cs.length, 2, 'outer + hole');
+  const outer = cs.filter(c => c.outer), holes = cs.filter(c => !c.outer);
+  eq(outer.length, 1); eq(holes.length, 1);
+  ok(outer[0].area > 0 && holes[0].area < 0, 'winding must be opposite so nonzero fill leaves the counter open');
+  eq(Math.abs(holes[0].area), 6, 'hole area is the 3x2 interior');
+});
+
+test('an "8" yields two separate holes', () => {
+  const { mask, w, h } = art(`
+    #####
+    #...#
+    #####
+    #...#
+    #####
+  `);
+  const cs = traceContours(mask, w, h);
+  eq(cs.filter(c => !c.outer).length, 2, 'two counters');
+  eq(cs.filter(c => c.outer).length, 1);
+});
+
+test('disjoint parts (the dot of an i) yield separate contours', () => {
+  const { mask, w, h } = art(`
+    .##.
+    ....
+    .##.
+    .##.
+  `);
+  const cs = traceContours(mask, w, h);
+  eq(cs.length, 2, 'dot and stem are separate outer contours');
+  ok(cs.every(c => c.outer));
+});
+
+test('a 1px speck is discarded as scanner noise', () => {
+  const { mask, w, h } = art(`
+    #...
+    ....
+    ..##
+    ..##
+  `);
+  const cs = traceContours(mask, w, h);
+  eq(cs.length, 1, 'only the real blob survives');
+  eq(cs[0].area, 4);
+});
+
+test('minArea:0 keeps the speck — the threshold is doing the work', () => {
+  const { mask, w, h } = art(`
+    #...
+    ....
+    ..##
+    ..##
+  `);
+  eq(traceContours(mask, w, h, { minArea: 0 }).length, 2);
+});
+
+test('a diagonal stroke stays ONE contour (8-connected ink)', () => {
+  const { mask, w, h } = art(`
+    #....
+    .#...
+    ..#..
+    ...#.
+    ....#
+  `);
+  const cs = traceContours(mask, w, h, { minArea: 0 });
+  eq(cs.length, 1, 'a thin diagonal pen stroke must not break into 5 blobs');
+});
+
+test('an empty mask yields no contours rather than throwing', () => {
+  const { mask, w, h } = art(`
+    ....
+    ....
+  `);
+  eq(traceContours(mask, w, h).length, 0);
+});
+
+test('shoelace sign distinguishes winding', () => {
+  const sq = [{ x: 0, y: 0 }, { x: 2, y: 0 }, { x: 2, y: 2 }, { x: 0, y: 2 }];
+  ok(shoelace(sq) > 0);
+  ok(shoelace(sq.slice().reverse()) < 0);
+});
+
+section('T4 — simplification');
+
+test('RDP keeps a square\'s four corners', () => {
+  const { mask, w, h } = art(`
+    ######
+    ######
+    ######
+    ######
+  `);
+  const c = traceContours(mask, w, h)[0];
+  const s = rdp(c.pts, 0.6, true);
+  eq(s.length, 4, 'a square simplifies to exactly 4 points, got ' + JSON.stringify(s));
+});
+
+test('RDP on a closed loop does not collapse it to nothing', () => {
+  const { mask, w, h } = art(`
+    .####.
+    ######
+    ######
+    .####.
+  `);
+  const c = traceContours(mask, w, h)[0];
+  ok(rdp(c.pts, 50, true).length >= 3, 'even an absurd epsilon must leave a usable loop');
+});
+
+test('RDP passes 2-point input straight through', () => {
+  const two = [{ x: 0, y: 0 }, { x: 5, y: 5 }];
+  eq(rdp(two, 1, true).length, 2);
+  eq(rdp(two, 1, false).length, 2);
+});
+
+test('a high epsilon loses detail but never breaks the loop', () => {
+  const { mask, w, h } = art(`
+    ..####..
+    .######.
+    ########
+    ########
+    .######.
+    ..####..
+  `);
+  const c = traceContours(mask, w, h)[0];
+  const fine = rdp(c.pts, 0.3, true).length;
+  const coarse = rdp(c.pts, 2.5, true).length;
+  ok(coarse < fine, `coarse (${coarse}) should have fewer points than fine (${fine})`);
+  ok(coarse >= 3, 'still a closed shape');
+});
+
+section('T4 — curve fitting');
+
+test('findCorners finds four corners on a square', () => {
+  const sq = [{ x: 0, y: 0 }, { x: 4, y: 0 }, { x: 4, y: 4 }, { x: 0, y: 4 }];
+  eq(findCorners(sq, Math.PI / 3).length, 4);
+});
+
+test('findCorners finds none on a smooth circle', () => {
+  const circle = [];
+  for (let i = 0; i < 24; i++) {
+    const a = i / 24 * Math.PI * 2;
+    circle.push({ x: 10 + 8 * Math.cos(a), y: 10 + 8 * Math.sin(a) });
+  }
+  eq(findCorners(circle, Math.PI / 3).length, 0, 'a 15-degree turn is not a corner');
+});
+
+test('fitBeziers returns nothing for degenerate input instead of NaN', () => {
+  eq(fitBeziers([], {}).length, 0);
+  eq(fitBeziers([{ x: 1, y: 1 }], {}).length, 0);
+});
+
+test('fitBeziers handles a 2-point run', () => {
+  const c = fitBeziers([{ x: 0, y: 0 }, { x: 10, y: 0 }], {});
+  eq(c.length, 1);
+  eq(c[0].length, 4, 'one cubic, four control points');
+});
+
+test('a square keeps its corners sharp after fitting', () => {
+  const sq = [{ x: 0, y: 0 }, { x: 8, y: 0 }, { x: 8, y: 8 }, { x: 0, y: 8 }];
+  const curves = fitBeziers(sq, { tolerance: 0.5 });
+  ok(curves.length >= 4, 'at least one segment per side, got ' + curves.length);
+  /* Every original corner must still be an endpoint of some segment. */
+  for (const corner of sq) {
+    const hit = curves.some(c =>
+      (Math.hypot(c[0].x - corner.x, c[0].y - corner.y) < 0.01) ||
+      (Math.hypot(c[3].x - corner.x, c[3].y - corner.y) < 0.01));
+    ok(hit, `corner ${corner.x},${corner.y} was smoothed away`);
+  }
+});
+
+test('fitted curves stay within tolerance of the source points', () => {
+  const circle = [];
+  for (let i = 0; i < 40; i++) {
+    const a = i / 40 * Math.PI * 2;
+    circle.push({ x: 20 + 15 * Math.cos(a), y: 20 + 15 * Math.sin(a) });
+  }
+  const curves = fitBeziers(circle, { tolerance: 0.5 });
+  const evalAt = (b, t) => {
+    const m = 1 - t;
+    return {
+      x: m * m * m * b[0].x + 3 * m * m * t * b[1].x + 3 * m * t * t * b[2].x + t * t * t * b[3].x,
+      y: m * m * m * b[0].y + 3 * m * m * t * b[1].y + 3 * m * t * t * b[2].y + t * t * t * b[3].y
+    };
+  };
+  let worst = 0;
+  for (const b of curves) {
+    for (let t = 0; t <= 1; t += 0.05) {
+      const p = evalAt(b, t);
+      worst = Math.max(worst, Math.abs(Math.hypot(p.x - 20, p.y - 20) - 15));
+    }
+  }
+  ok(worst < 1.2, 'max deviation from the true circle was ' + worst.toFixed(3) + 'px');
+});
+
+test('no NaN reaches the output path', () => {
+  const { mask, w, h } = art(`
+    .###.
+    #...#
+    #...#
+    .###.
+  `);
+  const d = maskToPath(mask, w, h);
+  ok(d.length > 0, 'expected a path');
+  ok(!/NaN|Infinity|undefined/.test(d), 'path contained a non-finite number: ' + d);
+  ok(d.startsWith('M'), 'path must start with a moveto');
+  eq((d.match(/Z/g) || []).length, 2, 'outer and hole are both closed');
+});
+
+test('traceForStore emits plain arrays that survive JSON', () => {
+  const { mask, w, h } = art(`
+    .###.
+    #...#
+    .###.
+  `);
+  const cs = traceForStore(mask, w, h);
+  ok(cs.length >= 1);
+  const round = JSON.parse(JSON.stringify(cs));
+  eq(round[0].curves[0][0].length, 2, 'points are [x,y] pairs');
+  ok(Number.isFinite(round[0].curves[0][0][0]));
+});
+
+section('T4 — fidelity (the one that catches silent quality loss)');
+
+/* Rasterise the fitted path back through the browser's own fill rule and
+   compare it against the bitmap it came from. A curve-fitting regression
+   makes letters subtly wrong while everything still "works", which is
+   exactly the failure eyeballing misses. This catches it as a number. */
+function fidelity(artStr, opts) {
+  const { mask, w, h } = art(artStr);
+  const d = maskToPath(mask, w, h, opts);
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  svg.style.cssText = 'position:absolute;left:-9999px;width:' + w + 'px;height:' + h + 'px';
+  const path = document.createElementNS(NS, 'path');
+  path.setAttribute('d', d);
+  svg.appendChild(path);
+  document.body.appendChild(svg);
+  const pt = svg.createSVGPoint();
+  let agree = 0, filled = 0;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    pt.x = x + 0.5; pt.y = y + 0.5;
+    const hit = path.isPointInFill(pt);
+    if (hit) filled++;
+    if (hit === !!mask[y * w + x]) agree++;
+  }
+  svg.remove();
+  return { pct: agree / (w * h) * 100, filled, ink: mask.reduce((a, b) => a + b, 0) };
+}
+
+test('a closed letter with a counter reproduces its bitmap exactly', () => {
+  const f = fidelity(`
+    ..#####..
+    .#######.
+    ##.....##
+    ##.....##
+    ##.....##
+    .#######.
+    ..#####..`);
+  eq(f.pct, 100, 'pixel agreement');
+  eq(f.filled, f.ink, 'the counter must stay open — nonzero fill rule with opposite winding');
+});
+
+test('two counters (an 8) both stay open', () => {
+  const f = fidelity(`
+    .#####.
+    ##...##
+    ##...##
+    .#####.
+    ##...##
+    ##...##
+    .#####.`);
+  eq(f.pct, 100);
+});
+
+test('disjoint parts both render', () => {
+  const f = fidelity(`
+    .###.
+    .###.
+    .....
+    .###.
+    .###.
+    .###.
+    .###.`);
+  eq(f.pct, 100);
+});
+
+test('a sharp-cornered letter stays above 95% agreement', () => {
+  const f = fidelity(`
+    ##.....##
+    ##.....##
+    .##...##.
+    .##...##.
+    ..##.##..
+    ...###...
+    ....#....`);
+  ok(f.pct >= 95, 'agreement was ' + f.pct.toFixed(1) + '%');
+});
+
+test('a thin diagonal stroke stays above 95% agreement', () => {
+  const f = fidelity(`
+    ##.....
+    .##....
+    ..##...
+    ...##..
+    ....##.
+    .....##`);
+  ok(f.pct >= 95, 'agreement was ' + f.pct.toFixed(1) + '%');
+});
+
+section('T1 — real-world file size');
+
+test('a realistic glyph stores in a sane number of bytes', () => {
+  /* Build a ~120x150 ring, roughly what a scanned "o" looks like at the
+     resolution the ingest tool will produce. */
+  const W = 120, H = 150, mask = new Uint8Array(W * H);
+  const cx = W / 2, cy = H / 2, ro = 55, ri = 34;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const dx = (x - cx) / ro, dy = (y - cy) / (ro * 1.2);
+    const dxi = (x - cx) / ri, dyi = (y - cy) / (ri * 1.2);
+    if (dx * dx + dy * dy <= 1 && dxi * dxi + dyi * dyi > 1) mask[y * W + x] = 1;
+  }
+  const v = makeVariant({ mask, w: W, h: H, baseline: 140, xheight: 30 });
+  const bytes = new TextEncoder().encode(v.rle).length;
+  window.__glyphBytes = bytes;
+  ok(bytes < 3000, 'one glyph bitmap is ' + bytes + ' bytes');
+
+  /* And the whole style: 74 letters x 5 variants at that size. */
+  const est = bytes * 74 * 5;
+  window.__styleEst = est;
+  ok(est < 900000, 'estimated full style is ' + Math.round(est / 1024) + ' KB');
+});
+
+/* ---------- visual check ---------- */
+const samples = {
+  'o (hole)': `
+    ..#####..
+    .#######.
+    ##.....##
+    ##.....##
+    ##.....##
+    .#######.
+    ..#####..`,
+  'a (counter)': `
+    ..######.
+    .#######.
+    ##....##.
+    ##....##.
+    .#######.
+    ..#######`,
+  'i (disjoint)': `
+    .###.
+    .###.
+    .....
+    .###.
+    .###.
+    .###.
+    .###.`,
+  'v (corners)': `
+    ##.....##
+    ##.....##
+    .##...##.
+    .##...##.
+    ..##.##..
+    ...###...
+    ....#....`,
+  '8 (two holes)': `
+    .#####.
+    ##...##
+    ##...##
+    .#####.
+    ##...##
+    ##...##
+    .#####.`,
+  'diagonal': `
+    ##.....
+    .##....
+    ..##...
+    ...##..
+    ....##.
+    .....##`
+};
+
+for (const [label, a] of Object.entries(samples)) {
+  const { mask, w, h } = art(a);
+  const d = maskToPath(mask, w, h);
+  const S = 14;
+  let px = '';
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    if (mask[y * w + x]) px += `<rect x="${x}" y="${y}" width="1" height="1" fill="#C9D3E8"/>`;
+  }
+  const fig = document.createElement('figure');
+  fig.innerHTML =
+    `<svg width="${w * S}" height="${h * S}" viewBox="0 0 ${w} ${h}">${px}` +
+    `<path d="${d}" fill="#101425" fill-rule="nonzero"/></svg>` +
+    `<figcaption>${label}</figcaption>`;
+  out.appendChild(fig);
+}
+
+/* ---------- summary ---------- */
+const s = document.getElementById('summary');
+s.className = fail ? 'fail' : 'pass';
+s.textContent = fail
+  ? `${fail} FAILED · ${pass} passed`
+  : `All ${pass} tests passed`;
+</script>
