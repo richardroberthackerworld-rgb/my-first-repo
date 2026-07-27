@@ -13,23 +13,63 @@ Design doc, with the full 14-task plan and the reasoning behind every decision:
 
 | Task | File | State |
 |---|---|---|
-| T1 storage | `src/store.js` | done, 48 tests green |
-| T4 tracer | `src/trace.js` | done, 48 tests green |
-| T11 harness | `test.html` | partial — covers T1 and T4 only |
+| T1 storage | `src/store.js` | done |
+| T2 donor sheet | `sheet.html`, `src/sheet.js` | done |
+| T3 ingest | `tools/ingest.html`, `src/capture.js` | done |
+| T4 tracer | `src/trace.js` | done |
+| T11 harness | `test.html` | partial — covers T1-T4 only |
 
-Everything else (donor kit, ingest, layout, realism, render, export, app, payments,
+**72 tests green.** Everything else (layout, realism, render, export, app, payments,
 OCR, key proxy, infra) is not started.
 
-## Running the tests
+## Running it
 
 ```bash
 npx serve -p 3130 .
 ```
 
-Then open <http://localhost:3130/hand/test.html>.
-
 ES modules need a real origin, so `file://` will not work. There is no build step and
-no dependencies — the tests are plain assertions in a single page.
+no dependencies.
+
+- Tests: <http://localhost:3130/hand/test.html>
+- Donor sheet: <http://localhost:3130/hand/sheet.html>
+- Ingest: <http://localhost:3130/hand/tools/ingest.html>
+
+## Capturing a donor
+
+1. Open `sheet.html`, type the donor's name, print 5 sheets at **100% scale**. Not
+   "fit to page" — the geometry has to survive the printer.
+2. Donor writes one character per box, in **black or blue pen only**, sitting each
+   letter on the darker blue line.
+3. Scan at **300 dpi or higher, in colour**. Colour is not optional: the guide rules
+   are removed by reading the scan through its red channel, and a greyscale scan mixes
+   the blue down into a mid grey that gets traced as ink.
+4. Open `tools/ingest.html`, load each scan, check the four corner handles, extract.
+5. Download the style JSON.
+
+Blank cells are reported by character, so a donor who skipped six letters can be asked
+for exactly those six.
+
+## Why the sheet looks the way it does
+
+**The letter label sits above the writing box, never inside it.** Anything printed
+inside the box shares space with the pen stroke, so removing it later means registering
+a subtracted image to within a pixel or two. Nothing co-located means nothing to
+subtract. It also stops the donor tracing over a printed exemplar, which makes them
+write less like themselves.
+
+**The box border and both rules are blue, not grey.** They sit right against the
+writing area and the red-channel read only removes colours with a high red component.
+A grey border survives thresholding and gets traced as part of the letter.
+
+**Five identical sheets, not one dense sheet.** Same total cells either way, but the
+ingest tool only has one layout to understand, and a donor who gives up after three
+sheets still leaves a usable style.
+
+**There is deliberately no deskew.** The original plan listed one, inherited from the
+phone-photo design where the sheet itself might be tilted. After fiducial rectification
+the sheet is already square, and any slant left in a glyph is the donor's own italic
+hand. Removing it would destroy the exact thing being captured.
 
 ## The two decisions this code exists to enforce
 

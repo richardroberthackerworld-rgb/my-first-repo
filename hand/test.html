@@ -50,6 +50,14 @@ import {
 import {
   traceContours, shoelace, rdp, findCorners, fitBeziers, beziersToPath, maskToPath, traceForStore
 } from './src/trace.js';
+import {
+  SHEET, CHARS, charAt, cellRect, cellWriteRect, cellRules,
+  cellRectPx, cellWriteRectPx, cellRulesPx, fiducials, pageSizePx, mmToPx, gridBox
+} from './src/sheet.js';
+import {
+  redChannel, luminance, otsuThreshold, binarize, findFiducials,
+  solveHomography, applyHomography, quadIsSane, warpGray, cropCell, despeckle
+} from './src/capture.js';
 
 /* ---------- tiny assertion harness ---------- */
 const out = document.getElementById('visual');
@@ -636,6 +644,387 @@ test('a realistic glyph stores in a sane number of bytes', () => {
   const est = bytes * 74 * 5;
   window.__styleEst = est;
   ok(est < 900000, 'estimated full style is ' + Math.round(est / 1024) + ' KB');
+});
+
+/* ================= T2: sheet geometry ================= */
+section('T2 — sheet geometry (the contract between the sheet and the ingest tool)');
+
+test('every character has a cell and the grid has room to spare', () => {
+  eq(CHARS.length, 73, 'character count');
+  ok(SHEET.cols * SHEET.rows >= CHARS.length, 'grid must hold every character');
+  eq(charAt(CHARS.length), null, 'the tail is blank, not undefined');
+  eq(charAt(0), 'a');
+});
+
+test('cells tile the grid without overlapping or leaving gaps', () => {
+  const g = gridBox();
+  for (let i = 0; i < SHEET.cols * SHEET.rows; i++) {
+    const r = cellRect(i);
+    ok(r.x >= g.x - 1e-9 && r.y >= g.y - 1e-9, `cell ${i} starts before the grid`);
+    ok(r.x + r.w <= g.x + g.w + 1e-9, `cell ${i} runs past the right edge`);
+    ok(r.y + r.h <= g.y + g.h + 1e-9, `cell ${i} runs past the bottom edge`);
+  }
+  /* neighbours must touch exactly */
+  const a = cellRect(0), b = cellRect(1), c = cellRect(SHEET.cols);
+  near(a.x + a.w, b.x, 1e-9, 'horizontal neighbours must abut');
+  near(a.y + a.h, c.y, 1e-9, 'vertical neighbours must abut');
+});
+
+test('cellRect refuses an out-of-range index instead of returning NaN', () => {
+  throws(() => cellRect(-1), /outside/);
+  throws(() => cellRect(SHEET.cols * SHEET.rows), /outside/);
+});
+
+test('the writing box sits inside the cell, below the label strip', () => {
+  for (const i of [0, 17, 40, 72]) {
+    const r = cellRect(i), b = cellWriteRect(i);
+    ok(b.y > r.y, `cell ${i}: writing box must start below the cell top`);
+    near(b.y - r.y, r.h * SHEET.labelFrac, 1e-9, 'label strip height');
+    near(b.y + b.h, r.y + r.h, 1e-9, 'writing box must reach the cell bottom');
+  }
+});
+
+test('both rules fall inside the writing box, x-height above baseline', () => {
+  for (const i of [0, 33, 72]) {
+    const b = cellWriteRect(i), ru = cellRules(i);
+    ok(ru.xheight > b.y && ru.xheight < b.y + b.h, `cell ${i}: x-height outside the box`);
+    ok(ru.baseline > ru.xheight, `cell ${i}: baseline must sit below the x-height line`);
+    ok(ru.baseline < b.y + b.h, `cell ${i}: no descender room below the baseline`);
+  }
+});
+
+test('the four fiducials are in TL TR BR BL order and clear of the grid', () => {
+  const f = fiducials(), g = gridBox();
+  eq(f.length, 4);
+  ok(f[0].x < f[1].x && f[0].y < f[3].y, 'order must be TL, TR, BR, BL');
+  ok(f[1].x > f[0].x && f[2].y > f[1].y, 'order must be TL, TR, BR, BL');
+  for (const p of f) {
+    const insideGrid = p.x > g.x && p.x < g.x + g.w && p.y > g.y && p.y < g.y + g.h;
+    ok(!insideGrid, `fiducial at ${p.x},${p.y} overlaps the writing grid`);
+  }
+});
+
+test('pixel geometry agrees with millimetre geometry at any DPI', () => {
+  for (const dpi of [150, 300, 600]) {
+    const page = pageSizePx(dpi);
+    near(page.w, mmToPx(SHEET.pageW, dpi), 1, 'page width');
+    const r = cellRect(20), rp = cellRectPx(20, dpi);
+    near(rp.x, mmToPx(r.x, dpi), 1, `cell x at ${dpi}dpi`);
+    near(rp.w, mmToPx(r.w, dpi), 1.5, `cell w at ${dpi}dpi`);
+    const bp = cellWriteRectPx(20, dpi), ru = cellRulesPx(20, dpi);
+    ok(ru.baseline > 0 && ru.baseline < bp.h, 'baseline must land inside the writing box in px');
+    ok(ru.xheight < ru.baseline, 'x-height above baseline in px');
+  }
+});
+
+test('a cell gives usable glyph resolution at 300 dpi', () => {
+  const b = cellWriteRectPx(0, 300);
+  ok(b.w >= 180 && b.h >= 180, `writing box is ${b.w}x${b.h}px — too small to trace a stroke cleanly`);
+});
+
+/* ================= T3: capture pipeline ================= */
+section('T3 — colour dropout and thresholding');
+
+function imgFrom(pixels, w, h) {
+  const d = new Uint8ClampedArray(w * h * 4);
+  pixels.forEach((c, i) => { d[i * 4] = c[0]; d[i * 4 + 1] = c[1]; d[i * 4 + 2] = c[2]; d[i * 4 + 3] = 255; });
+  return { data: d, width: w, height: h };
+}
+
+test('the red channel drops light blue but keeps black and blue ink', () => {
+  const img = imgFrom([
+    [255, 255, 255],   // paper
+    [184, 216, 240],   // light blue rule
+    [207, 228, 247],   // light blue box border
+    [17, 17, 17],      // black pen
+    [26, 58, 138]      // blue pen
+  ], 5, 1);
+  const r = redChannel(img);
+  const t = 128;
+  eq(r[0] > t, true, 'paper stays light');
+  eq(r[1] > t, true, 'blue rule must read as light and vanish');
+  eq(r[2] > t, true, 'blue border must read as light and vanish');
+  eq(r[3] <= t, true, 'black pen must survive');
+  eq(r[4] <= t, true, 'blue pen must survive');
+});
+
+test('luminance does NOT drop the blue rule — this is why we use red', () => {
+  const img = imgFrom([[184, 216, 240]], 1, 1);
+  ok(luminance(img)[0] > redChannel(img)[0] - 40, 'sanity');
+  /* The point: a greyscale scan mixes the blue into a mid grey that can fall
+     below the threshold and be traced as ink. Scan in colour. */
+  ok(luminance(img)[0] < 230, 'blue rule in luminance is a mid grey, not white');
+});
+
+test('otsu splits a bimodal histogram and lands mid-gap, not against the ink', () => {
+  const g = new Uint8Array(1000);
+  for (let i = 0; i < 1000; i++) g[i] = i < 300 ? 20 + (i % 5) : 230 + (i % 5);
+  const t = otsuThreshold(g);
+  const bin = binarize(g, t);
+  eq(bin.slice(0, 300).reduce((a, b) => a + b, 0), 300, 'all dark pixels are ink');
+  eq(bin.slice(300).reduce((a, b) => a + b, 0), 0, 'no light pixel is ink');
+  /* Every value from 24 to 229 scores identically here. Taking the middle is
+     what keeps antialiased stroke edges from being shaved off. */
+  ok(t > 100 && t < 160, 'threshold should sit mid-gap, landed at ' + t);
+});
+
+test('a thin antialiased stroke survives thresholding intact', () => {
+  /* A 3px stroke on white with soft edges: 255 paper, 150/90 antialiased
+     shoulders, 30 core. A threshold hugging the ink peak would keep only the
+     core and break the stroke up. */
+  const W = 40, H = 6;
+  const g = new Uint8Array(W * H).fill(255);
+  for (let y = 0; y < H; y++) {
+    for (let x = 8; x < 32; x++) {
+      const d = Math.abs(y - 2.5);
+      g[y * W + x] = d < 0.6 ? 30 : d < 1.6 ? 90 : d < 2.4 ? 150 : 255;
+    }
+  }
+  const t = otsuThreshold(g);
+  const bin = binarize(g, t);
+  /* Walk the stroke: every column across it must have at least 2 ink pixels,
+     otherwise the stroke has thinned to the point of breaking. */
+  let thinnest = 99;
+  for (let x = 10; x < 30; x++) {
+    let col = 0;
+    for (let y = 0; y < H; y++) col += bin[y * W + x];
+    thinnest = Math.min(thinnest, col);
+  }
+  ok(thinnest >= 2, `stroke thinned to ${thinnest}px at its narrowest (threshold ${t})`);
+});
+
+section('T3 — homography');
+
+test('maps a square onto itself as the identity', () => {
+  const q = [{ x: 0, y: 0 }, { x: 10, y: 0 }, { x: 10, y: 10 }, { x: 0, y: 10 }];
+  const m = solveHomography(q, q);
+  const p = applyHomography(m, 3, 7);
+  near(p.x, 3, 1e-6); near(p.y, 7, 1e-6);
+});
+
+test('recovers a known scale and translation', () => {
+  const from = [{ x: 0, y: 0 }, { x: 10, y: 0 }, { x: 10, y: 10 }, { x: 0, y: 10 }];
+  const to = from.map(p => ({ x: p.x * 3 + 5, y: p.y * 3 - 2 }));
+  const m = solveHomography(from, to);
+  const p = applyHomography(m, 4, 6);
+  near(p.x, 17, 1e-6); near(p.y, 16, 1e-6);
+});
+
+test('recovers a genuine perspective distortion', () => {
+  const from = [{ x: 0, y: 0 }, { x: 100, y: 0 }, { x: 100, y: 100 }, { x: 0, y: 100 }];
+  const to = [{ x: 8, y: 4 }, { x: 96, y: 11 }, { x: 104, y: 92 }, { x: 2, y: 99 }];
+  const m = solveHomography(from, to);
+  from.forEach((p, i) => {
+    const q = applyHomography(m, p.x, p.y);
+    near(q.x, to[i].x, 1e-6, 'corner ' + i + ' x');
+    near(q.y, to[i].y, 1e-6, 'corner ' + i + ' y');
+  });
+});
+
+test('rejects a degenerate quad instead of returning a NaN matrix', () => {
+  const good = [{ x: 0, y: 0 }, { x: 10, y: 0 }, { x: 10, y: 10 }, { x: 0, y: 10 }];
+  throws(() => solveHomography([{ x: 0, y: 0 }, { x: 5, y: 0 }, { x: 10, y: 0 }, { x: 0, y: 5 }], good), /degenerate/);
+  throws(() => solveHomography([{ x: 0, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 0 }], good), /degenerate/);
+  throws(() => solveHomography([{ x: 0, y: 0 }, { x: 10, y: 10 }, { x: 10, y: 0 }, { x: 0, y: 10 }], good), /degenerate/);
+});
+
+test('quadIsSane rejects non-finite handle positions', () => {
+  eq(quadIsSane([{ x: NaN, y: 0 }, { x: 10, y: 0 }, { x: 10, y: 10 }, { x: 0, y: 10 }]), false);
+  eq(quadIsSane([{ x: 0, y: 0 }, { x: 10, y: 0 }, { x: 10, y: 10 }, { x: 0, y: 10 }]), true);
+});
+
+section('T3 — despeckle');
+
+test('drops dust but keeps the dot of an i', () => {
+  const { mask, w, h } = art(`
+    #.........
+    ..........
+    ....##....
+    ....##....
+    ..........
+    ...####...
+    ...####...
+    ...####...
+  `);
+  const clean = despeckle(mask, w, h, 3);
+  eq(clean[0], 0, 'the single-pixel speck must go');
+  eq(clean.reduce((a, b) => a + b, 0), mask.reduce((a, b) => a + b, 0) - 1, 'nothing else may be touched');
+});
+
+/* ---------- the end-to-end one ---------- */
+section('T2 + T3 — synthetic scan round trip');
+
+/**
+ * Render a sheet exactly as sheet.html would, put ink in a few known cells,
+ * then push it through the whole capture pipeline and check that precisely
+ * those cells come back. If the grid is off by even one cell this fails
+ * loudly, which is the point: a misaligned grid corrupts every glyph while
+ * throwing nothing.
+ */
+function syntheticScan(dpi, inkCells) {
+  const page = pageSizePx(dpi);
+  const cv = document.createElement('canvas');
+  cv.width = page.w; cv.height = page.h;
+  const ctx = cv.getContext('2d', { willReadFrequently: true });
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, page.w, page.h);
+
+  ctx.fillStyle = '#000';
+  const fs = mmToPx(SHEET.fidSize, dpi);
+  for (const f of fiducials()) {
+    ctx.fillRect(mmToPx(f.x, dpi) - fs / 2, mmToPx(f.y, dpi) - fs / 2, fs, fs);
+  }
+
+  ctx.lineWidth = Math.max(1, mmToPx(0.25, dpi));
+  for (let i = 0; i < CHARS.length; i++) {
+    const b = cellWriteRectPx(i, dpi), ru = cellRulesPx(i, dpi);
+    ctx.strokeStyle = '#CFE4F7';
+    ctx.strokeRect(b.x + .5, b.y + .5, b.w - 1, b.h - 1);
+    ctx.strokeStyle = '#B8D8F0';
+    for (const yy of [ru.xheight, ru.baseline]) {
+      ctx.beginPath(); ctx.moveTo(b.x, b.y + yy + .5); ctx.lineTo(b.x + b.w, b.y + yy + .5); ctx.stroke();
+    }
+    ctx.fillStyle = '#5A6072';                       // label, outside the box
+    ctx.font = Math.round(mmToPx(3.2, dpi)) + 'px monospace';
+    ctx.fillText(CHARS[i], cellRectPx(i, dpi).x + 3, cellRectPx(i, dpi).y + mmToPx(3.6, dpi));
+  }
+
+  ctx.fillStyle = '#111';
+  for (const i of inkCells) {
+    const b = cellWriteRectPx(i, dpi), ru = cellRulesPx(i, dpi);
+    ctx.beginPath();
+    ctx.ellipse(b.x + b.w / 2, b.y + ru.baseline - b.h * 0.14, b.w * 0.2, b.h * 0.13, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  return ctx.getImageData(0, 0, page.w, page.h);
+}
+
+const DPI = 150;                       // keep the test quick; geometry is DPI-independent
+const INK = [0, 7, 40, 72];            // first, end of row 1, middle, last character
+const scanImg = syntheticScan(DPI, INK);
+const scanGray = redChannel(scanImg);
+const scanBin = binarize(scanGray, otsuThreshold(scanGray));
+const detected = findFiducials(scanBin, scanImg.width, scanImg.height);
+
+test('finds all four fiducials on a rendered sheet', () => {
+  ok(detected, 'detection returned null');
+  eq(detected.length, 4);
+});
+
+test('detected fiducial centres match the printed positions', () => {
+  const want = fiducials().map(f => ({ x: mmToPx(f.x, DPI), y: mmToPx(f.y, DPI) }));
+  detected.forEach((p, i) => {
+    near(p.x, want[i].x, 2, `fiducial ${i} x`);
+    near(p.y, want[i].y, 2, `fiducial ${i} y`);
+  });
+});
+
+test('blue rules and the cell border are gone after the red-channel read', () => {
+  /* Sample the middle of a cell that has no ink. If the box border or rules
+     survived, this cell would come back non-blank. */
+  const page = pageSizePx(DPI);
+  const b = cellWriteRectPx(3, DPI);
+  const crop = cropCell(scanBin, page.w, page.h, b, { inset: 0.08 });
+  const ink = crop.mask.reduce((a, v) => a + v, 0);
+  ok(ink < 20, 'an empty cell should be empty, found ' + ink + ' ink pixels');
+});
+
+test('the whole pipeline returns ink in exactly the cells it was drawn into', () => {
+  const page = pageSizePx(DPI);
+  const dst = fiducials().map(f => ({ x: mmToPx(f.x, DPI), y: mmToPx(f.y, DPI) }));
+  const flat = warpGray(scanGray, scanImg.width, scanImg.height, detected, dst, page.w, page.h);
+  const bin = binarize(flat, otsuThreshold(flat));
+
+  const withInk = [], blank = [];
+  for (let i = 0; i < CHARS.length; i++) {
+    const b = cellWriteRectPx(i, DPI);
+    const crop = cropCell(bin, page.w, page.h, b, { inset: 0.08 });
+    const clean = despeckle(crop.mask, crop.w, crop.h, 20);
+    let v = null;
+    try { v = makeVariant({ mask: clean, w: crop.w, h: crop.h, baseline: 10, xheight: 5 }); } catch (e) { /* blank */ }
+    (v ? withInk : blank).push(CHARS[i]);
+  }
+
+  eq(withInk.join(''), INK.map(i => CHARS[i]).join(''), 'wrong cells came back with ink — the grid is misaligned');
+  eq(blank.length, CHARS.length - INK.length, 'every other cell must report blank');
+});
+
+test('a full alphabet extracts into the RIGHT cells (letterform sanity)', () => {
+  /* The 4-cell test above proves the grid is roughly aligned. This proves it
+     is aligned exactly: draw all 73 characters in a real font, extract them,
+     and check the shapes have the proportions those characters should have.
+     An off-by-one grid still yields 73 glyphs and still reports zero blanks —
+     but "i" would come back as wide as "m", and this catches that. */
+  const dpi = 200;
+  const page = pageSizePx(dpi);
+  const cv = document.createElement('canvas');
+  cv.width = page.w; cv.height = page.h;
+  const ctx = cv.getContext('2d', { willReadFrequently: true });
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, page.w, page.h);
+  ctx.fillStyle = '#000';
+  const fs = mmToPx(SHEET.fidSize, dpi);
+  for (const f of fiducials()) ctx.fillRect(mmToPx(f.x, dpi) - fs / 2, mmToPx(f.y, dpi) - fs / 2, fs, fs);
+
+  for (let i = 0; i < CHARS.length; i++) {
+    const b = cellWriteRectPx(i, dpi), ru = cellRulesPx(i, dpi);
+    ctx.fillStyle = '#14213a';
+    ctx.font = Math.round(b.h * 0.5) + 'px Georgia, serif';
+    ctx.textBaseline = 'alphabetic';
+    const m = ctx.measureText(CHARS[i]);
+    ctx.fillText(CHARS[i], b.x + (b.w - m.width) / 2, b.y + ru.baseline);
+  }
+
+  const img = ctx.getImageData(0, 0, page.w, page.h);
+  const gray = redChannel(img);
+  const found = findFiducials(binarize(gray, otsuThreshold(gray)), page.w, page.h);
+  ok(found, 'fiducials not found on the alphabet sheet');
+
+  const dst = fiducials().map(f => ({ x: mmToPx(f.x, dpi), y: mmToPx(f.y, dpi) }));
+  const flat = warpGray(gray, page.w, page.h, found, dst, page.w, page.h);
+  const bin = binarize(flat, otsuThreshold(flat));
+
+  const dim = {};
+  let blanks = 0;
+  for (let i = 0; i < CHARS.length; i++) {
+    const b = cellWriteRectPx(i, dpi), ru = cellRulesPx(i, dpi);
+    const crop = cropCell(bin, page.w, page.h, b, { inset: 0.08 });
+    const clean = despeckle(crop.mask, crop.w, crop.h, 20);
+    try {
+      const v = makeVariant({
+        mask: clean, w: crop.w, h: crop.h,
+        baseline: ru.baseline - crop.offsetY, xheight: ru.xheight - crop.offsetY
+      });
+      dim[CHARS[i]] = { w: v.w, h: v.h };
+    } catch (e) { blanks++; }
+  }
+
+  eq(blanks, 0, 'every cell should contain a character');
+  ok(dim['i'].w < dim['m'].w * 0.6, `"i" (${dim['i'].w}px) should be far narrower than "m" (${dim['m'].w}px)`);
+  ok(dim['l'].w < dim['w'].w * 0.6, `"l" should be far narrower than "w"`);
+  ok(dim['M'].w > dim['i'].w * 2, '"M" should be much wider than "i"');
+  ok(dim['g'].h > dim['o'].h * 1.15, '"g" should be taller than "o" — it has a descender');
+  ok(dim['b'].h > dim['o'].h * 1.15, '"b" should be taller than "o" — it has an ascender');
+  ok(dim['.'].h < dim['o'].h * 0.6, '"." should be much shorter than "o"');
+});
+
+test('an extracted glyph sits on the baseline it was drawn against', () => {
+  const page = pageSizePx(DPI);
+  const dst = fiducials().map(f => ({ x: mmToPx(f.x, DPI), y: mmToPx(f.y, DPI) }));
+  const flat = warpGray(scanGray, scanImg.width, scanImg.height, detected, dst, page.w, page.h);
+  const bin = binarize(flat, otsuThreshold(flat));
+
+  const i = INK[2];
+  const b = cellWriteRectPx(i, DPI), ru = cellRulesPx(i, DPI);
+  const crop = cropCell(bin, page.w, page.h, b, { inset: 0.08 });
+  const clean = despeckle(crop.mask, crop.w, crop.h, 20);
+  const v = makeVariant({
+    mask: clean, w: crop.w, h: crop.h,
+    baseline: ru.baseline - crop.offsetY,
+    xheight: ru.xheight - crop.offsetY
+  });
+  /* The blob was drawn just above the baseline, so the baseline should land
+     near the bottom of the stored glyph, not off the end of it. */
+  ok(v.baseline > 0, 'baseline fell above the stored glyph');
+  ok(v.baseline <= v.h + 4, `baseline (${v.baseline}) fell below the glyph (h=${v.h})`);
 });
 
 /* ---------- visual check ---------- */

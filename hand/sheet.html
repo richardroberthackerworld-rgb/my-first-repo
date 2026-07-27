@@ -1,0 +1,168 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>7Hand — donor sheet</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  /* Everything is positioned in millimetres so what prints matches what the
+     ingest tool expects. Do not switch these to pixels. */
+  @page { size: A4 portrait; margin: 0; }
+
+  /* The box border and both rules must be BLUE, not grey. They sit right up
+     against the writing area, and the red-channel read that removes them only
+     works on colours with a high red component. A grey border would survive
+     thresholding and get traced as part of the letter. The label is allowed to
+     be dark because it lives outside the writing box and is never cropped. */
+  :root { --ink:#101425; --rule:#B8D8F0; --box:#CFE4F7; --muted:#5A6072; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:#E9ECF3; font:14px/1.5 ui-sans-serif,system-ui,'Segoe UI',Roboto,sans-serif; color:var(--ink); }
+
+  /* screen-only chrome */
+  .bar { padding:16px 20px; background:#fff; border-bottom:1px solid #DFE3EC; display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
+  .bar h1 { font-size:16px; margin:0 12px 0 0; letter-spacing:-.3px; }
+  .bar label { font-size:13px; color:var(--muted); display:flex; gap:6px; align-items:center; }
+  .bar input, .bar select { font:inherit; padding:4px 8px; border:1px solid #CBD2E0; border-radius:6px; }
+  .bar button { font:600 14px/1 inherit; padding:9px 16px; border:0; border-radius:7px; background:var(--ink); color:#fff; cursor:pointer; }
+  .hint { padding:14px 20px; color:var(--muted); font-size:13px; max-width:820px; }
+  .hint b { color:var(--ink); }
+
+  .page {
+    position:relative; width:210mm; height:297mm; background:#fff; margin:20px auto;
+    box-shadow:0 4px 24px rgba(16,20,37,.14);
+  }
+  .fid { position:absolute; background:#000; }
+  .cell { position:absolute; }
+  .label {
+    position:absolute; left:0; top:0; width:100%;
+    font:600 3.2mm/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+    color:var(--muted); padding-left:1mm; padding-top:.8mm;
+  }
+  .box { position:absolute; left:0; border:.25mm solid var(--box); border-radius:.6mm; }
+  .rule { position:absolute; left:0; width:100%; border-top:.25mm solid var(--rule); }
+  .rule.base { border-top-width:.35mm; }
+
+  .hdr { position:absolute; font-size:3.6mm; color:var(--ink); }
+  .hdr .fld { display:inline-block; border-bottom:.3mm solid #98A2B8; min-width:52mm; }
+  .ftr { position:absolute; font-size:2.9mm; color:var(--muted); }
+
+  @media print {
+    body { background:#fff; }
+    .bar, .hint { display:none !important; }
+    .page { margin:0; box-shadow:none; page-break-after:always; }
+  }
+</style>
+
+<div class="bar">
+  <h1>7Hand donor sheet</h1>
+  <label>Donor <input id="donor" placeholder="name" size="16"></label>
+  <label>Sheets <select id="count"><option>1</option><option>2</option><option>3</option><option>4</option><option selected>5</option></select></label>
+  <button id="print">Print / Save as PDF</button>
+</div>
+
+<div class="hint">
+  <p><b>For the donor:</b> write one character in each box, the one printed in grey above it.
+  Sit the letter on the <b>darker blue line</b> (that is the baseline) and let round letters
+  like <i>o</i> and <i>e</i> reach the <b>lighter blue line</b> above it. Descenders on
+  <i>g</i>, <i>y</i>, <i>p</i> go below the baseline as normal. Write at your natural speed —
+  neat-but-normal, not your best calligraphy.</p>
+  <p><b>Use a black or blue pen.</b> Not red, not green, not pencil. The blue guide lines are
+  removed by reading the scan through its red channel, and a red pen would be removed along
+  with them.</p>
+  <p><b>Do not touch the four black corner squares.</b> They are how the scan gets straightened.
+  If one is covered or cut off, the whole sheet has to be placed by hand.</p>
+  <p>Print all sheets at <b>100% scale</b> (no "fit to page"), then scan at <b>300&nbsp;dpi or
+  higher, in colour</b>. Colour matters: greyscale scanning destroys the red-channel trick.</p>
+</div>
+
+<div id="sheets"></div>
+
+<script type="module">
+import { SHEET, CHARS, cellRect, cellWriteRect, cellRules, fiducials, charAt } from './src/sheet.js';
+
+const mm = v => v.toFixed(3) + 'mm';
+const host = document.getElementById('sheets');
+
+function buildSheet(n, total, donor) {
+  const page = document.createElement('div');
+  page.className = 'page';
+
+  for (const f of fiducials()) {
+    const d = document.createElement('div');
+    d.className = 'fid';
+    d.style.cssText =
+      `left:${mm(f.x - SHEET.fidSize / 2)};top:${mm(f.y - SHEET.fidSize / 2)};` +
+      `width:${mm(SHEET.fidSize)};height:${mm(SHEET.fidSize)}`;
+    page.appendChild(d);
+  }
+
+  const hdr = document.createElement('div');
+  hdr.className = 'hdr';
+  hdr.style.cssText = `left:${mm(SHEET.margin)};top:${mm(SHEET.margin + 6)};width:${mm(SHEET.pageW - SHEET.margin * 2)}`;
+  hdr.innerHTML =
+    `Donor: <span class="fld">${donor ? escapeHtml(donor) : '&nbsp;'}</span>` +
+    `<span style="float:right">Sheet ${n} of ${total}</span>`;
+  page.appendChild(hdr);
+
+  for (let i = 0; i < SHEET.cols * SHEET.rows; i++) {
+    const ch = charAt(i);
+    if (ch === null) continue;
+
+    const r = cellRect(i);
+    const b = cellWriteRect(i);
+    const rules = cellRules(i);
+
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.style.cssText = `left:${mm(r.x)};top:${mm(r.y)};width:${mm(r.w)};height:${mm(r.h)}`;
+
+    /* The label lives ABOVE the writing box, never inside it. Nothing printed
+       inside the box shares space with the pen, so nothing has to be
+       subtracted from the scan later. */
+    const label = document.createElement('div');
+    label.className = 'label';
+    label.textContent = ch === "'" ? "apostrophe '" : ch === '"' ? 'quote "' : ch;
+    cell.appendChild(label);
+
+    const box = document.createElement('div');
+    box.className = 'box';
+    box.style.cssText = `top:${mm(b.y - r.y)};width:${mm(b.w)};height:${mm(b.h)}`;
+
+    const x = document.createElement('div');
+    x.className = 'rule';
+    x.style.top = mm(rules.xheight - b.y);
+    box.appendChild(x);
+
+    const base = document.createElement('div');
+    base.className = 'rule base';
+    base.style.top = mm(rules.baseline - b.y);
+    box.appendChild(base);
+
+    cell.appendChild(box);
+    page.appendChild(cell);
+  }
+
+  const ftr = document.createElement('div');
+  ftr.className = 'ftr';
+  ftr.style.cssText = `left:${mm(SHEET.margin)};bottom:${mm(SHEET.margin - 4)};width:${mm(SHEET.pageW - SHEET.margin * 2)}`;
+  ftr.innerHTML = `Black or blue pen only. Sit letters on the darker line. Do not cover the corner squares. ` +
+                  `<span style="float:right">7Hand ${CHARS.length} characters</span>`;
+  page.appendChild(ftr);
+
+  return page;
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function render() {
+  const total = +document.getElementById('count').value;
+  const donor = document.getElementById('donor').value.trim();
+  host.textContent = '';
+  for (let n = 1; n <= total; n++) host.appendChild(buildSheet(n, total, donor));
+}
+
+document.getElementById('count').addEventListener('change', render);
+document.getElementById('donor').addEventListener('input', render);
+document.getElementById('print').addEventListener('click', () => window.print());
+render();
+</script>
