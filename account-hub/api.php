@@ -22,14 +22,38 @@ switch ($action) {
 		global $CFG;
 		$gid = $CFG['google']['client_id'] ?? '';
 		if (strpos($gid, 'TODO') === 0) $gid = '';   // not filled in yet
-		json_out(array('ok' => true, 'google_client_id' => $gid));
+		// Plans for the visitor's currency, formatted for the pricing modal.
+		$P = hub_pricing();
+		$plans = array();
+		foreach (array_keys($P['plans']) as $k) {
+			$d = plan_details($k);
+			if ($d) $plans[$k] = array(
+				'amount'  => $d['amount_minor'],   // minor units (paise/cents) — client shows amount/100
+				'credits' => $d['credits'],
+				'label'   => $d['label'],
+				'days'    => $d['days'],
+				'symbol'  => $d['symbol'],
+			);
+		}
+		json_out(array('ok' => true, 'google_client_id' => $gid, 'plans' => $plans, 'gateway' => ($CFG['gateway'] ?? 'razorpay')));
 		break;
 	}
 
 	/* ---- who am I (includes the tools this account has unlocked) ---- */
 	case 'me': {
 		$u = current_user();
-		json_out(array('ok' => true, 'authed' => (bool)$u, 'user' => public_user($u),
+		$pu = public_user($u);
+		// A tool asks for ITS OWN balance (?tool=7q / 7solve). 7Marks and 7Solve
+		// are separate products, so each reports its own credits and plan.
+		$tool = tool_key((string)($_GET['tool'] ?? ($in['tool'] ?? '')));
+		if ($u && $pu && $tool !== '') {
+			$w = tool_wallet((int)$u['id'], $tool);
+			$pu['credits'] = (int)$w['credits'];
+			$pu['plan']    = (string)$w['plan'];
+			$pu['expires'] = $w['plan_expires'];
+			$pu['tool']    = $tool;
+		}
+		json_out(array('ok' => true, 'authed' => (bool)$u, 'user' => $pu,
 			'tools' => $u ? user_tools($u['id']) : array()));
 		break;
 	}
@@ -145,6 +169,9 @@ switch ($action) {
 	}
 
 	case 'logout':
+		// Revoke ONLY the token that made this request, so signing out of one
+		// tool leaves your other tools and devices signed in.
+		revoke_api_token(api_token_from_request());
 		$_SESSION = array();
 		session_destroy();
 		json_out(array('ok' => true));
@@ -162,12 +189,19 @@ switch ($action) {
 		$d = plan_details($plan, $product);
 		if (!$d) fail('Unknown plan.');
 		$gateway = ($CFG['gateway'] ?? 'razorpay');
+		// Where 7Pay sends the buyer back after a successful payment. Only allow
+		// a return URL on one of our own tool origins (no open redirect).
+		$ret = (string)($in['return'] ?? '');
+		$origins = $CFG['allowed_origins'] ?? array();
+		$retOk = '';
+		foreach ($origins as $o) { if ($ret !== '' && strpos($ret, rtrim($o, '/')) === 0) { $retOk = $ret; break; } }
 		$payload = array(
 			'amount' => $d['amount_minor'], 'currency' => $d['currency'],
 			'receipt' => 'u' . $u['id'] . '-' . time(),
 			'notes' => array('user_id' => (string)$u['id'], 'plan' => $plan, 'product' => $product, 'credits' => (string)$d['credits']),
 		);
 		if ($gateway === 'sevenpay') {
+			$payload['callback_url'] = $retOk;   // 7Pay redirects here on success (Razorpay's API rejects extra fields)
 			list($code, $order) = sevenpay_api('order.create', $payload);
 		} else {
 			list($code, $order) = rzp_request('POST', '/orders', $payload);
@@ -250,8 +284,17 @@ switch ($action) {
 	case 'consume': {
 		$u = current_user();
 		if (!$u) json_out(array('ok' => false, 'error' => 'not_authed'), 401);
-		$count = max(1, (int)($in['count'] ?? 1));
+		$count   = max(1, (int)($in['count'] ?? 1));
 		$product = substr((string)($in['product'] ?? 'tool'), 0, 40);
+		$tool    = tool_key($product);
+		// Per-tool wallet: spending in 7Solve must never touch 7Marks credits.
+		if ($tool !== '') {
+			list($ok, $left) = tool_spend((int)$u['id'], $tool, $count);
+			if (!$ok) json_out(array('ok' => false, 'error' => 'no_credits', 'credits' => $left, 'tool' => $tool), 402);
+			db()->prepare('INSERT INTO usage_log (user_id, product, credits) VALUES (?,?,?)')->execute(array($u['id'], $product, $count));
+			json_out(array('ok' => true, 'credits' => $left, 'tool' => $tool));
+		}
+		// No product named (legacy caller) — fall back to the shared balance.
 		if ((int)$u['credits'] < $count) {
 			json_out(array('ok' => false, 'error' => 'no_credits', 'credits' => (int)$u['credits']), 402);
 		}

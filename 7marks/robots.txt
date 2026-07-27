@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://7marks.7by.in/sitemap.xml

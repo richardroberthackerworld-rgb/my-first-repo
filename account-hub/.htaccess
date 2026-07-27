@@ -7,6 +7,17 @@
 
 RewriteEngine On
 
+# ---- CRITICAL: pass the Authorization header through to PHP ----
+# Tools authenticate as a signed-in student with "Authorization: Bearer <token>".
+# Apache/LiteSpeed on cPanel (CGI/FPM) DROPS that header by default, so PHP
+# never sees it, every token call fails, and credits silently stop being spent.
+# These two lines re-expose it. Do not remove them.
+RewriteCond %{HTTP:Authorization} .
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+<IfModule mod_setenvif.c>
+    SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
+</IfModule>
+
 # Never rewrite real files or folders (api.php, assets/, .well-known, ...)
 RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d

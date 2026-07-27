@@ -1,0 +1,314 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>7Hand — ingest</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  :root { --bg:#F7F8FC; --fg:#101425; --muted:#5A6072; --ok:#059669; --warn:#D97706; --bad:#DC2626;
+          --line:#E2E6F0; --card:#fff; --accent:#0F766E; }
+  * { box-sizing:border-box }
+  body { margin:0; padding:24px; background:var(--bg); color:var(--fg);
+         font:15px/1.5 ui-sans-serif,system-ui,'Segoe UI',Roboto,sans-serif }
+  .wrap { max-width:1180px; margin:0 auto }
+  h1 { font-size:22px; letter-spacing:-.4px; margin:0 0 2px }
+  .sub { color:var(--muted); margin:0 0 20px; font-size:14px }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:16px }
+  .row { display:flex; gap:12px; align-items:center; flex-wrap:wrap }
+  button { font:600 14px/1 inherit; padding:10px 16px; border:0; border-radius:7px;
+           background:var(--fg); color:#fff; cursor:pointer }
+  button.ghost { background:#EDF0F7; color:var(--fg) }
+  button:disabled { opacity:.4; cursor:not-allowed }
+  input[type=file] { font:inherit }
+  label.opt { font-size:13px; color:var(--muted); display:flex; gap:6px; align-items:center }
+  label.opt input { width:70px; font:inherit; padding:4px 6px; border:1px solid #CBD2E0; border-radius:6px }
+  #stage { position:relative; display:inline-block; max-width:100%; margin-top:12px }
+  #stage canvas { display:block; max-width:100%; height:auto; border:1px solid var(--line); border-radius:6px; background:#fff }
+  .handle { position:absolute; width:22px; height:22px; margin:-11px 0 0 -11px; border-radius:50%;
+            background:rgba(15,118,110,.25); border:2px solid var(--accent); cursor:grab; touch-action:none }
+  .handle::after { content:''; position:absolute; inset:8px; background:var(--accent); border-radius:50% }
+  .status { font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace; padding:8px 12px; border-radius:7px; margin-top:10px }
+  .status.ok { background:#E6F7F1; color:var(--ok) } .status.warn { background:#FEF3E2; color:var(--warn) }
+  .status.bad { background:#FDECEC; color:var(--bad) } .status.busy { background:#EEF1F8; color:var(--muted) }
+  .glyphs { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px }
+  figure { margin:0; width:66px; text-align:center }
+  figure svg, figure canvas { width:60px; height:60px; border:1px solid var(--line); border-radius:5px; background:#fff }
+  figcaption { font:11px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace; color:var(--muted) }
+  figure.blank svg, figure.blank canvas { border-color:#F3B7B7; background:#FFF6F6 }
+  table { border-collapse:collapse; width:100%; font-size:14px }
+  th,td { text-align:left; padding:6px 10px; border-bottom:1px solid var(--line) }
+  th { font:600 12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace; color:var(--muted); text-transform:uppercase; letter-spacing:1px }
+  code { font:12px ui-monospace,SFMono-Regular,Menlo,monospace; background:#EEF1F8; padding:1px 5px; border-radius:4px }
+  .muted { color:var(--muted); font-size:13px }
+</style>
+
+<div class="wrap">
+  <h1>7Hand ingest</h1>
+  <p class="sub">Scanned donor sheets in, style file out. Internal tool — never shipped to users.</p>
+
+  <div class="card">
+    <div class="row">
+      <input type="file" id="file" accept="image/*">
+      <label class="opt">DPI <input id="dpi" type="number" value="300" min="150" max="600"></label>
+      <label class="opt">Speck floor <input id="speck" type="number" value="30" min="0" max="500"></label>
+      <button id="extract" disabled>Extract glyphs</button>
+      <button id="redetect" class="ghost" disabled>Re-detect corners</button>
+    </div>
+    <div id="msg" class="status busy">Load a scan of a donor sheet. Colour, 300 dpi or better.</div>
+    <div id="stage"></div>
+  </div>
+
+  <div class="card" id="resultCard" style="display:none">
+    <div class="row" style="justify-content:space-between">
+      <strong id="resultTitle">Extracted</strong>
+      <span class="muted" id="resultMeta"></span>
+    </div>
+    <div class="glyphs" id="glyphs"></div>
+  </div>
+
+  <div class="card">
+    <div class="row" style="justify-content:space-between">
+      <strong>Style</strong>
+      <div class="row">
+        <input id="styleName" placeholder="donor name" style="font:inherit;padding:8px 10px;border:1px solid #CBD2E0;border-radius:6px">
+        <button id="download" class="ghost" disabled>Download style JSON</button>
+        <button id="reset" class="ghost">Reset</button>
+      </div>
+    </div>
+    <table id="tally"><thead><tr><th>Sheet</th><th>Glyphs</th><th>Blank</th><th>Notes</th></tr></thead><tbody></tbody></table>
+    <p class="muted" id="styleSummary">No sheets ingested yet.</p>
+  </div>
+</div>
+
+<script type="module">
+import { SHEET, CHARS, charAt, cellWriteRectPx, cellRulesPx, fiducials, pageSizePx, mmToPx } from '../src/sheet.js';
+import { redChannel, otsuThreshold, binarize, findFiducials, solveHomography, warpGray, cropCell, despeckle, quadIsSane } from '../src/capture.js';
+import { createStyle, addVariant, makeVariant, styleToJSON, incompleteGlyphs, variantMask } from '../src/store.js';
+import { maskToPath } from '../src/trace.js';
+
+const $ = id => document.getElementById(id);
+const msg = (text, kind = 'busy') => { const m = $('msg'); m.className = 'status ' + kind; m.textContent = text; };
+const yieldUI = () => new Promise(r => setTimeout(r, 16));
+
+let style = createStyle('Untitled donor');
+let sheetNo = 0;
+let scan = null;      // { gray, w, h, bmp }
+let corners = null;   // 4 points in scan pixels, TL TR BR BL
+
+/* ---------- load ---------- */
+
+$('file').addEventListener('change', async e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  msg('Reading ' + f.name + '…');
+  await yieldUI();
+  try {
+    const bmp = await createImageBitmap(f);
+    const c = new OffscreenCanvas(bmp.width, bmp.height);
+    const ctx = c.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(bmp, 0, 0);
+    const img = ctx.getImageData(0, 0, bmp.width, bmp.height);
+    scan = { gray: redChannel(img), w: bmp.width, h: bmp.height, bmp };
+    detect();
+  } catch (err) {
+    msg('Could not read that image: ' + err.message, 'bad');
+  }
+});
+
+function detect() {
+  const t = otsuThreshold(scan.gray);
+  const bin = binarize(scan.gray, t);
+  const found = findFiducials(bin, scan.w, scan.h);
+  if (found && quadIsSane(found)) {
+    corners = found;
+    msg(`Found all four corner squares. ${scan.w}x${scan.h} scan, threshold ${t}. Check the handles, then extract.`, 'ok');
+  } else {
+    /* Detection failing is normal, not exceptional: a finger over a corner, a
+       cropped edge, a sheet printed at the wrong scale. Never guess — a wrong
+       guess produces a skewed grid that corrupts every glyph silently. Hand
+       the user four handles instead. */
+    const m = 0.08;
+    corners = [
+      { x: scan.w * m, y: scan.h * m },
+      { x: scan.w * (1 - m), y: scan.h * m },
+      { x: scan.w * (1 - m), y: scan.h * (1 - m) },
+      { x: scan.w * m, y: scan.h * (1 - m) }
+    ];
+    msg('Could not find the four corner squares. Drag the handles onto the centres of the black squares, then extract.', 'warn');
+  }
+  drawStage();
+  $('extract').disabled = false;
+  $('redetect').disabled = false;
+}
+
+$('redetect').addEventListener('click', () => { if (scan) detect(); });
+
+/* ---------- stage with draggable corners ---------- */
+
+function drawStage() {
+  const stage = $('stage');
+  stage.textContent = '';
+  const maxW = 820;
+  const s = Math.min(1, maxW / scan.w);
+  const cw = Math.round(scan.w * s), ch = Math.round(scan.h * s);
+
+  const cv = document.createElement('canvas');
+  cv.width = cw; cv.height = ch;
+  cv.getContext('2d').drawImage(scan.bmp, 0, 0, cw, ch);
+  stage.appendChild(cv);
+  stage.style.width = cw + 'px';
+
+  const names = ['TL', 'TR', 'BR', 'BL'];
+  corners.forEach((p, i) => {
+    const hd = document.createElement('div');
+    hd.className = 'handle';
+    hd.title = names[i];
+    const place = () => { hd.style.left = (corners[i].x * s) + 'px'; hd.style.top = (corners[i].y * s) + 'px'; };
+    place();
+    let dragging = false;
+    hd.addEventListener('pointerdown', ev => { dragging = true; hd.setPointerCapture(ev.pointerId); hd.style.cursor = 'grabbing'; });
+    hd.addEventListener('pointermove', ev => {
+      if (!dragging) return;
+      const r = cv.getBoundingClientRect();
+      corners[i] = {
+        x: Math.max(0, Math.min(scan.w, (ev.clientX - r.left) / r.width * scan.w)),
+        y: Math.max(0, Math.min(scan.h, (ev.clientY - r.top) / r.height * scan.h))
+      };
+      place();
+    });
+    hd.addEventListener('pointerup', ev => { dragging = false; hd.style.cursor = 'grab'; hd.releasePointerCapture(ev.pointerId); });
+    stage.appendChild(hd);
+  });
+}
+
+/* ---------- extract ---------- */
+
+$('extract').addEventListener('click', async () => {
+  if (!scan || !corners) return;
+  if (!quadIsSane(corners)) {
+    msg('Those four handles do not form a usable quad — they are crossed, collinear, or on top of each other. Move them onto the four black squares.', 'bad');
+    return;
+  }
+  const dpi = Math.max(150, Math.min(600, +$('dpi').value || 300));
+  const speck = Math.max(0, +$('speck').value || 0);
+
+  msg('Rectifying the page at ' + dpi + ' dpi…');
+  await yieldUI();
+
+  const page = pageSizePx(dpi);
+  const dst = fiducials().map(f => ({ x: mmToPx(f.x, dpi), y: mmToPx(f.y, dpi) }));
+
+  let flat;
+  try {
+    flat = warpGray(scan.gray, scan.w, scan.h, corners, dst, page.w, page.h);
+  } catch (err) {
+    msg('Rectification failed: ' + err.message, 'bad');
+    return;
+  }
+
+  msg('Thresholding and cutting cells…');
+  await yieldUI();
+
+  const t = otsuThreshold(flat);
+  const bin = binarize(flat, t);
+
+  sheetNo++;
+  const glyphBox = $('glyphs');
+  glyphBox.textContent = '';
+  $('resultCard').style.display = '';
+  $('resultTitle').textContent = 'Sheet ' + sheetNo;
+
+  const blanks = [];
+  let ok = 0;
+
+  for (let i = 0; i < CHARS.length; i++) {
+    const ch = charAt(i);
+    const rect = cellWriteRectPx(i, dpi);
+    const rules = cellRulesPx(i, dpi);
+    const crop = cropCell(bin, page.w, page.h, rect, { inset: 0.08 });
+    const clean = speck > 0 ? despeckle(crop.mask, crop.w, crop.h, speck) : crop.mask;
+
+    let variant = null;
+    try {
+      variant = makeVariant({
+        mask: clean, w: crop.w, h: crop.h,
+        baseline: rules.baseline - crop.offsetY,
+        xheight: rules.xheight - crop.offsetY
+      });
+      addVariant(style, ch, variant);
+      ok++;
+    } catch (err) {
+      /* A blank cell is the donor skipping a letter. Name it — the whole point
+         of reporting by character is that the donor can fill in just those. */
+      blanks.push(ch);
+    }
+
+    const fig = document.createElement('figure');
+    if (!variant) {
+      fig.className = 'blank';
+      fig.innerHTML = `<svg viewBox="0 0 10 10"></svg><figcaption>${esc(ch)} blank</figcaption>`;
+    } else {
+      const m = variantMask(variant);
+      const d = maskToPath(m, variant.w, variant.h);
+      fig.innerHTML =
+        `<svg viewBox="0 0 ${variant.w} ${variant.h}"><path d="${d}" fill="#101425"/></svg>` +
+        `<figcaption>${esc(ch)}</figcaption>`;
+    }
+    glyphBox.appendChild(fig);
+
+    if (i % 12 === 0) await yieldUI();
+  }
+
+  $('resultMeta').textContent = `${ok} extracted, ${blanks.length} blank, threshold ${t}`;
+  addTally(sheetNo, ok, blanks);
+
+  if (blanks.length === 0) {
+    msg(`Sheet ${sheetNo}: all ${ok} characters extracted.`, 'ok');
+  } else {
+    msg(`Sheet ${sheetNo}: ${ok} extracted. Blank cells: ${blanks.join(' ')} — ask the donor to fill just these.`, 'warn');
+  }
+  refreshStyle();
+});
+
+function esc(s) { return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+function addTally(n, ok, blanks) {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${n}</td><td>${ok}</td><td>${blanks.length}</td><td class="muted">${blanks.length ? esc(blanks.join(' ')) : 'complete'}</td>`;
+  document.querySelector('#tally tbody').appendChild(tr);
+}
+
+function refreshStyle() {
+  const chars = Object.keys(style.glyphs).length;
+  const short = incompleteGlyphs(style, SHEET.repeats);
+  const bytes = new TextEncoder().encode(styleToJSON(style)).length;
+  $('styleSummary').innerHTML =
+    `<b>${chars}</b> of ${CHARS.length} characters, ${sheetNo} sheet(s) ingested, ` +
+    `<b>${Math.round(bytes / 1024)} KB</b> raw. ` +
+    (short.length
+      ? `${short.length} character(s) have fewer than ${SHEET.repeats} samples — more sheets will improve variation.`
+      : `Every character has all ${SHEET.repeats} samples.`);
+  $('download').disabled = chars === 0;
+}
+
+$('download').addEventListener('click', () => {
+  style.name = $('styleName').value.trim() || 'Untitled donor';
+  style.donor = style.name;
+  const blob = new Blob([styleToJSON(style)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = style.id + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+$('reset').addEventListener('click', () => {
+  style = createStyle('Untitled donor');
+  sheetNo = 0;
+  document.querySelector('#tally tbody').textContent = '';
+  $('glyphs').textContent = '';
+  $('resultCard').style.display = 'none';
+  refreshStyle();
+  msg('Reset. Load a scan of a donor sheet.', 'busy');
+});
+
+refreshStyle();
+</script>

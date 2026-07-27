@@ -42,17 +42,15 @@ return array(
 	'allowed_origins' => array(
 		'https://removebg.7by.in',
 		'https://vocalremover.7by.in',
-		'https://7q.7by.in',        // 7Q
+		'https://7marks.7by.in',    // 7Marks
 		'https://7solve.7by.in',    // 7Solve
-		'https://qbank.7by.in',     // 7Q (old)
-		'https://doubtsnap.7by.in', // 7Solve (old)
 		// add more tools here...
-		'http://localhost:3061', // local dev
-		'http://localhost:3050', // local dev (7Q / 7Solve)
+		'http://localhost:3061', // local dev (7Solve)
+		'http://localhost:3050', // local dev (7Marks)
 	),
 
-	// ---- Payment gateway: 'sevenpay' (our own, at pay.7by.in) or 'razorpay' ----
-	'gateway' => 'sevenpay',
+	// ---- Payment gateway: 'razorpay' (live) or 'sevenpay' (our own, retired) ----
+	'gateway' => 'razorpay',
 
 	// ---- 7Pay (our own gateway — see the pay/ folder, deployed at pay.7by.in) ----
 	'sevenpay' => array(
@@ -72,7 +70,7 @@ return array(
 	// ---- Google Sign-In (Google Cloud Console → OAuth client, type "Web") ----
 	// Authorised JavaScript origin must include https://account.7by.in
 	'google' => array(
-		'client_id' => 'TODO_xxxxx.apps.googleusercontent.com',
+		'client_id' => '795705423816-2ffl53j83vir4mvau9mo4883afqc8khp.apps.googleusercontent.com',
 	),
 
 	// ---- Plans: price (INR) → credits + validity days ----
@@ -84,6 +82,10 @@ return array(
 	// Free credits granted on signup so new users can try the tools.
 	// 100 credits = 10 uses at the standard 10-credits-per-action. Set 0 to disable.
 	'free_signup_credits' => 100,   // one-time welcome bonus (10 free actions)
+
+	// FREE accounts are topped up to this many credits once per day (3 answers
+	// at 10 credits each). Never stacks; paid plans are unaffected. 0 = off.
+	'free_daily_credits' => 20,
 
 	// Only allow these email domains to sign up. Empty array = allow any.
 	// e.g. ['gmail.com'] to accept only @gmail.com addresses.

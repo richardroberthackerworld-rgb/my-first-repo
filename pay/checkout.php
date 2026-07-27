@@ -42,6 +42,10 @@ $upiAmountText = gw_money($upiPayAmount, 'INR');
 // UPI deep links — same params work for Google Pay, PhonePe, Paytm, BHIM.
 // In test mode the QR/app buttons point at a dummy VPA and are simulated.
 $upiVpa = $isTest ? 'test@7pay' : $GW['upi']['vpa'];
+// Your REAL PhonePe merchant QR (saved as phonepe-qr.png in this folder).
+// PhonePe merchant VPAs often refuse generic generated QR/intents, so when the
+// image exists we show IT instead of a generated code — it always scans.
+$staticQr = !$isTest && file_exists(__DIR__ . '/phonepe-qr.png');
 $upiPayee = $GW['upi']['payee'];
 $upiParams = $order ? 'pa=' . rawurlencode($upiVpa) . '&pn=' . rawurlencode($upiPayee)
 	. '&am=' . rawurlencode(number_format($upiPayAmount / 100, 2, '.', ''))
@@ -69,6 +73,7 @@ function e($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex">
 <title>Pay <?php echo e($amountText); ?> — <?php echo e($mName); ?> · 7Pay</title>
+<link rel="icon" type="image/png" href="favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/pay.css">
@@ -80,7 +85,8 @@ function e($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
   .co-close { position: absolute; top: 14px; right: 14px; width: 30px; height: 30px; border-radius: 50%; border: 0; background: rgba(255,255,255,0.18); color: #fff; font-size: 15px; line-height: 1; cursor: pointer; }
   .co-close:hover { background: rgba(255,255,255,0.3); }
   .co-merchant { display: flex; align-items: center; gap: 12px; }
-  .co-avatar { width: 42px; height: 42px; border-radius: var(--r-md); background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.25); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 19px; }
+  .co-avatar { width: 42px; height: 42px; border-radius: var(--r-md); background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.25); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 19px; overflow: hidden; }
+  .co-avatar img { width: 100%; height: 100%; object-fit: contain; background: #fff; border-radius: inherit; padding: 6px; box-sizing: border-box; }
   .co-mname { font-weight: 700; font-size: 17px; line-height: 1.25; }
   .co-desc { font-size: 12.5px; opacity: 0.78; }
   .co-amount { margin-top: 14px; display: flex; align-items: baseline; justify-content: space-between; }
@@ -105,6 +111,8 @@ function e($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
   .upi-live-box { text-align: center; padding: 6px 0 2px; }
   #qrBox { width: 168px; height: 168px; margin: 0 auto 10px; background: #fff; border: 1px solid var(--border-bright); border-radius: var(--r-lg); display: flex; align-items: center; justify-content: center; padding: 8px; }
   #qrBox img, #qrBox canvas { max-width: 100%; max-height: 100%; }
+  #qrBox.static-qr { width: 220px; height: auto; min-height: 220px; }
+  #qrBox.static-qr img { border-radius: 6px; }
   .vpa-line { font-family: var(--font-mono); font-size: 13px; color: var(--text); background: var(--surface-2); border-radius: var(--r-md); padding: 8px 12px; display: inline-block; margin-bottom: 12px; }
   .divider { display: flex; align-items: center; gap: 10px; color: var(--dim); font-family: var(--font-mono); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; margin: 16px 0; }
   .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border-bright); }
@@ -162,7 +170,7 @@ function e($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 	<div class="co-head">
 		<?php if ($embed): ?><button class="co-close" id="closeBtn" aria-label="Close">✕</button><?php endif; ?>
 		<div class="co-merchant">
-			<div class="co-avatar"><?php echo e($initial); ?></div>
+			<div class="co-avatar"><?php if (file_exists(__DIR__ . '/logo.png')): ?><img src="logo.png" alt="<?php echo e($mName); ?>"><?php else: echo e($initial); endif; ?></div>
 			<div>
 				<div class="co-mname"><?php echo e($mName); ?></div>
 				<div class="co-desc"><?php echo e($desc ?: 'Secure checkout'); ?></div>
@@ -212,11 +220,16 @@ function e($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 		     Test mode: dummy VPA, app taps are simulated. Live: real deep links. -->
 		<div class="panel<?php if ($defaultTab !== 'upi') echo ' hidden'; ?>" data-panel="upi">
 			<div class="upi-live-box">
+				<?php if ($staticQr): ?>
+				<div id="qrBox" class="static-qr"><img src="phonepe-qr.png" alt="Scan with any UPI app"></div>
+				<?php else: ?>
 				<div id="qrBox"><span class="mono-label">QR</span></div>
-				<div class="vpa-line"><?php echo e($upiVpa); ?></div>
-				<?php if ($upiAuto && !$isTest): ?>
-				<div style="font-family:var(--font-mono);font-size:13.5px;font-weight:600;color:var(--accent);margin:-4px 0 10px">Pay exactly <?php echo e($upiAmountText); ?></div>
 				<?php endif; ?>
+				<div class="vpa-line">🔒 7Pay · Secure UPI</div>
+				<?php if ($upiAuto && !$isTest): ?>
+				<div style="font-family:var(--font-mono);font-size:15px;font-weight:700;color:var(--accent);margin:-4px 0 10px">Pay exactly <?php echo e($upiAmountText); ?></div>
+				<?php endif; ?>
+				<?php if (!$staticQr): ?>
 				<div class="apps">
 					<?php foreach ($upiApps as $slug => $app): ?>
 					<?php if ($isTest): ?>
@@ -226,6 +239,7 @@ function e($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 					<?php endif; ?>
 					<?php endforeach; ?>
 				</div>
+				<?php endif; ?>
 			</div>
 			<?php if ($isTest): ?>
 			<div class="divider">or pay with UPI ID</div>
@@ -236,7 +250,11 @@ function e($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 			<div class="divider">after paying</div>
 			<div class="field"><label for="utr">UTR <span style="text-transform:none;letter-spacing:0;color:var(--dim)">(optional)</span></label>
 				<input class="input mono" id="utr" placeholder="Leave empty — we detect it automatically"></div>
+			<?php if ($staticQr): ?>
+			<p style="font-size:12.5px;color:var(--muted);margin-bottom:14px">Scan the QR with <b>any UPI app</b> (PhonePe, GPay, Paytm, BHIM) and enter <b>exactly <?php echo e($upiAmountText); ?></b> as the amount — that exact figure identifies <i>your</i> payment. This page completes <b>automatically</b> the moment your money arrives — usually within a minute.</p>
+			<?php else: ?>
 			<p style="font-size:12.5px;color:var(--muted);margin-bottom:14px">Scan the QR or tap your app — the amount <b><?php echo e($upiAmountText); ?></b> is filled in for you. Pay it <b>exactly</b> (those few paise identify <i>your</i> payment). This page completes <b>automatically</b> the moment your money arrives — usually within a minute.</p>
+			<?php endif; ?>
 			<?php else: ?>
 			<div class="divider">then confirm</div>
 			<div class="field"><label for="utr">UTR / Transaction reference</label>
@@ -321,7 +339,7 @@ function e($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
   function post(msg) { if (EMBED && window.parent !== window) window.parent.postMessage(msg, '*'); }
 
   /* UPI QR — scan-to-pay code (test: dummy VPA; live: real) */
-  if (window.QRCode && $('#qrBox')) {
+  if (window.QRCode && $('#qrBox') && !$('#qrBox').classList.contains('static-qr')) {
     $('#qrBox').innerHTML = '';
     new QRCode($('#qrBox'), { text: UPI_LINK, width: 150, height: 150, correctLevel: QRCode.CorrectLevel.M });
   }

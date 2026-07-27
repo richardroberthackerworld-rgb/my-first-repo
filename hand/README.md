@@ -1,0 +1,124 @@
+# 7Hand (working name)
+
+Renders typed text as convincing handwriting on printable pages.
+
+> **The folder name is provisional.** It must not become `write/` — that collides
+> with the existing `writer/` product (`writer.7by.in`, `make-writer-zip.ps1`), and a
+> one-character difference in folder, subdomain and build script is a deploy footgun.
+
+Design doc, with the full 14-task plan and the reasoning behind every decision:
+`~/.gstack/projects/richardroberthackerworld-rgb-my-first-repo/chint-videotools-fixes-design-20260727-181013.md`
+
+## Built so far
+
+| Task | File | State |
+|---|---|---|
+| T1 storage | `src/store.js` | done |
+| T2 donor sheet | `sheet.html`, `src/sheet.js` | done |
+| T3 ingest | `tools/ingest.html`, `src/capture.js` | done |
+| T4 tracer | `src/trace.js` | done |
+| T11 harness | `test.html` | partial — covers T1-T4 only |
+
+**72 tests green.** Everything else (layout, realism, render, export, app, payments,
+OCR, key proxy, infra) is not started.
+
+## Running it
+
+```bash
+npx serve -p 3130 .
+```
+
+ES modules need a real origin, so `file://` will not work. There is no build step and
+no dependencies.
+
+- Tests: <http://localhost:3130/hand/test.html>
+- Donor sheet: <http://localhost:3130/hand/sheet.html>
+- Ingest: <http://localhost:3130/hand/tools/ingest.html>
+
+## Capturing a donor
+
+1. Open `sheet.html`, type the donor's name, print 5 sheets at **100% scale**. Not
+   "fit to page" — the geometry has to survive the printer.
+2. Donor writes one character per box, in **black or blue pen only**, sitting each
+   letter on the darker blue line.
+3. Scan at **300 dpi or higher, in colour**. Colour is not optional: the guide rules
+   are removed by reading the scan through its red channel, and a greyscale scan mixes
+   the blue down into a mid grey that gets traced as ink.
+4. Open `tools/ingest.html`, load each scan, check the four corner handles, extract.
+5. Download the style JSON.
+
+Blank cells are reported by character, so a donor who skipped six letters can be asked
+for exactly those six.
+
+## Why the sheet looks the way it does
+
+**The letter label sits above the writing box, never inside it.** Anything printed
+inside the box shares space with the pen stroke, so removing it later means registering
+a subtracted image to within a pixel or two. Nothing co-located means nothing to
+subtract. It also stops the donor tracing over a printed exemplar, which makes them
+write less like themselves.
+
+**The box border and both rules are blue, not grey.** They sit right against the
+writing area and the red-channel read only removes colours with a high red component.
+A grey border survives thresholding and gets traced as part of the letter.
+
+**Five identical sheets, not one dense sheet.** Same total cells either way, but the
+ingest tool only has one layout to understand, and a donor who gives up after three
+sheets still leaves a usable style.
+
+**There is deliberately no deskew.** The original plan listed one, inherited from the
+phone-photo design where the sheet itself might be tilted. After fiducial rectification
+the sheet is already square, and any slant left in a glyph is the donor's own italic
+hand. Removing it would destroy the exact thing being captured.
+
+## The two decisions this code exists to enforce
+
+**The bitmap is canonical; contours are a cache.** `store.js` will happily throw the
+contour cache away and rebuild it (`dropContours` / `ensureContours`). This is not
+tidiness. The v2 plotter needs a centerline, which is the path a pen follows down the
+middle of a stroke, and you cannot recover a centerline from an outline. Keeping the
+1-bit bitmap means adding the plotter later is a pure addition instead of asking every
+existing user to re-capture their handwriting.
+
+**No external libraries.** `trace.js` implements boundary extraction, RDP
+simplification and cubic bezier fitting in about 400 lines. A general-purpose tracing
+library is built for colour photographs and would be a CDN dependency, and this repo
+has already been bitten once by a CDN library hanging on Indian ISPs (see the comments
+in `videotools/app.js`). The boundary walk is also what the v2 skeletonizer will build
+on, so it is not throwaway work.
+
+## How the tracer works
+
+```
+mask ──► traceContours ──► rdp ──► fitBeziers ──► SVG path
+1-bit    pixel-edge        thin     smooth
+         staircase loops   out      curves
+```
+
+Boundaries are walked along **pixel edges**, not pixel centres. Every filled pixel
+emits a directed edge for each side facing background, and those edges are stitched
+into closed loops. Holes and disjoint parts fall out correctly with no special casing,
+and every loop is closed by construction. Outer boundaries come out with positive
+signed area and holes negative, so the default nonzero fill rule leaves the counter of
+an "a" open with no extra work.
+
+At a saddle — two pixels touching corner to corner — the walk prefers the left turn,
+which keeps them in one contour. That matters: a thin diagonal pen stroke touching only
+at corners is one stroke, not a dotted line of separate blobs.
+
+## Test coverage notes
+
+The fidelity tests are the ones worth keeping honest. They rasterise the fitted vector
+path back through the browser's own fill rule and compare it against the bitmap it came
+from, so a curve-fitting regression shows up as a number rather than as letters that
+look slightly off to nobody in particular. Current agreement: 100% on closed letters
+with counters, 97-98% on sharp corners and thin diagonals.
+
+`test.html` is a debugging harness, not a regression net. It has no CI and only runs
+when someone opens it. Do not count it as coverage in any plan.
+
+## Measured sizes
+
+One realistic glyph bitmap is about 1.3 KB of RLE. A full style of 73 characters at 5
+variants each is about 400 KB raw and 135 KB gzipped. **Load styles lazily, one at a
+time**, and make sure gzip is enabled at the server.

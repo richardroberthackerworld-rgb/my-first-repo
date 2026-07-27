@@ -12,3 +12,22 @@ keys.php
 
 # Node
 node_modules/
+
+# build output for the videotools subdomain packages
+dist/
+*.tar.gz
+video-subdomain*.zip
+main-site-addons*.zip
+
+# Android signing keys — NEVER commit (anyone with these can sign fake app updates)
+android/*.keystore
+android/*.jks
+android/**/app-release-*.aab
+android/**/app-release-*.apk
+android/**/build/
+
+# Built app bundles (rebuildable; keep out of the public repo)
+android/**/*.aab
+# Gradle build caches
+android/**/.gradle/
+android/**/build/

@@ -82,6 +82,46 @@ with no matching pending payment are ignored; reservations expire after
 `window_minutes`; and the dashboard's manual Approve/Reject still works any
 time (e.g. if your phone was off).
 
+### Better SMS signal: PhonePe Business (recommended)
+
+Bank SMS can be late or missing. **PhonePe Business** sends its own
+"payment received" SMS the instant a UPI payment lands, from the UPI network
+itself — far more reliable than bank alerts, and the money still goes
+**directly to your bank** (instant, no gateway settlement delay):
+
+1. In the PhonePe Business app: **Account → Notification Alerts → enable
+   Transaction SMS** (per-payment SMS to your registered number).
+2. Show the **PhonePe Business QR / VPA** as your `upi.vpa` in `config.php`.
+3. Point the SMS-forwarder (step 2 above) at the PhonePe sender
+   (e.g. `PHONPE`) as well as your bank — both feed the same webhook, and
+   duplicates are harmless (UTR dedupe).
+
+**Fully phone-free with PhonePe:** the app also has
+**Add Notification Receiver → Email** (under notification settings). Point
+it at the poller's mailbox (e.g. `upi-alerts@7by.in`) and PhonePe emails
+every received payment — the poller below picks it up with **no phone
+involved at all**, and the signal comes from the UPI rails, not your bank's
+flaky alerts. This is the recommended setup.
+
+## Phone-free fallback: bank-email poller
+
+If your bank can email credit alerts, `mail-poller.php` confirms payments
+with **no phone at all** — it reads a mailbox and feeds each alert to the
+same `upi.credit` matcher:
+
+1. cPanel → **Email Accounts** → create a dedicated mailbox,
+   e.g. `upi-alerts@7by.in`.
+2. In your bank's netbanking → alerts: send **credit alerts by email** to it.
+3. Fill `config.php` → `upi_mail` (host/user/pass, `enabled => true`).
+   `upi_auto` must also be enabled — it provides the token.
+4. cPanel → **Cron Jobs** → every minute:
+   `php -q /home/USER/path-to/pay/mail-poller.php`
+   (needs the PHP `imap` extension: cPanel → Select PHP Version → tick imap).
+
+Run all three signals together — PhonePe SMS + bank SMS + bank email. They
+all hit the same matcher; the first one wins, the rest are no-ops. The more
+signals, the fewer payments ever wait for manual approval.
+
 ## Test vs live
 
 - `mode => 'test'` — everything simulated, no real money.

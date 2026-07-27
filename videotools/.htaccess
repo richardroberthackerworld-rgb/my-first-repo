@@ -1,0 +1,62 @@
+# VidLab / ClipCut — subdomain document root
+# Clean URLs + cache policy. Everything here is static; the video engine
+# runs in the visitor's browser, so no server-side config is needed.
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=(self)"
+  Header unset X-Powered-By
+  Header unset Server
+</IfModule>
+
+# Block hidden/system files
+<FilesMatch "^\.">
+  Require all denied
+</FilesMatch>
+
+Options -Indexes
+ServerSignature Off
+
+# ---- Clean URLs: /watermark-remover instead of /watermark-remover.html ----
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # send visitors from /page.html to the clean /page
+  RewriteCond %{THE_REQUEST} \s/+(.*)/index\.html[\s?] [NC]
+  RewriteRule ^ /%1/ [R=301,L]
+  RewriteCond %{THE_REQUEST} \s/+(.*)\.html[\s?] [NC]
+  RewriteRule ^ /%1 [R=301,L]
+
+  # serve the real .html file for a clean URL
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_FILENAME}\.html -f
+  RewriteRule ^(.*)$ $1.html [L]
+</IfModule>
+
+# ---- Turn off LiteSpeed full-page cache (keeps updates instant) ----
+<IfModule LiteSpeed>
+  CacheDisable public /
+  RewriteEngine On
+  RewriteRule .* - [E=Cache-Control:no-cache]
+</IfModule>
+
+<IfModule mod_headers.c>
+  # HTML: always revalidate so edits appear immediately
+  <FilesMatch "\.(html|htm)$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+  </FilesMatch>
+  # CSS / JS: cached but revalidated (fast 304s, never stale)
+  <FilesMatch "\.(css|js|mjs)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+  # Images / fonts: safe to cache
+  <FilesMatch "\.(png|jpe?g|gif|webp|svg|ico|woff2?|ttf)$">
+    Header set Cache-Control "public, max-age=604800"
+  </FilesMatch>
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/css application/javascript image/svg+xml
+</IfModule>

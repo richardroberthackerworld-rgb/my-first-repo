@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "in.sevenby.q",
+    "sha256_cert_fingerprints": [
+      "58:59:C5:B3:6C:A1:76:2C:BC:BB:54:9F:37:94:56:E5:69:C1:7C:13:6C:41:4A:9B:A1:87:B7:23:69:21:E4:C0"
+    ]
+  }
+}]

@@ -47,6 +47,30 @@ function db() {
 	// existing installs: add the token column if it isn't there yet
 	try { $pdo->exec("ALTER TABLE users ADD COLUMN api_token VARCHAR(64) NULL"); } catch (Exception $e) {}
 	try { $pdo->exec("CREATE INDEX idx_users_api_token ON users (api_token)"); } catch (Exception $e) {}
+	// daily free-credit top-up bookkeeping
+	try { $pdo->exec("ALTER TABLE users ADD COLUMN daily_at DATE NULL"); } catch (Exception $e) {}
+	// One row per ACTIVE LOGIN. The old single users.api_token column meant
+	// signing in anywhere overwrote it, instantly logging the user out of every
+	// other site/device. Each login now gets its own token and they coexist.
+	$pdo->exec("CREATE TABLE IF NOT EXISTS api_tokens (
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		user_id INT NOT NULL,
+		token_hash VARCHAR(64) NOT NULL UNIQUE,
+		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		KEY idx_tokens_user (user_id)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+	// PER-TOOL wallets: 7Marks and 7Solve are separate products with separate
+	// prices, so they must have separate balances. One row per (user, tool).
+	$pdo->exec("CREATE TABLE IF NOT EXISTS tool_credits (
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		user_id INT NOT NULL,
+		tool VARCHAR(24) NOT NULL,
+		credits INT NOT NULL DEFAULT 0,
+		plan VARCHAR(20) NOT NULL DEFAULT 'none',
+		plan_expires DATETIME NULL,
+		daily_at DATE NULL,
+		UNIQUE KEY uniq_user_tool (user_id, tool)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 	$pdo->exec("CREATE TABLE IF NOT EXISTS transactions (
 		id INT AUTO_INCREMENT PRIMARY KEY,
 		user_id INT NOT NULL,
@@ -66,6 +90,14 @@ function db() {
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 	try { $pdo->exec("ALTER TABLE transactions ADD COLUMN credits INT NULL, ADD COLUMN currency VARCHAR(8) NULL"); } catch (Exception $e) { /* columns already exist */ }
 	try { $pdo->exec("ALTER TABLE transactions ADD COLUMN tool VARCHAR(40) NULL"); } catch (Exception $e) { /* already exists */ }
+	// RENAME: the question-paper app was internally '7q' and is now '7marks'
+	// everywhere. Carry existing wallets, purchases and usage over to the new
+	// key so nobody loses credits or a Pro plan. IGNORE skips the rare case
+	// where a '7marks' row already exists (the '7q' leftover is then unused).
+	try { $pdo->exec("UPDATE IGNORE tool_credits SET tool = '7marks' WHERE tool = '7q'"); } catch (Exception $e) {}
+	try { $pdo->exec("UPDATE transactions  SET tool = '7marks' WHERE tool = '7q'"); } catch (Exception $e) {}
+	try { $pdo->exec("UPDATE usage_log     SET product = '7marks' WHERE product = '7q'"); } catch (Exception $e) {}
+	try { $pdo->exec("UPDATE IGNORE entitlements SET tool = '7marks' WHERE tool = '7q'"); } catch (Exception $e) {}
 	// Per-tool unlocks (entitlements). One row per (user, tool); NULL expiry = lifetime.
 	$pdo->exec("CREATE TABLE IF NOT EXISTS entitlements (
 		id INT AUTO_INCREMENT PRIMARY KEY,
@@ -310,8 +342,15 @@ function current_user() {
 	//    (a tool on another subdomain can't see our session cookie).
 	$tok = api_token_from_request();
 	if ($tok !== '') {
+		$h = hash('sha256', $tok);
+		// one row per active login — several sites/devices can be signed in at once
+		$st = db()->prepare('SELECT u.* FROM api_tokens t JOIN users u ON u.id = t.user_id WHERE t.token_hash = ?');
+		$st->execute(array($h));
+		$u = $st->fetch();
+		if ($u) return refresh_plan($u);
+		// tokens issued before the multi-login table existed still work
 		$st = db()->prepare('SELECT * FROM users WHERE api_token = ?');
-		$st->execute(array(hash('sha256', $tok)));
+		$st->execute(array($h));
 		$u = $st->fetch();
 		if ($u) return refresh_plan($u);
 	}
@@ -347,18 +386,51 @@ function email_domain_msg() {
 }
 
 // Issue (or reuse) a long-lived API token for this user. Only the HASH is stored.
+/**
+ * Give this login its OWN token. Existing tokens stay valid, so signing in on
+ * 7Marks does not sign you out of 7Solve (or your phone). Oldest tokens are
+ * pruned so the table can't grow forever.
+ */
 function issue_api_token($userId) {
 	$plain = bin2hex(random_bytes(24));
-	db()->prepare('UPDATE users SET api_token = ? WHERE id = ?')
-		->execute(array(hash('sha256', $plain), $userId));
+	db()->prepare('INSERT INTO api_tokens (user_id, token_hash) VALUES (?,?)')
+		->execute(array($userId, hash('sha256', $plain)));
+	// keep the 20 most recent logins for this account
+	try {
+		$st = db()->prepare('SELECT id FROM api_tokens WHERE user_id = ? ORDER BY id DESC LIMIT 1 OFFSET 20');
+		$st->execute(array($userId));
+		$cut = $st->fetchColumn();
+		if ($cut) db()->prepare('DELETE FROM api_tokens WHERE user_id = ? AND id <= ?')->execute(array($userId, (int)$cut));
+	} catch (Exception $e) { /* pruning is best-effort */ }
 	return $plain;
+}
+
+/** Sign out ONE login (the token presented), leaving other sites/devices alone. */
+function revoke_api_token(string $plain): void {
+	if ($plain === '') return;
+	try { db()->prepare('DELETE FROM api_tokens WHERE token_hash = ?')->execute(array(hash('sha256', $plain))); }
+	catch (Exception $e) {}
 }
 
 // Expire the plan (and its credits) once past plan_expires.
 function refresh_plan($u) {
+	global $CFG;
 	if ($u['plan'] !== 'none' && $u['plan_expires'] && strtotime($u['plan_expires']) < time()) {
 		db()->prepare("UPDATE users SET plan='none', plan_expires=NULL, credits=0 WHERE id=?")->execute(array($u['id']));
 		$u['plan'] = 'none'; $u['plan_expires'] = null; $u['credits'] = 0;
+	}
+	// Daily free credits: FREE accounts are topped up to this many credits once a
+	// day (never stacked, never reduced — a fuller balance is left alone). Paid
+	// plans are untouched: their bought credits simply spend down.
+	$daily = (int)($CFG['free_daily_credits'] ?? 30);
+	if ($daily > 0 && $u['plan'] === 'none') {
+		$today = date('Y-m-d');
+		if (($u['daily_at'] ?? null) !== $today) {
+			$newBal = max((int)$u['credits'], $daily);
+			db()->prepare("UPDATE users SET credits = ?, daily_at = ? WHERE id = ?")
+				->execute(array($newBal, $today, $u['id']));
+			$u['credits'] = $newBal; $u['daily_at'] = $today;
+		}
 	}
 	return $u;
 }
@@ -379,6 +451,11 @@ function grant_plan($userId, $planKey, $credits = null, $days = null) {
 	$p = isset($plans['plans'][$planKey]) ? $plans['plans'][$planKey] : array('credits' => 0, 'days' => 30);
 	if ($credits === null) $credits = $p['credits'];
 	if ($days === null) $days = $p['days'];
+	// Expiry = purchase moment + plan length, at the SAME clock time it was
+	// bought (monthly: 30 days later; yearly: 365 days later). A top-up bought
+	// some days later starts a fresh period from THAT purchase's date & time —
+	// remaining credits stack on top. On expiry refresh_plan() wipes leftover
+	// paid credits, drops Pro, and the account returns to the free 30/day.
 	$expires = date('Y-m-d H:i:s', time() + $days * 86400);
 	// Add credits (stack if they buy again) and set the new expiry.
 	db()->prepare("UPDATE users SET credits = credits + ?, plan = ?, plan_expires = ? WHERE id = ?")
@@ -452,8 +529,101 @@ function user_tools($userId) {
 
 /** Grant whatever a paid transaction promised — a tool unlock or a credit plan. */
 function grant_from_tx($tx) {
-	if (!empty($tx['tool'])) grant_tool($tx['user_id'], $tx['tool']);
-	else grant_plan($tx['user_id'], $tx['plan'], isset($tx['credits']) ? (int)$tx['credits'] : null);
+	if (!empty($tx['tool'])) { grant_tool($tx['user_id'], $tx['tool']); return; }
+	// Credit the wallet of the product that was actually bought, so a 7Marks
+	// purchase never tops up 7Solve. 'product' is stored on the transaction.
+	$prod = tool_key((string)($tx['product'] ?? ''));
+	if ($prod !== '') {
+		tool_grant($tx['user_id'], $prod, (int)($tx['credits'] ?? 0), (string)($tx['plan'] ?? 'monthly'));
+		return;
+	}
+	grant_plan($tx['user_id'], $tx['plan'], isset($tx['credits']) ? (int)$tx['credits'] : null);
+}
+
+/* ================= PER-TOOL WALLETS =================================
+   7Marks and 7Solve are separate products, bought separately, so each
+   keeps its own balance, its own plan and its own daily free credits.
+   Everything below is keyed on (user_id, tool).
+   ================================================================== */
+
+/** Normalise a product/tool name ('7q' = 7Marks, '7solve'). '' if unknown. */
+function tool_key(string $t): string {
+	$t = strtolower(preg_replace('/[^a-z0-9]/i', '', $t));
+	if ($t === '' || $t === 'tool') return '';
+	// '7q' was the old internal name for 7Marks. Any still-cached client that
+	// sends it must land on the same wallet as the renamed app.
+	if ($t === '7q' || $t === 'qbank') return '7marks';
+	if ($t === 'doubtsnap') return '7solve';
+	return substr($t, 0, 24);
+}
+
+/**
+ * This user's wallet for one tool. Creates it on first use, expires a finished
+ * plan (clearing leftover paid credits) and tops a FREE wallet up to the daily
+ * allowance once per day — the same rules as the old single balance, but per
+ * tool. Always returns an array with credits/plan/plan_expires.
+ */
+function tool_wallet(int $userId, string $tool): array {
+	global $CFG;
+	$tool = tool_key($tool);
+	if ($tool === '') return array('credits' => 0, 'plan' => 'none', 'plan_expires' => null);
+
+	$st = db()->prepare('SELECT * FROM tool_credits WHERE user_id = ? AND tool = ?');
+	$st->execute(array($userId, $tool));
+	$w = $st->fetch();
+	if (!$w) {
+		db()->prepare('INSERT INTO tool_credits (user_id, tool, credits, plan) VALUES (?,?,0,?)')
+			->execute(array($userId, $tool, 'none'));
+		$st->execute(array($userId, $tool));
+		$w = $st->fetch();
+	}
+
+	// plan finished -> drop to free and clear any leftover paid credits
+	if (($w['plan'] ?? 'none') !== 'none' && !empty($w['plan_expires']) && strtotime($w['plan_expires']) < time()) {
+		db()->prepare("UPDATE tool_credits SET plan='none', plan_expires=NULL, credits=0 WHERE id=?")
+			->execute(array($w['id']));
+		$w['plan'] = 'none'; $w['plan_expires'] = null; $w['credits'] = 0;
+	}
+
+	// free wallets are topped UP to the daily allowance once a day (never stacked)
+	$daily = (int)($CFG['free_daily_credits'] ?? 30);
+	if ($daily > 0 && ($w['plan'] ?? 'none') === 'none') {
+		$today = date('Y-m-d');
+		if (($w['daily_at'] ?? null) !== $today) {
+			$newBal = max((int)$w['credits'], $daily);
+			db()->prepare('UPDATE tool_credits SET credits = ?, daily_at = ? WHERE id = ?')
+				->execute(array($newBal, $today, $w['id']));
+			$w['credits'] = $newBal; $w['daily_at'] = $today;
+		}
+	}
+	return $w;
+}
+
+/** Spend credits from ONE tool's wallet. Returns [ok, creditsLeft]. */
+function tool_spend(int $userId, string $tool, int $count): array {
+	$tool = tool_key($tool);
+	if ($tool === '' || $count < 1) return array(false, 0);
+	$w = tool_wallet($userId, $tool);
+	$have = (int)$w['credits'];
+	if ($have < $count) return array(false, $have);
+	// guarded update: a concurrent request can't take the balance negative
+	$st = db()->prepare('UPDATE tool_credits SET credits = credits - ? WHERE user_id = ? AND tool = ? AND credits >= ?');
+	$st->execute(array($count, $userId, $tool, $count));
+	if ($st->rowCount() === 0) return array(false, $have);
+	return array(true, $have - $count);
+}
+
+/** Add bought credits to ONE tool's wallet and start/extend its plan. */
+function tool_grant(int $userId, string $tool, int $credits, string $plan = 'monthly', ?int $days = null): void {
+	$tool = tool_key($tool);
+	if ($tool === '') return;
+	$plans = hub_pricing();
+	if ($days === null) $days = (int)($plans['plans'][$plan]['days'] ?? 30);
+	if ($credits <= 0) $credits = (int)($plans['plans'][$plan]['credits'] ?? 0);
+	tool_wallet($userId, $tool);   // make sure the row exists
+	$expires = date('Y-m-d H:i:s', time() + $days * 86400);
+	db()->prepare('UPDATE tool_credits SET credits = credits + ?, plan = ?, plan_expires = ? WHERE user_id = ? AND tool = ?')
+		->execute(array($credits, $plan, $expires, $userId, $tool));
 }
 
 /* ---------------- Pricing / currency / products ---------------- */

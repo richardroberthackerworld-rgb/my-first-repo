@@ -160,6 +160,7 @@ function importFiles(files) {
     if (!kind) return;
     const m = { id: uid(), kind, name: file.name, url, duration: 0, el: null, thumb: null };
     media.push(m);
+    persistAsset(m, file);   // keep the bytes so the project survives a reload
     if (kind === 'video') {
       const v = document.createElement('video');
       v.src = url; v.preload = 'metadata'; v.muted = true; v.playsInline = true;
@@ -235,8 +236,16 @@ function renderMediaGrid() {
       media.splice(media.indexOf(m), 1);
       renderMediaGrid();
     });
+    // drag straight onto a timeline track to place it exactly
+    item.draggable = true;
+    item.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('text/plain', 'clipcut:' + m.id);
+      e.dataTransfer.effectAllowed = 'copy';
+    });
     (m.kind === 'audio' ? agrid : grid).appendChild(item);
   });
+  // the big import prompt collapses to a strip once the library has media
+  $('dropzone').classList.toggle('compact', media.length > 0);
 }
 
 function escapeHtml(s) { return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
@@ -254,6 +263,7 @@ function addMediaToTimeline(m) {
     select('v', c);
   }
   renderTimeline(); renderInspector(); needsRedraw = true;
+  commit();
 }
 
 function makeVideoClip(m, inPoint = 0, dur = null) {
@@ -1046,6 +1056,7 @@ function addGfxClip(preset) {
   select('g', c);
   renderTimeline(); renderInspector();
   needsRedraw = true;
+  commit();
 }
 
 function renderGfxPresets() {
@@ -1329,6 +1340,8 @@ function tplPlaceholderMedia(i, tpl) {
   const img = new Image(); img.src = url;
   const m = { id: uid(), kind: 'image', name: 'Placeholder ' + (i + 1), url, duration: 4, el: img, thumb: url };
   media.push(m);
+  // placeholders are persisted too, so a restored template project still renders
+  fetch(url).then(r => r.blob()).then(b => persistAsset(m, b)).catch(() => {});
   return m;
 }
 
@@ -1385,6 +1398,7 @@ function applyTemplate(tpl) {
   seek(0);
   renderTimeline(); renderInspector();
   needsRedraw = true;
+  commit();
   play();
 }
 
@@ -1433,13 +1447,62 @@ function render(t) {
 }
 
 function drawEmptyState() {
-  ctx.fillStyle = 'rgba(240,240,248,0.28)';
-  ctx.font = `700 ${PH * 0.045}px Outfit, sans-serif`;
+  const cx = PW / 2, cy = PH / 2;
+  const u = Math.min(PW, PH) / 100;   // one unit, so it scales to every aspect ratio
+
+  // deep backdrop with a soft brand glow instead of flat black
+  const bg = ctx.createLinearGradient(0, 0, PW, PH);
+  bg.addColorStop(0, '#16161F');
+  bg.addColorStop(1, '#0E0E15');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, PW, PH);
+
+  const glow = ctx.createRadialGradient(cx, cy - u * 6, u * 2, cx, cy, Math.max(PW, PH) * 0.62);
+  glow.addColorStop(0, 'rgba(255,0,110,0.16)');
+  glow.addColorStop(0.55, 'rgba(124,58,237,0.07)');
+  glow.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, PW, PH);
+
+  // film-strip mark
+  const fw = u * 34, fh = u * 21, fx = cx - fw / 2, fy = cy - u * 19;
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+  ctx.lineWidth = Math.max(1, u * 0.5);
+  roundRect(ctx, fx, fy, fw, fh, u * 2);
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,0.13)';
+  const ph = u * 2.4, pw = u * 2.4, gap = (fh - ph * 4) / 5;
+  for (let i = 0; i < 4; i++) {
+    const py = fy + gap + i * (ph + gap);
+    roundRect(ctx, fx + u * 1.6, py, pw, ph, u * 0.6); ctx.fill();
+    roundRect(ctx, fx + fw - u * 1.6 - pw, py, pw, ph, u * 0.6); ctx.fill();
+  }
+  // play triangle
+  ctx.fillStyle = 'rgba(255,0,110,0.9)';
+  const tw = u * 6.4, th = u * 7.4, tx = cx - tw * 0.3, ty = cy - u * 8.5;
+  ctx.beginPath();
+  ctx.moveTo(tx, ty - th / 2); ctx.lineTo(tx + tw, ty); ctx.lineTo(tx, ty + th / 2);
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText('Import media to get started', PW / 2, PH / 2 - PH * 0.03);
-  ctx.fillStyle = 'rgba(240,240,248,0.16)';
-  ctx.font = `400 ${PH * 0.026}px Outfit, sans-serif`;
-  ctx.fillText('Drop a video on the left panel, then click it to add it to the timeline', PW / 2, PH / 2 + PH * 0.03);
+  ctx.fillStyle = 'rgba(255,255,255,0.92)';
+  ctx.font = `700 ${u * 6.4}px Outfit, sans-serif`;
+  ctx.fillText('Start your video', cx, cy + u * 9);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.font = `500 ${u * 3.5}px Outfit, sans-serif`;
+  ctx.fillText('Import media on the left — or open Templates for a ready-made style', cx, cy + u * 17);
+
+  // aspect badge, so the current canvas shape is always obvious
+  const label = curAspect + '  ·  ' + PW + 'x' + PH;
+  ctx.font = `500 ${u * 2.8}px "JetBrains Mono", monospace`;
+  const bw = ctx.measureText(label).width + u * 5, bh = u * 6.4;
+  ctx.fillStyle = 'rgba(255,255,255,0.07)';
+  roundRect(ctx, cx - bw / 2, cy + u * 22, bw, bh, bh / 2); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  ctx.fillText(label, cx, cy + u * 22 + bh / 2);
 }
 
 /* ============================================================
@@ -1645,6 +1708,217 @@ function tick() {
 }
 
 /* ============================================================
+   HISTORY (undo / redo) + AUTOSAVE
+   Snapshots are JSON of the four tracks. Live DOM elements (video /
+   audio / image) and per-frame scratch fields are stripped out and
+   rebuilt from the media library on restore, so a snapshot stays a
+   plain serialisable object that can also go straight to IndexedDB.
+   ============================================================ */
+const HISTORY_LIMIT = 80;
+let history = [], histIndex = -1, histLock = false;
+
+const snapReplacer = (k, v) =>
+  (k === 'el' || k === 'bbox' || k.charAt(0) === '_') ? undefined : v;
+
+function snapshot() {
+  return JSON.stringify({
+    v: vTrack, t: tTrack, g: gTrack, a: aTrack,
+    aspect: curAspect, quality: curQuality, name: $('projectName').value,
+  }, snapReplacer);
+}
+
+function commit() {
+  if (histLock) return;
+  const snap = snapshot();
+  if (history[histIndex] === snap) return;   // nothing actually changed
+  history.splice(histIndex + 1);             // drop the redo branch
+  history.push(snap);
+  if (history.length > HISTORY_LIMIT) history.shift();
+  histIndex = history.length - 1;
+  updateHistoryUI();
+  scheduleAutosave();
+}
+
+/* give a restored clip its media element back */
+function rehydrateClip(c) {
+  const m = media.find(x => x.id === c.mediaId);
+  if (!m) return false;                      // asset is gone — drop the clip
+  if (c.kind === 'video') {
+    const v = document.createElement('video');
+    v.src = m.url; v.preload = 'auto'; v.playsInline = true;
+    v.addEventListener('seeked', () => { needsRedraw = true; });
+    v.addEventListener('loadeddata', () => { needsRedraw = true; });
+    c.el = v;
+    hookClipAudio(c);
+  } else if (c.kind === 'audio') {
+    const a = document.createElement('audio');
+    a.src = m.url; a.preload = 'auto';
+    c.el = a;
+    hookClipAudio(c);
+  } else {
+    c.el = m.el;
+  }
+  return true;
+}
+
+function applySnapshot(json) {
+  const s = JSON.parse(json);
+  histLock = true;
+  stopPlayback();
+  vTrack.length = 0; tTrack.length = 0; gTrack.length = 0; aTrack.length = 0;
+  (s.v || []).forEach(c => { if (rehydrateClip(c)) vTrack.push(c); });
+  (s.a || []).forEach(c => { if (rehydrateClip(c)) aTrack.push(c); });
+  (s.t || []).forEach(c => tTrack.push(c));
+  (s.g || []).forEach(c => gTrack.push(c));
+  if (s.aspect) { curAspect = s.aspect; $('aspectSelect').value = s.aspect; }
+  if (s.quality) { curQuality = s.quality; $('qualitySelect').value = String(s.quality); }
+  if (s.name) $('projectName').value = s.name;
+  applyResolution();
+  deselect();
+  renderTimeline(); renderInspector();
+  seek(Math.min(playhead, totalDuration()));
+  needsRedraw = true;
+  histLock = false;
+}
+
+function undo() {
+  if (histIndex <= 0) return;
+  histIndex--;
+  applySnapshot(history[histIndex]);
+  updateHistoryUI();
+  scheduleAutosave();
+}
+function redo() {
+  if (histIndex >= history.length - 1) return;
+  histIndex++;
+  applySnapshot(history[histIndex]);
+  updateHistoryUI();
+  scheduleAutosave();
+}
+function updateHistoryUI() {
+  const u = $('undoBtn'), r = $('redoBtn');
+  if (u) u.disabled = histIndex <= 0;
+  if (r) r.disabled = histIndex >= history.length - 1;
+}
+
+/* ---------- IndexedDB: assets + the current project ---------- */
+const DB_NAME = 'clipcut-editor', DB_VER = 1;
+let _dbp = null;
+function db() {
+  if (_dbp) return _dbp;
+  _dbp = new Promise((res, rej) => {
+    const rq = indexedDB.open(DB_NAME, DB_VER);
+    rq.onupgradeneeded = () => {
+      const d = rq.result;
+      if (!d.objectStoreNames.contains('assets')) d.createObjectStore('assets', { keyPath: 'id' });
+      if (!d.objectStoreNames.contains('project')) d.createObjectStore('project');
+    };
+    rq.onsuccess = () => res(rq.result);
+    rq.onerror = () => rej(rq.error);
+  });
+  return _dbp;
+}
+function idbRun(store, mode, fn) {
+  return db().then(d => new Promise((res, rej) => {
+    const tx = d.transaction(store, mode);
+    const rq = fn(tx.objectStore(store));
+    rq.onsuccess = () => res(rq.result);
+    rq.onerror = () => rej(rq.error);
+  }));
+}
+const idbPut = (store, val, key) => idbRun(store, 'readwrite', s => key !== undefined ? s.put(val, key) : s.put(val));
+const idbGet = (store, key) => idbRun(store, 'readonly', s => s.get(key));
+const idbAll = (store) => idbRun(store, 'readonly', s => s.getAll());
+const idbClear = (store) => idbRun(store, 'readwrite', s => s.clear());
+
+/* keep the original bytes so a project survives a reload: blob: URLs die
+   with the page, so the file itself has to be stored, not the URL */
+async function persistAsset(m, blob) {
+  try {
+    await idbPut('assets', {
+      id: m.id, kind: m.kind, name: m.name, duration: m.duration || 0,
+      thumb: (m.thumb && m.thumb.startsWith('data:')) ? m.thumb : null, blob,
+    });
+  } catch (_) { /* private mode or out of quota — editing still works */ }
+}
+
+let saveTimer = null;
+function scheduleAutosave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(doAutosave, 1200);
+}
+async function doAutosave() {
+  try {
+    await idbPut('project', { tracks: snapshot(), savedAt: Date.now() }, 'current');
+    flashSaved();
+  } catch (_) { /* best effort */ }
+}
+function flashSaved() {
+  const el = $('saveState');
+  if (!el) return;
+  el.textContent = 'SAVED';
+  el.classList.add('on');
+  clearTimeout(flashSaved._t);
+  flashSaved._t = setTimeout(() => el.classList.remove('on'), 1400);
+}
+
+async function restoreAssets() {
+  const rows = await idbAll('assets');
+  rows.forEach(r => {
+    if (media.some(m => m.id === r.id)) return;
+    const url = URL.createObjectURL(r.blob);
+    const m = { id: r.id, kind: r.kind, name: r.name, url, duration: r.duration || 0, el: null, thumb: r.thumb };
+    if (r.kind === 'image') {
+      const img = new Image(); img.src = url; m.el = img;
+      m.duration = r.duration || 4;
+      if (!m.thumb) m.thumb = url;
+    } else if (r.kind === 'video') {
+      const v = document.createElement('video');
+      v.src = url; v.preload = 'metadata'; v.muted = true; v.playsInline = true;
+      m.el = v;
+      v.addEventListener('loadeddata', () => { needsRedraw = true; });
+    } else {
+      const a = document.createElement('audio');
+      a.src = url; a.preload = 'metadata'; m.el = a;
+    }
+    media.push(m);
+  });
+  renderMediaGrid();
+}
+
+/* offer the last project back rather than silently loading it */
+async function offerRestore() {
+  let proj;
+  try { proj = await idbGet('project', 'current'); } catch (_) { return; }
+  if (!proj || !proj.tracks) return;
+  let s;
+  try { s = JSON.parse(proj.tracks); } catch (_) { return; }
+  const clips = (s.v || []).length + (s.t || []).length + (s.g || []).length + (s.a || []).length;
+  if (!clips) return;
+
+  const when = new Date(proj.savedAt || Date.now());
+  const bar = document.createElement('div');
+  bar.className = 'restore-bar';
+  bar.innerHTML = `<span class="rb-text"><b>Restore your last project?</b>
+      <span class="rb-meta mono">${clips} CLIP${clips > 1 ? 'S' : ''} · ${when.toLocaleDateString()} ${when.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></span>
+    <button class="btn btn-primary btn-sm" id="rbYes">Restore</button>
+    <button class="btn btn-ghost btn-sm" id="rbNo">Start fresh</button>`;
+  document.body.appendChild(bar);
+  requestAnimationFrame(() => bar.classList.add('show'));
+
+  bar.querySelector('#rbYes').addEventListener('click', async () => {
+    bar.remove();
+    await restoreAssets();
+    applySnapshot(proj.tracks);
+    history = [snapshot()]; histIndex = 0; updateHistoryUI();
+  });
+  bar.querySelector('#rbNo').addEventListener('click', async () => {
+    bar.remove();
+    try { await idbClear('project'); await idbClear('assets'); } catch (_) {}
+  });
+}
+
+/* ============================================================
    TIMELINE UI
    ============================================================ */
 const tlScroll = $('tlScroll'), tlInner = $('tlInner');
@@ -1768,6 +2042,7 @@ function clipPointerDown(e, c, type, el) {
     }
     renderTimeline(); renderInspector();
     needsRedraw = true;
+    commit();
   };
 
   window.addEventListener('pointermove', onMove);
@@ -1780,17 +2055,17 @@ function drawRuler(width) {
   ruler.height = 26;
   const rc = ruler.getContext('2d');
   rc.clearRect(0, 0, width, 26);
-  rc.fillStyle = 'rgba(240,240,248,0.3)';
+  rc.fillStyle = 'rgba(20,20,31,0.45)';
   rc.font = '9px "JetBrains Mono", monospace';
   const labelEvery = [1, 2, 5, 10, 30].find(v => v * pps >= 64) || 60;
   const secs = Math.ceil(width / pps);
   for (let s = 0; s <= secs; s++) {
     const x = s * pps;
     const isLabel = s % labelEvery === 0;
-    rc.fillStyle = isLabel ? 'rgba(240,240,248,0.35)' : 'rgba(240,240,248,0.12)';
+    rc.fillStyle = isLabel ? 'rgba(20,20,31,0.42)' : 'rgba(20,20,31,0.16)';
     rc.fillRect(x, isLabel ? 12 : 18, 1, isLabel ? 14 : 8);
     if (isLabel) {
-      rc.fillStyle = 'rgba(240,240,248,0.4)';
+      rc.fillStyle = 'rgba(20,20,31,0.5)';
       rc.fillText(fmtTime(s).slice(0, 5), x + 4, 9);
     }
   }
@@ -1841,6 +2116,7 @@ function deleteSelected() {
   selected = null;
   renderTimeline(); renderInspector();
   needsRedraw = true;
+  commit();
 }
 
 function splitAtPlayhead() {
@@ -1888,6 +2164,7 @@ function splitAtPlayhead() {
   }
   renderTimeline(); renderInspector();
   needsRedraw = true;
+  commit();
 }
 
 function duplicateSelected() {
@@ -1899,6 +2176,11 @@ function duplicateSelected() {
     c2.speed = clip.speed; c2.volume = clip.volume;
     c2.grade = { ...clip.grade }; c2.effect = clip.effect;
     c2.transition = { ...clip.transition };
+    // framing and motion are part of the look too — a duplicate that
+    // silently loses the crop is worse than no duplicate
+    c2.motion = clip.motion; c2.fit = clip.fit;
+    c2.crop = { ...(clip.crop || { l: 0, t: 0, r: 0, b: 0 }) };
+    c2.humanFx = clip.humanFx; c2.humanColor = clip.humanColor;
     vTrack.splice(vTrack.indexOf(clip) + 1, 0, c2);
     select('v', c2);
   } else if (type === 't') {
@@ -1919,6 +2201,7 @@ function duplicateSelected() {
   }
   renderTimeline(); renderInspector();
   needsRedraw = true;
+  commit();
 }
 
 /* ============================================================
@@ -1936,6 +2219,7 @@ function addTextClip(preset) {
   select('t', c);
   renderTimeline(); renderInspector();
   needsRedraw = true;
+  commit();
 }
 
 function renderTextPresets() {
@@ -2004,6 +2288,8 @@ function tabsFor(type) {
 }
 
 function renderInspector() {
+  // keep the browse galleries' active highlights in step with the selection
+  if (typeof renderBrowsePanels === 'function' && $('fxGrid')) renderBrowsePanels();
   if (!selected) {
     inspector.innerHTML = `<div class="inspector-empty"><div class="ie-icon">✦</div>
       <p>Select a clip on the timeline to edit its <b>color grade</b>, <b>effects</b>, <b>transition</b>, speed and volume.</p></div>`;
@@ -2069,6 +2355,7 @@ function sliderRow(parent, label, value, min, max, step, fmt, oninput) {
     oninput(v);
     needsRedraw = true;
   });
+  input.addEventListener('change', () => commit());
   row.appendChild(input);
   parent.appendChild(row);
   return input;
@@ -2081,7 +2368,7 @@ function chipGrid(parent, options, isActive, onpick, cyan) {
     const b = document.createElement('button');
     b.className = 'chip' + (isActive(op) ? (cyan ? ' active active-cyan' : ' active') : '');
     b.textContent = op.name || op;
-    b.addEventListener('click', () => { onpick(op); needsRedraw = true; renderInspector(); });
+    b.addEventListener('click', () => { onpick(op); needsRedraw = true; renderInspector(); commit(); });
     grid.appendChild(b);
   });
   parent.appendChild(grid);
@@ -2159,6 +2446,7 @@ function buildHumanTab(body, clip) {
     const cp = document.createElement('input');
     cp.type = 'color'; cp.value = clip.humanColor;
     cp.addEventListener('input', () => { clip.humanColor = cp.value; needsRedraw = true; });
+    cp.addEventListener('change', () => commit());
     row.appendChild(cp);
     body.appendChild(row);
   }
@@ -2202,6 +2490,7 @@ function buildGfxTab(body, clip) {
     const cp = document.createElement('input');
     cp.type = 'color'; cp.value = clip.color;
     cp.addEventListener('input', () => { clip.color = cp.value; needsRedraw = true; });
+    cp.addEventListener('change', () => commit());
     row.appendChild(cp);
     body.appendChild(row);
   }
@@ -2255,6 +2544,7 @@ function buildTextTab(body, clip) {
   ta.className = 'insp-textarea';
   ta.value = clip.text;
   ta.addEventListener('input', () => { clip.text = ta.value || ' '; needsRedraw = true; renderTimeline(); });
+  ta.addEventListener('change', () => commit());
   body.appendChild(ta);
   sliderRow(body, 'Position X', Math.round(clip.x * 100), 0, 100, 1, v => v + '%', v => { clip.x = v / 100; });
   sliderRow(body, 'Position Y', Math.round(clip.y * 100), 0, 100, 1, v => v + '%', v => { clip.y = v / 100; });
@@ -2284,6 +2574,7 @@ function buildTextStyleTab(body, clip) {
   const cp = document.createElement('input');
   cp.type = 'color'; cp.value = clip.color;
   cp.addEventListener('input', () => { clip.color = cp.value; needsRedraw = true; });
+    cp.addEventListener('change', () => commit());
   colorRow.appendChild(cp);
   body.appendChild(colorRow);
   sectionLabel(body, '// Extras');
@@ -2425,6 +2716,256 @@ $('exportCancel').addEventListener('click', () => {
 });
 
 /* ============================================================
+   BROWSE PANELS — stickers, effects, transitions, filters
+   Same libraries the inspector uses, surfaced as galleries so a look
+   is one click away instead of buried behind a selection.
+   ============================================================ */
+const note = m => (typeof toastError === 'function' ? toastError(m) : alert(m));
+
+const STICKERS = ['😀','😂','😍','🤩','😎','🥳','😭','😱','🤯','🥰','🔥','✨','⭐','💥','💯','👍','👏','🙌','🤝','❤️',
+                  '💔','🎉','🎊','🏆','🎯','💡','⚡','🚀','🌈','☀️','🌙','⏰','📌','📢','🔔','💬','❓','❗','✅','❌'];
+
+const FX_ICONS = {
+  none: '⊘', glitch: '⚡', vhs: '📼', chromatic: '🌈', grain: '🎞️', dreamy: '💭', pixelate: '🔲',
+  scanlines: '📺', invert: '🔃', mirror: '🪞', kaleido: '❄️', zoomblur: '💫', oldfilm: '🎬',
+  duotone: '🎨', rgbwave: '🌊', cinebars: '🎥', strobe: '💡', retrowave: '🌆',
+};
+const TRANS_ICONS = {
+  none: '⊘', fade: '◐', fadeblack: '⬛', fadewhite: '⬜', wipeleft: '⇤', wiperight: '⇥',
+  wipeup: '⤒', wipedown: '⤓', slideleft: '⬅️', slideright: '➡️', circleopen: '⊙',
+  circleclose: '⊗', zoomin: '🔍', blurwarp: '🌀',
+};
+const swatch = i => {
+  const pal = TPL_PALETTES[i % TPL_PALETTES.length];
+  return `linear-gradient(135deg, ${pal[0]}, ${pal[1]})`;
+};
+
+/* the clip a browse-panel click should act on: the selection, else
+   whatever sits under the playhead, else the first clip */
+function targetVideoClip() {
+  if (selected && selected.type === 'v') return selected.clip;
+  return activeVideoAt(playhead)[0] || vTrack[0] || null;
+}
+
+function addSticker(emoji) {
+  const gp = GFX_PRESETS.find(p => p.id === 'sticker');
+  const c = {
+    id: uid(), kind: 'gfx', preset: 'sticker', name: gp.icon + ' Sticker',
+    start: playhead, dur: 3, x: 0.5, y: 0.5, scale: 1, speed: 1, density: 40,
+    color: '#00D4FF', text: '', text2: '', emoji,
+  };
+  gTrack.push(c);
+  select('g', c);
+  renderTimeline(); renderInspector();
+  needsRedraw = true;
+  commit();
+}
+
+function renderStickers() {
+  const wrap = $('stickerGrid');
+  wrap.innerHTML = '';
+  STICKERS.forEach(e => {
+    const b = document.createElement('div');
+    b.className = 'sticker';
+    b.textContent = e;
+    b.title = 'Add to timeline';
+    b.addEventListener('click', () => addSticker(e));
+    wrap.appendChild(b);
+  });
+}
+
+function renderBrowsePanels() {
+  const cur = targetVideoClip();
+
+  const fx = $('fxGrid');
+  fx.innerHTML = '';
+  EFFECTS.forEach((op, i) => {
+    const card = document.createElement('div');
+    card.className = 'fx-card' + (cur && cur.effect === op.id ? ' on' : '');
+    card.innerHTML = `<div class="fx-prev" style="background:${swatch(i)}">${FX_ICONS[op.id] || '✦'}</div>
+      <div class="fx-name">${op.name}</div>`;
+    card.addEventListener('click', () => {
+      const c = targetVideoClip();
+      if (!c) { note('Add a clip to the timeline first.'); return; }
+      c.effect = op.id;
+      select('v', c);
+      needsRedraw = true; renderInspector(); renderBrowsePanels(); commit();
+    });
+    fx.appendChild(card);
+  });
+
+  const tr = $('transGrid');
+  tr.innerHTML = '';
+  TRANSITIONS.forEach((op, i) => {
+    const card = document.createElement('div');
+    card.className = 'fx-card' + (cur && cur.transition && cur.transition.type === op.id ? ' on' : '');
+    card.innerHTML = `<div class="fx-prev" style="background:${swatch(i + 2)}">${TRANS_ICONS[op.id] || '⇄'}</div>
+      <div class="fx-name">${op.name}</div>`;
+    card.addEventListener('click', () => {
+      const c = targetVideoClip();
+      if (!c) { note('Add a clip to the timeline first.'); return; }
+      c.transition = { type: op.id, dur: (c.transition && c.transition.dur) || 0.8 };
+      select('v', c);
+      needsRedraw = true; renderTimeline(); renderInspector(); renderBrowsePanels(); commit();
+    });
+    tr.appendChild(card);
+  });
+
+  const fl = $('filterGrid');
+  fl.innerHTML = '';
+  Object.keys(GRADE_PRESETS).forEach((name, i) => {
+    const card = document.createElement('div');
+    card.className = 'fx-card' + (cur && cur.grade && cur.grade.preset === name ? ' on' : '');
+    card.innerHTML = `<div class="fx-prev" style="background:${swatch(i + 4)}">🎨</div>
+      <div class="fx-name">${name}</div>`;
+    card.addEventListener('click', () => {
+      const c = targetVideoClip();
+      if (!c) { note('Add a clip to the timeline first.'); return; }
+      const fresh = defaultGrade();
+      Object.assign(fresh, GRADE_PRESETS[name], { preset: name });
+      c.grade = fresh;
+      select('v', c);
+      needsRedraw = true; renderInspector(); renderBrowsePanels(); commit();
+    });
+    fl.appendChild(card);
+  });
+}
+
+/* ============================================================
+   CUT LEFT / CUT RIGHT  (CapCut-style trim to playhead)
+   ============================================================ */
+function cutSide(side) {
+  layout();
+  let type = 'v', c = null;
+  if (selected) { type = selected.type; c = selected.clip; }
+  else { c = activeVideoAt(playhead)[0]; }
+  if (!c) { note('Select a clip on the timeline first.'); return; }
+
+  const lt = playhead - c.start;
+  if (lt <= 0.03 || lt >= c.dur - 0.03) {
+    note('Put the playhead inside the clip, then cut.');
+    return;
+  }
+  if (side === 'left') {
+    // video/audio also advance their source in-point, images have none
+    if (c.kind === 'video' || type === 'a') c.in += lt;
+    c.dur -= lt;
+    if (type !== 'v') c.start = playhead;   // v track re-flows in layout()
+  } else {
+    c.dur = lt;
+  }
+  select(type, c);
+  renderTimeline(); renderInspector();
+  needsRedraw = true;
+  commit();
+}
+
+/* ============================================================
+   DRAG MEDIA ONTO THE TIMELINE
+   ============================================================ */
+function dropMediaAt(m, t) {
+  if (m.kind === 'audio') {
+    const c = { id: uid(), mediaId: m.id, kind: 'audio', name: m.name, start: Math.max(0, t), in: 0, dur: m.duration || 5, volume: 1 };
+    c.el = document.createElement('audio'); c.el.src = m.url; c.el.preload = 'auto';
+    hookClipAudio(c);
+    aTrack.push(c);
+    select('a', c);
+  } else {
+    const c = makeVideoClip(m);
+    layout();
+    let idx = vTrack.length;
+    for (let i = 0; i < vTrack.length; i++) {
+      if (t < vTrack[i].start + vTrack[i].dur / 2) { idx = i; break; }
+    }
+    vTrack.splice(idx, 0, c);
+    select('v', c);
+  }
+  renderTimeline(); renderInspector();
+  needsRedraw = true;
+  commit();
+}
+
+function wireTimelineDrop() {
+  [trackVideo, trackAudio, trackText, trackGfx].forEach(el => {
+    el.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+      el.classList.add('drop-hint');
+    });
+    el.addEventListener('dragleave', () => el.classList.remove('drop-hint'));
+    el.addEventListener('drop', e => {
+      e.preventDefault();
+      el.classList.remove('drop-hint');
+      const rect = tlInner.getBoundingClientRect();
+      const t = Math.max(0, (e.clientX - rect.left - 34) / pps);
+      if (e.dataTransfer.files && e.dataTransfer.files.length) { importFiles(e.dataTransfer.files); return; }
+      const raw = e.dataTransfer.getData('text/plain') || '';
+      if (!raw.startsWith('clipcut:')) return;
+      const m = media.find(x => x.id === raw.slice(8));
+      if (m) dropMediaAt(m, t);
+    });
+  });
+}
+
+/* ============================================================
+   RESIZABLE PANELS
+   ============================================================ */
+const LAYOUT_KEY = 'clipcut-layout-v1';
+function applyLayout(l) {
+  const left = document.querySelector('.panel-left');
+  const right = document.querySelector('.panel-right');
+  const tl = document.querySelector('.timeline-area');
+  if (l.left) { left.style.width = l.left + 'px'; left.style.flexBasis = l.left + 'px'; }
+  if (l.right) { right.style.width = l.right + 'px'; right.style.flexBasis = l.right + 'px'; }
+  if (l.timeline) { tl.style.height = l.timeline + 'px'; }
+}
+function readLayout() {
+  try { return JSON.parse(localStorage.getItem(LAYOUT_KEY)) || {}; } catch (_) { return {}; }
+}
+function saveLayout() {
+  const left = document.querySelector('.panel-left').getBoundingClientRect().width;
+  const right = document.querySelector('.panel-right').getBoundingClientRect().width;
+  const timeline = document.querySelector('.timeline-area').getBoundingClientRect().height;
+  try { localStorage.setItem(LAYOUT_KEY, JSON.stringify({ left: Math.round(left), right: Math.round(right), timeline: Math.round(timeline) })); } catch (_) {}
+}
+function wireResizers() {
+  applyLayout(readLayout());
+  const start = (handle, onMove) => {
+    handle.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      handle.classList.add('active');
+      const move = ev => { onMove(ev); needsRedraw = true; };
+      const up = () => {
+        handle.classList.remove('active');
+        window.removeEventListener('pointermove', move);
+        window.removeEventListener('pointerup', up);
+        saveLayout();
+        renderTimeline();
+        needsRedraw = true;
+      };
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerup', up);
+    });
+  };
+  const left = document.querySelector('.panel-left');
+  const right = document.querySelector('.panel-right');
+  const tl = document.querySelector('.timeline-area');
+
+  start($('resizeLeft'), ev => {
+    const w = clamp(ev.clientX, 190, Math.min(460, innerWidth - 520));
+    left.style.width = w + 'px'; left.style.flexBasis = w + 'px';
+  });
+  start($('resizeRight'), ev => {
+    const w = clamp(innerWidth - ev.clientX, 220, Math.min(520, innerWidth - 520));
+    right.style.width = w + 'px'; right.style.flexBasis = w + 'px';
+  });
+  start($('resizeTimeline'), ev => {
+    const h = clamp(innerHeight - ev.clientY, 150, Math.max(180, innerHeight - 260));
+    tl.style.height = h + 'px';
+  });
+}
+
+/* ============================================================
    WIRING
    ============================================================ */
 $('fileInput').addEventListener('change', e => { importFiles(e.target.files); e.target.value = ''; });
@@ -2458,20 +2999,37 @@ $('zoomSlider').addEventListener('input', e => {
 $('aspectSelect').addEventListener('change', e => {
   curAspect = e.target.value;
   applyResolution();
+  commit();
 });
 
 $('qualitySelect').addEventListener('change', e => {
   curQuality = parseInt(e.target.value, 10);
   applyResolution();
+  commit();
 });
+
+$('projectName').addEventListener('change', () => commit());
+$('undoBtn').addEventListener('click', undo);
+$('redoBtn').addEventListener('click', redo);
+$('cutLeftBtn').addEventListener('click', () => cutSide('left'));
+$('cutRightBtn').addEventListener('click', () => cutSide('right'));
 
 window.addEventListener('keydown', e => {
   const tag = (e.target.tagName || '').toLowerCase();
-  if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+  const typing = tag === 'input' || tag === 'textarea' || tag === 'select';
+  // undo/redo work even while a field has focus, like every other editor
+  if ((e.ctrlKey || e.metaKey) && !e.altKey) {
+    const k = e.key.toLowerCase();
+    if (k === 'z' && !e.shiftKey) { e.preventDefault(); undo(); return; }
+    if (k === 'y' || (k === 'z' && e.shiftKey)) { e.preventDefault(); redo(); return; }
+  }
+  if (typing) return;
   if (e.code === 'Space') { e.preventDefault(); playing ? stopPlayback() : play(); }
   else if (e.key === 'Delete' || e.key === 'Backspace') deleteSelected();
   else if (e.key === 's' || e.key === 'S') splitAtPlayhead();
   else if (e.key === 'd' || e.key === 'D') duplicateSelected();
+  else if (e.key === 'q' || e.key === 'Q') cutSide('left');
+  else if (e.key === 'w' || e.key === 'W') cutSide('right');
   else if (e.key === 'Home') seek(0);
   else if (e.key === 'End') seek(totalDuration());
   else if (e.key === 'ArrowLeft') seek(playhead - (e.shiftKey ? 1 : 1 / 30));
@@ -2486,7 +3044,14 @@ applyResolution();
 renderTextPresets();
 renderGfxPresets();
 renderTemplates();
+renderStickers();
+renderBrowsePanels();
 renderMediaGrid();
 renderTimeline();
 renderInspector();
+wireTimelineDrop();
+wireResizers();
+commit();          // history[0] is the empty project, so undo can reach it
+updateHistoryUI();
+offerRestore();    // ask before bringing the last session back
 requestAnimationFrame(tick);
