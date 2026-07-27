@@ -90,6 +90,14 @@ function db() {
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 	try { $pdo->exec("ALTER TABLE transactions ADD COLUMN credits INT NULL, ADD COLUMN currency VARCHAR(8) NULL"); } catch (Exception $e) { /* columns already exist */ }
 	try { $pdo->exec("ALTER TABLE transactions ADD COLUMN tool VARCHAR(40) NULL"); } catch (Exception $e) { /* already exists */ }
+	// RENAME: the question-paper app was internally '7q' and is now '7marks'
+	// everywhere. Carry existing wallets, purchases and usage over to the new
+	// key so nobody loses credits or a Pro plan. IGNORE skips the rare case
+	// where a '7marks' row already exists (the '7q' leftover is then unused).
+	try { $pdo->exec("UPDATE IGNORE tool_credits SET tool = '7marks' WHERE tool = '7q'"); } catch (Exception $e) {}
+	try { $pdo->exec("UPDATE transactions  SET tool = '7marks' WHERE tool = '7q'"); } catch (Exception $e) {}
+	try { $pdo->exec("UPDATE usage_log     SET product = '7marks' WHERE product = '7q'"); } catch (Exception $e) {}
+	try { $pdo->exec("UPDATE IGNORE entitlements SET tool = '7marks' WHERE tool = '7q'"); } catch (Exception $e) {}
 	// Per-tool unlocks (entitlements). One row per (user, tool); NULL expiry = lifetime.
 	$pdo->exec("CREATE TABLE IF NOT EXISTS entitlements (
 		id INT AUTO_INCREMENT PRIMARY KEY,
@@ -542,6 +550,10 @@ function grant_from_tx($tx) {
 function tool_key(string $t): string {
 	$t = strtolower(preg_replace('/[^a-z0-9]/i', '', $t));
 	if ($t === '' || $t === 'tool') return '';
+	// '7q' was the old internal name for 7Marks. Any still-cached client that
+	// sends it must land on the same wallet as the renamed app.
+	if ($t === '7q' || $t === 'qbank') return '7marks';
+	if ($t === 'doubtsnap') return '7solve';
 	return substr($t, 0, 24);
 }
 

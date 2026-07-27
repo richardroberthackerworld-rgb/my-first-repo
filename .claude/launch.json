@@ -14,6 +14,12 @@
       "port": 3020
     },
     {
+      "name": "vocal-remover-3",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-p", "3200", "."],
+      "port": 3200
+    },
+    {
       "name": "resume-builder",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["serve", "-p", "3030", "."],
@@ -26,13 +32,13 @@
       "port": 3010
     },
     {
-      "name": "doubtsnap",
+      "name": "7solve",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["serve", "-p", "3040", "."],
       "port": 3040
     },
     {
-      "name": "qbank",
+      "name": "7marks",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["serve", "-p", "3050", "."],
       "port": 3050
@@ -68,9 +74,15 @@
       "port": 7412
     },
     {
-      "name": "pricehunt",
+      "name": "writer",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-p", "3110", "."],
+      "port": 3110
+    },
+    {
+      "name": "7compare",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["pricehunt/server/engine.mjs"],
+      "runtimeArgs": ["7compare/server/engine.mjs"],
       "port": 3100
     },
     {
@@ -78,6 +90,24 @@
       "runtimeExecutable": "C:\\Users\\chint\\.claude\\tools\\php\\php.exe",
       "runtimeArgs": ["-c", "C:\\Users\\chint\\.claude\\tools\\php\\php.ini", "-S", "localhost:7521", "-t", "U:\\New folder\\pay"],
       "port": 7521
+    },
+    {
+      "name": "vpn-ui",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["-y", "http-server", "vpn/renderer", "-p", "7940", "-c-1", "--silent"],
+      "port": 7940
+    },
+    {
+      "name": "cad",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-p", "3120", "."],
+      "port": 3120
+    },
+    {
+      "name": "hand",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-p", "3130", "."],
+      "port": 3130
     },
     {
       "name": "voxtwin",

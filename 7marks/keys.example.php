@@ -31,7 +31,7 @@ return [
     ],
 
     /* ---- only these sites may use the proxy (stops others stealing your quota) ---- */
-    'allow_origins' => ['7marks.7by.in', '7solve.7by.in', '7q.7by.in', 'qbank.7by.in', 'doubtsnap.7by.in', '7by.in', 'www.7by.in', 'localhost:3050'],
+    'allow_origins' => ['7marks.7by.in', '7by.in', 'www.7by.in', 'localhost:3050'],
 
     /* Some in-app browsers (Instagram/Facebook) strip the Origin header.
        true  = still allow those users (slightly weaker protection)
@@ -55,9 +55,9 @@ return [
     /* ============================================================
        PAYWALL — free tier, credits, ₹99/month
        ============================================================
-       Which app this folder is:  '7q'  or  '7solve'
+       Which app this folder is:  '7marks'  or  '7solve'
        (they bill SEPARATELY — a 7Marks pass does not work on 7Solve) */
-    'app' => '7q',
+    'app' => '7marks',
 
     /* Each AI action (solve, paper, hint, each follow-up button) costs this
        many credits. 10 = the default. */
@@ -68,7 +68,7 @@ return [
        hub's free_daily_credits, so students never see two different figures.
        Free credits work on the BASIC (cheap, high-limit) AI only — hard
        questions that need the big models require a paid plan (Premium). */
-    'free_per_day' => ['7q' => 30, '7solve' => 30],   // matches the hub's 30 free credits/day
+    'free_per_day' => ['7marks' => 30, '7solve' => 30],   // matches the hub's 30 free credits/day
 
     /* Plans. amount is in PAISE (9900 = ₹99). Even paid plans use credits, so
        one heavy user can never drain your API quota. Paid credits unlock the

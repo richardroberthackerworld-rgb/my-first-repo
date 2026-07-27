@@ -38,7 +38,7 @@
    TIP: add Gemini (for photos) + Groq (for fast text) at minimum.
    You can add all 5 — the more you add, the fewer "limit reached" errors.
 
-   NOTE: if you already filled doubtsnap/config.js, just copy the
+   NOTE: if you already filled 7solve/config.js, just copy the
    same keys here — both apps share the same providers.
    ============================================================ */
 

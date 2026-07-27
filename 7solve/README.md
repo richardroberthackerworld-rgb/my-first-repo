@@ -1,48 +1,44 @@
-# 7Marks 💯
+# 7Solve ✅ (formerly Doubt Snap)
 
-Pick a subject & topic — or snap photos of your textbook / notes — and generate a full **question bank**: theory or practical, long answer, short answer, very short answer, MCQs, fill in the blanks, and true/false — with an optional answer key. The sister app of [7Solve](../doubtsnap/) (7Solve answers *your* questions; 7Marks *asks you* questions).
+Snap a photo of any doubt (or type it) and get the exact answer with a step-by-step explanation — like a good teacher writing in your notebook.
 
 ## Features
-- 📷 **Photo material** — upload up to **5 photos** of textbook pages or class notes (camera, gallery, drag & drop, paste Ctrl+V). Questions are generated **only from that material**. Handwritten and printed pages both work.
-- ⌨️ **Or just type a topic** — e.g. "Photosynthesis", "Quadratic Equations", "Chapter 4 — The Mughal Empire". You can combine topic + photos.
-- 📝 **6 question types, mix freely** — MCQ (4 options), Very Short (1–2 lines), Short (3–5 lines), Long Answer / Essay, Fill in the Blanks, True/False — each with its own count (1–25).
-- 📐 **Theory or Practical** — choose Theory (definitions, explanations, distinctions), Practical (numericals, sums, worked problems — automatically uses the strongest reasoning models so the answer key is correct), or Mixed.
-- 🎚️ **Difficulty** — Easy, Medium, Hard, or Mixed (easy → hard within each section).
-- 🧠 **Hard mode = strongest AI** — Hard difficulty automatically routes through the most powerful free reasoning models: Gemini 2.5 Pro (~50 req/day free, also reads photos), then OpenRouter's free heavyweights (NVIDIA Nemotron 3 Ultra 555B, Tencent Hy3 295B, OpenAI gpt-oss-120b), falling back to the normal chain if they're busy.
-- 🔑 **Answer key toggle** — generate with answers + explanations, but they stay hidden until you press "Show answer key". Practice first, check later.
-- 🖨️ **Print / Save PDF** — prints only the question paper (clean, no site chrome). Answer key prints only if revealed.
-- ➕ **More questions** — one click generates a fresh set on the same topic, telling the AI not to repeat questions it already asked.
-- 🌐 **3 languages, fully translated UI + papers** — English, हिंदी, తెలుగు.
-- 🎓 **Every level** — Class 1–10, Intermediate (MPC / BiPC / CEC / MEC / HEC), Degree & PG, CA / CMA (India) / US CMA / CS / ACCA / CFA, Jobs & competitive exams (UPSC, Groups, SSC, Banking, JEE/NEET…), Current Affairs & GK.
-- 🤖 **Smart model routing** — auto-picks the best free AI model per subject and falls back if one is busy or rate-limited (same engine system as Doubt Snap).
-- 🗂️ **My Paper Shelf** — last 20 generated papers saved on the device (localStorage).
-- 📖 **Book theme** — same leather-and-paper look as Doubt Snap.
+- 📷 **Photo doubts** — camera capture (mobile), gallery upload, drag & drop, and paste (Ctrl+V). Reads handwritten and printed questions.
+- ⌨️ **Typed doubts** — or combine a photo + typed instructions.
+- 🌐 **3 languages, fully translated UI + answers** — English, हिंदी, తెలుగు.
+- 🎓 **Every level** — Class 1–10, Intermediate (MPC / BiPC / CEC / MEC / HEC), Degree & PG (B.Sc, B.Com, B.Tech, MBBS, MBA…), CA / CMA (India) / US CMA / CS / ACCA / CFA, Jobs & competitive exams (UPSC, Groups, SSC, Banking, JEE/NEET…), Current Affairs & GK.
+- 🤖 **Smart model routing** — the app automatically picks the best free AI model for each question (see below) and falls back to another if one is busy or rate-limited.
+- 🧠 **Automatic Deep Think** — the app reads your question and picks the right AI tier by itself (a live pill under the Solve button shows which): ⚡ simple definition-type doubts go to the fastest models (instant answers, saves the big-model quotas), 📖 normal doubts use the standard smart chain, and 🧠 big problems (calculations, proofs, multi-part numericals, anything at CA · CMA · Professional level) go to the strongest free reasoning models first — Gemini 2.5 Pro, DeepSeek-R1, Phi-4-Reasoning, Nemotron 3 Ultra 555B, Hy3 295B, gpt-oss-120b — with automatic fallback down the chain.
+- ✅ **Answer format** — exact answer first, then step-by-step explanation at the student's level, then **"✏️ Draw this diagram"** instructions when a figure helps, then a memory tip. Each answer shows which model solved it.
+- 📓 **My Notebook** — last 20 solved doubts saved on the device (localStorage).
+- 📖 **Book theme** — leather cover, paper pages, ruled answer sheet, chapter headings.
 
-## Setup — add your free API keys
+## Setup — add your free API keys (no "set key" button; you configure once)
 
-Open **`config.js`** and paste your free keys between the quotes. If you already set up Doubt Snap, **copy the same keys** — both apps share the same providers.
+Open **`config.js`** and paste your free keys between the quotes. Add as many as you like — you don't need all of them, but the more you add, the fewer "limit reached" errors.
 
 | # | Provider | Get a free key at | Key looks like | Best for |
 |---|----------|-------------------|----------------|----------|
-| 1 | **Google Gemini** | https://aistudio.google.com/apikey | `AIza…` | **Photos** (textbook pages, handwriting, Telugu/Hindi). ~1500/day. |
-| 2 | **Groq** | https://console.groq.com/keys | `gsk_…` | Fastest text papers (Llama 3.3 70B). |
+| 1 | **Google Gemini** | https://aistudio.google.com/apikey | `AIza…` | **Photos** (handwriting, Telugu/Hindi) + current affairs. ~1500/day. |
+| 2 | **Groq** | https://console.groq.com/keys | `gsk_…` | Fastest text answers (Llama 3.3 70B). |
 | 3 | **Cerebras** | https://cloud.cerebras.ai → API Keys | `csk-…` | Very fast, high daily volume. |
-| 4 | **OpenRouter** | https://openrouter.ai/keys | `sk-or-…` | Coding subjects (Qwen3 Coder) + photo fallback (Gemma 4). |
+| 4 | **OpenRouter** | https://openrouter.ai/keys | `sk-or-…` | Coding (Qwen3 Coder) + photo fallback (Gemma 4). |
 | 5 | **Mistral** (optional) | https://console.mistral.ai/api-keys | — | Text + Pixtral vision; doesn't log prompts. |
 | 6 | **GitHub Models** | https://github.com/settings/tokens | `ghp_…` / `github_pat_…` | **DeepSeek-R1** (~150/day) — best free CA/CMA numericals solver — plus GPT-4o (~50/day) and Phi-4-Reasoning. Free with any GitHub account. |
 
 **Minimum recommended:** add **Gemini** (for photos) + **Groq** (for fast text).
 
-Visitors see a site tagline in the top-right. **Owner view:** open the site with `?owner=1` (e.g. `https://7marks.7by.in/?owner=1`) to see the real engine status badge and which model generated each paper. All keys stay in `config.js` on your own site — the app calls the providers directly from the browser.
+Visitors see a site tagline in the top-right. **Owner view:** open the site with `?owner=1` to see the real engine status badge and which model answered each doubt. All keys stay in `config.js` on your own site — the app calls the providers directly from the browser.
 
-## How the app chooses a model (automatic)
-- **Hard difficulty, or CA · CMA · Professional level (automatic)** → Gemini 2.5 Pro → DeepSeek-R1 + Phi-4-Reasoning (GitHub Models) → Nemotron 3 Ultra 555B → Hy3 295B → gpt-oss-120b → then the normal chain below
+## How the app chooses a model (fully automatic)
+- **🧠 Big question detected** (calculations, proofs, multi-part numericals, journal entries, or CA · CMA · Professional level) → Gemini 2.5 Pro → DeepSeek-R1 + Phi-4-Reasoning (GitHub Models) → Nemotron 3 Ultra 555B → Hy3 295B → gpt-oss-120b → then the normal chain below
+- **⚡ Simple question detected** ("what is…", "define…", short one-liners) → Groq → Cerebras → Gemini Flash — instant answers that don't burn the big-model daily quotas
 - **Maths / Accounts (reasoning)** also tries GPT-4o via GitHub Models right after Gemini.
-- **Photos attached** → Gemini (best vision) → OpenRouter Gemma 4 → Mistral Pixtral
-- **Coding / programming subjects** → OpenRouter Qwen3 Coder → Gemini → Groq → Cerebras
+- **Photo attached** → Gemini (best vision) → OpenRouter Gemma 4 → Mistral Pixtral
+- **Coding / programming** → OpenRouter Qwen3 Coder → Gemini → Groq → Cerebras
 - **Maths / Physics / Accounts (reasoning)** → Gemini → Cerebras → Groq → OpenRouter
 - **Current affairs / GK** → Gemini → OpenRouter → Groq
-- **General / language subjects** → Gemini → Groq → Cerebras → OpenRouter
+- **General / language / essays** → Gemini → Groq → Cerebras → OpenRouter
 
 If the first choice is missing a key or hits its limit, it automatically tries the next one.
 
@@ -50,22 +46,10 @@ If the first choice is missing a key or hits its limit, it automatically tries t
 Static files — open `index.html` directly, or serve the folder:
 
 ```
-npx serve qbank
+npx serve 7solve
 ```
 
 No build step, no dependencies.
-
-## Deploy — launch on `7marks.7by.in` (cPanel)
-
-The homepage tool card and footer already link to `https://7marks.7by.in`, so going live is just:
-
-1. cPanel → **Domains → Create A New Domain** → `7marks.7by.in`. Uncheck "share document root"; let it create `/home/USER/7marks.7by.in` as the document root.
-2. **File Manager** → open that folder → upload **`qbank-site.zip`** (from the repo root) → **Extract**. The files must sit directly in the document root.
-3. **Rename `config.js.txt` → `config.js`** (right-click → Rename), then **Edit** it and paste your API keys. *(The zip ships it as `.txt` because cPanel's virus scanner false-positives on any zip containing `.js` files — "Foxhole.JS_Zip". It's not a real virus.)*
-4. cPanel → **SSL/TLS Status → Run AutoSSL** so `https://7marks.7by.in` is secure.
-5. Also re-upload the updated main-site `index.html` (or `vocalremover-app.zip`) so the homepage 7Marks card shows the new name.
-
-Visit `https://7marks.7by.in` — the ⚙️ badge at the top-right should show your active engines. If it says "No AI key set", `config.js` on the server still has empty keys.
 
 ## 🔒 Hide your keys (do this before a public launch)
 
@@ -89,7 +73,6 @@ reply unchanged. `api.php` also:
 `.htaccess` blocks `keys.php` from ever being fetched over the web, and re-uploading the site zip
 never overwrites it (the zip only ships `keys.example.php`). Requires PHP 7+ with cURL — standard
 on every cPanel host.
-
 ### 💾 Answer cache (built in, on by default with the proxy)
 
 Hundreds of students ask the same topics. The first one costs an AI call; **everyone after that is
@@ -101,7 +84,6 @@ traffic, and making repeat questions feel instant.
 - **Errors and empty replies are never cached** — only genuinely good answers
 - Clicking **"More questions"** always generates fresh ones (it tells the AI what was already asked)
 - Response header `X-7By-Cache: HIT|MISS` lets you confirm it's working
-
 ## 💳 Paywall — free tier, credits, ₹99/month
 
 **Enforced on the server** (`billing.php`, called from `api.php`). The browser only holds an opaque
@@ -118,10 +100,10 @@ pass token — editing the page cannot grant anyone credits.
   cost you no quota, so they cost the student no credit.
 - **Even paid plans use credits**, so one heavy user can never drain your API quota.
 - **A failed AI call is refunded** — students are never charged for an error.
-- **7Marks and 7Solve bill separately** — a 7Marks pass gives no credits on 7Solve.
+- **7Solve and 7Marks bill separately** — a 7Marks pass gives no credits on 7Solve.
 
 ### Switching it on
-1. In `keys.php` set `'app' => '7q'` and your 7Pay credentials (see *Wiring 7Pay* below).
+1. In  set  and your 7Pay credentials (see below).
 2. Tune `'free_per_day'` and `'plans'` to taste. `'billing_off' => true` disables the paywall entirely.
 
 ### Wiring 7Pay (one-time)

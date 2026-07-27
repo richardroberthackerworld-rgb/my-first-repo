@@ -44,12 +44,9 @@ return array(
 		'https://vocalremover.7by.in',
 		'https://7marks.7by.in',    // 7Marks
 		'https://7solve.7by.in',    // 7Solve
-		'https://7q.7by.in',        // 7Marks (previous address — keep until the redirect is live)
-		'https://qbank.7by.in',     // 7Marks (older still)
-		'https://doubtsnap.7by.in', // 7Solve (old)
 		// add more tools here...
-		'http://localhost:3061', // local dev
-		'http://localhost:3050', // local dev (7Q / 7Solve)
+		'http://localhost:3061', // local dev (7Solve)
+		'http://localhost:3050', // local dev (7Marks)
 	),
 
 	// ---- Payment gateway: 'razorpay' (live) or 'sevenpay' (our own, retired) ----
@@ -88,7 +85,7 @@ return array(
 
 	// FREE accounts are topped up to this many credits once per day (3 answers
 	// at 10 credits each). Never stacks; paid plans are unaffected. 0 = off.
-	'free_daily_credits' => 30,
+	'free_daily_credits' => 20,
 
 	// Only allow these email domains to sign up. Empty array = allow any.
 	// e.g. ['gmail.com'] to accept only @gmail.com addresses.

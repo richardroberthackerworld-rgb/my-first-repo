@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =====================================================================
-# 7By — build the Play Store app bundles (AAB) for 7Solve and 7Q.
+# 7By — build the Play Store app bundles (AAB) for 7Solve and 7Marks.
 #
 # RUN THIS ONLY AFTER the PWA files are live on the sites, i.e. these
 # must all load in a browser:
@@ -12,7 +12,7 @@
 #          bash build-apps.sh 7solve     # just one
 #
 # Output:  android/7solve/app-release-bundle.aab   <- upload to Play Console
-#          android/7q/app-release-bundle.aab
+#          android/7marks/app-release-bundle.aab
 # =====================================================================
 set -u
 cd "$(dirname "$0")"
@@ -20,8 +20,8 @@ cd "$(dirname "$0")"
 export BUBBLEWRAP_KEYSTORE_PASSWORD="${BUBBLEWRAP_KEYSTORE_PASSWORD:-SevenBy7by2026}"
 export BUBBLEWRAP_KEY_PASSWORD="${BUBBLEWRAP_KEY_PASSWORD:-SevenBy7by2026}"
 
-APPS=("${@:-7solve 7q}")
-[ $# -gt 0 ] && APPS=("$@") || APPS=(7solve 7q)
+APPS=("${@:-7solve 7marks}")
+[ $# -gt 0 ] && APPS=("$@") || APPS=(7solve 7marks)
 
 for app in "${APPS[@]}"; do
   echo ""

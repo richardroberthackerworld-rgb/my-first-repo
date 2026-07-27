@@ -4,7 +4,7 @@ Add-Type -AssemblyName System.IO.Compression | Out-Null
 Add-Type -AssemblyName System.IO.Compression.FileSystem | Out-Null
 
 function New-Zip {
-  param([string]$Zip, [string[]]$Roots, [string]$Prefix = '', [string[]]$ExcludeExt = @())
+  param([string]$Zip, [string[]]$Roots, [string]$Prefix = '', [string[]]$ExcludeExt = @(), [hashtable]$Rename = @{}, [string[]]$ExcludeNames = @())
   if (Test-Path -LiteralPath $Zip) { [System.IO.File]::Delete((Resolve-Path -LiteralPath $Zip).Path) }
   $fs = [System.IO.File]::Open($Zip, [System.IO.FileMode]::Create)
   $arch = New-Object System.IO.Compression.ZipArchive($fs, [System.IO.Compression.ZipArchiveMode]::Create)
@@ -29,11 +29,17 @@ function New-Zip {
       $baseLen = $item.FullName.Length + 1
       Get-ChildItem -LiteralPath $root -Recurse -File | ForEach-Object {
         if ($ExcludeExt -contains $_.Extension.ToLower()) { return }
+        # $ExcludeNames also filters files *inside* folders, not just top-level roots
+        if ($ExcludeNames -contains $_.Name) { return }
         $rel = $_.FullName.Substring($baseLen) -replace '\\','/'
         Add-File $_.FullName ($Prefix + $item.Name + '/' + $rel)
       }
     } else {
-      Add-File $item.FullName ($Prefix + $item.Name)
+      if ($ExcludeNames -contains $item.Name) { continue }
+      # $Rename lets a file ship under a different name (e.g. app-home.html -> index.html)
+      $outName = $item.Name
+      if ($Rename.ContainsKey($item.Name)) { $outName = $Rename[$item.Name] }
+      Add-File $item.FullName ($Prefix + $outName)
     }
   }
   $arch.Dispose(); $fs.Close()
@@ -47,14 +53,36 @@ if (-not $base) { $base = (Get-Location).Path }
 #    so the cPanel ClamAV "Foxhole.JS_Zip" false-positive can't block the upload.
 New-Zip -Zip (Join-Path $base 'sevenby-theme.zip') -Roots @((Join-Path $base 'wordpress-theme\sevenby')) -ExcludeExt @('.js')
 
-# 2) Static tool app for the subdomain
+# 2) Static tool app for the subdomain (vocalremover.7by.in).
+#    IMPORTANT: the root index.html is the LIGHT 7by.in hub homepage and belongs only to
+#    the main domain (see 7by-pages.zip below). Shipping it here overwrites the subdomain's
+#    own homepage, so it is excluded and app-home.html ships as index.html instead.
 $appRoots = @('assets','tools','blog') | ForEach-Object { Join-Path $base $_ }
-$appRoots += (Get-ChildItem -LiteralPath $base -File -Filter *.html | Select-Object -ExpandProperty FullName)
+#    _cardtest.html is a local scratch page and must never reach production.
+#    download-ai.html publicly hands out the AI engine, which contradicts keeping the
+#    implementation private — it is kept on disk but no longer shipped.
+$excludeHtml = @('index.html','_cardtest.html','download-ai.html')
+$appRoots += (Get-ChildItem -LiteralPath $base -File -Filter *.html |
+  Where-Object { $excludeHtml -notcontains $_.Name } |
+  Select-Object -ExpandProperty FullName)
 $htaccess = Join-Path $base '.htaccess'
 if (Test-Path -LiteralPath $htaccess) { $appRoots += $htaccess }   # cache-control rules
-New-Zip -Zip (Join-Path $base 'vocalremover-app.zip') -Roots $appRoots
+#    The subdomain needs its OWN robots.txt + sitemap.xml. The root-level ones point at
+#    7by.in, so they ship here under the subdomain-specific names and are renamed below.
+foreach ($seo in @('robots-sub.txt','sitemap-sub.xml')) {
+  $p = Join-Path $base $seo
+  if (Test-Path -LiteralPath $p) { $appRoots += $p }
+}
+#    This site ships ONLY the seven audio tools. ai-studio + the other-product tool
+#    pages (music generator, piano, drum pads, temp mail, resume builder) are kept on
+#    disk but excluded, so vocalremover.7by.in stays audio-only.
+$notAudio = @('ai-studio.html','music-generator.html','piano.html','drum-pads.html',
+              'temp-mail.html','temp-mail-preview.html','resume-builder.html')
+New-Zip -Zip (Join-Path $base 'vocalremover-app.zip') -Roots $appRoots `
+  -Rename @{ 'app-home.html' = 'index.html'; 'robots-sub.txt' = 'robots.txt'; 'sitemap-sub.xml' = 'sitemap.xml' } `
+  -ExcludeNames $notAudio
 
-# 3) QBank + DoubtSnap static apps for their subdomains (files at zip root).
+# 3) 7Marks + 7Solve static apps for their subdomains (files at zip root).
 #    cPanel ClamAV flags any zip containing .js (Foxhole.JS_Zip false-positive),
 #    so config.js ships as config.js.txt — after uploading, edit your keys into it
 #    and RENAME it to config.js in File Manager.
@@ -81,8 +109,8 @@ function New-AppZip {
   if (Test-Path -LiteralPath $wk) { $roots += $wk }
   New-Zip -Zip $Zip -Roots $roots
 }
-New-AppZip -AppDir (Join-Path $base 'qbank')     -Zip (Join-Path $base '7marks-site.zip')
-New-AppZip -AppDir (Join-Path $base 'doubtsnap') -Zip (Join-Path $base 'doubtsnap-site.zip')
+New-AppZip -AppDir (Join-Path $base '7marks') -Zip (Join-Path $base '7marks-site.zip')
+New-AppZip -AppDir (Join-Path $base '7solve') -Zip (Join-Path $base '7solve-site.zip')
 
 # 3b) Account hub UPDATE bundle — everything EXCEPT config.php.
 #     config.php holds the live DB password + secrets on the server, so we never

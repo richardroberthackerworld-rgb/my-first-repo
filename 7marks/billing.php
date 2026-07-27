@@ -27,7 +27,7 @@ function bill_plans(array $CFG): array {
         'pack_150' => ['label' => '150 credits',  'amount' => 4900, 'credits' => 150, 'days' => 365],
     ];
 }
-function bill_apps(): array { return ['7q', '7solve']; }
+function bill_apps(): array { return ['7marks', '7solve']; }
 
 function bill_dir(array $CFG): ?string {
     // NOTE: ?? does not catch an EMPTY string, and an unusable dir would silently

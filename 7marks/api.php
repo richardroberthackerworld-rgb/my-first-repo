@@ -28,7 +28,7 @@ $CFG = require $cfgFile;
 require_once __DIR__ . '/billing.php';
 
 /* which app is billing this request (7Solve and 7Marks bill separately) */
-$APP = $CFG['app'] ?? '7q';
+$APP = $CFG['app'] ?? '7marks';
 
 /* ---------- where each provider lives (fixed — never built from user input) ---------- */
 $ENDPOINTS = [
