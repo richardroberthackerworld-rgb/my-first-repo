@@ -108,3 +108,9 @@ ServerSignature Off
   AddOutputFilterByType DEFLATE text/html text/plain text/css application/javascript application/json image/svg+xml
 </IfModule>
 
+
+# ---- retired slug: the app is 7Marks now, not 7Q ----
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^blog/how-to-generate-question-papers-with-7q/?$ /blog/how-to-generate-question-papers-with-7marks [R=301,L]
+</IfModule>
