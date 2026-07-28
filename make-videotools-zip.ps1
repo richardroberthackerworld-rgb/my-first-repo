@@ -70,7 +70,12 @@ $paths = @('', 'watermark-remover', 'compressor', 'bg-remover', 'toolkit', 'pric
            'editor/', 'blog/', 'blog/how-to-remove-watermark-from-video',
            'blog/compress-video-for-whatsapp-instagram',
            'blog/remove-video-background-without-green-screen',
-           'blog/free-online-video-editor-clipcut')
+           'blog/free-online-video-editor-clipcut',
+           'blog/add-subtitles-captions-to-video-free',
+           'blog/best-video-sizes-for-social-media',
+           'blog/how-to-make-a-youtube-intro-free',
+           'blog/add-music-to-video-free',
+           'blog/convert-video-to-gif-guide')
 $sb = New-Object System.Text.StringBuilder
 [void]$sb.AppendLine('<?xml version="1.0" encoding="UTF-8"?>')
 [void]$sb.AppendLine('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
