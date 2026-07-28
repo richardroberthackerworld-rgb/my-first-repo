@@ -17,10 +17,16 @@ Design doc, with the full 14-task plan and the reasoning behind every decision:
 | T2 donor sheet | `sheet.html`, `src/sheet.js` | done |
 | T3 ingest | `tools/ingest.html`, `src/capture.js` | done |
 | T4 tracer | `src/trace.js` | done |
-| T11 harness | `test.html` | partial — covers T1-T4 only |
+| T5 layout | `src/layout.js` | done |
+| T6 realism | `src/realism.js` | done |
+| T7 preview | `app.html`, `src/render.js` | done |
+| T11 harness | `test.html` | partial — covers T1-T7 |
 
-**72 tests green.** Everything else (layout, realism, render, export, app, payments,
-OCR, key proxy, infra) is not started.
+**96 tests green.** Not started: T8 PDF export, T9 app polish, T10 payments,
+T12 infra, T13 OCR, T14 key proxy.
+
+You can type text and see it in a captured hand today. Printing works through the
+browser's own print dialog; the dedicated PDF exporter (T8) is not built.
 
 ## Running it
 
@@ -31,9 +37,14 @@ npx serve -p 3130 .
 ES modules need a real origin, so `file://` will not work. There is no build step and
 no dependencies.
 
+- App: <http://localhost:3130/hand/app.html> — click **Demo style** to try it instantly
 - Tests: <http://localhost:3130/hand/test.html>
 - Donor sheet: <http://localhost:3130/hand/sheet.html>
 - Ingest: <http://localhost:3130/hand/tools/ingest.html>
+
+The demo style renders a serif typeface through the real pipeline. It exercises
+layout but is **not handwriting and will not fool anyone** — it exists so the app is
+usable before a donor has been scanned.
 
 ## Capturing a donor
 
@@ -70,6 +81,27 @@ sheets still leaves a usable style.
 phone-photo design where the sheet itself might be tilted. After fiducial rectification
 the sheet is already square, and any slant left in a glyph is the donor's own italic
 hand. Removing it would destroy the exact thing being captured.
+
+## Why the wobble looks the way it does
+
+Uniformity gets machine-written pages caught, but the obvious fix is also wrong.
+Rolling an independent random number per letter produces a *jitter texture* that reads
+as machine-made in a different way. Real handwriting **drifts**: slant, size and
+baseline wander together and slowly, because they all come from one hand getting
+tired, speeding up, or shifting grip.
+
+So `realism.js` runs one smoothed random walk per hand and everything reads from it.
+There is a test asserting the lag-1 autocorrelation stays above 0.75, and a companion
+test proving independent noise *fails* that same check — so the test measures something
+real rather than passing by construction.
+
+Two smaller rules that matter more than they look:
+
+- **The same sample is never used twice in a row for one character.** A doubled letter
+  (`ll`, `oo`, `ee`) rendered with two identical shapes is the single most obvious tell
+  on a page, and English is full of them.
+- **Everything derives from a seed stored with the document.** Without it the preview
+  disagrees with the export and reopening a file changes the handwriting.
 
 ## The two decisions this code exists to enforce
 

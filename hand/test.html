@@ -58,6 +58,9 @@ import {
   redChannel, luminance, otsuThreshold, binarize, findFiducials,
   solveHomography, applyHomography, quadIsSane, warpGray, cropCell, despeckle
 } from './src/capture.js';
+import { makeRng, hashSeed, makeDrift, makeVariantPicker, DEFAULT_JITTER } from './src/realism.js';
+import { layout, styleScale, DEFAULT_PAGE } from './src/layout.js';
+import { buildGlyphDefs, pageSVG, variantPath } from './src/render.js';
 
 /* ---------- tiny assertion harness ---------- */
 const out = document.getElementById('visual');
@@ -1025,6 +1028,283 @@ test('an extracted glyph sits on the baseline it was drawn against', () => {
      near the bottom of the stored glyph, not off the end of it. */
   ok(v.baseline > 0, 'baseline fell above the stored glyph');
   ok(v.baseline <= v.h + 4, `baseline (${v.baseline}) fell below the glyph (h=${v.h})`);
+});
+
+/* ================= T6: realism ================= */
+section('T6 — seeded randomness');
+
+test('the same seed produces the same sequence, always', () => {
+  const a = makeRng(42), b = makeRng(42);
+  for (let i = 0; i < 50; i++) eq(a(), b(), 'divergence at draw ' + i);
+});
+
+test('different seeds produce different sequences', () => {
+  const a = makeRng(1), b = makeRng(2);
+  let same = 0;
+  for (let i = 0; i < 50; i++) if (a() === b()) same++;
+  ok(same < 3, 'seeds 1 and 2 produced ' + same + ' identical draws');
+});
+
+test('drift is CORRELATED, not per-letter noise — the whole point', () => {
+  const rand = makeRng(7);
+  const d = makeDrift(rand, { smoothness: 0.9 });
+  const seq = [];
+  for (let i = 0; i < 4000; i++) seq.push(d.step().slant);
+
+  /* Lag-1 autocorrelation. Independent noise sits near 0; a hand that drifts
+     sits high. If this ever drops, the realism layer has silently regressed
+     into the jitter texture it exists to avoid. */
+  const mean = seq.reduce((a, b) => a + b, 0) / seq.length;
+  let num = 0, den = 0;
+  for (let i = 1; i < seq.length; i++) num += (seq[i] - mean) * (seq[i - 1] - mean);
+  for (let i = 0; i < seq.length; i++) den += (seq[i] - mean) ** 2;
+  const acf = num / den;
+  ok(acf > 0.75, 'lag-1 autocorrelation was ' + acf.toFixed(3) + ', expected > 0.75 (drift, not noise)');
+});
+
+test('independent noise would FAIL that same test — proving it measures something', () => {
+  const rand = makeRng(7);
+  const seq = [];
+  for (let i = 0; i < 4000; i++) seq.push(rand() * 2 - 1);
+  const mean = seq.reduce((a, b) => a + b, 0) / seq.length;
+  let num = 0, den = 0;
+  for (let i = 1; i < seq.length; i++) num += (seq[i] - mean) * (seq[i - 1] - mean);
+  for (let i = 0; i < seq.length; i++) den += (seq[i] - mean) ** 2;
+  ok(Math.abs(num / den) < 0.1, 'independent noise should have near-zero autocorrelation');
+});
+
+test('drift is hard-bounded — one letter can never fly off the line', () => {
+  const d = makeDrift(makeRng(3), { smoothness: 0.92 });
+  let max = 0;
+  for (let i = 0; i < 40000; i++) {
+    const s = d.step();
+    max = Math.max(max, Math.abs(s.size), Math.abs(s.slant), Math.abs(s.base));
+  }
+  ok(max <= d.clampAt + 1e-9, 'drift reached ' + max.toFixed(2) + ' sigma, clamp is ' + d.clampAt);
+  ok(max > 1.5, 'drift only reached ' + max.toFixed(2) + ' sigma — that is too tame to look human');
+});
+
+test('a new line partly resets the hand but keeps fatigue', () => {
+  const d = makeDrift(makeRng(11), { smoothness: 0.95 });
+  for (let i = 0; i < 500; i++) d.step();
+  const before = d.peek();
+  d.newLine();
+  const after = d.peek();
+  eq(after.base, 0, 'baseline resets fully at the margin');
+  ok(Math.abs(after.slant) < Math.abs(before.slant) + 1e-9, 'slant should relax, not grow');
+});
+
+test('the same variant is never used twice in a row for one character', () => {
+  const pick = makeVariantPicker(makeRng(5));
+  let prev = -1;
+  for (let i = 0; i < 500; i++) {
+    const v = pick('l', 5);
+    ok(v !== prev, 'repeated variant ' + v + ' at draw ' + i + ' — "ll" would show two identical letters');
+    ok(v >= 0 && v < 5, 'variant index out of range');
+    prev = v;
+  }
+});
+
+test('a single-variant character does not break the picker', () => {
+  const pick = makeVariantPicker(makeRng(5));
+  for (let i = 0; i < 10; i++) eq(pick('q', 1), 0);
+});
+
+/* ================= T5: layout ================= */
+section('T5 — layout');
+
+/* A style built from a real typeface, through the same makeVariant() path a
+   scan takes. Not handwriting, but the right shape of data for layout. */
+function fontStyle(chars = 'abcdefghijklmnopqrstuvwxyz ., ', variants = 3) {
+  const style = createStyle('test font style', { id: 'tf' });
+  const S = 90, cv = document.createElement('canvas');
+  cv.width = S; cv.height = S;
+  const ctx = cv.getContext('2d', { willReadFrequently: true });
+  const faces = ['46px Georgia, serif', '44px "Times New Roman", serif', '48px Georgia, serif'];
+  for (const ch of new Set(chars.replace(/ /g, ''))) {
+    for (let k = 0; k < variants; k++) {
+      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, S, S);
+      ctx.fillStyle = '#000'; ctx.font = faces[k % faces.length];
+      ctx.textBaseline = 'alphabetic';
+      const m = ctx.measureText(ch);
+      ctx.fillText(ch, (S - m.width) / 2, 62);
+      const d = ctx.getImageData(0, 0, S, S).data;
+      const mask = new Uint8Array(S * S);
+      for (let i = 0, p = 0; p < mask.length; i += 4, p++) mask[p] = d[i] < 128 ? 1 : 0;
+      try { addVariant(style, ch, makeVariant({ mask, w: S, h: S, baseline: 62, xheight: 62 - 22 })); }
+      catch (e) { /* glyph the face cannot draw */ }
+    }
+  }
+  return style;
+}
+
+const TS = fontStyle();
+const LOREM = 'the quick brown fox jumps over the lazy dog and then does it again because that is what foxes do on a long afternoon in the sun. ';
+
+test('styleScale uses the median x-height and rejects an empty style', () => {
+  const s = styleScale(TS, 2.6);
+  ok(s > 0 && Number.isFinite(s), 'scale was ' + s);
+  throws(() => styleScale(createStyle('empty'), 2.6), /no usable x-height/);
+});
+
+test('lays text out into pages and glyphs', () => {
+  const doc = layout(LOREM.repeat(6), TS, { seed: 1 });
+  ok(doc.stats.pages >= 1, 'expected at least one page');
+  ok(doc.stats.glyphs > 100, 'expected plenty of glyphs, got ' + doc.stats.glyphs);
+  eq(doc.missing.length, 0, 'the test style covers this text');
+});
+
+test('the same seed reproduces the page exactly', () => {
+  const a = layout(LOREM, TS, { seed: 99 });
+  const b = layout(LOREM, TS, { seed: 99 });
+  const flat = d => JSON.stringify(d.pages.map(p => p.lines.map(l => l.glyphs.map(g => [g.ch, g.vi, r3(g.ax), r3(g.ay), r3(g.s), r3(g.rot)]))));
+  eq(flat(a), flat(b), 'identical seeds must give identical pages, or the preview will not match the print');
+});
+function r3(v) { return Math.round(v * 1000) / 1000; }
+
+test('a different seed gives a visibly different page', () => {
+  const a = layout(LOREM, TS, { seed: 1 });
+  const b = layout(LOREM, TS, { seed: 2 });
+  const ga = a.pages[0].lines.flatMap(l => l.glyphs);
+  const gb = b.pages[0].lines.flatMap(l => l.glyphs);
+  let diff = 0;
+  for (let i = 0; i < Math.min(ga.length, gb.length); i++) {
+    if (ga[i].vi !== gb[i].vi || Math.abs(ga[i].rot - gb[i].rot) > 0.01) diff++;
+  }
+  ok(diff > ga.length * 0.3, 'only ' + diff + ' of ' + ga.length + ' glyphs differed between seeds');
+});
+
+test('no glyph is placed past the right margin', () => {
+  const P = DEFAULT_PAGE;
+  const doc = layout(LOREM.repeat(4), TS, { seed: 4 });
+  const limit = P.pageW - P.marginRight;
+  let worst = 0;
+  for (const page of doc.pages) {
+    for (const line of page.lines) {
+      for (const g of line.glyphs) {
+        const v = TS.glyphs[g.ch][g.vi];
+        worst = Math.max(worst, g.ax + v.w * g.s);
+      }
+    }
+  }
+  /* Line-end compression is allowed to run a little long, but only a little. */
+  ok(worst <= limit + (P.pageW - P.marginLeft - P.marginRight) * 0.09,
+    'text ran to ' + worst.toFixed(1) + 'mm, right margin is at ' + limit + 'mm');
+});
+
+test('baselines sit on the ruling and glyphs stay near their line', () => {
+  const doc = layout(LOREM.repeat(3), TS, { seed: 6, linePitch: 8.5 });
+  const P = doc.settings;
+  /* The drift is clamped at 3 sigma, so the worst a glyph may stray is
+     3 x baselineMm. Anything past that is a bug, not a flourish. */
+  const tolerance = DEFAULT_JITTER.baselineMm * 3 + 1e-9;
+  let worst = 0;
+  for (const page of doc.pages) {
+    for (const line of page.lines) {
+      const n = (line.baselineY - P.marginTop) / P.linePitch;
+      near(n, Math.round(n), 1e-9, 'a line baseline fell off the ruling');
+      for (const g of line.glyphs) worst = Math.max(worst, Math.abs(g.ay - line.baselineY));
+    }
+  }
+  ok(worst <= tolerance, `a glyph strayed ${worst.toFixed(3)}mm from its line, limit is ${tolerance.toFixed(3)}mm`);
+  ok(worst > 0.05, 'no glyph moved at all — the baseline wobble is not being applied');
+});
+
+test('pages break at the line count the page can hold', () => {
+  const doc = layout(LOREM.repeat(30), TS, { seed: 8 });
+  ok(doc.stats.pages > 1, 'this much text should need more than one page, got ' + doc.stats.pages);
+  for (const page of doc.pages.slice(0, -1)) {
+    eq(page.lines.length, doc.stats.linesPerPage, 'a full page should be full');
+  }
+  const last = doc.pages[doc.pages.length - 1];
+  ok(last.lines.length <= doc.stats.linesPerPage, 'the last page must not overflow');
+});
+
+test('characters the style lacks are reported and skipped, never thrown', () => {
+  const doc = layout('abc कख xyz', TS, { seed: 1 });
+  ok(doc.missing.length > 0, 'Devanagari should be reported missing');
+  ok(doc.stats.glyphs > 0, 'the renderable characters should still lay out');
+  const chars = doc.pages[0].lines.flatMap(l => l.glyphs).map(g => g.ch).join('');
+  ok(!/[ऀ-ॿ]/.test(chars), 'a missing character leaked into the output');
+});
+
+test('empty and whitespace-only text produce no glyphs and no crash', () => {
+  eq(layout('', TS, { seed: 1 }).stats.glyphs, 0);
+  eq(layout('   \n\n  ', TS, { seed: 1 }).stats.glyphs, 0);
+});
+
+test('a word longer than the line does not loop forever', () => {
+  const doc = layout('a'.repeat(400), TS, { seed: 1 });
+  ok(doc.stats.glyphs === 400, 'all 400 letters should be placed, got ' + doc.stats.glyphs);
+  ok(doc.stats.pages < 20, 'runaway pagination: ' + doc.stats.pages + ' pages');
+});
+
+test('writing size actually changes the page count', () => {
+  const small = layout(LOREM.repeat(6), TS, { seed: 3, xHeightMm: 2.0 });
+  const big = layout(LOREM.repeat(6), TS, { seed: 3, xHeightMm: 3.6 });
+  ok(big.stats.pages >= small.stats.pages, 'bigger writing should need at least as many pages');
+  ok(big.scale > small.scale, 'scale should track the requested x-height');
+});
+
+/* ================= T7: render ================= */
+section('T7 — render');
+
+test('glyph shapes are defined once and reused', () => {
+  const doc = layout(LOREM.repeat(6), TS, { seed: 2 });
+  const defs = buildGlyphDefs(doc, TS);
+  ok(defs.count <= 26 * 3 + 4, 'more definitions (' + defs.count + ') than the style has variants');
+  ok(doc.stats.glyphs > defs.count * 5,
+    `${doc.stats.glyphs} placements should reuse ${defs.count} shapes — that reuse is what keeps the PDF small`);
+});
+
+test('a page emits one <use> per glyph and no NaN', () => {
+  const doc = layout(LOREM, TS, { seed: 2 });
+  const defs = buildGlyphDefs(doc, TS);
+  const svg = pageSVG(doc, TS, 0, defs);
+  const uses = (svg.match(/<use /g) || []).length;
+  eq(uses, doc.pages[0].lines.flatMap(l => l.glyphs).length, 'every glyph must be emitted');
+  ok(!/NaN|Infinity|undefined/.test(svg), 'non-finite value reached the SVG');
+  ok(svg.startsWith('<svg') && svg.endsWith('</svg>'));
+});
+
+test('the transform puts each baseline exactly on its line', () => {
+  const doc = layout('handwriting', TS, { seed: 12, jitter: { baselineMm: 0, slantDeg: 0 } });
+  const defs = buildGlyphDefs(doc, TS);
+  const svg = pageSVG(doc, TS, 0, defs);
+  const host = document.createElement('div');
+  host.style.cssText = 'position:absolute;left:-9999px';
+  host.innerHTML = svg;
+  document.body.appendChild(host);
+  const el = host.querySelector('svg');
+  const line = doc.pages[0].lines.find(l => l.glyphs.length);
+  const uses = [...el.querySelectorAll('use')];
+  /* Walk the transform the browser actually resolved and check where the
+     glyph's own baseline point ended up. */
+  const g = line.glyphs[0];
+  const v = TS.glyphs[g.ch][g.vi];
+  const pt = el.createSVGPoint();
+  pt.x = 0; pt.y = v.baseline;
+  /* The element's OWN transform, in viewBox units. getCTM() would fold in the
+     viewport scale as well (210mm across 794px is a 3.78x factor) and the
+     comparison against millimetre coordinates would be meaningless. */
+  const m = uses[0].transform.baseVal.consolidate().matrix;
+  const out = pt.matrixTransform(m);
+  host.remove();
+  near(out.y, g.ay, 0.05, 'glyph baseline landed off its line');
+  near(out.x, g.ax, 0.05, 'glyph left edge landed off its anchor');
+});
+
+test('ruled background draws one line per available line', () => {
+  const doc = layout('one line', TS, { seed: 1, ruled: true });
+  const svg = pageSVG(doc, TS, 0, buildGlyphDefs(doc, TS));
+  const rules = (svg.match(/<line /g) || []).length;
+  eq(rules, doc.stats.linesPerPage + 1, 'expected one rule per line plus the margin rule');
+});
+
+test('plain paper draws no ruling', () => {
+  const doc = layout('one line', TS, { seed: 1, ruled: false, marginRule: false });
+  const svg = pageSVG(doc, TS, 0, buildGlyphDefs(doc, TS));
+  eq((svg.match(/<line /g) || []).length, 0);
 });
 
 /* ---------- visual check ---------- */

@@ -1,0 +1,324 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>7Hand</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  :root { --bg:#F7F8FC; --fg:#101425; --muted:#5A6072; --line:#E2E6F0; --card:#fff;
+          --accent:#0F766E; --warn:#D97706; --bad:#DC2626; }
+  * { box-sizing:border-box }
+  body { margin:0; background:var(--bg); color:var(--fg);
+         font:15px/1.5 ui-sans-serif,system-ui,'Segoe UI',Roboto,sans-serif }
+  .app { display:grid; grid-template-columns:340px 1fr; min-height:100vh }
+  aside { background:var(--card); border-right:1px solid var(--line); padding:20px; overflow:auto;
+          position:sticky; top:0; height:100vh }
+  h1 { font-size:19px; margin:0 0 2px; letter-spacing:-.4px }
+  .sub { color:var(--muted); font-size:13px; margin:0 0 18px }
+  fieldset { border:0; padding:0; margin:0 0 18px }
+  legend { font:600 11px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace; color:var(--muted);
+           text-transform:uppercase; letter-spacing:1.4px; margin-bottom:8px }
+  label { display:block; font-size:13px; color:var(--muted); margin-bottom:10px }
+  label span { display:flex; justify-content:space-between; margin-bottom:3px }
+  input[type=range] { width:100% }
+  input[type=text], input[type=number], select, textarea {
+    width:100%; font:inherit; padding:8px 10px; border:1px solid #CBD2E0; border-radius:7px; background:#fff }
+  textarea { min-height:170px; resize:vertical; font:14px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace }
+  .row { display:flex; gap:8px; align-items:center }
+  .row > * { flex:1 }
+  button { font:600 14px/1 inherit; padding:10px 14px; border:0; border-radius:7px;
+           background:var(--fg); color:#fff; cursor:pointer }
+  button.ghost { background:#EDF0F7; color:var(--fg) }
+  button:disabled { opacity:.4; cursor:not-allowed }
+  .note { font-size:12.5px; padding:9px 11px; border-radius:7px; margin-bottom:12px; line-height:1.45 }
+  .note.warn { background:#FEF3E2; color:var(--warn) } .note.bad { background:#FDECEC; color:var(--bad) }
+  .note.info { background:#EEF1F8; color:var(--muted) }
+  main { padding:24px; overflow:auto }
+  .bar { display:flex; gap:14px; align-items:center; flex-wrap:wrap; margin-bottom:16px;
+         font-size:13px; color:var(--muted) }
+  .bar b { color:var(--fg) }
+  .pagebox { width:210mm; max-width:100%; aspect-ratio:210/297; margin:0 auto 18px;
+             background:#fff; box-shadow:0 3px 16px rgba(16,20,37,.12); border-radius:2px;
+             display:flex; align-items:center; justify-content:center; color:#C3CADA;
+             font:12px ui-monospace,SFMono-Regular,Menlo,monospace }
+  .pagebox svg { width:100%; height:100%; display:block }
+  @media print {
+    @page { size:A4 portrait; margin:0 }
+    body { background:#fff }
+    aside, .bar { display:none !important }
+    .app { display:block }
+    main { padding:0; overflow:visible }
+    .pagebox { width:210mm; height:297mm; margin:0; box-shadow:none; border-radius:0;
+               page-break-after:always; break-after:page }
+  }
+</style>
+
+<div class="app">
+<aside>
+  <h1>7Hand</h1>
+  <p class="sub">Type it, print it, hand it in.</p>
+
+  <div id="notes"></div>
+
+  <fieldset>
+    <legend>Handwriting</legend>
+    <div class="row" style="margin-bottom:8px">
+      <select id="styleSel"><option value="">No style loaded</option></select>
+    </div>
+    <div class="row">
+      <button class="ghost" id="loadBtn">Load style file</button>
+      <button class="ghost" id="demoBtn">Demo style</button>
+    </div>
+    <input type="file" id="styleFile" accept="application/json" hidden>
+  </fieldset>
+
+  <fieldset>
+    <legend>Text</legend>
+    <textarea id="text" spellcheck="false"></textarea>
+  </fieldset>
+
+  <fieldset>
+    <legend>Page</legend>
+    <label><span>Writing size <b id="xhLbl">2.6 mm</b></span>
+      <input type="range" id="xh" min="1.8" max="4" step="0.1" value="2.6"></label>
+    <label><span>Line spacing <b id="pitchLbl">8.5 mm</b></span>
+      <input type="range" id="pitch" min="6" max="12" step="0.5" value="8.5"></label>
+    <label><span>Slant wobble <b id="slantLbl">1.5°</b></span>
+      <input type="range" id="slant" min="0" max="4" step="0.1" value="1.5"></label>
+    <label><span>Baseline wobble <b id="baseLbl">0.35 mm</b></span>
+      <input type="range" id="base" min="0" max="1.2" step="0.05" value="0.35"></label>
+    <div class="row">
+      <label style="margin:0"><span>Ruled</span>
+        <select id="ruled"><option value="1">Ruled lines</option><option value="0">Plain paper</option></select></label>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Variation</legend>
+    <div class="row">
+      <label style="margin:0"><span>Seed</span><input type="number" id="seed" value="1"></label>
+      <button class="ghost" id="reroll" style="flex:0 0 auto;margin-top:18px">Reroll</button>
+    </div>
+    <p class="note info" style="margin-top:8px">The seed fixes every wobble. Same seed, same page, every time — that is what makes the preview match what prints.</p>
+  </fieldset>
+
+  <button id="print" style="width:100%">Print / Save as PDF</button>
+</aside>
+
+<main>
+  <div class="bar" id="stats">Load a style to begin.</div>
+  <div id="pages"></div>
+</main>
+</div>
+
+<script type="module">
+import { styleFromJSON, createStyle, addVariant, makeVariant, missingChars } from './src/store.js';
+import { layout, DEFAULT_PAGE } from './src/layout.js';
+import { buildGlyphDefs, pageSVG } from './src/render.js';
+import { CHARS } from './src/sheet.js';
+
+const $ = id => document.getElementById(id);
+const styles = new Map();
+let active = null;
+let doc = null, defs = null;
+let observer = null;
+
+const SAMPLE = `Experiment 3: Verification of Ohm's Law
+
+Aim: To verify Ohm's law and determine the resistance of a given wire.
+
+Apparatus: Battery eliminator, ammeter, voltmeter, rheostat, resistance wire, key, connecting wires.
+
+Theory: Ohm's law states that the current flowing through a conductor is directly proportional to the potential difference across its ends, provided the physical conditions remain constant.
+
+Result: The ratio of potential difference to current was found to be constant, verifying Ohm's law.`;
+
+$('text').value = SAMPLE;
+
+/* ---------- styles ---------- */
+
+function addStyle(style) {
+  styles.set(style.id, style);
+  const opt = document.createElement('option');
+  opt.value = style.id;
+  opt.textContent = style.name + ' (' + Object.keys(style.glyphs).length + ' chars)';
+  const sel = $('styleSel');
+  if (sel.options[0] && sel.options[0].value === '') sel.remove(0);
+  sel.appendChild(opt);
+  sel.value = style.id;
+  active = style;
+  render();
+}
+
+$('loadBtn').addEventListener('click', () => $('styleFile').click());
+$('styleFile').addEventListener('change', async e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  try {
+    addStyle(styleFromJSON(await f.text()));
+  } catch (err) {
+    note('bad', 'That style file could not be loaded: ' + err.message);
+  }
+});
+$('styleSel').addEventListener('change', e => { active = styles.get(e.target.value) || null; render(); });
+
+/**
+ * A demo style so the app is usable before anyone has been scanned.
+ * It renders each character in a serif font and pushes it through exactly the
+ * same makeVariant() path a real scan takes, so what you see here is the real
+ * pipeline — just with a typeface standing in for a person. It is NOT
+ * handwriting and will not fool anybody. It exists to exercise layout.
+ */
+$('demoBtn').addEventListener('click', () => {
+  const style = createStyle('Demo (font, not a person)', { id: 'demo' });
+  const S = 120, cv = document.createElement('canvas');
+  cv.width = S; cv.height = S;
+  const ctx = cv.getContext('2d', { willReadFrequently: true });
+  const fonts = ['italic 62px Georgia, serif', 'italic 60px "Times New Roman", serif',
+                 'italic 64px Georgia, serif', 'italic 61px Palatino, serif', 'italic 63px Georgia, serif'];
+  for (const ch of CHARS) {
+    for (let k = 0; k < fonts.length; k++) {
+      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, S, S);
+      ctx.fillStyle = '#000'; ctx.font = fonts[k];
+      ctx.textBaseline = 'alphabetic';
+      const m = ctx.measureText(ch);
+      ctx.fillText(ch, (S - m.width) / 2, 82);
+      const d = ctx.getImageData(0, 0, S, S).data;
+      const mask = new Uint8Array(S * S);
+      for (let i = 0, p = 0; p < mask.length; i += 4, p++) mask[p] = d[i] < 128 ? 1 : 0;
+      try { addVariant(style, ch, makeVariant({ mask, w: S, h: S, baseline: 82, xheight: 82 - 30 })); }
+      catch (e) { /* a character this font cannot draw */ }
+    }
+  }
+  addStyle(style);
+  note('info', 'Demo style loaded. It is a typeface, not a person’s hand — it exercises the layout engine but will not pass as handwriting. Scan a donor with the ingest tool for the real thing.');
+});
+
+/* ---------- notes ---------- */
+function note(kind, text) {
+  const d = document.createElement('div');
+  d.className = 'note ' + kind;
+  d.textContent = text;
+  $('notes').appendChild(d);
+  setTimeout(() => d.remove(), 9000);
+}
+
+/* ---------- render ---------- */
+
+function settings() {
+  return {
+    ...DEFAULT_PAGE,
+    xHeightMm: +$('xh').value,
+    linePitch: +$('pitch').value,
+    ruled: $('ruled').value === '1',
+    seed: (+$('seed').value >>> 0) || 1,
+    jitter: { slantDeg: +$('slant').value, baselineMm: +$('base').value }
+  };
+}
+
+function render() {
+  $('xhLbl').textContent = (+$('xh').value).toFixed(1) + ' mm';
+  $('pitchLbl').textContent = (+$('pitch').value).toFixed(1) + ' mm';
+  $('slantLbl').textContent = (+$('slant').value).toFixed(1) + '°';
+  $('baseLbl').textContent = (+$('base').value).toFixed(2) + ' mm';
+
+  const host = $('pages');
+  if (observer) { observer.disconnect(); observer = null; }
+  host.textContent = '';
+
+  if (!active) { $('stats').textContent = 'Load a style to begin.'; return; }
+
+  const text = $('text').value;
+  const t0 = performance.now();
+  try {
+    doc = layout(text, active, settings());
+  } catch (err) {
+    $('stats').textContent = '';
+    note('bad', 'Layout failed: ' + err.message);
+    return;
+  }
+  defs = buildGlyphDefs(doc, active);
+  const ms = Math.round(performance.now() - t0);
+
+  $('stats').innerHTML =
+    `<span><b>${doc.stats.pages}</b> page${doc.stats.pages === 1 ? '' : 's'}</span>` +
+    `<span><b>${doc.stats.glyphs.toLocaleString()}</b> letters</span>` +
+    `<span><b>${defs.count}</b> distinct shapes reused</span>` +
+    `<span>laid out in <b>${ms} ms</b></span>` +
+    `<span>seed <b>${doc.seed}</b></span>`;
+
+  if (doc.missing.length) {
+    note('warn', 'This style has no sample for: ' + doc.missing.join(' ') +
+      ' — those characters are skipped. Ask the donor for another sheet with just those.');
+  }
+
+  /* Windowed preview. A 120-page record is a quarter of a million glyph
+     placements; building them all as DOM at once locks the tab. Boxes are
+     laid out at full size immediately so scrolling is stable, and each page
+     draws itself only when it comes near the viewport. */
+  for (let i = 0; i < doc.pages.length; i++) {
+    const box = document.createElement('div');
+    box.className = 'pagebox';
+    box.dataset.page = i;
+    box.textContent = 'page ' + (i + 1);
+    host.appendChild(box);
+  }
+
+  const draw = box => {
+    if (box.dataset.drawn) return;
+    box.innerHTML = pageSVG(doc, active, +box.dataset.page, defs);
+    box.dataset.drawn = '1';
+  };
+
+  /* Draw the opening pages EAGERLY, before any observer is involved.
+     IntersectionObserver does not fire in a hidden or non-compositing tab —
+     a background tab, some print-to-PDF services, some screenshot tools — and
+     if the only path to drawing a page runs through the observer, the user
+     sits looking at blank rectangles with no error and nothing to click.
+     Windowing is a memory optimisation; it must never be load-bearing for
+     anything appearing on screen at all. */
+  const EAGER = 2;
+  for (let i = 0; i < Math.min(EAGER, host.children.length); i++) draw(host.children[i]);
+
+  if (doc.pages.length > EAGER && 'IntersectionObserver' in window) {
+    observer = new IntersectionObserver(entries => {
+      for (const e of entries) {
+        const i = +e.target.dataset.page;
+        if (e.isIntersecting) draw(e.target);
+        else if (e.target.dataset.drawn && doc.pages.length > 6 && i >= EAGER) {
+          /* Release pages only on long documents. On a short one the churn
+             costs more than the memory it saves. */
+          e.target.innerHTML = 'page ' + (i + 1);
+          delete e.target.dataset.drawn;
+        }
+      }
+    }, { rootMargin: '1200px 0px' });
+    for (const box of host.children) observer.observe(box);
+  } else {
+    /* No observer available: fall back to drawing everything. Slower on a
+       long document, but a slow page beats a blank one. */
+    for (const box of host.children) draw(box);
+  }
+}
+
+/* Printing needs every page present, not just the visible ones. */
+window.addEventListener('beforeprint', () => {
+  if (!doc) return;
+  for (const box of $('pages').children) {
+    if (!box.dataset.drawn) {
+      box.innerHTML = pageSVG(doc, active, +box.dataset.page, defs);
+      box.dataset.drawn = '1';
+    }
+  }
+});
+
+/* ---------- wiring ---------- */
+let t = null;
+const debounced = () => { clearTimeout(t); t = setTimeout(render, 220); };
+$('text').addEventListener('input', debounced);
+for (const id of ['xh', 'pitch', 'slant', 'base']) $(id).addEventListener('input', debounced);
+$('ruled').addEventListener('change', render);
+$('seed').addEventListener('change', render);
+$('reroll').addEventListener('click', () => { $('seed').value = Math.floor(Math.random() * 1e6) + 1; render(); });
+$('print').addEventListener('click', () => window.print());
+
+render();
+</script>
