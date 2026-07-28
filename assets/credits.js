@@ -21,12 +21,21 @@
   function token() { try { return localStorage.getItem('7by_token'); } catch (e) { return null; } }
   function apiOn() { return !!window.API_BASE && !!token(); }
 
-  async function api(path, body, method) {
+  // Routes through the shared 7By Account Hub (api.php?action=NAME). Only the two
+  // endpoints this meter needs are mapped; product = this tool's credit wallet.
+  function product() { return window.HUB_PRODUCT || 'vocalremover'; }
+  async function api(path, body) {
+    let action, payload = Object.assign({}, body || {});
+    if (path === '/api/me') { action = 'me'; payload.tool = product(); }
+    else if (path === '/api/credits/spend') { action = 'consume'; payload = { count: (body && body.amount) || 1, product: product() }; }
+    else { action = path.replace(/^\//, ''); }
     const headers = { 'Content-Type': 'application/json' };
-    const t = token(); if (t) headers['Authorization'] = 'Bearer ' + t;
-    const r = await fetch(window.API_BASE + path, { method: method || 'POST', headers, body: body ? JSON.stringify(body) : undefined });
+    const t = token(); if (t) { headers['Authorization'] = 'Bearer ' + t; payload.token = t; }
+    const base = window.API_BASE || '';
+    const url = base + (base.indexOf('?') > -1 ? '&' : '?') + 'action=' + encodeURIComponent(action);
+    const r = await fetch(url, { method: 'POST', headers, body: JSON.stringify(payload) });
     let d = {}; try { d = await r.json(); } catch (e) {}
-    if (!r.ok) { const err = new Error(d.error || ('HTTP ' + r.status)); err.status = r.status; err.data = d; throw err; }
+    if (!r.ok || d.ok === false) { const err = new Error(d.error || ('HTTP ' + r.status)); err.status = r.status; err.data = d; throw err; }
     return d;
   }
 
@@ -57,7 +66,7 @@
     // Pull the authoritative balance from the server (call on load + after login/payment).
     async sync() {
       if (!apiOn()) return this.balance();
-      try { const d = await api('/api/me', null, 'GET'); if (d.user && typeof d.user.credits === 'number') setSrv(d.user.credits); }
+      try { const d = await api('/api/me', null); if (d.user && typeof d.user.credits === 'number') setSrv(d.user.credits); }
       catch (e) { /* keep cached value; if the session is invalid the auth layer clears it */ }
       return this.balance();
     },

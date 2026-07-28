@@ -19,6 +19,14 @@
     if (blockCombo || blockDevtools) e.preventDefault();
   });
 })();
+/* The site is light-theme only — any previously stored theme preference is cleared so
+   an old 'dark' value can't linger in localStorage and fight the stylesheet. */
+(function clearLegacyTheme(){
+  try{
+    document.documentElement.removeAttribute('data-theme');
+    localStorage.removeItem('7by_theme');
+  }catch(e){}
+})();
 function injectLayout(root = '') {
   // Inject small nav-home style once
   if (!document.getElementById('layout-extra-css')) {
@@ -44,14 +52,11 @@ function injectLayout(root = '') {
   const toolsMenu = `
     <a href="${root}tools/vocal-remover" class="nav-dd-item"><span class="nav-dd-ico">🎤</span>Vocal Remover</a>
     <a href="${root}tools/stem-splitter" class="nav-dd-item"><span class="nav-dd-ico">🎛️</span>Stem Splitter</a>
+    <a href="${root}tools/noise-remover" class="nav-dd-item"><span class="nav-dd-ico">🔇</span>Noise Remover</a>
     <a href="${root}tools/audio-cutter" class="nav-dd-item"><span class="nav-dd-ico">✂️</span>Audio Cutter</a>
     <a href="${root}tools/song-joiner" class="nav-dd-item"><span class="nav-dd-ico">🔗</span>Song Joiner</a>
-    <a href="${root}tools/noise-remover" class="nav-dd-item"><span class="nav-dd-ico">🔇</span>Noise Remover</a>
     <a href="${root}tools/pitch-shifter" class="nav-dd-item"><span class="nav-dd-ico">🎵</span>Pitch Shifter</a>
-    <a href="${root}tools/audio-converter" class="nav-dd-item"><span class="nav-dd-ico">🔄</span>Audio Converter</a>
-    <a href="${root}tools/drum-pads" class="nav-dd-item"><span class="nav-dd-ico">🥁</span>Drum Pads</a>
-    <a href="${root}tools/temp-mail" class="nav-dd-item"><span class="nav-dd-ico">📧</span>Temp Mail</a>
-    <a href="${root}tools/resume-builder" class="nav-dd-item"><span class="nav-dd-ico">📄</span>Resume Builder</a>`;
+    <a href="${root}tools/audio-converter" class="nav-dd-item"><span class="nav-dd-ico">🔄</span>Audio Converter</a>`;
 
   const nav = `
 <nav>
@@ -88,7 +93,7 @@ function injectLayout(root = '') {
     <button class="mnav-x" onclick="closeMobileMenu()">✕</button>
   </div>
   <button class="btn btn-c btn-full" id="mnav-auth-btn" style="margin-bottom:6px" onclick="closeMobileMenu();openAuth('signin')">Sign In / Sign Up</button>
-  <a href="${root}pricing" class="btn btn-m btn-full" style="margin-bottom:14px">Get Pro ⚡</a>
+  <a href="${root}pricing" class="btn btn-m btn-full mnav-getpro" style="margin-bottom:14px">Get Pro ⚡</a>
   <a href="https://7by.in/" class="nav-alltools nav-alltools-block" onclick="closeMobileMenu()"><span class="nav-alltools-dot"></span>All Tools by 7By</a>
   <div class="mnav-label">Tools</div>
   ${toolsMenu.replace(/nav-dd-item/g,'mnav-item')}
@@ -107,9 +112,9 @@ function injectLayout(root = '') {
     <div class="foot-grid">
       <div class="foot-brand">
         <a href="https://7by.in/" class="logo"><img src="${root}assets/logo-mark.png" class="logo-mark" alt="7By.in"></a>
-        <p>AI-powered audio tools that run entirely in your browser. Free to use, private by design. No uploads, no servers.</p>
+        <p>AI-powered audio tools from 7By.in. Free to use, private by design, and built for people who work with audio.</p>
         <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
-          <span class="badge bc">Local Processing</span>
+          <span class="badge bc">Instant Results</span>
           <span class="badge bg">Privacy First</span>
         </div>
       </div>
@@ -118,14 +123,11 @@ function injectLayout(root = '') {
         <ul>
           <li><a href="${root}tools/vocal-remover">Vocal Remover</a></li>
           <li><a href="${root}tools/stem-splitter">Stem Splitter</a></li>
+          <li><a href="${root}tools/noise-remover">Noise Remover</a></li>
           <li><a href="${root}tools/audio-cutter">Audio Cutter</a></li>
           <li><a href="${root}tools/song-joiner">Song Joiner</a></li>
-          <li><a href="${root}tools/noise-remover">Noise Remover</a></li>
           <li><a href="${root}tools/pitch-shifter">Pitch Shifter</a></li>
           <li><a href="${root}tools/audio-converter">Audio Converter</a></li>
-          <li><a href="${root}tools/drum-pads">Drum Pads</a></li>
-          <li><a href="${root}tools/temp-mail">Temp Mail</a></li>
-          <li><a href="${root}tools/resume-builder">Resume Builder</a></li>
         </ul>
       </div>
       <div class="foot-col">
@@ -175,7 +177,7 @@ function injectLayout(root = '') {
     <h3>You're out of credits</h3>
     <p>AI Vocal Remover &amp; Stem Splitter use <strong>credits</strong> (10 per song). Top up with a plan — every other 7By tool stays free &amp; unlimited.</p>
     <div style="display:flex;flex-direction:column;gap:10px">
-      <a href="${root}pricing" class="btn btn-m btn-lg btn-full" onclick="closeModal()">Get 20,000 credits — ₹299/year</a>
+      <a href="${root}pricing" class="btn btn-m btn-lg btn-full" onclick="closeModal()">Get 20,000 credits — ₹499/year</a>
       <a href="${root}pricing" class="btn btn-ghost btn-full" onclick="closeModal()">See all plans</a>
     </div>
     <button class="modal-close" onclick="closeModal()">Maybe later</button>
@@ -272,20 +274,29 @@ function injectAuthStyles(){
 .auth-box{background:var(--surf);border:1px solid var(--bord);border-radius:24px;padding:32px 28px;width:100%;max-width:400px;position:relative;box-shadow:0 30px 80px -30px #000}
 .auth-x{position:absolute;top:16px;right:16px;background:none;border:0;color:var(--mut);font-size:16px;cursor:pointer}
 .auth-logo{display:flex;justify-content:center;margin-bottom:14px}
-.auth-logo .logo-mark{width:48px;height:48px;padding:6px;border-radius:12px}
+.auth-logo .logo-mark{width:52px;height:52px;padding:6px;border-radius:14px}
 .auth-box h3{text-align:center;font-size:22px;margin-bottom:6px}
 .auth-sub{text-align:center;color:var(--mut);font-size:13px;margin-bottom:22px}
-.auth-google{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#1a1a1a;border:0;border-radius:12px;padding:13px;font-family:'Outfit',sans-serif;font-weight:600;font-size:14px;cursor:pointer;transition:opacity .2s;pointer-events:none}
+.auth-google{position:relative;overflow:hidden;width:100%;display:flex;align-items:center;justify-content:center;gap:10px;
+  background:#fff;color:#1a1a1a;border:1px solid rgba(20,20,31,.14);border-radius:12px;padding:13px;
+  font-family:'Outfit',sans-serif;font-weight:600;font-size:14px;cursor:pointer;pointer-events:none;
+  box-shadow:0 1px 3px rgba(20,20,31,.08);transition:transform .18s,box-shadow .18s}
+.auth-google::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(100deg,transparent 32%,rgba(66,133,244,.14) 50%,transparent 68%);
+  transform:translateX(-130%);animation:gShine 4.5s ease-in-out infinite}
+@keyframes gShine{0%,70%{transform:translateX(-130%)}100%{transform:translateX(130%)}}
 .g-btn-wrap{position:relative;width:100%}
-.g-btn-wrap:hover .auth-google{opacity:.9}
-.g-overlay{position:absolute;inset:0;overflow:hidden;opacity:0.01;cursor:pointer}
+.g-btn-wrap:hover .auth-google{transform:translateY(-1px);box-shadow:0 6px 18px -6px rgba(66,133,244,.5),0 2px 6px rgba(20,20,31,.1)}
+.g-overlay{position:absolute;inset:0;overflow:hidden;opacity:0.01;cursor:pointer;z-index:2}
 .g-overlay iframe{width:100% !important}
+/* Mobile drawer Get Pro — as chunky as the All Tools pill, not a thin default btn. */
+.mnav-getpro{padding:14px 18px !important;font-size:15px !important;font-weight:800 !important}
 .g-ico{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:conic-gradient(from -45deg,#ea4335,#fbbc05,#34a853,#4285f4,#ea4335);color:#fff;font-weight:800;font-size:12px}
 .auth-or{display:flex;align-items:center;gap:12px;color:var(--dim);font-size:12px;margin:18px 0}
 .auth-or::before,.auth-or::after{content:'';flex:1;height:1px;background:var(--bord)}
 .auth-resend{text-align:center;font-size:12.5px;color:var(--mut);margin:-4px 0 12px}
 .auth-resend a{color:var(--dim);pointer-events:none;text-decoration:none}
-.auth-resend a.ready{color:#00D4FF;pointer-events:auto;cursor:pointer;text-decoration:underline}
+.auth-resend a.ready{color:#0A5C93;font-weight:700;pointer-events:auto;cursor:pointer;text-decoration:underline}
 .auth-in{width:100%;background:var(--s2,#0f1420);border:1px solid var(--bord);border-radius:11px;padding:13px 14px;color:var(--text);font-size:14px;margin-bottom:12px;outline:none;font-family:'Outfit',sans-serif}
 .auth-in:focus{border-color:var(--cyan)}
 .auth-pw{position:relative}
@@ -300,40 +311,76 @@ function injectAuthStyles(){
 .auth-link{color:var(--cyan);font-size:12px;text-decoration:none}
 .auth-switch{text-align:center;font-size:13px;color:var(--mut);margin-top:18px}
 .auth-switch a{color:var(--cyan);text-decoration:none;font-weight:600}
-.nav-user{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--text);background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.25);padding:6px 8px 6px 12px;border-radius:99px;max-width:200px}
+.nav-user{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--text);background:var(--surf);border:1px solid var(--bord);padding:5px 7px 5px 12px;border-radius:99px;max-width:220px;box-shadow:0 1px 3px rgba(20,20,31,.06)}
 .nav-user-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:90px}
-.nav-user-cr{color:var(--cyan);font-weight:700;white-space:nowrap;flex-shrink:0}
-.nav-user-logout{background:rgba(255,255,255,.08);border:0;color:var(--mag);font-size:12px;font-weight:700;padding:4px 9px;border-radius:99px;cursor:pointer;flex-shrink:0}
-.nav-user-logout:hover{background:rgba(255,255,255,.16)}
-@media(max-width:560px){.nav-user{max-width:150px;font-size:12px}.nav-user-name{max-width:60px}}
-.mnav-user{display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.25);border-radius:14px;padding:12px 14px;margin-bottom:14px}
+/* Credit pill — soft iridescent chip, dark ink, with a slow shimmer sweep. */
+.nav-user-cr,.mnav-user-cr{position:relative;overflow:hidden;display:inline-flex;align-items:center;gap:5px;flex-shrink:0;
+  font-weight:800;letter-spacing:.2px;color:#3A2A5A;white-space:nowrap;border-radius:99px;
+  background:linear-gradient(120deg,#E6F6FF 0%,#EFEAFF 48%,#FFE9F5 100%);border:1px solid rgba(124,44,203,.22);
+  box-shadow:0 1px 2px rgba(124,44,203,.12),inset 0 1px 0 rgba(255,255,255,.6)}
+.nav-user-cr{font-size:12px;padding:4px 11px}
+.nav-user-cr::after,.mnav-user-cr::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.65) 50%,transparent 70%);
+  transform:translateX(-130%);animation:crShine 4.5s ease-in-out infinite}
+@keyframes crShine{0%,72%{transform:translateX(-130%)}100%{transform:translateX(130%)}}
+.nav-user-logout{background:rgba(214,0,106,.08);border:0;color:var(--mag);font-size:12px;font-weight:700;padding:5px 11px;border-radius:99px;cursor:pointer;flex-shrink:0}
+.nav-user-logout:hover{background:rgba(214,0,106,.16)}
+@media(max-width:560px){.nav-user{max-width:170px;font-size:12px}.nav-user-name{max-width:60px}}
+.mnav-user{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--surf);border:1px solid var(--bord);border-radius:14px;padding:12px 14px;margin-bottom:14px;box-shadow:0 1px 3px rgba(20,20,31,.06)}
 .mnav-user-main{min-width:0;flex:1}
 .mnav-user-name{overflow-x:auto;overflow-y:hidden;white-space:nowrap;font-size:15px;font-weight:700;scrollbar-width:none;-ms-overflow-style:none}
 .mnav-user-name::-webkit-scrollbar{display:none}
-.mnav-user-cr{display:inline-flex;align-items:center;gap:5px;margin-top:6px;font-size:13px;font-weight:800;letter-spacing:.2px;color:#04121a;
-  background:linear-gradient(135deg,var(--cyan),var(--mag));padding:4px 11px;border-radius:99px;white-space:nowrap}
+.mnav-user-cr{margin-top:7px;font-size:13px;padding:5px 13px}
 @keyframes allToolsPulse{0%,100%{box-shadow:0 0 0 0 rgba(0,212,255,.45)}50%{box-shadow:0 0 0 6px rgba(0,212,255,0)}}
 @keyframes allToolsDot{0%,100%{transform:scale(1)}50%{transform:scale(1.4)}}
-.nav-alltools{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:700;color:#04121a;text-decoration:none;padding:7px 14px;border-radius:99px;
-  background:linear-gradient(135deg,var(--cyan),var(--mag));animation:allToolsPulse 2.4s ease-in-out infinite;white-space:nowrap;transition:transform .15s}
-.nav-alltools:hover{transform:translateY(-1px) scale(1.03)}
-.nav-alltools-dot{width:6px;height:6px;border-radius:50%;background:#04121a;animation:allToolsDot 1.2s ease-in-out infinite}
+/* Light text on a deepened brand gradient — the original bright cyan→magenta could not
+   carry white text legibly, so the stops are darkened enough to pass contrast in both themes. */
+.nav-alltools{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:700;color:#fff;text-decoration:none;padding:7px 14px;border-radius:99px;
+  background:linear-gradient(135deg,#0072A3 0%,#7B2C8F 55%,#B8005C 100%);animation:allToolsPulse 2.4s ease-in-out infinite;white-space:nowrap;transition:transform .15s,filter .15s}
+.nav-alltools:hover{transform:translateY(-1px) scale(1.03);filter:brightness(1.12)}
+.nav-alltools-dot{width:6px;height:6px;border-radius:50%;background:#fff;animation:allToolsDot 1.2s ease-in-out infinite}
 .nav-alltools-block{display:flex;width:100%;justify-content:center;margin-bottom:14px;padding:12px 14px;font-size:14px}
 @media(max-width:960px){.nav-center .nav-alltools{display:none}}
 `;
   document.head.appendChild(s);
 }
-/* ---- config: set these to go live (see server/README.md) ---- */
-window.API_BASE = window.API_BASE || 'https://api.7by.in';   // your live backend (set '' to force offline demo)
+/* ---- config: auth, credits and payments all run through the shared 7By Account
+ * Hub (account.7by.in) so one login works across every 7By tool. This site's
+ * credits live in the hub's "vocalremover" wallet. ---- */
+window.API_BASE = window.API_BASE || 'https://account.7by.in/api.php'; // shared account hub
+window.HUB_PRODUCT = window.HUB_PRODUCT || 'vocalremover';             // this tool's credit wallet
 window.GOOGLE_CLIENT_ID = window.GOOGLE_CLIENT_ID || '795705423816-2ffl53j83vir4mvau9mo4883afqc8khp.apps.googleusercontent.com';     // Google OAuth Web client id
 function _apiOn(){ return !!window.API_BASE; }
 function _token(){ try{ return localStorage.getItem('7by_token'); }catch(e){ return null; } }
+/* The hub exposes one endpoint (api.php?action=NAME) with slightly different field
+ * names than the old standalone backend. This map lets the rest of the site keep
+ * calling the familiar /api/... paths while apiPost() translates each to the hub. */
+const _HUB_ROUTES = {
+  '/api/auth/signup': { action:'signup_start' },
+  '/api/auth/verify': { action:'signup_verify', map:b=>({email:b.email, code:b.otp}) },
+  '/api/auth/login':  { action:'login' },
+  '/api/auth/forgot': { action:'reset_start' },
+  '/api/auth/reset':  { action:'reset_verify', map:b=>({email:b.email, code:b.otp, password:b.newPassword}) },
+  '/api/auth/google': { action:'google' },
+  '/api/me':          { action:'me',      tool:true },
+  '/api/credits/spend':{ action:'consume', map:b=>({count:b.amount||1}), product:true },
+  '/api/pay/order':   { action:'order',   product:true, map:b=>({plan:b.plan, return:location.href}) },
+  '/api/pay/verify':  { action:'verify' },
+  '/api/auth/logout': { action:'logout' }
+};
 async function apiPost(path, body, useAuth){
+  const route = _HUB_ROUTES[path];
+  const action = route ? route.action : path.replace(/^\//,'');
+  let payload = route && route.map ? route.map(body||{}) : Object.assign({}, body||{});
+  if(route && route.product) payload.product = window.HUB_PRODUCT;
+  if(route && route.tool)    payload.tool = window.HUB_PRODUCT;
   const headers={'Content-Type':'application/json'};
-  if(useAuth){ const t=_token(); if(t) headers['Authorization']='Bearer '+t; }
-  const r=await fetch(window.API_BASE+path,{method:'POST',headers,body:JSON.stringify(body||{})});
+  // The hub identifies a signed-in user by the token we were issued at login.
+  const t=_token(); if(t){ headers['Authorization']='Bearer '+t; payload.token=payload.token||t; }
+  const url = window.API_BASE + (window.API_BASE.indexOf('?')>-1?'&':'?') + 'action=' + encodeURIComponent(action);
+  const r=await fetch(url,{method:'POST',headers,body:JSON.stringify(payload)});
   let data={}; try{ data=await r.json(); }catch(e){}
-  if(!r.ok) throw new Error(data.error||('Request failed ('+r.status+')'));
+  if(!r.ok || data.ok===false) throw new Error(data.error||('Request failed ('+r.status+')'));
   return data;
 }
 function togglePw(btn){const i=btn.parentElement.querySelector('input');if(!i)return;const show=i.type==='password';i.type=show?'text':'password';btn.classList.toggle('showing',show);btn.setAttribute('aria-label',show?'Hide password':'Show password');}
