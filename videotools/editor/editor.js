@@ -344,9 +344,56 @@ function buildFilter(g, effect) {
   return f;
 }
 
+/* ---------- keyframes ----------
+   clip.kf holds per-property tracks of {t (local seconds), v}. A property
+   with keyframes overrides that dimension of the motion preset; a property
+   without them keeps the preset. Values: x/y = offset as fraction of the
+   canvas, s = scale multiplier, r = degrees, o = opacity 0..1.            */
+const KF_PROPS = ['x', 'y', 's', 'r', 'o'];
+const KF_DEFAULT = { x: 0, y: 0, s: 1, r: 0, o: 1 };
+const easeInOut = x => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+
+function kfValue(track, lt) {
+  if (!track || !track.length) return undefined;
+  if (lt <= track[0].t) return track[0].v;
+  if (lt >= track[track.length - 1].t) return track[track.length - 1].v;
+  for (let i = 0; i < track.length - 1; i++) {
+    const a = track[i], b = track[i + 1];
+    if (lt >= a.t && lt <= b.t) {
+      const p = (lt - a.t) / Math.max(b.t - a.t, 1e-4);
+      return a.v + (b.v - a.v) * easeInOut(p);
+    }
+  }
+  return track[track.length - 1].v;
+}
+function sampleKf(clip, lt) {
+  if (!clip.kf) return null;
+  let any = false;
+  const out = {};
+  KF_PROPS.forEach(p => {
+    const v = kfValue(clip.kf[p], lt);
+    if (v !== undefined) { out[p] = v; out['has_' + p] = true; any = true; }
+  });
+  return any ? out : null;
+}
+/* toggle a keyframe for one property at the current local time */
+function toggleKeyframe(clip, prop, value) {
+  if (!clip.kf) clip.kf = {};
+  if (!clip.kf[prop]) clip.kf[prop] = [];
+  const track = clip.kf[prop];
+  const lt = clamp(playhead - clip.start, 0, clip.dur);
+  const at = track.findIndex(k => Math.abs(k.t - lt) < 0.03);
+  if (at >= 0) track.splice(at, 1);                 // click on an existing key removes it
+  else { track.push({ t: lt, v: value }); track.sort((a, b) => a.t - b.t); }
+  if (!track.length) delete clip.kf[prop];
+  if (!Object.keys(clip.kf).length) delete clip.kf;
+}
+function clipHasKeys(clip) { return !!(clip.kf && Object.keys(clip.kf).length); }
+
 /* clip-level motion presets (mini keyframe animations, applied around canvas center) */
 function applyMotion(o, clip, lt) {
-  if (!clip.motion || clip.motion === 'none') return;
+  const kf = sampleKf(clip, lt);
+  if ((!clip.motion || clip.motion === 'none') && !kf) return;
   const pr = clamp(lt / Math.max(clip.dur, 0.01), 0, 1);
   let s = 1, tx = 0, ty = 0, rot = 0;
   switch (clip.motion) {
@@ -363,10 +410,62 @@ function applyMotion(o, clip, lt) {
       ty = (Math.cos(lt * 1.7) + Math.cos(lt * 4.1) * 0.5) * PH * 0.006;
       s = 1.035; break;
   }
+  if (kf) {   // keyframes win per-dimension
+    if (kf.has_s) s = kf.s;
+    if (kf.has_x) tx = kf.x * PW;
+    if (kf.has_y) ty = kf.y * PH;
+    if (kf.has_r) rot = kf.r * Math.PI / 180;
+  }
   o.translate(PW / 2 + tx, PH / 2 + ty);
   o.rotate(rot);
   o.scale(s, s);
   o.translate(-PW / 2, -PH / 2);
+}
+
+/* opacity = static clip.opacity × keyframed opacity, applied when the clip
+   is composited onto the main canvas */
+function clipOpacity(clip, t) {
+  let a = (clip.opacity != null ? clip.opacity : 1);
+  const kf = sampleKf(clip, t - clip.start);
+  if (kf && kf.has_o) a *= kf.o;
+  return clamp(a, 0, 1);
+}
+
+/* ---------- masks ---------- */
+const maskTmp = document.createElement('canvas'), maskTmpCtx = maskTmp.getContext('2d');
+function applyMask(o, clip) {
+  const m = clip.mask;
+  if (!m || m.type === 'none') return;
+  if (maskTmp.width !== PW || maskTmp.height !== PH) { maskTmp.width = PW; maskTmp.height = PH; }
+  const g = maskTmpCtx;
+  g.clearRect(0, 0, PW, PH);
+  const cx = (m.x != null ? m.x : 0.5) * PW, cy = (m.y != null ? m.y : 0.5) * PH;
+  const w = (m.w != null ? m.w : 0.6) * PW, h = (m.h != null ? m.h : 0.6) * PH;
+  const feather = (m.feather || 0) * Math.min(PW, PH) * 0.5;
+  g.save();
+  g.filter = feather > 0.5 ? `blur(${feather}px)` : 'none';
+  g.fillStyle = '#fff';
+  if (m.type === 'rect') {
+    g.fillRect(cx - w / 2, cy - h / 2, w, h);
+  } else if (m.type === 'circle') {
+    g.beginPath(); g.ellipse(cx, cy, w / 2, h / 2, 0, 0, Math.PI * 2); g.fill();
+  } else if (m.type === 'linear') {
+    // reveal the lower half, soft edge — angle rotates the split
+    const ang = (m.angle || 0) * Math.PI / 180;
+    const grad = g.createLinearGradient(
+      cx - Math.sin(ang) * PH, cy - Math.cos(ang) * PH,
+      cx + Math.sin(ang) * PH, cy + Math.cos(ang) * PH);
+    const edge = clamp(0.5 - (m.feather || 0.15), 0, 0.49);
+    grad.addColorStop(0, 'rgba(255,255,255,1)');
+    grad.addColorStop(clamp(0.5 - (m.feather || 0.15) * 0.5, 0, 1), 'rgba(255,255,255,1)');
+    grad.addColorStop(clamp(0.5 + (m.feather || 0.15) * 0.5, 0, 1), 'rgba(255,255,255,0)');
+    grad.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = grad; g.fillRect(0, 0, PW, PH);
+  }
+  g.restore();
+  o.globalCompositeOperation = m.invert ? 'destination-out' : 'destination-in';
+  o.drawImage(maskTmp, 0, 0);
+  o.globalCompositeOperation = 'source-over';
 }
 
 function drawClipInto(o, clip, t) {
@@ -494,6 +593,7 @@ function drawClipInto(o, clip, t) {
   applyTempTint(o, clip.grade);
   applyEffect(o, clip, t);
   if (clip.grade.vignette > 0) drawVignette(o, clip.grade.vignette / 100);
+  applyMask(o, clip);
   o.restore();
 }
 
@@ -1430,8 +1530,14 @@ function render(t) {
     const p = clamp((t - B.start) / Math.max(A.transDur, 0.001), 0, 1);
     compositeTransition(A.transition.type, p);
   } else if (acts.length === 1) {
-    drawClipInto(offACtx, acts[0], t);
+    const c = acts[0];
+    drawClipInto(offACtx, c, t);
+    // blend mode + opacity apply when the clip lands on the main canvas
+    ctx.globalCompositeOperation = (c.blend && c.blend !== 'normal') ? c.blend : 'source-over';
+    ctx.globalAlpha = clipOpacity(c, t);
     ctx.drawImage(offA, 0, 0);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
   } else if (vTrack.length === 0 && tTrack.length === 0 && gTrack.length === 0) {
     drawEmptyState();
   }
@@ -1964,7 +2070,9 @@ function buildTrack(trackEl, clips, type) {
     el.style.left = start * pps + 'px';
     el.style.width = Math.max(14, c.dur * pps) + 'px';
     const label = type === 't' ? ('T · ' + c.text.split('\n')[0]) : c.name;
-    el.innerHTML = `<span class="clip-label">${escapeHtml(label)}</span>
+    const badges = (type === 'v' && clipHasKeys(c) ? '<span class="clip-badge" title="Keyframed">◆</span>' : '')
+      + (type === 'v' && c.mask && c.mask.type !== 'none' ? '<span class="clip-badge" title="Masked">⬭</span>' : '');
+    el.innerHTML = `<span class="clip-label">${escapeHtml(label)}</span>${badges}
       <span class="trim-handle trim-l"></span><span class="trim-handle trim-r"></span>`;
     el.addEventListener('pointerdown', e => clipPointerDown(e, c, type, el));
     trackEl.appendChild(el);
@@ -2281,7 +2389,7 @@ canvas.addEventListener('pointerup', () => { dragText = null; });
    ============================================================ */
 const inspector = $('inspector');
 function tabsFor(type) {
-  return type === 'v' ? ['Grade', 'FX', 'Motion', 'Human', 'Trans', 'Clip']
+  return type === 'v' ? ['Grade', 'FX', 'Motion', 'Anim', 'Mask', 'Human', 'Trans', 'Clip']
     : type === 't' ? ['Text', 'Style', 'Effect']
     : type === 'g' ? ['Graphic']
     : ['Audio'];
@@ -2326,6 +2434,8 @@ function renderInspector() {
     if (inspTab === 'Grade') buildGradeTab(body, clip);
     else if (inspTab === 'FX') buildEffectsTab(body, clip);
     else if (inspTab === 'Motion') buildMotionTab(body, clip);
+    else if (inspTab === 'Anim') buildAnimTab(body, clip);
+    else if (inspTab === 'Mask') buildMaskTab(body, clip);
     else if (inspTab === 'Human') buildHumanTab(body, clip);
     else if (inspTab === 'Trans') buildTransitionTab(body, clip);
     else buildClipTab(body, clip);
@@ -2515,6 +2625,131 @@ function buildTransitionTab(body, clip) {
   });
 }
 
+/* a slider with a diamond keyframe toggle, CapCut-style. `prop` is the kf
+   track name; `toKf`/`fromKf` convert between the slider value and the stored
+   keyframe value (e.g. percent <-> fraction). */
+function kfSliderRow(body, clip, label, prop, value, min, max, step, fmt, apply, toKf, fromKf) {
+  const row = document.createElement('div');
+  row.className = 'ctl-row';
+  const hasKeyHere = () => {
+    const lt = clamp(playhead - clip.start, 0, clip.dur);
+    return !!(clip.kf && clip.kf[prop] && clip.kf[prop].some(k => Math.abs(k.t - lt) < 0.05));
+  };
+  const trackActive = () => !!(clip.kf && clip.kf[prop] && clip.kf[prop].length);
+  row.innerHTML = `<div class="ctl-label"><span>${label}</span>
+      <span style="display:flex;align-items:center;gap:8px">
+        <span class="ctl-value"></span>
+        <button class="kf-dot" title="Add / remove keyframe here">◆</button>
+      </span></div>`;
+  const val = row.querySelector('.ctl-value');
+  const dot = row.querySelector('.kf-dot');
+  const input = document.createElement('input');
+  input.type = 'range'; input.min = min; input.max = max; input.step = step; input.value = value;
+  val.textContent = fmt(value);
+  const paint = () => {
+    dot.classList.toggle('on', hasKeyHere());
+    dot.classList.toggle('track', trackActive());
+  };
+  input.addEventListener('input', () => {
+    const v = parseFloat(input.value);
+    val.textContent = fmt(v);
+    apply(v);
+    // if this property is animated, editing writes/updates the key at the playhead
+    if (trackActive()) { toggleKeyframeSet(clip, prop, toKf(v)); paint(); }
+    needsRedraw = true;
+  });
+  input.addEventListener('change', () => commit());
+  dot.addEventListener('click', () => {
+    toggleKeyframe(clip, prop, toKf(parseFloat(input.value)));
+    paint(); needsRedraw = true; commit();
+  });
+  paint();
+  row.appendChild(input);
+  body.appendChild(row);
+  return input;
+}
+/* set (not toggle) the key at the current time — used while dragging a slider
+   on an already-animated property */
+function toggleKeyframeSet(clip, prop, value) {
+  if (!clip.kf) clip.kf = {};
+  if (!clip.kf[prop]) clip.kf[prop] = [];
+  const track = clip.kf[prop];
+  const lt = clamp(playhead - clip.start, 0, clip.dur);
+  const at = track.findIndex(k => Math.abs(k.t - lt) < 0.05);
+  if (at >= 0) track[at].v = value;
+  else { track.push({ t: lt, v: value }); track.sort((a, b) => a.t - b.t); }
+}
+
+function buildAnimTab(body, clip) {
+  sectionLabel(body, '// Keyframe animation');
+  const hint = document.createElement('div');
+  hint.className = 'panel-hint';
+  hint.textContent = 'Move the playhead, set a value, then click ◆ to drop a keyframe. Add a second one further along and the clip animates between them.';
+  body.appendChild(hint);
+
+  if (!clip.kf) clip.kf = null;
+  // current sampled values so a fresh keyframe captures what's on screen
+  const lt = clamp(playhead - clip.start, 0, clip.dur);
+  const cur = sampleKf(clip, lt) || {};
+  const g = v => (v == null ? undefined : v);
+
+  kfSliderRow(body, clip, 'Scale', 's', Math.round((g(cur.s) ?? 1) * 100), 10, 300, 1,
+    v => v + '%', () => { needsRedraw = true; }, v => v / 100);
+  kfSliderRow(body, clip, 'Position X', 'x', Math.round((g(cur.x) ?? 0) * 100), -50, 50, 1,
+    v => v + '%', () => { needsRedraw = true; }, v => v / 100);
+  kfSliderRow(body, clip, 'Position Y', 'y', Math.round((g(cur.y) ?? 0) * 100), -50, 50, 1,
+    v => v + '%', () => { needsRedraw = true; }, v => v / 100);
+  kfSliderRow(body, clip, 'Rotation', 'r', Math.round(g(cur.r) ?? 0), -180, 180, 1,
+    v => v + '°', () => { needsRedraw = true; }, v => v);
+  kfSliderRow(body, clip, 'Opacity', 'o', Math.round((g(cur.o) ?? (clip.opacity ?? 1)) * 100), 0, 100, 1,
+    v => v + '%', () => { needsRedraw = true; }, v => v / 100);
+
+  if (clipHasKeys(clip)) {
+    const n = Object.values(clip.kf).reduce((s, t) => s + t.length, 0);
+    const info = document.createElement('div');
+    info.className = 'panel-hint';
+    info.style.marginTop = '4px';
+    info.textContent = n + ' keyframe' + (n > 1 ? 's' : '') + ' on this clip.';
+    body.appendChild(info);
+    const clr = document.createElement('button');
+    clr.className = 'reset-link';
+    clr.textContent = 'Clear all keyframes';
+    clr.addEventListener('click', () => { clip.kf = null; renderInspector(); needsRedraw = true; commit(); });
+    body.appendChild(clr);
+  }
+}
+
+function buildMaskTab(body, clip) {
+  if (!clip.mask) clip.mask = { type: 'none', x: 0.5, y: 0.5, w: 0.6, h: 0.6, feather: 0.1, invert: false, angle: 0 };
+  const m = clip.mask;
+  sectionLabel(body, '// Shape');
+  chipGrid(body, [
+    { name: 'None', id: 'none' }, { name: 'Rectangle', id: 'rect' },
+    { name: 'Circle', id: 'circle' }, { name: 'Linear', id: 'linear' },
+  ], op => m.type === op.id, op => { m.type = op.id; renderInspector(); });
+
+  if (m.type !== 'none') {
+    if (m.type !== 'linear') {
+      sectionLabel(body, '// Size & position');
+      sliderRow(body, 'Width', Math.round(m.w * 100), 5, 100, 1, v => v + '%', v => { m.w = v / 100; });
+      sliderRow(body, 'Height', Math.round(m.h * 100), 5, 100, 1, v => v + '%', v => { m.h = v / 100; });
+      sliderRow(body, 'Center X', Math.round(m.x * 100), 0, 100, 1, v => v + '%', v => { m.x = v / 100; });
+      sliderRow(body, 'Center Y', Math.round(m.y * 100), 0, 100, 1, v => v + '%', v => { m.y = v / 100; });
+    } else {
+      sectionLabel(body, '// Split');
+      sliderRow(body, 'Center Y', Math.round(m.y * 100), 0, 100, 1, v => v + '%', v => { m.y = v / 100; });
+      sliderRow(body, 'Angle', Math.round(m.angle || 0), 0, 180, 1, v => v + '°', v => { m.angle = v; });
+    }
+    sectionLabel(body, '// Edge');
+    sliderRow(body, 'Feather', Math.round((m.feather || 0) * 100), 0, 60, 1, v => v + '%', v => { m.feather = v / 100; });
+    const inv = document.createElement('label');
+    inv.className = 'check-row';
+    inv.innerHTML = `<input type="checkbox" ${m.invert ? 'checked' : ''}> Invert (hide the shape instead)`;
+    inv.querySelector('input').addEventListener('change', e => { m.invert = e.target.checked; needsRedraw = true; commit(); });
+    body.appendChild(inv);
+  }
+}
+
 function buildClipTab(body, clip) {
   sectionLabel(body, '// Framing');
   chipGrid(body, [{ name: 'Fit (whole image)', id: 'fit' }, { name: 'Fill (crop to frame)', id: 'fill' }],
@@ -2525,7 +2760,16 @@ function buildClipTab(body, clip) {
   sliderRow(body, 'Crop right', Math.round(clip.crop.r * 100), 0, 45, 1, v => v + '%', v => { clip.crop.r = v / 100; });
   sliderRow(body, 'Crop top', Math.round(clip.crop.t * 100), 0, 45, 1, v => v + '%', v => { clip.crop.t = v / 100; });
   sliderRow(body, 'Crop bottom', Math.round(clip.crop.b * 100), 0, 45, 1, v => v + '%', v => { clip.crop.b = v / 100; });
+  sectionLabel(body, '// Appearance');
+  sliderRow(body, 'Opacity', Math.round((clip.opacity != null ? clip.opacity : 1) * 100), 0, 100, 1, v => v + '%', v => { clip.opacity = v / 100; });
+  const opHint = document.createElement('div');
+  opHint.className = 'panel-hint';
+  opHint.style.marginTop = '2px';
+  opHint.textContent = 'Tip: keyframe opacity in the Anim tab for fade-in / fade-out.';
+  body.appendChild(opHint);
+
   if (clip.kind === 'video') {
+    sectionLabel(body, '// Timing');
     sliderRow(body, 'Speed', clip.speed, 0.25, 3, 0.05, v => v.toFixed(2) + '×', v => {
       const srcSpan = clip.dur * clip.speed;
       clip.speed = v;
@@ -2534,6 +2778,7 @@ function buildClipTab(body, clip) {
     });
     sliderRow(body, 'Volume', Math.round(clip.volume * 100), 0, 100, 1, v => v + '%', v => { clip.volume = v / 100; });
   } else {
+    sectionLabel(body, '// Timing');
     sliderRow(body, 'Duration', clip.dur, 0.5, 30, 0.1, v => v.toFixed(1) + 's', v => { clip.dur = v; renderTimeline(); });
   }
 }
