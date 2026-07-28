@@ -66,7 +66,7 @@ Put-Text $pricing (Join-Path $sub 'pricing.html')
 Put-Text "google.com, pub-8250159057339426, DIRECT, f08c47fec0942fa0`n" (Join-Path $sub 'ads.txt')
 Put-Text "User-agent: *`nAllow: /`n`nSitemap: https://$Subdomain/sitemap.xml`n" (Join-Path $sub 'robots.txt')
 
-$paths = @('', 'watermark-remover', 'compressor', 'bg-remover', 'image-watermark', 'toolkit', 'pricing',
+$paths = @('', 'watermark-remover', 'compressor', 'bg-remover', 'toolkit', 'pricing',
            'editor/', 'blog/', 'blog/how-to-remove-watermark-from-video',
            'blog/compress-video-for-whatsapp-instagram',
            'blog/remove-video-background-without-green-screen',
