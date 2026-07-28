@@ -108,29 +108,3 @@ ServerSignature Off
   AddOutputFilterByType DEFLATE text/html text/plain text/css application/javascript application/json image/svg+xml
 </IfModule>
 
-# ---- moved blog posts: 301 to the app site that now owns them ----
-# (keeps the ranking these URLs already earned on 7by.in)
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteRule ^blog/how\-to\-use\-7solve\-doubt\-solver/?$ https://7solve.7by.in/blog/how-to-use-7solve-doubt-solver [R=301,L]
-    RewriteRule ^blog/how\-ai\-doubt\-solvers\-work/?$ https://7solve.7by.in/blog/how-ai-doubt-solvers-work [R=301,L]
-    RewriteRule ^blog/how\-to\-solve\-maths\-word\-problems/?$ https://7solve.7by.in/blog/how-to-solve-maths-word-problems [R=301,L]
-    RewriteRule ^blog/how\-to\-memorise\-formulas/?$ https://7solve.7by.in/blog/how-to-memorise-formulas [R=301,L]
-    RewriteRule ^blog/common\-english\-grammar\-mistakes\-students\-make/?$ https://7solve.7by.in/blog/common-english-grammar-mistakes-students-make [R=301,L]
-    RewriteRule ^blog/how\-to\-study\-effectively\-with\-ai/?$ https://7solve.7by.in/blog/how-to-study-effectively-with-ai [R=301,L]
-    RewriteRule ^blog/free\-ai\-tools\-every\-indian\-student\-should\-use/?$ https://7solve.7by.in/blog/free-ai-tools-every-indian-student-should-use [R=301,L]
-    RewriteRule ^blog/note\-taking\-methods\-that\-actually\-help/?$ https://7solve.7by.in/blog/note-taking-methods-that-actually-help [R=301,L]
-    RewriteRule ^blog/overcome\-exam\-fear\-and\-anxiety/?$ https://7solve.7by.in/blog/overcome-exam-fear-and-anxiety [R=301,L]
-    RewriteRule ^blog/parents\-guide\-helping\-kids\-study/?$ https://7solve.7by.in/blog/parents-guide-helping-kids-study [R=301,L]
-    RewriteRule ^blog/group\-study\-vs\-self\-study/?$ https://7solve.7by.in/blog/group-study-vs-self-study [R=301,L]
-    RewriteRule ^blog/how\-to\-generate\-question\-papers\-with\-7q/?$ https://7marks.7by.in/blog/how-to-generate-question-papers-with-7marks [R=301,L]
-    RewriteRule ^blog/why\-practice\-papers\-beat\-rereading/?$ https://7marks.7by.in/blog/why-practice-papers-beat-rereading [R=301,L]
-    RewriteRule ^blog/class\-10\-board\-exam\-preparation\-plan/?$ https://7marks.7by.in/blog/class-10-board-exam-preparation-plan [R=301,L]
-    RewriteRule ^blog/jee\-neet\-prep\-smarter\-with\-ai/?$ https://7marks.7by.in/blog/jee-neet-prep-smarter-with-ai [R=301,L]
-    RewriteRule ^blog/ca\-foundation\-preparation\-guide/?$ https://7marks.7by.in/blog/ca-foundation-preparation-guide [R=301,L]
-    RewriteRule ^blog/us\-cma\-guide\-for\-indian\-students/?$ https://7marks.7by.in/blog/us-cma-guide-for-indian-students [R=301,L]
-    RewriteRule ^blog/time\-management\-during\-exams/?$ https://7marks.7by.in/blog/time-management-during-exams [R=301,L]
-    RewriteRule ^blog/revise\-full\-syllabus\-in\-one\-week/?$ https://7marks.7by.in/blog/revise-full-syllabus-in-one-week [R=301,L]
-    RewriteRule ^blog/daily\-study\-timetable\-for\-students/?$ https://7marks.7by.in/blog/daily-study-timetable-for-students [R=301,L]
-    RewriteRule ^blog/choosing\-stream\-after\-class\-10/?$ https://7marks.7by.in/blog/choosing-stream-after-class-10 [R=301,L]
-</IfModule>

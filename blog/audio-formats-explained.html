@@ -8,7 +8,7 @@
 <link rel="apple-touch-icon" href="/assets/favicon.png">
 <meta name="description" content="MP3, WAV, FLAC, AAC — what's the difference? Learn which audio format to use for vocal removal, music production and everyday listening.">
 <link rel="canonical" href="https://7by.in/blog/audio-formats-explained">
-<link rel="stylesheet" href="../assets/style.css?v=202607252134">
+<link rel="stylesheet" href="../assets/style.css?v=202607232006">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8250159057339426" crossorigin="anonymous"></script>
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta property="og:type" content="article">
@@ -40,94 +40,69 @@
     <a href="./" style="color:var(--mut);font-size:13px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;margin-bottom:24px">← Back to Blog</a>
     <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;font-weight:600;color:var(--amb);margin-bottom:12px">Explainer</div>
     <h1 style="font-size:clamp(28px,4vw,44px);line-height:1.2;margin-bottom:16px">Audio File Formats Explained: MP3 vs WAV vs FLAC</h1>
-    <div style="color:var(--dim);font-size:13px;font-family:'JetBrains Mono',monospace;margin-bottom:32px">July 1, 2026 · 8 min read · by Shirandasu Sandeep</div>
+    <div style="color:var(--dim);font-size:13px;font-family:'JetBrains Mono',monospace;margin-bottom:32px">July 1, 2026 · 5 min read · by Shirandasu Sandeep</div>
   </div>
 </section>
 <section style="padding:40px 0 80px">
   <div class="container" style="max-width:760px">
     <div class="blog-content">
-      <p class="lead" style="font-size:18px;color:var(--mut);line-height:1.8;margin-bottom:32px">Most advice about audio formats is either far too technical or reduces to "use MP3". Neither helps when you are staring at a dropdown wondering whether the choice matters. It does matter, but only at specific moments — and knowing which moments those are is the whole of it.</p>
+      <p class="lead" style="font-size:18px;color:var(--mut);line-height:1.8;margin-bottom:32px">Choosing the right audio format can make a real difference to the quality of your vocal removal, stem splitting, and final downloads. Here's what you need to know.</p>
 
-      <h2>Lossless and lossy</h2>
-      <p>Every format falls into one of two camps, and this is the only distinction that really matters.</p>
-      <p><strong>Lossless</strong> formats keep every sample of the original recording. WAV stores it plainly; FLAC compresses it the way a ZIP file does — smaller, but nothing thrown away, and unpacking gives you the original back exactly.</p>
-      <p><strong>Lossy</strong> formats — MP3, AAC, Opus — achieve much smaller files by permanently discarding parts of the sound. They rely on the fact that human hearing misses a great deal: a quiet sound immediately after a loud one, very high frequencies, detail masked by other detail. The encoder identifies material you are unlikely to notice and deletes it.</p>
-      <p>For listening, a well-encoded lossy file is genuinely hard to distinguish from lossless. The trouble starts when you process it.</p>
+      <h2>The Two Categories: Lossy vs Lossless</h2>
+      <p>All audio formats fall into one of two categories:</p>
+      <ul>
+        <li><strong>Lossy</strong> — permanently discard audio data to reduce file size. Once lost, it can't be recovered. Examples: MP3, AAC, OGG</li>
+        <li><strong>Lossless</strong> — preserve every bit of audio data. File size is larger but quality is perfect. Examples: WAV, FLAC, AIFF</li>
+      </ul>
 
-      <h2>Why it matters for processing</h2>
-      <p>This is the part most guides omit, and it is the reason to care at all.</p>
-      <p>Audio processing depends on fine detail — the subtle differences that distinguish one instrument from another, or a voice from a guitar occupying the same frequencies. Lossy encoding removed exactly that kind of detail, because it was judged inaudible in isolation.</p>
-      <p>So separation, noise reduction and pitch shifting all perform measurably better on lossless input. You are handing the tool a complete picture rather than a compressed approximation of one.</p>
-      <p>The practical rule: <strong>lossy for listening, lossless for working.</strong> If a file has further to travel, keep it lossless until the end.</p>
+      <h2>MP3 — The Universal Standard</h2>
+      <div style="background:var(--surf);border:1px solid var(--bord);border-radius:16px;padding:20px 24px;margin:16px 0">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px">
+          <div><strong style="color:var(--ok)">Pros</strong><ul style="margin:8px 0 0;padding-left:16px;display:flex;flex-direction:column;gap:4px"><li style="color:var(--mut)">Tiny file size</li><li style="color:var(--mut)">Universal compatibility</li><li style="color:var(--mut)">Good for streaming</li></ul></div>
+          <div><strong style="color:var(--mag)">Cons</strong><ul style="margin:8px 0 0;padding-left:16px;display:flex;flex-direction:column;gap:4px"><li style="color:var(--mut)">Lossy compression</li><li style="color:var(--mut)">Artefacts at low bitrates</li><li style="color:var(--mut)">Not ideal for processing</li></ul></div>
+        </div>
+      </div>
+      <p>MP3 at 320kbps is indistinguishable from lossless for most listeners in A/B tests. At 128kbps (common for downloads), you may hear "swirling" artefacts on cymbals and reverb tails. For vocal removal, 320kbps MP3 input gives good results; 128kbps may introduce artefacts.</p>
 
-      <h2>Generation loss</h2>
-      <p>The related trap, and one people fall into repeatedly.</p>
-      <p>Every time audio passes through a lossy encoder, more is discarded. Encode once at a decent bitrate and the result is fine. Take that MP3, edit it, export as MP3 again, and the second encoder is not compressing the original recording — it is compressing an already-degraded approximation, making fresh guesses on top of old ones.</p>
-      <p>Do this three or four times and it becomes clearly audible: smeared cymbals, a hollow quality in vocals, a loss of air at the top.</p>
-      <p>The fix is simply to keep intermediate steps lossless and encode once, at the very end. Cutting, joining and separating should all produce lossless output if the file is going anywhere else afterwards.</p>
+      <h2>WAV — The Studio Standard</h2>
+      <div style="background:var(--surf);border:1px solid var(--bord);border-radius:16px;padding:20px 24px;margin:16px 0">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px">
+          <div><strong style="color:var(--ok)">Pros</strong><ul style="margin:8px 0 0;padding-left:16px;display:flex;flex-direction:column;gap:4px"><li style="color:var(--mut)">Perfect lossless quality</li><li style="color:var(--mut)">Universal DAW support</li><li style="color:var(--mut)">Best for processing</li></ul></div>
+          <div><strong style="color:var(--mag)">Cons</strong><ul style="margin:8px 0 0;padding-left:16px;display:flex;flex-direction:column;gap:4px"><li style="color:var(--mut)">Large file size (~10MB/min)</li><li style="color:var(--mut)">No metadata support</li><li style="color:var(--mut)">Not compressed at all</li></ul></div>
+        </div>
+      </div>
+      <p>WAV is the format used by 7By.in for all output files. It preserves every sample from the processing, giving you the highest quality result. The 7By AI Engine encodes 16-bit, 44.1kHz stereo WAV.</p>
 
-      <h2>The formats, briefly</h2>
-      <p><strong>WAV</strong> — lossless, uncompressed, universally supported. Large files. The right choice for anything being edited or processed, and for handing audio to another application.</p>
-      <p><strong>FLAC</strong> — lossless, compressed to roughly half the size of WAV. Identical quality. Excellent for archiving. Slightly less universally supported by consumer devices, though that gap has largely closed.</p>
-      <p><strong>MP3</strong> — lossy, ancient, and plays absolutely everywhere. Not the most efficient format any more, but its universality is unmatched. The safe default for sharing.</p>
-      <p><strong>AAC / M4A</strong> — lossy, more efficient than MP3 at the same bitrate. The standard across Apple devices and most streaming. A better technical choice than MP3 where you know it will be supported.</p>
-      <p><strong>OGG / Opus</strong> — lossy and genuinely excellent, particularly at low bitrates and for speech. Less universally supported on consumer hardware, which is its only real drawback.</p>
+      <h2>FLAC — Lossless with Compression</h2>
+      <div style="background:var(--surf);border:1px solid var(--bord);border-radius:16px;padding:20px 24px;margin:16px 0">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px">
+          <div><strong style="color:var(--ok)">Pros</strong><ul style="margin:8px 0 0;padding-left:16px;display:flex;flex-direction:column;gap:4px"><li style="color:var(--mut)">Lossless quality</li><li style="color:var(--mut)">~50% smaller than WAV</li><li style="color:var(--mut)">Supports metadata</li></ul></div>
+          <div><strong style="color:var(--mag)">Cons</strong><ul style="margin:8px 0 0;padding-left:16px;display:flex;flex-direction:column;gap:4px"><li style="color:var(--mut)">Less universal than WAV</li><li style="color:var(--mut)">Requires decoder support</li></ul></div>
+        </div>
+      </div>
+      <p>FLAC is excellent for archiving your music collection. 7By.in accepts FLAC as input — modern browser audio decodes it natively in Chrome and Firefox.</p>
 
-      <h2>Bitrate, in practical terms</h2>
-      <p>Bitrate is how much data per second a lossy file is allowed. More data, more detail retained, larger file.</p>
-      <p>For music, 128 kbps is noticeably compromised on decent headphones — cymbals lose their shimmer first. 192 kbps is a reasonable middle ground where most people stop noticing. 320 kbps is the practical ceiling for MP3, and past it you are adding file size without adding much audible benefit.</p>
-      <p>For speech, far less is needed. Voice occupies a narrower range and tolerates compression well, so a podcast at 96 or 128 kbps is perfectly acceptable and keeps files small.</p>
-      <p>The thing to remember is that bitrate cannot restore anything. Converting a 128 kbps file to 320 kbps does not improve it — it produces a larger file containing the same degraded audio. Quality is set when material is first discarded.</p>
+      <h2>AAC — Apple's MP3 Alternative</h2>
+      <p>AAC (Advanced Audio Coding) is used by Apple Music and YouTube. At the same bitrate, AAC sounds slightly better than MP3 due to a more efficient compression algorithm. If your music came from Apple Music or an iPhone, it's likely AAC (.m4a). 7By.in accepts AAC as input.</p>
 
-      <h2>Sample rate and channels</h2>
-      <p>Two settings that matter less than people assume, with one exception each.</p>
-      <p><strong>Sample rate</strong> is how many times per second the audio was measured. 44,100 Hz is the CD standard and entirely sufficient for listening; 48,000 Hz is standard for video. The exception: if your audio is going into a video project, match the project's rate to avoid conversion.</p>
-      <p><strong>Channels</strong> — stereo carries two, mono carries one. The exception: for a speech recording made on a single microphone, converting to mono halves the file size with no loss whatsoever, because both channels contained the same thing. For music, keep stereo.</p>
-      <p>The <a href="https://7by.in/tools/audio-converter">Audio Converter</a> exposes both, which is useful precisely for those two cases.</p>
-
-      <h2>Choosing, in practice</h2>
-      <p>Reduced to the decisions you will actually face:</p>
-      <p><strong>Sending to a video editor?</strong> WAV, at the project's sample rate.</p>
-      <p><strong>About to separate, cut or clean it?</strong> Start from the most lossless source you have; export WAV if there are more steps to come.</p>
-      <p><strong>Archiving something you care about?</strong> FLAC — lossless, half the size of WAV.</p>
-      <p><strong>Sharing or uploading?</strong> MP3 at 192 or 320, encoded once at the end.</p>
-      <p><strong>A voice recording that is finished?</strong> Mono, and a modest bitrate. There is nothing to gain from more.</p>
-      <p><strong>Not sure?</strong> WAV. You can always convert down later; you can never convert back up.</p>
-
-      <h2>Why file sizes differ so much</h2>
-      <p>It helps to have a rough sense of the numbers, because it explains most format decisions on its own.</p>
-      <p>A three-minute stereo song as WAV runs to roughly 30 MB. The same song as FLAC lands around half that, with identical quality. As a 320 kbps MP3 it is around 7 MB, and at 128 kbps roughly 3 MB.</p>
-      <p>So the jump from lossless to lossy saves a great deal, while the jump from 320 to 128 saves comparatively little in absolute terms and costs noticeably more quality. That is the argument for not going below 192 for music unless size is genuinely critical.</p>
-      <p>Speech is different. A one-hour interview at 320 kbps is pointlessly large; the same recording in mono at 96 kbps is a fraction of the size and sounds no worse, because voice simply does not need the bandwidth.</p>
-
-      <h2>Metadata and file names</h2>
-      <p>A small practical matter that causes disproportionate annoyance.</p>
-      <p>Converting between formats frequently drops embedded information — title, artist, album art. If a file matters to you, check the tags survived, particularly when converting for a device that organises music by them.</p>
-      <p>File names matter more than they should. Processing several files usually produces several downloads with near-identical names, and sorting them out afterwards is tedious. Name your sources clearly before you start, and rename outputs immediately rather than promising yourself you will do it later.</p>
-      <p>If you are producing a set of files that belong together, settle on one format and one naming pattern at the start. Mixing formats within a batch is a small decision that reliably creates confusion downstream.</p>
-
-      <h2>What about streaming quality?</h2>
-      <p>A question that comes up constantly, and the answer is more nuanced than the marketing suggests.</p>
-      <p>Streaming services deliver lossy audio, typically somewhere between 128 and 320 kbps depending on the service and your settings. Some now offer lossless tiers.</p>
-      <p>For listening, the difference between a good 256 kbps stream and lossless is genuinely difficult to hear on most equipment, in most rooms, at most listening volumes. Anyone insisting otherwise is usually describing ideal conditions rather than normal ones.</p>
-      <p>For processing, the difference is real and easy to demonstrate. This is why separating a track you own as a proper file gives a better result than separating something captured from a stream — and why source quality is the first thing to check when a result disappoints.</p>
-
-      <h2>Common questions</h2>
-      <h3>Can I improve a low-quality MP3 by converting it?</h3>
-      <p>No. The discarded information is gone permanently. Conversion changes the container, not the content.</p>
-      <h3>Is FLAC actually identical to WAV?</h3>
-      <p>Yes, bit for bit, once decoded. The compression is entirely reversible.</p>
-      <h3>Which format should I use for separation?</h3>
-      <p>Whatever lossless copy you have. If your only source is an MP3, use the highest bitrate version you can find — the difference in the result is easy to hear.</p>
-      <h3>Does converting between lossy formats lose quality?</h3>
-      <p>Yes, and more than people expect. Going MP3 to AAC decodes and re-encodes, discarding material twice. Avoid it where you can.</p>
-      <h3>What does conversion cost?</h3>
-      <p>Nothing. The Audio Converter is free and unlimited, with no account required.</p>
+      <h2>Which Format to Use for 7By.in?</h2>
+      <div style="background:var(--surf);border:1px solid var(--bord);border-radius:16px;overflow:hidden;margin:20px 0">
+        <table style="width:100%;border-collapse:collapse">
+          <thead><tr style="background:var(--s2)"><th style="padding:12px 16px;text-align:left;font-size:12px;color:var(--mut)">Use Case</th><th style="padding:12px 16px;text-align:left;font-size:12px;color:var(--mut)">Recommended Format</th></tr></thead>
+          <tbody>
+            <tr style="border-top:1px solid var(--bord)"><td style="padding:12px 16px">Input for best quality result</td><td style="padding:12px 16px;color:var(--cyan);font-weight:600">WAV or FLAC</td></tr>
+            <tr style="border-top:1px solid var(--bord)"><td style="padding:12px 16px">Input (typical download)</td><td style="padding:12px 16px;color:var(--cyan);font-weight:600">MP3 320kbps</td></tr>
+            <tr style="border-top:1px solid var(--bord)"><td style="padding:12px 16px">Output download (7By.in)</td><td style="padding:12px 16px;color:var(--cyan);font-weight:600">WAV (16-bit PCM)</td></tr>
+            <tr style="border-top:1px solid var(--bord)"><td style="padding:12px 16px">Sharing / uploading to YouTube</td><td style="padding:12px 16px;color:var(--cyan);font-weight:600">MP3 320kbps</td></tr>
+            <tr style="border-top:1px solid var(--bord)"><td style="padding:12px 16px">Archiving your music</td><td style="padding:12px 16px;color:var(--cyan);font-weight:600">FLAC</td></tr>
+          </tbody>
+        </table>
+      </div>
 
       <div style="background:var(--surf);border:1px solid var(--bord);border-radius:20px;padding:24px;margin-top:40px;text-align:center">
-        <h3 style="margin-bottom:8px">Convert with the settings you actually want</h3>
-        <p style="color:var(--mut);margin-bottom:16px">MP3, WAV, FLAC, OGG, AAC and M4A — with control over bitrate, sample rate and channels. Free and unlimited.</p>
-        <a href="../tools/audio-converter" class="btn btn-c">Open the Audio Converter →</a>
+        <h3 style="margin-bottom:8px">Process Your Audio Now</h3>
+        <p style="color:var(--mut);margin-bottom:16px">7By.in accepts MP3, WAV, FLAC, AAC, and OGG. Outputs lossless WAV.</p>
+        <a href="../tools/vocal-remover" class="btn btn-m">Try Free →</a>
       </div>
     </div>
   </div>
@@ -146,8 +121,8 @@
 </section>
 
 </div>
-<script src="../assets/layout.js?v=202607252134"></script>
-<script src="../assets/app.js?v=202607252134"></script>
+<script src="../assets/layout.js?v=202607232006"></script>
+<script src="../assets/app.js?v=202607232006"></script>
 <script>injectLayout('../');</script>
 </body>
 </html>
