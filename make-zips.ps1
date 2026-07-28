@@ -54,17 +54,26 @@ if (-not $base) { $base = (Get-Location).Path }
 New-Zip -Zip (Join-Path $base 'sevenby-theme.zip') -Roots @((Join-Path $base 'wordpress-theme\sevenby')) -ExcludeExt @('.js')
 
 # 2) Static tool app for the subdomain (vocalremover.7by.in).
-#    IMPORTANT: the root index.html is the LIGHT 7by.in hub homepage and belongs only to
-#    the main domain (see 7by-pages.zip below). Shipping it here overwrites the subdomain's
-#    own homepage, so it is excluded and app-home.html ships as index.html instead.
 $appRoots = @('assets','tools','blog') | ForEach-Object { Join-Path $base $_ }
-#    _cardtest.html is a local scratch page and must never reach production.
-#    download-ai.html publicly hands out the AI engine, which contradicts keeping the
-#    implementation private — it is kept on disk but no longer shipped.
-$excludeHtml = @('index.html','_cardtest.html','download-ai.html')
-$appRoots += (Get-ChildItem -LiteralPath $base -File -Filter *.html |
-  Where-Object { $excludeHtml -notcontains $_.Name } |
-  Select-Object -ExpandProperty FullName)
+#    Root-level pages are an ALLOWLIST. Anything not named below does not ship.
+#    This used to scan the repo root and ship every *.html except three named files,
+#    which made "reaches production" the default for any new page dropped at the root.
+#    game.html ("Sacred Glow") was shipping to the audio subdomain that way.
+#    Deliberately NOT here: index.html is the LIGHT 7by.in hub homepage and belongs only
+#    to the main domain (see 7by-pages.zip below) — shipping it would overwrite the
+#    subdomain's own homepage, so app-home.html ships as index.html via -Rename instead.
+#    _cardtest.html is a local scratch page. download-ai.html publicly hands out the AI
+#    engine, which contradicts keeping the implementation private. All stay on disk.
+$shipHtml = @('app-home.html','about.html','contact.html','cookie-policy.html',
+              'disclaimer.html','dmca.html','pricing.html','privacy-policy.html',
+              'terms-of-service.html')
+#    An allowlist fails the other way: a renamed or deleted page goes missing silently.
+#    Warn rather than ship a zip that is quietly short a page.
+foreach ($h in $shipHtml) {
+  $p = Join-Path $base $h
+  if (Test-Path -LiteralPath $p) { $appRoots += $p }
+  else { Write-Warning ("vocalremover-app.zip: allowlisted page missing, not shipped: " + $h) }
+}
 $htaccess = Join-Path $base '.htaccess'
 if (Test-Path -LiteralPath $htaccess) { $appRoots += $htaccess }   # cache-control rules
 #    The subdomain needs its OWN robots.txt + sitemap.xml. The root-level ones point at
@@ -107,6 +116,12 @@ function New-AppZip {
   # .well-known/assetlinks.json — links the site to the Android app (kills the URL bar)
   $wk = Join-Path $AppDir '.well-known'
   if (Test-Path -LiteralPath $wk) { $roots += $wk }
+  # Each app now hosts its OWN blog (moved off 7by.in), plus the stylesheet and
+  # icons those posts need — both must ship or every post loads unstyled.
+  foreach ($sub in @('blog','assets')) {
+    $p = Join-Path $AppDir $sub
+    if (Test-Path -LiteralPath $p) { $roots += $p }
+  }
   New-Zip -Zip $Zip -Roots $roots
 }
 New-AppZip -AppDir (Join-Path $base '7marks') -Zip (Join-Path $base '7marks-site.zip')

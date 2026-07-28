@@ -1,0 +1,136 @@
+# 7By.in — cache policy
+# Goal: HTML/CSS/JS always update immediately after you upload new files,
+# while images/fonts (which rarely change) stay cached for speed.
+# Also disables the LiteSpeed full-page cache that was serving stale pages.
+
+# ---- Cross-origin isolation -> enables MULTI-CORE (WASM threads) for the AI tools ----
+# The AI separation runs on many CPU threads only when the page is "cross-origin isolated".
+# COEP: credentialless keeps AdSense / CDN / the model loading while enabling this.
+# Scoped to /tools/ only — applying this site-wide breaks the Razorpay checkout iframe
+# on pricing.html (it needs to load cross-origin resources without COEP restrictions).
+<IfModule mod_headers.c>
+  <If "%{REQUEST_URI} =~ m#^/tools/#">
+    Header set Cross-Origin-Opener-Policy "same-origin"
+    Header set Cross-Origin-Embedder-Policy "credentialless"
+  </If>
+</IfModule>
+
+# ---- Security hardening ----
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=(self)"
+  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+  # Allow this subdomain to be iframed only by 7by.in (used by the WordPress "Tool Embed" template)
+  Header always set Content-Security-Policy "frame-ancestors 'self' https://7by.in https://www.7by.in"
+  Header unset X-Powered-By
+  Header unset Server
+</IfModule>
+<IfModule mod_headers.c>
+  <FilesMatch "\.(html|htm)$">
+    Header always set Content-Type "text/html; charset=UTF-8"
+  </FilesMatch>
+</IfModule>
+
+# Block access to hidden/system files (.env, .git, etc.)
+<FilesMatch "^\.">
+  Require all denied
+</FilesMatch>
+<FilesMatch "\.(env|log|json)$">
+  Require all denied
+</FilesMatch>
+
+# Disable directory listing
+Options -Indexes
+ServerSignature Off
+
+# ---- Clean URLs: hide .html and index.html from the address bar ----
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # 1) External redirect: if a visitor lands on /page.html or /folder/index.html,
+  #    send their browser to the clean URL so it's what shows/gets bookmarked/shared.
+  RewriteCond %{THE_REQUEST} \s/+(.*)/index\.html[\s?] [NC]
+  RewriteRule ^ /%1/ [R=301,L]
+  RewriteCond %{THE_REQUEST} \s/+(.*)\.html[\s?] [NC]
+  RewriteRule ^ /%1 [R=301,L]
+
+  # 2) Internal rewrite: serve the real .html file for a clean URL, without changing
+  #    what's shown in the address bar (e.g. /pricing quietly serves pricing.html).
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_FILENAME}\.html -f
+  RewriteRule ^(.*)$ $1.html [L]
+</IfModule>
+
+# ---- Turn OFF LiteSpeed's full-page cache for this site ----
+<IfModule LiteSpeed>
+  CacheDisable public /
+  RewriteEngine On
+  RewriteRule .* - [E=Cache-Control:no-cache]
+</IfModule>
+
+<IfModule mod_headers.c>
+  # HTML: never store — every visit fetches the latest
+  <FilesMatch "\.(html|htm)$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+  </FilesMatch>
+
+  # CSS / JS: keep cached but revalidate on every load.
+  # (The browser sends an If-None-Match; the server returns a fast 304 if unchanged,
+  #  or the new file the moment you update it — so no more stale styles/scripts.)
+  <FilesMatch "\.(css|js|mjs)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+
+  # Images / fonts: safe to cache for a week (bump filename if you replace one)
+  <FilesMatch "\.(png|jpe?g|gif|webp|svg|ico|woff2?|ttf|eot)$">
+    Header set Cache-Control "public, max-age=604800"
+  </FilesMatch>
+</IfModule>
+
+# ---- Also stop mod_expires from over-caching html/css/js (some hosts enable it) ----
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/html "access plus 0 seconds"
+  ExpiresByType text/css "access plus 0 seconds"
+  ExpiresByType application/javascript "access plus 0 seconds"
+  ExpiresByType image/png "access plus 1 week"
+  ExpiresByType image/jpeg "access plus 1 week"
+  ExpiresByType image/svg+xml "access plus 1 week"
+  ExpiresByType font/woff2 "access plus 1 week"
+</IfModule>
+
+# ---- Compression for speed (helps PageSpeed / AdSense) ----
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/css application/javascript application/json image/svg+xml
+</IfModule>
+
+# ---- moved blog posts: 301 to the app site that now owns them ----
+# (keeps the ranking these URLs already earned on 7by.in)
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^blog/how\-to\-use\-7solve\-doubt\-solver/?$ https://7solve.7by.in/blog/how-to-use-7solve-doubt-solver [R=301,L]
+    RewriteRule ^blog/how\-ai\-doubt\-solvers\-work/?$ https://7solve.7by.in/blog/how-ai-doubt-solvers-work [R=301,L]
+    RewriteRule ^blog/how\-to\-solve\-maths\-word\-problems/?$ https://7solve.7by.in/blog/how-to-solve-maths-word-problems [R=301,L]
+    RewriteRule ^blog/how\-to\-memorise\-formulas/?$ https://7solve.7by.in/blog/how-to-memorise-formulas [R=301,L]
+    RewriteRule ^blog/common\-english\-grammar\-mistakes\-students\-make/?$ https://7solve.7by.in/blog/common-english-grammar-mistakes-students-make [R=301,L]
+    RewriteRule ^blog/how\-to\-study\-effectively\-with\-ai/?$ https://7solve.7by.in/blog/how-to-study-effectively-with-ai [R=301,L]
+    RewriteRule ^blog/free\-ai\-tools\-every\-indian\-student\-should\-use/?$ https://7solve.7by.in/blog/free-ai-tools-every-indian-student-should-use [R=301,L]
+    RewriteRule ^blog/note\-taking\-methods\-that\-actually\-help/?$ https://7solve.7by.in/blog/note-taking-methods-that-actually-help [R=301,L]
+    RewriteRule ^blog/overcome\-exam\-fear\-and\-anxiety/?$ https://7solve.7by.in/blog/overcome-exam-fear-and-anxiety [R=301,L]
+    RewriteRule ^blog/parents\-guide\-helping\-kids\-study/?$ https://7solve.7by.in/blog/parents-guide-helping-kids-study [R=301,L]
+    RewriteRule ^blog/group\-study\-vs\-self\-study/?$ https://7solve.7by.in/blog/group-study-vs-self-study [R=301,L]
+    RewriteRule ^blog/how\-to\-generate\-question\-papers\-with\-7q/?$ https://7marks.7by.in/blog/how-to-generate-question-papers-with-7marks [R=301,L]
+    RewriteRule ^blog/why\-practice\-papers\-beat\-rereading/?$ https://7marks.7by.in/blog/why-practice-papers-beat-rereading [R=301,L]
+    RewriteRule ^blog/class\-10\-board\-exam\-preparation\-plan/?$ https://7marks.7by.in/blog/class-10-board-exam-preparation-plan [R=301,L]
+    RewriteRule ^blog/jee\-neet\-prep\-smarter\-with\-ai/?$ https://7marks.7by.in/blog/jee-neet-prep-smarter-with-ai [R=301,L]
+    RewriteRule ^blog/ca\-foundation\-preparation\-guide/?$ https://7marks.7by.in/blog/ca-foundation-preparation-guide [R=301,L]
+    RewriteRule ^blog/us\-cma\-guide\-for\-indian\-students/?$ https://7marks.7by.in/blog/us-cma-guide-for-indian-students [R=301,L]
+    RewriteRule ^blog/time\-management\-during\-exams/?$ https://7marks.7by.in/blog/time-management-during-exams [R=301,L]
+    RewriteRule ^blog/revise\-full\-syllabus\-in\-one\-week/?$ https://7marks.7by.in/blog/revise-full-syllabus-in-one-week [R=301,L]
+    RewriteRule ^blog/daily\-study\-timetable\-for\-students/?$ https://7marks.7by.in/blog/daily-study-timetable-for-students [R=301,L]
+    RewriteRule ^blog/choosing\-stream\-after\-class\-10/?$ https://7marks.7by.in/blog/choosing-stream-after-class-10 [R=301,L]
+</IfModule>

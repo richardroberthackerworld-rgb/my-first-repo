@@ -8,7 +8,7 @@
 <link rel="apple-touch-icon" href="/assets/favicon.png">
 <meta name="description" content="A deep dive into how AI stem separation actually works — from signal processing to deep learning, spectrograms to the model architectures.">
 <link rel="canonical" href="https://7by.in/blog/science-of-ai-stem-separation">
-<link rel="stylesheet" href="../assets/style.css?v=202607232006">
+<link rel="stylesheet" href="../assets/style.css?v=202607252134">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8250159057339426" crossorigin="anonymous"></script>
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta property="og:type" content="article">
@@ -40,67 +40,79 @@
     <a href="./" style="color:var(--mut);font-size:13px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;margin-bottom:24px">← Back to Blog</a>
     <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;font-weight:600;color:var(--mag);margin-bottom:12px">Technical</div>
     <h1 style="font-size:clamp(28px,4vw,44px);line-height:1.2;margin-bottom:16px">The Science Behind AI Stem Separation Technology</h1>
-    <div style="color:var(--dim);font-size:13px;font-family:'JetBrains Mono',monospace;margin-bottom:32px">July 1, 2026 · 8 min read · by Shirandasu Sandeep</div>
+    <div style="color:var(--dim);font-size:13px;font-family:'JetBrains Mono',monospace;margin-bottom:32px">July 1, 2026 · 9 min read · by Shirandasu Sandeep</div>
   </div>
 </section>
 <section style="padding:40px 0 80px">
   <div class="container" style="max-width:760px">
     <div class="blog-content">
-      <p class="lead" style="font-size:18px;color:var(--mut);line-height:1.8;margin-bottom:32px">Separating a mixed song into individual instruments sounds like magic. But it's actually a combination of clever signal processing and pattern-recognition AI trained on millions of examples. Here's how it works.</p>
+      <p class="lead" style="font-size:18px;color:var(--mut);line-height:1.8;margin-bottom:32px">There is a question underneath stem separation that sounds almost philosophical: if two sounds were added together into a single number, how can anything ever pull them apart again? Strictly speaking, it cannot. What actually happens is far more interesting than the marketing word "AI" suggests, and understanding it tells you exactly when to trust the result and when not to.</p>
 
-      <h2>The Core Problem: Cocktail Party Effect</h2>
-      <p>Humans are remarkably good at focusing on one voice in a noisy room — the "cocktail party effect." Our brains perform unconscious source separation in real time. Getting computers to do the same thing is called the "cocktail party problem" in signal processing, and it's been unsolved for decades.</p>
-      <p>Audio mixing makes this problem harder: when a producer mixes a song, all the instruments are summed together into a single waveform. The mixing process is inherently information-destroying — you can always add two signals together, but unambiguously separating them is not always possible.</p>
+      <h2>The problem is unsolvable, technically</h2>
+      <p>Start with the uncomfortable truth. A stereo song is two streams of numbers. At every instant, each number is the sum of everything happening at that moment — the singer, the snare, the bass, the guitar, the reverb tail from three seconds ago.</p>
+      <p>Ask a mathematician to recover the individual parts from that sum and they will tell you it is underdetermined. You have two equations and perhaps thirty unknowns. There is no unique answer. Infinitely many combinations of instruments produce exactly the sum you are holding.</p>
+      <p>That is not a limitation of current technology. It is a property of the problem. No future breakthrough will make it exactly solvable.</p>
+      <p>So how does separation work at all? Because "no unique answer" is not the same as "no good answer". Of the infinitely many possible explanations, almost all of them are absurd — they would require instruments that no human ever played and sounds that no drum ever made. Only a tiny handful are plausible. Separation is the art of finding those.</p>
 
-      <h2>Approach 1: Signal Processing (Filter Banks)</h2>
-      <p>The simplest approach exploits the known frequency characteristics of different instruments:</p>
-      <ul>
-        <li>Bass guitar and kick drum: dominant below 200 Hz</li>
-        <li>Vocals: most energy between 300 Hz and 3 kHz</li>
-        <li>Hi-hats and cymbals: above 6 kHz</li>
-        <li>Guitar: 80 Hz to 6 kHz</li>
-      </ul>
-      <p>By applying bandpass filters tuned to these ranges, you can extract approximate stems. This is fast, runs in any browser, and requires no training data. The limitation: frequency ranges overlap significantly, so bleed between sources is high.</p>
-      <p>This is the classic approach to browser-based processing — deterministic, lightweight, and it needs no GPU.</p>
+      <h2>Sound is more than a waveform</h2>
+      <p>The wiggly line you see in an audio editor is not what an engine analyses. It is far too crude.</p>
+      <p>Instead, audio is broken into short overlapping slices — typically a few tens of milliseconds each — and each slice is decomposed into the frequencies it contains and how strongly. Stack those slices side by side and you get a spectrogram: a picture of the sound, with time running left to right and frequency bottom to top, brightness showing energy.</p>
+      <p>This picture is where separation becomes possible, because instruments look strikingly different in it.</p>
+      <p>A snare drum is a vertical stripe — a burst of energy across nearly all frequencies at once, gone almost immediately. A bass note is a thick horizontal band low down, holding steady. A sung vowel is a set of evenly spaced horizontal lines that drift gently with the singer's pitch, wobbling with vibrato. A cymbal is a bright smear at the top that fades slowly.</p>
+      <p>Once you see sound this way, "separate the drums" stops being mysterious. It becomes a question of recognising shapes.</p>
 
-      <h2>Approach 2: Mid-Side Matrix (for Vocals)</h2>
-      <p>As covered in our <a href="mid-side-processing">Mid-Side Processing article</a>, this exploits stereo positioning. Vocals centred in the mix are captured in the Mid (L+R) channel; panned instruments appear in the Side (L−R) channel.</p>
-      <p>Simple, elegant, and surprisingly effective on commercial recordings — but fails when instruments share the centre position (bass, kick) or when vocals are multi-tracked and panned.</p>
+      <h2>Learning what things look like</h2>
+      <p>An engine is not programmed with those descriptions. Nobody sits down and writes a rule saying a snare is a vertical stripe. The rules would be endless and would fail constantly.</p>
+      <p>Instead it learns from examples. The training material is a large collection of songs where the individual layers were available separately — the actual drum recording, the actual vocal recording, alongside the finished mix.</p>
+      <p>The engine is shown a mix and asked to produce the separate layers. Its first attempts are meaningless noise. Each attempt is compared against the true answer, the error is measured, and the internal settings are nudged in whatever direction reduces that error. Then again. Millions of times.</p>
+      <p>Nobody tells it what a snare is. It discovers that a certain shape reliably belongs to the drum layer, because guessing that way reduces its error. Repeat across a vast range of music and it accumulates a working sense of what each instrument family looks like — and, crucially, how they behave across time rather than in a single frozen instant.</p>
 
-      <h2>Approach 3: Spectrogram Masking (The AI Way)</h2>
-      <p>Modern deep learning approaches work on spectrograms — 2D representations of audio where the x-axis is time, y-axis is frequency, and brightness is amplitude. A spectrogram turns audio into an image.</p>
-      <p>The algorithm:</p>
-      <ol>
-        <li><strong>Convert</strong> the audio to a spectrogram using Short-Time Fourier Transform (STFT)</li>
-        <li><strong>Feed</strong> the spectrogram to a neural network</li>
-        <li><strong>The network predicts a mask</strong> — a spectrogram-shaped matrix of values 0–1 indicating "how much of this time-frequency bin belongs to source X"</li>
-        <li><strong>Multiply</strong> the original spectrogram by the mask to extract each source</li>
-        <li><strong>Convert back</strong> to audio with Inverse STFT</li>
-      </ol>
+      <h2>Masks: the trick that makes it work</h2>
+      <p>Here is the detail that surprises people. A well-built engine does not usually generate audio from scratch. It generates a filter.</p>
+      <p>For every point in that time-frequency picture, it estimates a proportion: how much of the energy here belongs to vocals? How much to drums? Think of it as a stencil laid over the spectrogram — mostly opaque where the vocal is absent, mostly transparent where it dominates.</p>
+      <p>Apply that stencil to the original audio and you get the vocal stem. Apply the inverse and you get everything else.</p>
+      <p>This matters for a practical reason. Because the output is built from the original recording rather than synthesised, the result keeps the actual texture of the actual performance. It is the real snare, filtered — not a computer's impression of a snare. That is why good separation sounds like a recording rather than like a machine's reconstruction.</p>
+      <p>It also explains the characteristic failure mode. Where two instruments genuinely overlap — a bass note and a kick drum occupying the same frequency at the same instant — the engine must split that shared energy by proportion. Get it slightly wrong and you hear a faint ghost of one instrument in the other's track. This is why artefacts cluster precisely where instruments collide.</p>
 
-      <h2>the model: The Architecture Behind Modern Separation</h2>
-      <p>The most successful neural network architecture for audio separation is the <strong>the model</strong>, originally developed for medical image segmentation. It has an encoder-decoder structure with skip connections:</p>
-      <ul>
-        <li><strong>Encoder</strong> — progressively compresses the spectrogram, learning higher-level patterns</li>
-        <li><strong>Bottleneck</strong> — captures the most abstract representation of the audio</li>
-        <li><strong>Decoder</strong> — reconstructs the mask at full resolution</li>
-        <li><strong>Skip connections</strong> — pass high-resolution details from encoder to decoder, preserving fine-grained frequency information</li>
-      </ul>
-      <p>Deezer's Spleeter and Meta's Demucs both use variants of this architecture, trained on proprietary datasets of songs with their original multitrack stems.</p>
+      <h2>Why the old approach could never get here</h2>
+      <p>Earlier tools took a completely different route: subtract one stereo channel from the other and whatever sat centred cancels out.</p>
+      <p>That works on a single assumption — that the vocal is centred and other things are not. It is arithmetic, not understanding. And it carries consequences that no refinement can remove: the centred kick and snare vanish along with the singer, the stereo image collapses, the wide reverb tail of the voice survives as a ghost, and a mono recording offers nothing to subtract at all.</p>
+      <p>Most fundamentally, it has no concept of instruments. It knows only positions. Asking it for a drum track is asking a question in a language it does not speak.</p>
+      <p>Recognition-based separation replaced it not because it is fashionable but because it answers a different, better question: not <em>where is this sound</em>, but <em>what is this sound</em>.</p>
 
-      <h2>Training Data: The Secret Ingredient</h2>
-      <p>What makes modern neural separation so powerful is training data. Models like Demucs are trained on thousands of songs where the unmixed stems are known — the exact vocal track, drum track, and bass track used in production.</p>
-      <p>During training, the model sees the mixed audio and tries to predict the individual stems. The difference between prediction and ground truth is the loss, which is minimised through backpropagation over millions of examples.</p>
-      <p>This is why neural approaches generalise better than filter banks — they've learned the acoustic signatures of real instruments across a huge variety of musical styles and production techniques.</p>
+      <h2>Overlap, phase, and other awkward realities</h2>
+      <p>A few genuine difficulties are worth knowing, because they explain most disappointing results.</p>
+      <p><strong>Shared frequencies.</strong> When a male vocal, a guitar and a snare all occupy the same region simultaneously, the engine must apportion energy that is genuinely ambiguous. Dense arrangements are harder for exactly this reason.</p>
+      <p><strong>Phase.</strong> The spectrogram captures how much of each frequency is present but discards some information about alignment. Reconstructing audio requires guessing that alignment back. Guess imperfectly and you get a slight watery quality — the artefact people describe as "underwater", and it comes from this step rather than from the recognition itself.</p>
+      <p><strong>Training bias.</strong> An engine learns from what it was shown. Trained mostly on Western pop and rock, it develops confident categories for drum kit, bass guitar, electric guitar and voice. Present it with a sitar, a tabla or an unusual folk instrument and it has no confident slot, so those sounds get distributed into whichever category seems least wrong — usually the catch-all "other" stem.</p>
+      <p><strong>Compression.</strong> Heavily limited modern masters push everything to a similar level, flattening exactly the contrasts the engine uses to tell layers apart.</p>
 
-      <h2>Why Browser-Based Tools Use Signal Processing</h2>
-      <p>Running a the model in the browser is possible in principle (TensorFlow.js exists), but the model file sizes (100MB–1GB) and compute requirements make it impractical for real-time use without a GPU. Signal processing approaches run in milliseconds on any device.</p>
-      <p>The trade-off: signal processing is faster and private; neural network approaches produce better quality. 7By.in chose browser-first signal processing for the privacy and accessibility benefits — and the downloadable <a href="../download-ai">7By AI Engine</a> is open source so developers can extend it.</p>
+      <h2>Why source quality matters so much</h2>
+      <p>This is the single most controllable factor, and it follows directly from everything above.</p>
+      <p>A lossy encoder achieves small file sizes by discarding detail it judges you will not consciously notice — quiet sounds masked by louder ones, subtle high-frequency content. For casual listening that is a reasonable trade.</p>
+      <p>For separation it is destructive, because the discarded material is precisely the fine detail that distinguishes one instrument from another. The engine is handed a blurred photograph and asked to identify faces in it.</p>
+      <p>Feed the same song as a WAV or FLAC and the difference is immediate and obvious. If you want one improvement to your results, this is it — a better source file beats every setting.</p>
+
+      <h2>How to judge a result properly</h2>
+      <p>Listen to the isolated vocal first, even when what you actually want is the instrumental.</p>
+      <p>The vocal stem is a diagnostic. If it is clean and complete, the instrumental almost certainly is too. If you hear cymbals or guitar bleeding into it, that same material is now missing from the instrumental, and you have learned that in twenty seconds rather than after a full listen.</p>
+      <p>Use headphones. Laptop speakers hide everything below roughly 200 Hz, which is exactly where bass and kick separation problems live.</p>
+      <p>And do not re-process a separated stem hoping to clean it. The engine expects a normal mix as input. Feeding it something already filtered gives it material it was never trained on, and artefacts compound rather than cancel.</p>
+
+      <h2>Common questions</h2>
+      <h3>Is this the same technology as noise removal?</h3>
+      <p>Related, but the goal differs. Noise removal identifies and suppresses unwanted sound; separation identifies several wanted sources and keeps them all, apart. The <a href="https://7by.in/tools/noise-remover">Noise Remover</a> is tuned for the first job.</p>
+      <h3>Will it ever be perfect?</h3>
+      <p>It will keep improving, but perfect reconstruction is mathematically impossible, not merely difficult. Any tool claiming otherwise is overselling.</p>
+      <h3>Why do results vary so much between songs?</h3>
+      <p>Because difficulty is a property of the mix. Sparse, cleanly produced music separates well; dense, heavily compressed or live material does not. The tool is constant; the songs are not.</p>
+      <h3>Does a longer song separate worse?</h3>
+      <p>No. Processing works through the track in segments, so length affects time and credit cost rather than quality.</p>
 
       <div style="background:var(--surf);border:1px solid var(--bord);border-radius:20px;padding:24px;margin-top:40px;text-align:center">
-        <h3 style="margin-bottom:8px">Try Stem Separation in Your Browser</h3>
-        <p style="color:var(--mut);margin-bottom:16px">No upload. No GPU. Free for two songs per day.</p>
-        <a href="../tools/stem-splitter" class="btn btn-m">Open Stem Splitter →</a>
+        <h3 style="margin-bottom:8px">Try it on something you know well</h3>
+        <p style="color:var(--mut);margin-bottom:16px">The best way to understand separation is to hear a familiar song come apart. 20 free credits daily.</p>
+        <a href="../tools/stem-splitter" class="btn btn-m">Open the Stem Splitter →</a>
       </div>
     </div>
   </div>
@@ -110,7 +122,7 @@
     <div style="padding-top:24px;border-top:1px solid var(--bord)">
       <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;font-weight:600;color:var(--dim);margin-bottom:16px">Related reading</div>
       <ul style="list-style:none;padding:0;margin:0">
-        <li style="margin-bottom:10px"><a href="top-5-uses-vocal-remover" style="color:var(--ok);font-weight:600;text-decoration:none;font-size:15px">Top 5 Uses for Vocal Remover Tools You Didn&#039;t Know About &rarr;</a></li>
+        <li style="margin-bottom:10px"><a href="top-5-uses-vocal-remover" style="color:var(--ok);font-weight:600;text-decoration:none;font-size:15px">9 Things You Can Do With a Vocal Remover (Beyond Karaoke) &rarr;</a></li>
         <li style="margin-bottom:10px"><a href="what-is-stem-separation" style="color:var(--ok);font-weight:600;text-decoration:none;font-size:15px">What Is Stem Separation? A Plain-English Explanation &rarr;</a></li>
         <li style="margin-bottom:10px"><a href="10-uses-isolated-vocals" style="color:var(--ok);font-weight:600;text-decoration:none;font-size:15px">10 Creative Uses for Isolated Vocal Tracks &rarr;</a></li>
       </ul>
@@ -119,8 +131,8 @@
 </section>
 
 </div>
-<script src="../assets/layout.js?v=202607232006"></script>
-<script src="../assets/app.js?v=202607232006"></script>
+<script src="../assets/layout.js?v=202607252134"></script>
+<script src="../assets/app.js?v=202607252134"></script>
 <script>injectLayout('../');</script>
 </body>
 </html>
