@@ -20,13 +20,40 @@ Design doc, with the full 14-task plan and the reasoning behind every decision:
 | T5 layout | `src/layout.js` | done |
 | T6 realism | `src/realism.js` | done |
 | T7 preview | `app.html`, `src/render.js` | done |
-| T11 harness | `test.html` | partial — covers T1-T7 |
+| T8 PDF export | `src/pdf.js` | done |
+| T11 harness | `test.html` | partial — covers T1-T8 |
 
-**96 tests green.** Not started: T8 PDF export, T9 app polish, T10 payments,
-T12 infra, T13 OCR, T14 key proxy.
+**105 tests green.** Not started: T9 app polish, T10 payments, T12 infra,
+T13 OCR, T14 key proxy.
 
-You can type text and see it in a captured hand today. Printing works through the
-browser's own print dialog; the dedicated PDF exporter (T8) is not built.
+You can type text, see it in a captured hand, and download a print-ready PDF today.
+
+## PDF export
+
+Written by hand rather than vendored, for a reason that is not stubbornness: the
+whole task is glyph reuse, and no general-purpose JS PDF library exposes Form
+XObjects. PDF is a plain text format; the writer is about 230 lines.
+
+Every glyph variant becomes a Form XObject defined once, and each occurrence is a
+two-line reference:
+
+```
+q  a b c d e f cm  /G17 Do  Q
+```
+
+A 120-page record is roughly a quarter of a million placements. Writing the bezier
+path out for each one is tens of millions of path segments — minutes to build, tens
+of megabytes, and a phone PDF viewer that gives up. With 73 characters at 5 variants
+there are only 365 distinct shapes in the entire job. Measured on the two-page sample:
+1,254 letters, 159 shapes, 141 KB.
+
+Pages are emitted one at a time and released before the next begins, so peak memory
+is one page rather than the whole document.
+
+Both emitters read the same cached curves from `render.js`, so a glyph is traced once
+and the print cannot disagree with the preview it was approved from. A test asserts
+the flattened PDF matrix lands the baseline in the same place the nested SVG
+transforms do.
 
 ## Running it
 

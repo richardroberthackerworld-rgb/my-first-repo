@@ -100,7 +100,11 @@
     <p class="note info" style="margin-top:8px">The seed fixes every wobble. Same seed, same page, every time — that is what makes the preview match what prints.</p>
   </fieldset>
 
-  <button id="print" style="width:100%">Print / Save as PDF</button>
+  <div class="row">
+    <button id="pdf" style="flex:2">Download PDF</button>
+    <button id="print" class="ghost" style="flex:1">Print</button>
+  </div>
+  <div id="pdfNote" style="margin-top:8px"></div>
 </aside>
 
 <main>
@@ -113,6 +117,7 @@
 import { styleFromJSON, createStyle, addVariant, makeVariant, missingChars } from './src/store.js';
 import { layout, DEFAULT_PAGE } from './src/layout.js';
 import { buildGlyphDefs, pageSVG } from './src/render.js';
+import { buildPdf } from './src/pdf.js';
 import { CHARS } from './src/sheet.js';
 
 const $ = id => document.getElementById(id);
@@ -319,6 +324,32 @@ $('ruled').addEventListener('change', render);
 $('seed').addEventListener('change', render);
 $('reroll').addEventListener('click', () => { $('seed').value = Math.floor(Math.random() * 1e6) + 1; render(); });
 $('print').addEventListener('click', () => window.print());
+
+$('pdf').addEventListener('click', async () => {
+  if (!doc || !active) { note('warn', 'Load a style first.'); return; }
+  const btn = $('pdf');
+  btn.disabled = true;
+  const was = btn.textContent;
+  btn.textContent = 'Building…';
+  try {
+    const t0 = performance.now();
+    const out = await buildPdf(doc, active, { title: active.name + ' — 7Hand' });
+    const ms = Math.round(performance.now() - t0);
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(out.blob);
+    a.download = (active.name.replace(/[^a-z0-9]+/gi, '-').toLowerCase() || 'handwriting') + '.pdf';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    $('pdfNote').innerHTML =
+      `<div class="note info">${out.pages} page(s), ${(out.bytes / 1024).toFixed(0)} KB, ` +
+      `${out.placements.toLocaleString()} letters from ${out.shapes} embedded shapes, built in ${ms} ms.</div>`;
+  } catch (err) {
+    note('bad', 'PDF export failed: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = was;
+  }
+});
 
 render();
 </script>

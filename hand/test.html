@@ -61,6 +61,7 @@ import {
 import { makeRng, hashSeed, makeDrift, makeVariantPicker, DEFAULT_JITTER } from './src/realism.js';
 import { layout, styleScale, DEFAULT_PAGE } from './src/layout.js';
 import { buildGlyphDefs, pageSVG, variantPath } from './src/render.js';
+import { buildPdf, glyphMatrix, variantPdfOps } from './src/pdf.js';
 
 /* ---------- tiny assertion harness ---------- */
 const out = document.getElementById('visual');
@@ -1307,6 +1308,139 @@ test('plain paper draws no ruling', () => {
   eq((svg.match(/<line /g) || []).length, 0);
 });
 
+/* ================= T8: PDF export ================= */
+section('T8 — PDF export');
+
+/* Async tests need their own runner: the harness above is synchronous. */
+const pending = [];
+function atest(name, fn) { pending.push({ name, fn }); }
+
+atest('produces a structurally valid PDF', async () => {
+  const doc = layout(LOREM, TS, { seed: 1 });
+  const out = await buildPdf(doc, TS, { compress: false });
+  const text = await out.blob.text();
+  ok(text.startsWith('%PDF-1.7'), 'missing PDF header');
+  ok(text.trimEnd().endsWith('%%EOF'), 'missing EOF marker');
+  ok(/\/Type\s*\/Catalog/.test(text), 'no catalog');
+  ok(/\/Type\s*\/Pages/.test(text), 'no page tree');
+  ok(/\/Type\s*\/Page[^s]/.test(text), 'no page object');
+  ok(/\btrailer\b/.test(text) && /\bstartxref\b/.test(text), 'no trailer');
+});
+
+atest('the xref offsets actually point at their objects', async () => {
+  /* A PDF with a wrong xref opens in some readers and not others. This walks
+     every entry and checks the bytes at that offset really begin that object,
+     which is the one structural thing a reader cannot recover from. */
+  const doc = layout(LOREM, TS, { seed: 2 });
+  const out = await buildPdf(doc, TS, { compress: false });
+  const text = await out.blob.text();
+
+  const startxref = +text.slice(text.lastIndexOf('startxref') + 9).trim().split(/\s/)[0];
+  ok(Number.isFinite(startxref) && startxref > 0 && startxref < text.length, 'startxref out of range');
+  ok(text.startsWith('xref', startxref), 'startxref does not point at the xref table');
+
+  const header = text.slice(startxref).split('\n');
+  const [first, count] = header[1].split(' ').map(Number);
+  eq(first, 0, 'xref should start at object 0');
+
+  let checked = 0;
+  for (let i = 1; i < count; i++) {
+    const entry = header[1 + i + 1];
+    const off = +entry.slice(0, 10);
+    ok(text.startsWith(`${i} 0 obj`, off),
+      `xref entry ${i} points at offset ${off}, which reads "${text.slice(off, off + 18)}"`);
+    checked++;
+  }
+  ok(checked > 3, 'expected several objects to check, saw ' + checked);
+});
+
+atest('every glyph shape is embedded once and referenced many times', async () => {
+  const doc = layout(LOREM.repeat(8), TS, { seed: 3 });
+  const out = await buildPdf(doc, TS, { compress: false });
+  const text = await out.blob.text();
+  const forms = (text.match(/\/Subtype\s*\/Form/g) || []).length;
+  const draws = (text.match(/\/G\d+ Do/g) || []).length;
+  eq(forms, out.shapes, 'one Form XObject per distinct shape');
+  eq(draws, out.placements, 'one draw call per letter on the page');
+  ok(draws > forms * 8,
+    `${draws} placements should reuse ${forms} shapes — that reuse is what keeps the file small`);
+});
+
+atest('reuse keeps the file far smaller than inlining every glyph would', async () => {
+  const doc = layout(LOREM.repeat(8), TS, { seed: 4 });
+  const out = await buildPdf(doc, TS, { compress: false });
+  /* Rough cost of inlining: each placement would carry its own path. Compare
+     against the size of the embedded shapes times the number of placements. */
+  const text = await out.blob.text();
+  const formBytes = (text.match(/\/Subtype \/Form[\s\S]*?endobj/g) || [])
+    .reduce((a, s) => a + s.length, 0);
+  const naive = (formBytes / Math.max(1, out.shapes)) * out.placements;
+  ok(out.bytes < naive * 0.3,
+    `export is ${(out.bytes / 1024) | 0}KB; inlining would be roughly ${(naive / 1024) | 0}KB`);
+});
+
+atest('compression shrinks the file and keeps it valid', async () => {
+  const doc = layout(LOREM.repeat(4), TS, { seed: 5 });
+  const plain = await buildPdf(doc, TS, { compress: false });
+  const zipped = await buildPdf(doc, TS, { compress: true });
+  if (typeof CompressionStream === 'undefined') {
+    eq(zipped.bytes, plain.bytes, 'no CompressionStream here, so sizes should match');
+    return;
+  }
+  ok(zipped.bytes < plain.bytes * 0.8,
+    `compressed ${(zipped.bytes / 1024) | 0}KB vs plain ${(plain.bytes / 1024) | 0}KB`);
+  const t = await zipped.blob.text();
+  ok(t.startsWith('%PDF-1.7') && t.trimEnd().endsWith('%%EOF'), 'compressed file is malformed');
+  ok(/\/Filter \/FlateDecode/.test(t), 'streams should be marked FlateDecode');
+});
+
+atest('the glyph matrix puts the baseline exactly where SVG puts it', async () => {
+  /* The one place the two emitters could silently disagree: SVG nests four
+     transforms, PDF must flatten them into one matrix by hand. If this drifts,
+     the print differs from the preview it was approved from. */
+  const doc = layout('handwriting sample', TS, { seed: 12 });
+  const g = doc.pages[0].lines.find(l => l.glyphs.length).glyphs[0];
+  const v = TS.glyphs[g.ch][g.vi];
+  const m = glyphMatrix(g, v.baseline);
+
+  /* Apply the flattened matrix to the glyph's own baseline-left point. */
+  const px = 0, py = v.baseline;
+  const x = m[0] * px + m[2] * py + m[4];
+  const y = m[1] * px + m[3] * py + m[5];
+  near(x, g.ax, 1e-6, 'PDF matrix put the glyph left edge off its anchor');
+  near(y, g.ay, 1e-6, 'PDF matrix put the baseline off its line');
+});
+
+atest('a rotated glyph pivots about the baseline, same as SVG', async () => {
+  const g = { ch: 'a', vi: 0, ax: 40, ay: 100, s: 0.12, rot: 6 };
+  const m = glyphMatrix(g, 250);
+  const x = m[2] * 250 + m[4];
+  const y = m[3] * 250 + m[5];
+  near(x, g.ax, 1e-6, 'rotation moved the anchor');
+  near(y, g.ay, 1e-6, 'rotation moved the anchor');
+});
+
+atest('a non-finite coordinate is refused, not written into the file', async () => {
+  const doc = layout('abc', TS, { seed: 1 });
+  const line = doc.pages[0].lines.find(l => l.glyphs.length);
+  line.glyphs[0].ax = NaN;
+  let threw = null;
+  try { await buildPdf(doc, TS, { compress: false }); } catch (e) { threw = e; }
+  ok(threw && /non-finite/.test(threw.message),
+    'a NaN coordinate must throw, not produce a file that opens blank in some readers');
+});
+
+atest('a multi-page document emits one page object per page', async () => {
+  const doc = layout(LOREM.repeat(30), TS, { seed: 6 });
+  ok(doc.stats.pages > 1, 'need a multi-page document for this test');
+  const out = await buildPdf(doc, TS, { compress: false });
+  const text = await out.blob.text();
+  eq((text.match(/\/Type \/Page[^s]/g) || []).length, doc.stats.pages, 'page object count');
+  eq(out.pages, doc.stats.pages);
+  const kids = text.match(/\/Kids \[([^\]]*)\]/)[1].trim().split(/\s+0 R/).filter(Boolean);
+  eq(kids.length, doc.stats.pages, 'page tree must list every page');
+});
+
 /* ---------- visual check ---------- */
 const samples = {
   'o (hole)': `
@@ -1373,10 +1507,33 @@ for (const [label, a] of Object.entries(samples)) {
   out.appendChild(fig);
 }
 
-/* ---------- summary ---------- */
+/* ---------- async tests, then the summary ---------- */
 const s = document.getElementById('summary');
+s.textContent = `running ${pending.length} async tests…`;
+
+/* The PDF tests are async (compression and Blob reads are promise-based), so
+   they run after everything synchronous and report into the same tally. The
+   summary is only written once they finish, or a green banner would appear
+   before the slowest tests had a chance to fail. */
+for (const { name, fn } of pending) {
+  let err = null;
+  try { await fn(); } catch (e) { err = e; }
+  const row = document.createElement('div');
+  row.className = 'case';
+  row.innerHTML = `<span class="tag ${err ? 'bad' : 'ok'}">${err ? 'FAIL' : 'PASS'}</span><span>${name}</span>`;
+  list.appendChild(row);
+  if (err) {
+    fail++;
+    const why = document.createElement('div');
+    why.className = 'why';
+    why.textContent = (err.stack || String(err)).split('\n').slice(0, 3).join('\n');
+    list.appendChild(why);
+  } else pass++;
+}
+
 s.className = fail ? 'fail' : 'pass';
 s.textContent = fail
   ? `${fail} FAILED · ${pass} passed`
   : `All ${pass} tests passed`;
+window.__done = true;
 </script>

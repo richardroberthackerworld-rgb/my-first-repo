@@ -30,11 +30,23 @@
 'use strict';
 
 import { variantMask } from './store.js';
-import { maskToPath } from './trace.js';
+import { maskToCurves, beziersToPath } from './trace.js';
 
-/** Trace a variant on first use and cache the path on it. */
+/**
+ * Trace a variant on first use and cache the CURVES on it.
+ * Both the SVG preview and the PDF export read from this one cache, so a
+ * glyph is traced once and the two outputs cannot drift apart. A printed page
+ * differing from the preview it was approved from is the kind of bug nobody
+ * finds until a customer does.
+ */
+export function variantCurves(v) {
+  if (v.curves == null) v.curves = maskToCurves(variantMask(v), v.w, v.h);
+  return v.curves;
+}
+
+/** Cached SVG path string for a variant. */
 export function variantPath(v) {
-  if (v.pathD == null) v.pathD = maskToPath(variantMask(v), v.w, v.h);
+  if (v.pathD == null) v.pathD = variantCurves(v).map(c => beziersToPath(c.curves)).join('');
   return v.pathD;
 }
 
