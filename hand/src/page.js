@@ -29,6 +29,84 @@
 
 import { otsuThreshold, binarize } from './capture.js';
 
+/* ---------- finding the page --------------------------------------------- */
+
+/**
+ * Locate the sheet of paper inside a photograph.
+ *
+ * A photo is not a scan. It contains the desk, the shadow beside the spine,
+ * the dark strip where the page curls away, sometimes a hand. All of that
+ * survives thresholding, and a dark band running down the side of the image
+ * puts ink in every row — which merges every line of writing into one and
+ * makes the page yield nothing.
+ *
+ * Trying to erase that afterwards does not work. Its solid core gets removed,
+ * but the antialiased boundary breaks into a dotted line of fragments, each
+ * too small to look like a rule and too disconnected to look like a blob,
+ * still smeared down the full height. The fix is to never look at it: find
+ * the paper and crop to it.
+ *
+ * The paper is the largest bright region. Nothing else in a photograph of a
+ * page is both bright and that large.
+ */
+export function findPageBounds(gray, w, h, { brightFrac = 0.55, insetFrac = 0.004 } = {}) {
+  const t = otsuThreshold(gray);
+  /* Paper is comfortably above the ink threshold. Sitting the cut between the
+     two keeps shadowed paper on the paper side. */
+  const bright = t + (255 - t) * brightFrac;
+
+  /* Projections, not connected components.
+     The obvious approach — largest connected bright region — fails on exactly
+     the pages this exists for: the printed rules are darker than the bright
+     cut, so they slice the paper into horizontal strips and no single strip is
+     large enough to look like a page. Counting bright pixels per row and per
+     column does not care whether the paper is cut up. */
+  const rowBright = new Uint32Array(h);
+  const colBright = new Uint32Array(w);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (gray[y * w + x] >= bright) { rowBright[y]++; colBright[x]++; }
+    }
+  }
+
+  const span = (counts, n, limit) => {
+    const need = limit * 0.3;
+    let from = 0, to = n - 1;
+    while (from < n && counts[from] < need) from++;
+    while (to > from && counts[to] < need) to--;
+    return { from, to };
+  };
+
+  const rows = span(rowBright, h, w);
+  const cols = span(colBright, w, h);
+
+  /* Nothing convincing: a very dark photo, or a page already filling the
+     frame. Use the whole image rather than cropping to something arbitrary. */
+  if (rows.to - rows.from < h * 0.3 || cols.to - cols.from < w * 0.3) {
+    return { x: 0, y: 0, w, h, cropped: false };
+  }
+
+  /* Pull in slightly so the paper's own edge shadow stays outside. */
+  const inset = Math.round(Math.min(w, h) * insetFrac);
+  const x = Math.max(0, cols.from + inset);
+  const y = Math.max(0, rows.from + inset);
+  const x1 = Math.min(w - 1, cols.to - inset);
+  const y1 = Math.min(h - 1, rows.to - inset);
+  return {
+    x, y, w: Math.max(1, x1 - x + 1), h: Math.max(1, y1 - y + 1),
+    cropped: !(x === 0 && y === 0 && x1 === w - 1 && y1 === h - 1)
+  };
+}
+
+/** Copy a rectangle out of a greyscale image. */
+export function cropGray(gray, w, h, box) {
+  const out = new Uint8Array(box.w * box.h);
+  for (let y = 0; y < box.h; y++) {
+    for (let x = 0; x < box.w; x++) out[y * box.w + x] = gray[(y + box.y) * w + (x + box.x)];
+  }
+  return out;
+}
+
 /* ---------- deskew ------------------------------------------------------ */
 
 /**
@@ -101,56 +179,67 @@ export function rotateGray(gray, w, h, deg) {
  * horizontal stroke in handwriting is a few characters wide. So a row whose
  * longest unbroken run of ink covers `minFrac` of the page is part of a rule.
  */
-export function detectRuling(bin, w, h, { minFrac = 0.5, growFrac = 0.25 } = {}) {
-  const longestRun = (get, n) => {
-    let best = 0, run = 0;
-    for (let i = 0; i < n; i++) {
-      if (get(i)) { run++; if (run > best) best = run; }
-      else run = 0;
-    }
-    return best;
-  };
-
+export function detectRuling(bin, w, h, { minRunFrac = 0.045, minRunPx = 22, vertFrac = 0.25 } = {}) {
   /**
-   * Find core rule positions, then GROW each band outward.
+   * Rules are found by LOCAL run length, not by whole rows.
    *
-   * A printed rule is one or two pixels of solid colour with antialiased
-   * shoulders on either side. Only the core is dark enough to clear the main
-   * threshold, so detecting the core alone leaves the shoulders behind — and
-   * a leftover shoulder is a full-page-long streak of ink, which is worse
-   * than useless: it forms a phantom "word" at the page margin that shifts
-   * every real word out of alignment.
+   * The first version asked "does this image row contain a long run of ink"
+   * and marked the whole row. That works on a flat scan and fails completely
+   * on a photograph, which is what people actually take: a bound notebook
+   * photographed at an angle has rules that bow and drift, from page curl and
+   * perspective. A curved rule never sits inside one image row, so no row
+   * qualifies and almost nothing is found. On a real page it detected 3 rules
+   * out of about 30, and rotating the image cannot fix it — the rules are
+   * curved, not tilted.
    *
-   * The shoulder is still a rule, so it still spans the page. Growing while
-   * the neighbouring row remains long (a quarter of the page) picks it up.
-   * Handwriting never produces a run that long, so this cannot eat text.
+   * Marking individual pixels that belong to a long horizontal run has no
+   * such assumption. A rule is long everywhere along its length whatever
+   * shape it takes, while handwriting has no horizontal stroke anywhere near
+   * that long. Underlines are removed too, which is correct: they are ruling
+   * as far as the letters are concerned.
+   *
+   * Returns a mask: 1 = horizontal rule, 2 = vertical rule.
    */
-  const bandsFrom = (runs, n, span) => {
-    const core = runs.map(r => r >= span * minFrac);
-    const out = [];
-    let i = 0;
-    while (i < n) {
-      if (!core[i]) { i++; continue; }
-      let from = i, to = i;
-      while (to + 1 < n && core[to + 1]) to++;
-      while (from > 0 && runs[from - 1] >= span * growFrac) from--;
-      while (to < n - 1 && runs[to + 1] >= span * growFrac) to++;
-      out.push({ from, to });
-      i = to + 1;
+  const kH = Math.max(minRunPx, Math.round(w * minRunFrac));
+
+  /* The vertical threshold is a much larger fraction than the horizontal one,
+     and the asymmetry is deliberate. Handwriting has no long HORIZONTAL runs,
+     but it is full of long VERTICAL ones — the stem of every l, k, h, b and d.
+     Using the same fraction both ways erased those stems as though they were
+     margin rule, which quietly mutilated letters and dropped the yield.
+     A margin rule runs most of the height of the page; a letter stem never
+     comes close. */
+  const kV = Math.max(minRunPx, Math.round(h * vertFrac));
+  const mask = new Uint8Array(w * h);
+  let hCount = 0, vCount = 0;
+
+  for (let y = 0; y < h; y++) {
+    let x = 0;
+    while (x < w) {
+      if (!bin[y * w + x]) { x++; continue; }
+      const start = x;
+      while (x < w && bin[y * w + x]) x++;
+      if (x - start >= kH) {
+        for (let i = start; i < x; i++) mask[y * w + i] = 1;
+        hCount++;
+      }
     }
-    return out;
-  };
+  }
 
-  const hRuns = new Array(h);
-  for (let y = 0; y < h; y++) hRuns[y] = longestRun(x => bin[y * w + x], w);
+  for (let x = 0; x < w; x++) {
+    let y = 0;
+    while (y < h) {
+      if (!bin[y * w + x]) { y++; continue; }
+      const start = y;
+      while (y < h && bin[y * w + x]) y++;
+      if (y - start >= kV) {
+        for (let i = start; i < y; i++) mask[i * w + x] = mask[i * w + x] || 2;
+        vCount++;
+      }
+    }
+  }
 
-  const vRuns = new Array(w);
-  for (let x = 0; x < w; x++) vRuns[x] = longestRun(y => bin[y * w + x], h);
-
-  return {
-    horizontal: bandsFrom(hRuns, h, w),
-    vertical: bandsFrom(vRuns, w, h)
-  };
+  return { mask, horizontalRuns: hCount, verticalRuns: vCount, kH, kV };
 }
 
 /**
@@ -162,50 +251,205 @@ export function detectRuling(bin, w, h, { minFrac = 0.5, growFrac = 0.25 } = {})
  * both sides of it at that column — that is, when nothing is passing through.
  * Where a stroke does cross, its pixels stay and the letter survives.
  */
-export function removeRuling(bin, w, h, ruling, { probe = 3, slack = 1 } = {}) {
+export function removeRuling(bin, w, h, ruling, { probe = 4, slack = 1 } = {}) {
+  const { mask } = ruling;
   const out = new Uint8Array(bin);
 
-  const inkRow = (x, y) => {
-    if (y < 0 || y >= h) return false;
-    for (let dx = -slack; dx <= slack; dx++) {
-      const xx = x + dx;
-      if (xx >= 0 && xx < w && bin[y * w + xx]) return true;
-    }
+  /* Ink that is NOT itself part of a rule. A rule crossing another rule must
+     not count as "a stroke passes through here", or the intersections of the
+     margin rule with every horizontal rule would all be preserved. */
+  const realInk = (x, y) => {
+    if (x < 0 || x >= w || y < 0 || y >= h) return false;
+    const p = y * w + x;
+    return bin[p] === 1 && mask[p] === 0;
+  };
+  const nearRow = (x, y) => {
+    for (let dx = -slack; dx <= slack; dx++) if (realInk(x + dx, y)) return true;
     return false;
   };
-  const inkCol = (x, y) => {
-    if (x < 0 || x >= w) return false;
-    for (let dy = -slack; dy <= slack; dy++) {
-      const yy = y + dy;
-      if (yy >= 0 && yy < h && bin[yy * w + x]) return true;
-    }
+  const nearCol = (x, y) => {
+    for (let dy = -slack; dy <= slack; dy++) if (realInk(x, y + dy)) return true;
     return false;
   };
 
-  for (const r of ruling.horizontal) {
+  for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
-      let above = false, below = false;
-      for (let d = 1; d <= probe; d++) {
-        if (inkRow(x, r.from - d)) above = true;
-        if (inkRow(x, r.to + d)) below = true;
+      const p = y * w + x;
+      if (!mask[p]) continue;
+
+      /* Keep the pixel when handwriting continues on both sides of the rule:
+         a descender passing through, or a letter straddling the line. Erasing
+         those would cut letters in half, and on ruled paper most letters sit
+         on a rule. */
+      let a = false, b = false;
+      if (mask[p] === 1) {
+        for (let d = 1; d <= probe && !(a && b); d++) {
+          if (nearRow(x, y - d)) a = true;
+          if (nearRow(x, y + d)) b = true;
+        }
+      } else {
+        for (let d = 1; d <= probe && !(a && b); d++) {
+          if (nearCol(x - d, y)) a = true;
+          if (nearCol(x + d, y)) b = true;
+        }
       }
-      if (above && below) continue;
-      for (let y = r.from; y <= r.to; y++) out[y * w + x] = 0;
+      if (!(a && b)) out[p] = 0;
     }
   }
 
-  for (const r of ruling.vertical) {
+  return out;
+}
+
+/**
+ * Discard anything far too big to be handwriting.
+ *
+ * A photograph of a notebook contains more than the page: the dark background
+ * either side, the shadow along the spine, a binder ring, the edge of the
+ * desk. Those survive thresholding as enormous blobs, and a blob that spans
+ * the height of the image puts ink in every row — so the horizontal
+ * projection never drops, every line of writing merges into one band, and the
+ * page yields nothing. That is what a real photo did: one line, two words,
+ * from a page holding thirty lines.
+ *
+ * Bounding box is the giveaway. A letter occupies a few percent of the page.
+ * The limits are loose on width, because joined-up writing can run a whole
+ * word together, and tight on height, where nothing legitimate comes close.
+ */
+export function dropOversized(bin, w, h, { maxHeightFrac = 0.22, maxWidthFrac = 0.6 } = {}) {
+  const maxH = h * maxHeightFrac, maxW = w * maxWidthFrac;
+  const out = new Uint8Array(bin);
+  const seen = new Uint8Array(w * h);
+  let dropped = 0;
+
+  for (let y0 = 0; y0 < h; y0++) {
+    for (let x0 = 0; x0 < w; x0++) {
+      const p0 = y0 * w + x0;
+      if (seen[p0] || !bin[p0]) continue;
+
+      const stack = [p0];
+      const cells = [];
+      let minX = x0, maxX = x0, minY = y0, maxY = y0;
+      while (stack.length) {
+        const p = stack.pop();
+        if (seen[p]) continue;
+        seen[p] = 1;
+        if (!bin[p]) continue;
+        const x = p % w, y = (p - x) / w;
+        cells.push(p);
+        if (x < minX) minX = x; if (x > maxX) maxX = x;
+        if (y < minY) minY = y; if (y > maxY) maxY = y;
+        if (x > 0) stack.push(p - 1);
+        if (x < w - 1) stack.push(p + 1);
+        if (y > 0) stack.push(p - w);
+        if (y < h - 1) stack.push(p + w);
+      }
+
+      if (maxY - minY + 1 > maxH || maxX - minX + 1 > maxW) {
+        for (const p of cells) out[p] = 0;
+        dropped++;
+      }
+    }
+  }
+  return { bin: out, dropped };
+}
+
+/* ---------- de-curl ------------------------------------------------------ */
+
+/**
+ * Straighten text lines that bow across the page.
+ *
+ * Rotation is not enough. A photograph of a bound notebook has lines that
+ * CURVE — from page curl near the spine and from perspective — and a curve
+ * cannot be rotated flat. Line finding works by horizontal projection, which
+ * assumes a line of writing occupies one horizontal band, so a bowed line
+ * smears across many rows and splits into several. Measured on a synthetic
+ * page, a bow of just 2px against a 76px line pitch took line detection from
+ * 4 lines to 6 and dropped word matches from 7 to 1. Real photos always have
+ * at least that much.
+ *
+ * The page is cut into vertical strips and each strip's row profile is
+ * correlated against its LEFT NEIGHBOUR, not against the whole page — the
+ * whole-page profile is itself smeared by the curl, so correlating against it
+ * would be measuring the problem with a ruler made of the problem.
+ * Accumulating neighbour-to-neighbour offsets traces the curve.
+ */
+export function estimateCurl(bin, w, h, { strips = 14, maxShift = 0 } = {}) {
+  const S = Math.max(2, Math.min(strips, Math.floor(w / 40)));
+  const D = maxShift || Math.max(4, Math.round(h * 0.04));
+
+  const profile = (x0, x1) => {
+    const p = new Float64Array(h);
     for (let y = 0; y < h; y++) {
-      let left = false, right = false;
-      for (let d = 1; d <= probe; d++) {
-        if (inkCol(r.from - d, y)) left = true;
-        if (inkCol(r.to + d, y)) right = true;
-      }
-      if (left && right) continue;
-      for (let x = r.from; x <= r.to; x++) out[y * w + x] = 0;
+      let c = 0;
+      for (let x = x0; x < x1; x++) if (bin[y * w + x]) c++;
+      p[y] = c;
     }
+    return smooth(p, 2);
+  };
+
+  const profiles = [];
+  for (let s = 0; s < S; s++) {
+    profiles.push(profile(Math.floor(s * w / S), Math.floor((s + 1) * w / S)));
   }
 
+  const rel = [0];
+  for (let s = 1; s < S; s++) {
+    const a = profiles[s - 1], b = profiles[s];
+    let best = 0, bestScore = -Infinity;
+    for (let d = -D; d <= D; d++) {
+      let score = 0;
+      for (let y = 0; y < h; y++) {
+        const yy = y + d;
+        if (yy >= 0 && yy < h) score += b[y] * a[yy];
+      }
+      /* Prefer the smallest shift among equals: without this a blank strip
+         drifts arbitrarily and drags the rest of the page with it. */
+      if (score > bestScore * 1.0001) { bestScore = score; best = d; }
+    }
+    rel.push(best);
+  }
+
+  const cum = [];
+  let acc = 0;
+  for (const d of rel) { acc += d; cum.push(acc); }
+  const mean = cum.reduce((a, b) => a + b, 0) / cum.length;
+  return cum.map(v => v - mean);
+}
+
+/** Apply a per-strip vertical shift, interpolating between strip centres. */
+export function applyCurl(gray, w, h, shifts) {
+  const S = shifts.length;
+  if (S < 2) return gray;
+  const out = new Uint8Array(w * h).fill(255);
+  const centre = s => (s + 0.5) * w / S;
+
+  for (let x = 0; x < w; x++) {
+    /* linear interpolation of the shift between neighbouring strip centres */
+    let shift;
+    if (x <= centre(0)) shift = shifts[0];
+    else if (x >= centre(S - 1)) shift = shifts[S - 1];
+    else {
+      let s = 0;
+      while (s < S - 2 && centre(s + 1) < x) s++;
+      const t = (x - centre(s)) / (centre(s + 1) - centre(s));
+      shift = shifts[s] * (1 - t) + shifts[s + 1] * t;
+    }
+
+    for (let y = 0; y < h; y++) {
+      /* Sample from where the content currently is: a strip measured as
+         displaced by +d is pulled back by reading from y - d. Getting this
+         sign backwards does not fail loudly — it doubles the curve instead of
+         removing it, and the page just segments slightly worse.
+         Rounding to whole pixels instead of interpolating was tried and is
+         worse: it leaves a step at every strip boundary, and the steps
+         fragment lines more than the interpolation blurs letters. */
+      const sy = y - shift;
+      const y0 = Math.floor(sy);
+      if (y0 < 0 || y0 + 1 >= h) continue;
+      const f = sy - y0;
+      out[y * w + x] = gray[y0 * w + x] * (1 - f) + gray[(y0 + 1) * w + x] * f;
+    }
+  }
   return out;
 }
 
@@ -486,11 +730,38 @@ export function findLetters(bin, w, word, { minArea = 12, overlapFrac = 0.55 } =
  * Take a photographed page apart.
  * Returns the deskewed binary image plus its lines, words and letters.
  */
-export function analysePage(gray, w, h, opts = {}) {
+export function analysePage(gray0, w0, h0, opts = {}) {
+  /* Crop to the paper first. Everything downstream measures projections over
+     the whole image, so any desk or shadow left in frame corrupts all of it. */
+  const page = opts.cropToPage === false
+    ? { x: 0, y: 0, w: w0, h: h0, cropped: false }
+    : findPageBounds(gray0, w0, h0, opts);
+  const gray = page.cropped ? cropGray(gray0, w0, h0, page) : gray0;
+  const w = page.w, h = page.h;
+
   const t0 = otsuThreshold(gray);
   const rough = binarize(gray, t0);
   const skew = opts.skew != null ? opts.skew : estimateSkew(rough, w, h, opts);
-  const straight = rotateGray(gray, w, h, skew);
+  let straight = rotateGray(gray, w, h, skew);
+
+  /* Then flatten the curve. Rotation handles a tilted page; only this handles
+     a curved one, and every photo of a bound notebook is curved. */
+  let curl = null, curlApplied = false;
+  if (opts.deCurl !== false) {
+    curl = estimateCurl(binarize(straight, otsuThreshold(straight)), w, h, opts);
+    /* Only straighten when there is enough curve to be worth it.
+       Resampling costs sharpness, and a softened stroke edge can bridge the
+       gap to its neighbour when the image is thresholded again — which merges
+       letters and costs matches. Below a few pixels the curve does not break
+       line finding, so paying that cost would be a net loss. Above it, the
+       page is unusable uncorrected and the trade is clearly worth making. */
+    const amplitude = Math.max(...curl.map(Math.abs));
+    if (amplitude >= (opts.minCurlPx ?? 3)) {
+      straight = applyCurl(straight, w, h, curl);
+      curlApplied = true;
+    }
+  }
+
   const t = otsuThreshold(straight);
   let bin = binarize(straight, t);
 
@@ -498,12 +769,19 @@ export function analysePage(gray, w, h, opts = {}) {
      the printed rules destroy both line and word segmentation if they reach
      the next stage. Skew is corrected before this so the rules are horizontal
      and their full length is visible in a single row. */
-  let ruling = { horizontal: [], vertical: [] };
+  let ruling = { mask: null, horizontalRuns: 0, verticalRuns: 0 };
+  let oversized = 0;
   if (opts.removeRuling !== false) {
     ruling = detectRuling(bin, w, h, opts);
-    if (ruling.horizontal.length || ruling.vertical.length) {
+    if (ruling.horizontalRuns || ruling.verticalRuns) {
       bin = removeRuling(bin, w, h, ruling, opts);
     }
+    /* After the ruling, before anything measures a projection: the page edges
+       and shadows in a photograph are bigger than any letter and put ink in
+       every row, which merges the whole page into one line. */
+    const cleaned = dropOversized(bin, w, h, opts);
+    bin = cleaned.bin;
+    oversized = cleaned.dropped;
   }
 
   const lines = findLines(bin, w, h, opts).map(line => {
@@ -519,12 +797,16 @@ export function analysePage(gray, w, h, opts = {}) {
   }).filter(l => l.words.length);
 
   return {
-    bin, w, h, skew, threshold: t, lines, ruling,
+    bin, w, h, skew, threshold: t, lines, ruling, page, curl,
     stats: {
+      cropped: page.cropped,
+      curlPx: curl ? Math.round(Math.max(...curl.map(Math.abs))) : 0,
+      curlCorrected: curlApplied,
       lines: lines.length,
       words: lines.reduce((a, l) => a + l.words.length, 0),
       letters: lines.reduce((a, l) => a + l.words.reduce((b, wd) => b + wd.letters.length, 0), 0),
-      rulesRemoved: ruling.horizontal.length + ruling.vertical.length
+      rulesRemoved: ruling.horizontalRuns + ruling.verticalRuns,
+      oversizedDropped: oversized
     }
   };
 }

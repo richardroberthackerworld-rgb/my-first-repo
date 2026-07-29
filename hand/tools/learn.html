@@ -195,7 +195,9 @@ $('analyse').addEventListener('click', async () => {
   msg(
     `${s.lines} lines, ${s.words} words, ${s.letters} letter shapes. ` +
     `Skew corrected ${page.skew.toFixed(2)}°.` +
-    (s.rulesRemoved ? ` Removed ${s.rulesRemoved} printed rule(s) from the paper.` : '') +
+    (s.cropped ? ' Cropped to the paper.' : '') +
+    (s.curlCorrected ? ` Straightened ${s.curlPx}px of page curl.` : '') +
+    (s.rulesRemoved ? ` Removed ${s.rulesRemoved} printed rule(s).` : '') +
     (weak ? ` ${weak} line(s) had too few plain letters to place a baseline confidently.` : ''),
     weak ? 'warn' : 'ok'
   );

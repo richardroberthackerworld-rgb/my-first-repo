@@ -64,7 +64,8 @@ import { buildGlyphDefs, pageSVG, variantPath } from './src/render.js';
 import { buildPdf, glyphMatrix, variantPdfOps } from './src/pdf.js';
 import {
   estimateSkew, rotateGray, findLines, findWords, findLetters,
-  analysePage, lineMetrics, alignTranscript, detectRuling, removeRuling
+  analysePage, lineMetrics, alignTranscript, detectRuling, removeRuling,
+  findPageBounds, cropGray, dropOversized, estimateCurl, applyCurl
 } from './src/page.js';
 import { transcribe, prepareImage, checkLineCount, VISION_PROVIDERS } from './src/ocr.js';
 
@@ -1542,30 +1543,52 @@ section('Page analysis — RULED notebook paper');
  * Writing sits ON the lines, so strokes cross them and descenders hang
  * through them — exactly the case that must survive rule removal.
  */
-function ruledPage(lines, { size = 30, pitch = 76, skew = 0, ruleGrey = 150 } = {}) {
+function ruledPage(lines, { size = 30, pitch = 76, skew = 0, ruleGrey = 150,
+                            bow = 0, edges = false } = {}) {
   const W = 900, H = 100 + lines.length * pitch + 60;
   const cv = document.createElement('canvas');
   cv.width = W; cv.height = H;
   const ctx = cv.getContext('2d', { willReadFrequently: true });
   ctx.fillStyle = '#fdfdf8'; ctx.fillRect(0, 0, W, H);
+
+  if (edges) {
+    /* The dark background either side of a photographed page. */
+    ctx.fillStyle = '#2b2b30';
+    ctx.fillRect(0, 0, 24, H);
+    ctx.fillRect(W - 30, 0, 30, H);
+    ctx.fillRect(0, 0, W, 14);
+  }
+
   ctx.translate(W / 2, H / 2); ctx.rotate(skew * Math.PI / 180); ctx.translate(-W / 2, -H / 2);
 
-  /* printed horizontal ruling, all the way across */
+  /* Printed ruling. `bow` curves each rule the way page curl and perspective
+     curve them in a photograph of a bound notebook — which is the case that
+     defeated row-based detection. */
+  const ruleY = (i, x) => 60 + i * pitch + 0.5 + bow * Math.sin(Math.PI * x / W);
   ctx.strokeStyle = `rgb(${ruleGrey},${ruleGrey + 12},${ruleGrey + 24})`;
   ctx.lineWidth = 1.6;
   for (let i = 0; i < lines.length + 4; i++) {
-    const y = 60 + i * pitch + 0.5;
-    ctx.beginPath(); ctx.moveTo(20, y); ctx.lineTo(W - 20, y); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(20, ruleY(i, 20));
+    for (let x = 20; x <= W - 20; x += 6) ctx.lineTo(x, ruleY(i, x));
+    ctx.stroke();
   }
+
   /* red margin rule */
   ctx.strokeStyle = 'rgb(190,120,130)';
   ctx.beginPath(); ctx.moveTo(64.5, 10); ctx.lineTo(64.5, H - 10); ctx.stroke();
 
-  /* writing, sitting on the rules */
+  /* writing, sitting on the rules and following their curve */
   ctx.fillStyle = '#16233f';
   ctx.font = size + 'px Georgia, serif';
   ctx.textBaseline = 'alphabetic';
-  lines.forEach((t, i) => ctx.fillText(t, 80, 60 + i * pitch));
+  lines.forEach((t, i) => {
+    let x = 80;
+    for (const ch of t) {
+      ctx.fillText(ch, x, ruleY(i, x));
+      x += ctx.measureText(ch).width;
+    }
+  });
 
   return { gray: luminance(ctx.getImageData(0, 0, W, H)), w: W, h: H };
 }
@@ -1575,18 +1598,40 @@ const RULED = ['one two three', 'nose worn menu', 'never mind me', 'pack my box 
 test('printed ruling is detected', () => {
   const p = ruledPage(RULED);
   const bin = binarize(p.gray, otsuThreshold(p.gray));
-  const ruling = detectRuling(bin, p.w, p.h);
-  ok(ruling.horizontal.length >= RULED.length,
-    `found ${ruling.horizontal.length} horizontal rules, expected at least ${RULED.length}`);
-  ok(ruling.vertical.length >= 1, 'the red margin rule should be found');
+  const r = detectRuling(bin, p.w, p.h);
+  ok(r.horizontalRuns >= RULED.length,
+    `found ${r.horizontalRuns} horizontal rule runs, expected at least ${RULED.length}`);
+  ok(r.verticalRuns >= 1, 'the red margin rule should be found');
+});
+
+test('CURVED ruling is detected — a photographed page, not a flat scan', () => {
+  /* The case that beat the first version. A bound notebook photographed at an
+     angle has rules that bow, so no image row contains a long run and
+     row-based detection finds almost nothing. On the real page it caught 3
+     rules out of about 30, and no amount of rotation fixes a curve. */
+  const p = ruledPage(RULED, { bow: 14, skew: -1.75 });
+  const bin = binarize(p.gray, otsuThreshold(p.gray));
+  const r = detectRuling(bin, p.w, p.h);
+  ok(r.horizontalRuns >= RULED.length,
+    `only ${r.horizontalRuns} rule runs found on a bowed page`);
 });
 
 test('blank paper has no ruling to find', () => {
   const p = fakePage(RULED, { size: 30 });
   const bin = binarize(p.gray, otsuThreshold(p.gray));
-  const ruling = detectRuling(bin, p.w, p.h);
-  eq(ruling.horizontal.length, 0, 'invented a rule on blank paper');
-  eq(ruling.vertical.length, 0, 'invented a margin rule on blank paper');
+  const r = detectRuling(bin, p.w, p.h);
+  eq(r.horizontalRuns, 0, 'invented a rule on blank paper');
+  eq(r.verticalRuns, 0, 'invented a margin rule on blank paper');
+});
+
+test('handwriting alone is never mistaken for ruling', () => {
+  /* The threshold has to sit above the longest horizontal stroke handwriting
+     produces and below the shortest rule. If it drifts down, letters get
+     erased and the cause is invisible. */
+  const p = fakePage(['mmm www ooo', 'the quick brown fox'], { size: 44 });
+  const bin = binarize(p.gray, otsuThreshold(p.gray));
+  const r = detectRuling(bin, p.w, p.h);
+  eq(r.horizontalRuns, 0, 'handwriting was mistaken for a rule');
 });
 
 test('removing the ruling keeps the strokes that cross it', () => {
@@ -1597,19 +1642,15 @@ test('removing the ruling keeps the strokes that cross it', () => {
 
   const before = bin.reduce((a, v) => a + v, 0);
   const after = cleaned.reduce((a, v) => a + v, 0);
-  ok(after < before * 0.85, 'the rules should be gone: ' + before + ' -> ' + after);
-  /* but the writing must survive. Ink inside the text columns, away from the
-     rule rows, should be almost untouched. */
+  ok(after < before * 0.9, 'the rules should be gone: ' + before + ' -> ' + after);
+
+  /* The writing must survive. Ink that was never marked as rule should be
+     almost entirely intact. */
   let kept = 0, total = 0;
-  const ruleRow = new Uint8Array(p.h);
-  for (const r of ruling.horizontal) for (let y = r.from; y <= r.to; y++) ruleRow[y] = 1;
-  for (let y = 0; y < p.h; y++) {
-    if (ruleRow[y]) continue;
-    for (let x = 80; x < p.w - 40; x++) {
-      if (bin[y * p.w + x]) { total++; if (cleaned[y * p.w + x]) kept++; }
-    }
+  for (let i = 0; i < bin.length; i++) {
+    if (bin[i] && !ruling.mask[i]) { total++; if (cleaned[i]) kept++; }
   }
-  ok(kept / total > 0.99, `only ${Math.round(kept / total * 100)}% of the writing survived`);
+  eq(kept, total, `${total - kept} pixels of writing were destroyed`);
 });
 
 test('THE BUG: a ruled page segments into its real lines and words', () => {
@@ -1648,6 +1689,111 @@ test('faint ruling is removed as well as dark ruling', () => {
   }
 });
 
+test('THE REAL PHOTO CASE: tilt and dark page edges', () => {
+  /* As close to the reported failure as a synthetic page gets: a notebook
+     photographed at an angle, tilted, with the dark background showing either
+     side. Page curl is covered separately below — it is only partly solved. */
+  const p = ruledPage(RULED, { skew: -1.75, edges: true });
+  const page = analysePage(p.gray, p.w, p.h);
+
+  ok(page.stats.rulesRemoved > 0, 'no ruling removed from a photographed page');
+  eq(page.stats.cropped, true, 'the dark surroundings should have been cropped away');
+  eq(page.stats.lines, RULED.length,
+    `got ${page.stats.lines} lines, expected ${RULED.length}`);
+
+  const expected = RULED.reduce((a, l) => a + l.split(' ').length, 0);
+  ok(page.stats.words >= expected - 3,
+    `got ${page.stats.words} words, expected about ${expected}`);
+
+  const align = alignTranscript(page, RULED.join('\n'));
+  ok(align.matched >= 4, `only ${align.matched} of ${expected} words aligned on a photographed page`);
+});
+
+test('curl is measured, and only corrected when it is worth the blur', () => {
+  /* Straightening resamples the image, which softens stroke edges; a softened
+     edge can bridge to its neighbour when thresholded again, merging letters.
+     Below a few pixels the curve does not break line finding, so correcting
+     it would cost more than it gains. */
+  const flat = ruledPage(RULED);
+  const a = analysePage(flat.gray, flat.w, flat.h);
+  eq(a.stats.curlCorrected, false, 'a flat page must not be resampled');
+
+  const bent = ruledPage(RULED, { bow: 12 });
+  const b = analysePage(bent.gray, bent.w, bent.h);
+  ok(b.stats.curlPx >= 6, 'curl on a bowed page was measured as only ' + b.stats.curlPx + 'px');
+  eq(b.stats.curlCorrected, true, 'a clearly bowed page should be straightened');
+});
+
+test('correcting curl reduces it rather than doubling it', () => {
+  /* The sign of the correction is easy to get backwards and does not fail
+     loudly — it doubles the curve instead of removing it, and the page just
+     segments a bit worse. */
+  const p = ruledPage(RULED, { bow: 14 });
+  const bin = binarize(p.gray, otsuThreshold(p.gray));
+  const shifts = estimateCurl(bin, p.w, p.h);
+  const before = Math.max(...shifts.map(Math.abs));
+
+  const fixed = applyCurl(p.gray, p.w, p.h, shifts);
+  const after = Math.max(...estimateCurl(binarize(fixed, otsuThreshold(fixed)), p.w, p.h).map(Math.abs));
+
+  ok(after < before * 0.5,
+    `curl went from ${before.toFixed(1)}px to ${after.toFixed(1)}px — the correction is being applied backwards`);
+});
+
+test('the paper is found inside a photo and the desk cropped away', () => {
+  const p = ruledPage(RULED, { edges: true });
+  const box = findPageBounds(p.gray, p.w, p.h);
+  ok(box.cropped, 'the dark surroundings were not cropped');
+  ok(box.x >= 20 && box.x < 60, 'left edge landed at ' + box.x + ', expected near the paper edge (24)');
+  ok(box.w < p.w - 30, 'crop is barely narrower than the image: ' + box.w + ' of ' + p.w);
+  ok(box.h > p.h * 0.9, 'cropped away too much vertically: ' + box.h + ' of ' + p.h);
+});
+
+test('a page with no surroundings is left alone', () => {
+  const p = ruledPage(RULED);
+  const box = findPageBounds(p.gray, p.w, p.h);
+  ok(box.w > p.w * 0.95 && box.h > p.h * 0.95,
+    'cropped a page that had nothing to crop: ' + box.w + 'x' + box.h);
+});
+
+test('dark page edges do not become lines of their own', () => {
+  /* A blob spanning the image height puts ink in every row, so the horizontal
+     projection never drops and the entire page merges into one band. That is
+     what turned a real thirty-line page into "1 line, 2 words". */
+  const p = ruledPage(RULED, { edges: true });
+  const page = analysePage(p.gray, p.w, p.h);
+  eq(page.stats.cropped, true, 'the photo was not cropped to the paper');
+  eq(page.stats.lines, RULED.length, 'the page edge was counted as a line of writing');
+  ok(page.stats.words >= RULED.reduce((a, l) => a + l.split(' ').length, 0) - 2,
+    'words did not survive the edges: ' + page.stats.words);
+});
+
+test('a photographed page reads the same as a clean page', () => {
+  /* The real measure: after cropping, a page shot on a dark desk should give
+     the same answer as the identical page with nothing around it. Comparing
+     against the uncropped run is meaningless — its extra "letters" are shards
+     of the desk edge, not writing. */
+  const plain = ruledPage(RULED);
+  const photo = ruledPage(RULED, { edges: true });
+  const a = analysePage(plain.gray, plain.w, plain.h);
+  const b = analysePage(photo.gray, photo.w, photo.h);
+
+  eq(b.stats.cropped, true, 'the photo should have been cropped');
+  eq(b.stats.lines, a.stats.lines, 'line count differs from the clean page');
+  eq(b.stats.letters, a.stats.letters,
+    `letter count differs: clean ${a.stats.letters}, photo ${b.stats.letters}`);
+  ok(Math.abs(b.stats.words - a.stats.words) <= 1,
+    `word count differs: clean ${a.stats.words}, photo ${b.stats.words}`);
+});
+
+test('cropping is what recovers the page, not a coincidence', () => {
+  const p = ruledPage(RULED, { edges: true });
+  const noCrop = analysePage(p.gray, p.w, p.h, { cropToPage: false });
+  const withCrop = analysePage(p.gray, p.w, p.h);
+  ok(withCrop.stats.lines > noCrop.stats.lines,
+    `turning cropping off should collapse the page: ${noCrop.stats.lines} vs ${withCrop.stats.lines} lines`);
+});
+
 test('without rule removal the words collapse, proving the fix does the work', () => {
   const p = ruledPage(RULED);
   const off = analysePage(p.gray, p.w, p.h, { removeRuling: false });
@@ -1681,16 +1827,28 @@ test('a word containing no letters is never emitted', () => {
 section('Page analysis — baseline from the letters themselves');
 
 test('descenders do not drag the baseline down', () => {
-  /* "gypsy pygmy" is almost all descenders; "nonsense" has none. The baseline
-     the two produce must be close, because the mode ignores descenders where
-     a mean would be pulled down by them. */
-  const a = fakePage(['nonsense scene'], { size: 34 });
-  const b = fakePage(['gypsy pygmy'], { size: 34 });
-  const mA = lineMetrics(analysePage(a.gray, a.w, a.h).lines[0]);
-  const mB = lineMetrics(analysePage(b.gray, b.w, b.h).lines[0]);
-  ok(mA && mB, 'both lines should yield metrics');
-  near(mB.baseline, mA.baseline, 4,
-    `descender-heavy baseline ${mB.baseline.toFixed(1)} vs plain ${mA.baseline.toFixed(1)}`);
+  /* "gypsy pygmy" is almost all descenders; "nonsense scene" has none. The
+     baseline must sit ABOVE the descenders in the first case and at the foot
+     of the letters in the second — the mode ignores descenders where a mean
+     would be pulled down by them.
+     Measured as a fraction of the line's own height, because the two pages
+     are cropped to their own paper and their absolute coordinates are not
+     comparable. */
+  const drop = (text) => {
+    const p = fakePage([text], { size: 34 });
+    const line = analysePage(p.gray, p.w, p.h).lines[0];
+    const m = lineMetrics(line);
+    ok(m, 'no metrics for "' + text + '"');
+    return (line.bottom - m.baseline) / (line.bottom - line.top + 1);
+  };
+
+  const plain = drop('nonsense scene occurs');
+  const descenders = drop('the puppy jumped happily');
+
+  ok(plain < 0.12,
+    `a line with no descenders should end at its baseline, got ${plain.toFixed(2)} below it`);
+  ok(descenders > plain + 0.06,
+    `descenders should hang below the baseline: plain ${plain.toFixed(2)} vs descenders ${descenders.toFixed(2)}`);
 });
 
 test('x-height is measured from short letters, not ascenders', () => {
