@@ -12,7 +12,7 @@
 # Usage:  .\make-videotools-zip.ps1
 #         .\make-videotools-zip.ps1 -Subdomain clip.7by.in
 param(
-  [string]$Subdomain = 'video.7by.in',
+  [string]$Subdomain = '7vidlabs.7by.in',
   [string]$MainDomain = '7by.in'
 )
 
@@ -55,13 +55,9 @@ $sharedAssets | ForEach-Object {
   if (Test-Path -LiteralPath $p) { Put-File $p (Join-Path $sub ('assets\' + $_)) }
 }
 
-# pricing page retargeted for the subdomain (source file left untouched:
-# the main site keeps using it as-is)
-$pricing = [System.IO.File]::ReadAllText((Join-Path $base 'pricing.html'), $utf8)
-$pricing = $pricing.Replace("injectLayout('')", "injectLayout('https://$MainDomain/')")
-$pricing = $pricing.Replace('href="tools/audio-cutter"', "href=""https://$MainDomain/tools/audio-cutter""")
-$pricing = $pricing.Replace("https://$MainDomain/pricing", "https://$Subdomain/pricing")
-Put-Text $pricing (Join-Path $sub 'pricing.html')
+# pricing: the subdomain ships videotools/pricing.html (video-specific,
+# already copied above with the rest of the app). The main site keeps its
+# own audio pricing.html unchanged. Nothing to retarget here.
 
 Put-Text "google.com, pub-8250159057339426, DIRECT, f08c47fec0942fa0`n" (Join-Path $sub 'ads.txt')
 Put-Text "User-agent: *`nAllow: /`n`nSitemap: https://$Subdomain/sitemap.xml`n" (Join-Path $sub 'robots.txt')
