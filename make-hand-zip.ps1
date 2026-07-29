@@ -16,10 +16,17 @@
 #  different subdomain, different zip.
 # =============================================================
 
+param(
+    # -Local builds a zip for trying it on your own machine: keeps the test
+    # harness, the sample output and start.bat. The default build is for
+    # deployment and strips all three.
+    [switch]$Local
+)
+
 $ErrorActionPreference = 'Stop'
 
 $src = Join-Path $PSScriptRoot 'hand'
-$out = Join-Path $PSScriptRoot 'hand-site.zip'
+$out = Join-Path $PSScriptRoot $(if ($Local) { 'hand-try-it.zip' } else { 'hand-site.zip' })
 $stage = Join-Path $env:TEMP ('hand-stage-' + [guid]::NewGuid().ToString('N'))
 
 if (-not (Test-Path $src)) { throw "Source folder not found: $src" }
@@ -28,8 +35,12 @@ Write-Host 'Staging...' -ForegroundColor Cyan
 New-Item -ItemType Directory -Path $stage -Force | Out-Null
 Copy-Item -Path (Join-Path $src '*') -Destination $stage -Recurse -Force
 
-# Strip anything that must never leave this machine or would confuse a user.
-foreach ($drop in @('api\config.php', 'api\.state', 'test.html', 'samples', '.gitignore')) {
+# api/config.php and the rate-limit state must NEVER leave this machine,
+# whichever build this is. The rest is only stripped for deployment.
+$drops = @('api\config.php', 'api\.state', '.gitignore')
+if (-not $Local) { $drops += @('test.html', 'samples', 'start.bat', 'START-HERE.html', 'START-HERE.md') }
+
+foreach ($drop in $drops) {
     $p = Join-Path $stage $drop
     if (Test-Path $p) {
         Remove-Item -Path $p -Recurse -Force
@@ -59,9 +70,19 @@ $size = [math]::Round((Get-Item $out).Length / 1KB)
 Write-Host ''
 Write-Host "Built $out ($size KB)" -ForegroundColor Green
 Write-Host ''
-Write-Host 'On the host:' -ForegroundColor Yellow
-Write-Host '  1. upload and extract into the subdomain root'
-Write-Host '  2. cp api/config.example.php api/config.php and add one free key'
-Write-Host '  3. chmod 700 api/.state   (PHP must be able to write there)'
-Write-Host '  4. open api/config.php in a browser: it must NOT display'
+
+if ($Local) {
+    Write-Host 'To try it:' -ForegroundColor Yellow
+    Write-Host '  1. unzip anywhere'
+    Write-Host '  2. double-click start.bat'
+    Write-Host '  3. follow the page that opens'
+    Write-Host ''
+    Write-Host '  Nothing needs configuring to test it.' -ForegroundColor DarkGray
+} else {
+    Write-Host 'On the host:' -ForegroundColor Yellow
+    Write-Host '  1. upload and extract into the subdomain root'
+    Write-Host '  2. cp api/config.example.php api/config.php and add one free key'
+    Write-Host '  3. chmod 700 api/.state   (PHP must be able to write there)'
+    Write-Host '  4. open api/config.php in a browser: it must NOT display'
+}
 Write-Host ''
