@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7Hand — Write Your Assignments In Your Own Handwriting | 7By</title>
+<meta name="description" content="Photograph a page you already wrote, and 7Hand learns your handwriting. Type or paste anything and get it back as a print-ready PDF in your own hand, on ruled or plain paper. Free, runs in your browser, nothing uploaded.">
+<link rel="canonical" href="https://7hand.7by.in/">
+<meta name="theme-color" content="#1D4ED8">
+
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://7hand.7by.in/">
+<meta property="og:title" content="7Hand — Write In Your Own Handwriting">
+<meta property="og:description" content="Photograph a page you already wrote. 7Hand learns your handwriting and writes anything in it.">
+<meta property="og:site_name" content="7By">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="7Hand — Write In Your Own Handwriting">
+<meta name="twitter:description" content="Photograph a page you already wrote. 7Hand learns your handwriting and writes anything in it.">
+
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "7Hand",
+  "url": "https://7hand.7by.in/",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any modern browser",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+  "description": "Learns your handwriting from a photograph of a page you already wrote, then writes any text in it as a print-ready PDF."
+}
+</script>
+
+<style>
+:root{
+  --bg:#EEF1F8; --surface:#FFFFFF; --surface2:#F4F6FC;
+  --ink:#1D4ED8; --ink-deep:#1E3A8A; --teal:#00876A; --amber:#B07800;
+  --text:#14141F; --muted:rgba(20,20,31,0.62); --dim:rgba(20,20,31,0.40);
+  --border:rgba(20,20,31,0.11); --border-bright:rgba(20,20,31,0.20);
+  --mono:'JetBrains Mono',monospace; --sans:'Outfit',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1140px;margin:0 auto;padding:0 28px}
+.mono{font-family:var(--mono)}
+
+header{position:sticky;top:0;z-index:20;background:rgba(238,241,248,.86);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.nav{display:flex;align-items:center;justify-content:space-between;height:64px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;letter-spacing:-.5px}
+.logo .m{width:26px;height:26px;border-radius:7px;background:var(--ink);color:#fff;display:grid;place-items:center;font-size:14px;font-weight:800}
+.nav nav{display:flex;gap:26px;font-size:15px;color:var(--muted)}
+.nav nav a:hover{color:var(--text)}
+@media(max-width:760px){.nav nav{display:none}}
+
+.btn{display:inline-block;background:var(--text);color:#fff;padding:13px 22px;border-radius:9px;font-weight:600;font-size:15px;transition:transform .12s}
+.btn:hover{transform:translateY(-1px)}
+.btn.primary{background:var(--ink)}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--border-bright)}
+
+.hero{padding:76px 0 60px}
+.tag{display:inline-block;font-family:var(--mono);font-size:11.5px;letter-spacing:2px;text-transform:uppercase;color:var(--ink);background:rgba(29,78,216,.09);padding:6px 12px;border-radius:20px;margin-bottom:22px}
+h1{font-size:60px;line-height:1.03;letter-spacing:-2.4px;font-weight:800;max-width:15ch}
+h1 em{font-style:normal;color:var(--ink)}
+.lede{font-size:20px;color:var(--muted);max-width:56ch;margin:22px 0 30px}
+.cta{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.cta .note{font-size:13.5px;color:var(--dim)}
+@media(max-width:760px){h1{font-size:38px;letter-spacing:-1.4px}.lede{font-size:17px}}
+
+.strip{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:56px}
+.strip div{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px}
+.strip b{display:block;font-family:var(--mono);font-size:22px;letter-spacing:-1px;color:var(--ink)}
+.strip span{font-size:13.5px;color:var(--muted)}
+@media(max-width:760px){.strip{grid-template-columns:1fr}}
+
+section{padding:64px 0;border-top:1px solid var(--border)}
+h2{font-size:34px;letter-spacing:-1.2px;font-weight:800;margin-bottom:10px}
+.sub{color:var(--muted);max-width:60ch;margin-bottom:34px}
+
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.step{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:26px}
+.step .n{font-family:var(--mono);font-size:12px;color:var(--ink);letter-spacing:2px;margin-bottom:12px}
+.step h3{font-size:19px;letter-spacing:-.4px;margin-bottom:7px}
+.step p{font-size:14.5px;color:var(--muted)}
+@media(max-width:860px){.steps{grid-template-columns:1fr}}
+
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px}
+.card h3{font-size:17px;letter-spacing:-.3px;margin-bottom:6px}
+.card p{font-size:14.5px;color:var(--muted)}
+@media(max-width:860px){.grid{grid-template-columns:1fr}}
+
+.honest{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:0 14px 14px 0;padding:24px 26px}
+.honest h3{font-size:17px;margin-bottom:8px}
+.honest p{font-size:14.5px;color:var(--muted);margin-bottom:8px}
+.honest p:last-child{margin-bottom:0}
+
+.final{text-align:center;padding:80px 0}
+.final h2{font-size:40px}
+@media(max-width:760px){.final h2{font-size:29px}}
+
+footer{border-top:1px solid var(--border);padding:34px 0;font-size:14px;color:var(--muted)}
+.foot{display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.foot a:hover{color:var(--text)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="logo" href="/"><span class="m">7</span> 7Hand</a>
+    <nav>
+      <a href="#how">How it works</a>
+      <a href="#what">What it does</a>
+      <a href="#honest">Limits</a>
+    </nav>
+    <a class="btn primary" href="tools/learn.html">Start</a>
+  </div>
+</header>
+
+<div class="wrap hero">
+  <div class="tag">Free · Runs in your browser</div>
+  <h1>Your assignments, in <em>your own handwriting</em>.</h1>
+  <p class="lede">Photograph a page you already wrote. 7Hand learns the shape of your letters,
+  then writes anything you type in that same hand — ready to print on ruled or plain paper.</p>
+  <div class="cta">
+    <a class="btn primary" href="tools/learn.html">Learn my handwriting</a>
+    <a class="btn ghost" href="app.html">Already have a style? Write →</a>
+  </div>
+  <p class="cta note" style="margin-top:14px">No account. No printing a template. Nothing is uploaded.</p>
+
+  <div class="strip">
+    <div><b>One photo</b><span>A page you already wrote is all it needs</span></div>
+    <div><b>~20 min</b><span>From photograph to a printable PDF</span></div>
+    <div><b>0 uploads</b><span>Your writing never leaves your device</span></div>
+  </div>
+</div>
+
+<section id="how">
+  <div class="wrap">
+    <h2>How it works</h2>
+    <p class="sub">No template sheet to print, no scanner, no app to install.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="n">STEP 01</div>
+        <h3>Photograph a page</h3>
+        <p>Old notes, a past assignment, anything in your own hand. Dark pen, flat on a table,
+        daylight. A slight tilt is corrected automatically.</p>
+      </div>
+      <div class="step">
+        <div class="n">STEP 02</div>
+        <h3>Confirm what it says</h3>
+        <p>7Hand finds every line, word and letter, then matches them to the text. It only keeps
+        the words it is certain about — so it never mislabels a letter.</p>
+      </div>
+      <div class="step">
+        <div class="n">STEP 03</div>
+        <h3>Write anything</h3>
+        <p>Type or paste your text. Set the writing size and line spacing to match your notebook.
+        Download a PDF and print it at 100%.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="what">
+  <div class="wrap">
+    <h2>Built to not look fake</h2>
+    <p class="sub">The reason machine-written pages get spotted is that every letter is identical.
+    7Hand is built around avoiding exactly that.</p>
+    <div class="grid">
+      <div class="card">
+        <h3>Every letter is a real one of yours</h3>
+        <p>It keeps several genuine samples of each character from your page and varies which one
+        it uses. The same letter twice in a row never gets the same shape.</p>
+      </div>
+      <div class="card">
+        <h3>The writing drifts, like a hand does</h3>
+        <p>Slant, size and baseline wander together and slowly — the way writing changes as a hand
+        tires or speeds up. Not random jitter per letter, which reads as fake in its own way.</p>
+      </div>
+      <div class="card">
+        <h3>Sits on real ruling</h3>
+        <p>Line spacing is set in millimetres and defaults to 8.5&nbsp;mm, matching standard Indian
+        ruled paper. Print at 100% and it lands on the lines.</p>
+      </div>
+      <div class="card">
+        <h3>Nothing leaves your device</h3>
+        <p>Your photo, your letters and your text are processed entirely in your browser. There is
+        no account and no upload. Optional AI reading is the one exception, and it asks first.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="honest">
+  <div class="wrap">
+    <h2>What it can’t do</h2>
+    <p class="sub">Worth knowing before you spend twenty minutes on it.</p>
+    <div class="honest">
+      <h3>Whatever your photo doesn’t contain, your style won’t have</h3>
+      <p>Photograph a page of all lowercase and you get a lowercase-only handwriting. Capitals,
+      digits and punctuation have to appear somewhere. The fix is one extra line, photographed as
+      a second page.</p>
+      <h3 style="margin-top:16px">Around half your words get skipped</h3>
+      <p>Where letters touch each other, 7Hand cannot tell where one ends and the next begins — so
+      it discards that word instead of guessing. Print-style writing keeps far more than joined-up
+      cursive does.</p>
+      <h3 style="margin-top:16px">It writes prose, not diagrams</h3>
+      <p>Text on lines. Not circuit diagrams, ruled observation tables, graphs or formulae. A lab
+      record page is often half diagram, and that half is still yours to draw.</p>
+      <h3 style="margin-top:16px">English only, for now</h3>
+      <p>Devanagari and other conjunct-forming scripts need different handling and are not
+      supported yet.</p>
+    </div>
+  </div>
+</section>
+
+<div class="wrap final">
+  <h2>Twenty minutes and a photo.</h2>
+  <p class="lede" style="margin:14px auto 26px">The only way to know whether it looks like your
+  handwriting is to try it with your handwriting.</p>
+  <a class="btn primary" href="tools/learn.html">Start with a photo</a>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <div>7Hand — part of <a href="https://7by.in" style="color:var(--ink)">7By</a></div>
+    <div><a href="app.html">Write</a> · <a href="tools/learn.html">Learn a hand</a> · <a href="sheet.html">Template sheet</a></div>
+  </div>
+</footer>
+
+</body>
+</html>

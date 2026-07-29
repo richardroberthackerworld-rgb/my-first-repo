@@ -1,0 +1,77 @@
+# =============================================================
+#  7hand.7by.in — subdomain root.
+#
+#  Static hosting. The only server-side code is api/ocr.php, and
+#  api/ has its own .htaccess protecting the config.
+# =============================================================
+
+Options -Indexes
+DirectoryIndex index.html
+
+# ---- clean URLs: /app instead of /app.html ----
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Never rewrite the API or anything that already exists on disk.
+  RewriteCond %{REQUEST_URI} ^/api/ [OR]
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # /app  ->  /app.html
+  RewriteCond %{REQUEST_FILENAME}.html -f
+  RewriteRule ^(.+?)/?$ $1.html [L]
+
+  # Send /app.html to /app once, so a page is not indexed at two URLs.
+  RewriteCond %{THE_REQUEST} \s/+(.+?)\.html[\s?] [NC]
+  RewriteRule ^ /%1 [R=301,L]
+</IfModule>
+
+# ---- the test harness is not for visitors ----
+<Files "test.html">
+  Require all denied
+</Files>
+
+# ---- caching ----
+# The app is loaded as ES modules with no build step and no content hashing,
+# so a long cache on the JS would strand people on an old version after every
+# deploy. Assets that never change get a year; code gets revalidated.
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/svg+xml            "access plus 1 year"
+  ExpiresByType image/png                "access plus 1 year"
+  ExpiresByType application/pdf          "access plus 1 month"
+  ExpiresByType text/css                 "access plus 1 hour"
+  ExpiresByType application/javascript   "access plus 1 hour"
+  ExpiresByType text/html                "access plus 0 seconds"
+</IfModule>
+
+<IfModule mod_headers.c>
+  <FilesMatch "\.(js|mjs|css|html)$">
+    Header set Cache-Control "public, max-age=3600, must-revalidate"
+  </FilesMatch>
+
+  # ---- security ----
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  # Camera is genuinely useful here (photograph a page on a phone). Everything
+  # else this page has no business asking for.
+  Header always set Permissions-Policy "camera=(self), microphone=(), geolocation=(), payment=()"
+</IfModule>
+
+# ---- compression ----
+# The style JSON is run-length text and compresses about threefold, which is
+# the difference between a 400KB and a 135KB style download.
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/plain text/xml
+  AddOutputFilterByType DEFLATE application/javascript application/json
+  AddOutputFilterByType DEFLATE image/svg+xml
+</IfModule>
+
+# ---- correct types ----
+<IfModule mod_mime.c>
+  AddType application/javascript .js .mjs
+  AddType image/svg+xml .svg
+  AddType application/manifest+json .webmanifest
+</IfModule>

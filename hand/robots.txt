@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Internal tooling and test harness — no reason for these in an index.
+Disallow: /test.html
+Disallow: /api/
+Disallow: /samples/
+
+Sitemap: https://7hand.7by.in/sitemap.xml
