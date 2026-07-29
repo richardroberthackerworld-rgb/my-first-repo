@@ -21,12 +21,53 @@ Design doc, with the full 14-task plan and the reasoning behind every decision:
 | T6 realism | `src/realism.js` | done |
 | T7 preview | `app.html`, `src/render.js` | done |
 | T8 PDF export | `src/pdf.js` | done |
-| T11 harness | `test.html` | partial — covers T1-T8 |
+| — learn from a page | `src/page.js`, `tools/learn.html` | done |
+| T13 transcription | `src/ocr.js` | done, untested against a live API |
+| T14 key proxy | `api/ocr.php` | done, untested against a live API |
+| T12 build | `../make-hand-zip.ps1` | done |
+| T11 harness | `test.html` | covers everything above |
 
-**105 tests green.** Not started: T9 app polish, T10 payments, T12 infra,
-T13 OCR, T14 key proxy.
+**131 tests green.** Not started: **T10 payments — there is no paywall.**
+Everything runs client-side and the server only sees transcription requests, so
+nothing currently stops anyone exporting as much as they like.
 
-You can type text, see it in a captured hand, and download a print-ready PDF today.
+Photograph a page you already wrote, have it read, and get new text back in
+that same hand as a print-ready PDF.
+
+## Transcription
+
+**Optional.** Everything works without it — you type what the page says. This
+automates that one step and nothing else.
+
+The model never sees a glyph and never decides which blob is which letter. It
+only produces text, which the alignment step then checks against the ink and
+discards where the two disagree. So the model can misread a word without doing
+damage: that word is skipped, exactly like one with joined letters.
+
+Two ways to run it:
+
+| | Key lives | Use |
+|---|---|---|
+| **Proxy** (default) | on your server | anything public |
+| **Direct** | in page source | your own machine only |
+
+Direct mode logs a warning every time it runs. A key on a public OCR button is
+lifted and burned within days.
+
+To enable:
+
+```bash
+cp hand/api/config.example.php hand/api/config.php
+# add one free key: https://aistudio.google.com/apikey
+```
+
+`api/config.php` is gitignored, denied by `api/.htaccess`, and the build script
+refuses to run if it finds it staged or spots anything key-shaped in the output.
+
+The proxy owns the prompt — the client only sends an image. Otherwise the
+endpoint is a free general-purpose vision model for anyone who finds the URL,
+paid for out of your quota. It is rate limited per caller, 12 requests per 10
+minutes by default.
 
 ## PDF export
 

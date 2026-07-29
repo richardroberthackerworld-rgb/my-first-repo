@@ -66,6 +66,7 @@ import {
   estimateSkew, rotateGray, findLines, findWords, findLetters,
   analysePage, lineMetrics, alignTranscript
 } from './src/page.js';
+import { transcribe, prepareImage, checkLineCount, VISION_PROVIDERS } from './src/ocr.js';
 
 /* ---------- tiny assertion harness ---------- */
 const out = document.getElementById('visual');
@@ -1656,6 +1657,159 @@ test('end to end: a tilted page becomes labelled glyph samples', () => {
   const v = style.glyphs[ch][0];
   const d = maskToPath(variantMask(v), v.w, v.h);
   ok(d.startsWith('M') && !/NaN/.test(d), 'a captured glyph did not trace cleanly');
+});
+
+/* ================= T13: transcription ================= */
+section('T13 — transcription (network stubbed)');
+
+function pngBlob(w = 40, h = 20) {
+  const cv = document.createElement('canvas');
+  cv.width = w; cv.height = h;
+  const ctx = cv.getContext('2d');
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = '#000'; ctx.fillText('hi', 4, 14);
+  return new Promise(r => cv.toBlob(r, 'image/png'));
+}
+
+/** Swap fetch for a scripted responder, restore afterwards. */
+async function withFetch(handler, fn) {
+  const real = globalThis.fetch;
+  const calls = [];
+  globalThis.fetch = async (url, init) => {
+    calls.push({ url: String(url), init });
+    return handler(String(url), init, calls.length);
+  };
+  try { return await fn(calls); } finally { globalThis.fetch = real; }
+}
+const jsonRes = (obj, status = 200) =>
+  new Response(JSON.stringify(obj), { status, headers: { 'Content-Type': 'application/json' } });
+
+atest('prepareImage downscales a large photo before upload', async () => {
+  const cv = document.createElement('canvas');
+  cv.width = 4000; cv.height = 3000;
+  const ctx = cv.getContext('2d');
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 4000, 3000);
+  const big = await new Promise(r => cv.toBlob(r, 'image/jpeg', 0.9));
+  const out = await prepareImage(big, { maxEdge: 1600 });
+  eq(Math.max(out.width, out.height), 1600, 'long edge should be capped');
+  eq(out.height, 1200, 'aspect ratio must be preserved');
+  ok(out.dataUrl.startsWith('data:image/jpeg;base64,'), 'should encode as a jpeg data url');
+});
+
+atest('with nothing configured it says so instead of failing obscurely', async () => {
+  let threw = null;
+  try { await transcribe(await pngBlob(), {}); } catch (e) { threw = e; }
+  ok(threw && /no transcription is configured/i.test(threw.message), 'got: ' + (threw && threw.message));
+});
+
+atest('the proxy path sends the image and returns the text', async () => {
+  await withFetch(
+    () => jsonRes({ text: 'first line\nsecond line', provider: 'gemini' }),
+    async calls => {
+      const out = await transcribe(await pngBlob(), { proxy: '/api/ocr.php' });
+      eq(out.text, 'first line\nsecond line');
+      eq(out.provider, 'gemini');
+      eq(calls.length, 1);
+      const body = JSON.parse(calls[0].init.body);
+      ok(body.image.startsWith('data:image/'), 'the image should be sent as a data url');
+      /* The server owns the prompt. If the client could set one, the endpoint
+         is a free vision model for whoever finds the URL. */
+      eq('prompt' in body, false, 'the client must not send a prompt to the proxy');
+    }
+  );
+});
+
+atest('markdown fences and stray line numbers are stripped', async () => {
+  await withFetch(
+    () => jsonRes({ text: '```\n1. the first line\n2. the second line\n```' }),
+    async () => {
+      const out = await transcribe(await pngBlob(), { proxy: '/x' });
+      eq(out.text, 'the first line\nthe second line',
+        'a fenced, numbered response would otherwise become the transcript verbatim');
+    }
+  );
+});
+
+atest('a rate limit is reported as a wait, not as a crash', async () => {
+  await withFetch(
+    () => jsonRes({ error: 'Rate limit reached. Try again in about 3 minute(s).' }, 429),
+    async () => {
+      let threw = null;
+      try { await transcribe(await pngBlob(), { proxy: '/x' }); } catch (e) { threw = e; }
+      ok(threw && /too many requests/i.test(threw.message), 'got: ' + (threw && threw.message));
+    }
+  );
+});
+
+atest('the direct path falls through to the second provider', async () => {
+  await withFetch(
+    (url, init, n) => n === 1
+      ? jsonRes({ error: { message: 'quota exhausted' } }, 429)
+      : jsonRes({ choices: [{ message: { content: 'read by the fallback' } }] }),
+    async calls => {
+      const out = await transcribe(await pngBlob(), { keys: { gemini: 'k1', github: 'k2' } });
+      eq(out.text, 'read by the fallback');
+      eq(out.provider, 'github');
+      eq(calls.length, 2, 'it should have tried both');
+      ok(/generativelanguage/.test(calls[0].url), 'gemini first');
+      ok(/models\.github\.ai/.test(calls[1].url), 'github second');
+    }
+  );
+});
+
+atest('when every provider fails it names each reason', async () => {
+  await withFetch(
+    () => jsonRes({ error: { message: 'boom' } }, 500),
+    async () => {
+      let threw = null;
+      try { await transcribe(await pngBlob(), { keys: { gemini: 'k', github: 'k' } }); } catch (e) { threw = e; }
+      ok(threw, 'should have thrown');
+      ok(/gemini: boom/.test(threw.message) && /github: boom/.test(threw.message),
+        '"transcription failed" alone is useless when the cause is a quota reset hours away — got: ' + threw.message);
+    }
+  );
+});
+
+atest('an empty response is treated as a failure, not as an empty page', async () => {
+  await withFetch(
+    () => jsonRes({ candidates: [{ content: { parts: [{ text: '   ' }] } }] }),
+    async () => {
+      let threw = null;
+      try { await transcribe(await pngBlob(), { keys: { gemini: 'k' } }); } catch (e) { threw = e; }
+      ok(threw && /empty response/.test(threw.message), 'got: ' + (threw && threw.message));
+    }
+  );
+});
+
+atest('the image never leaves without a key present', async () => {
+  await withFetch(
+    () => { throw new Error('fetch should not have been called'); },
+    async () => {
+      let threw = null;
+      try { await transcribe(await pngBlob(), { keys: { gemini: '', github: '' } }); } catch (e) { threw = e; }
+      ok(threw && /no transcription is configured/i.test(threw.message), 'no key must mean no request, got: ' + (threw && threw.message));
+    }
+  );
+});
+
+test('checkLineCount catches a transcript that is out of step with the page', () => {
+  /* Alignment pairs transcript line N with ink line N. A count mismatch puts
+     every later line out of step and the page yields nothing, so this has to
+     be caught before the user presses build. */
+  const good = checkLineCount('one\ntwo\nthree', 3);
+  eq(good.ok, true); eq(good.got, 3); eq(good.hint, null);
+
+  const merged = checkLineCount('one two\nthree', 3);
+  eq(merged.ok, false);
+  ok(/merged/.test(merged.hint), 'should suggest lines were merged: ' + merged.hint);
+
+  const split = checkLineCount('one\ntwo\nthree\nfour', 3);
+  eq(split.ok, false);
+  ok(/split|added a heading/.test(split.hint), 'should suggest a split: ' + split.hint);
+});
+
+test('blank lines in a transcript do not count as lines of writing', () => {
+  eq(checkLineCount('one\n\n\ntwo', 2).ok, true);
 });
 
 /* ---------- visual check ---------- */

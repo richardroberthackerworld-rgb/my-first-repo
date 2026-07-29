@@ -1,0 +1,3 @@
+# Real API keys live here. Only config.example.php is committed.
+api/config.php
+api/.state/

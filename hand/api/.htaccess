@@ -1,0 +1,11 @@
+# Never serve the config, the state directory, or anything else here as text.
+# A config.php delivered as plain text hands out the API key to anyone who
+# guesses the URL. ocr.php is the only file in this folder meant to be reached.
+
+<FilesMatch "^(config|config\.example)\.php$">
+    Require all denied
+</FilesMatch>
+
+RedirectMatch 404 /\.state(/|$)
+
+Options -Indexes

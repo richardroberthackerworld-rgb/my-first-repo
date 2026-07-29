@@ -71,9 +71,13 @@
 
     <div>
       <div class="card">
-        <strong>What does it say?</strong>
+        <div class="row" style="justify-content:space-between; align-items:baseline">
+          <strong>What does it say?</strong>
+          <button id="readIt" class="ghost" style="padding:7px 12px" disabled>Read it for me</button>
+        </div>
         <p class="muted" style="margin:6px 0 8px">One line here per line on the page. Only words where the letter
         count matches the ink are used — the rest are skipped, and skipping is fine.</p>
+        <div id="ocrMsg"></div>
         <textarea id="transcript" spellcheck="false" placeholder="type the page, one line per line"></textarea>
         <div class="row" style="margin-top:10px">
           <button id="build" disabled>Build style</button>
@@ -96,12 +100,47 @@ import { redChannel, luminance } from '../src/capture.js';
 import { analysePage, alignTranscript, lineMetrics } from '../src/page.js';
 import { createStyle, addVariant, makeVariant, styleToJSON, incompleteGlyphs, variantMask } from '../src/store.js';
 import { maskToPath } from '../src/trace.js';
+import { transcribe, checkLineCount } from '../src/ocr.js';
+import { ocrConfig, ocrAvailable } from '../config.js';
 
 const $ = id => document.getElementById(id);
 const msg = (t, k = 'busy') => { const m = $('msg'); m.className = 'status ' + k; m.textContent = t; };
 const yieldUI = () => new Promise(r => setTimeout(r, 16));
 
-let scan = null, page = null, style = null;
+let scan = null, page = null, style = null, sourceFile = null;
+
+const ocrNote = (t, k = 'busy') =>
+  $('ocrMsg').innerHTML = `<div class="status ${k}" style="margin:0 0 8px">${esc(t)}</div>`;
+
+/* ---------- transcription ---------- */
+
+$('readIt').addEventListener('click', async () => {
+  if (!sourceFile || !page) return;
+  const btn = $('readIt');
+  btn.disabled = true;
+  const was = btn.textContent;
+  try {
+    const out = await transcribe(sourceFile, ocrConfig(), {
+      onProgress: s => { btn.textContent = s + '…'; ocrNote(s + '…'); }
+    });
+    $('transcript').value = out.text;
+
+    /* Alignment pairs transcript line N with ink line N. If the counts
+       disagree every later line is out of step and the page yields nothing,
+       so say so plainly rather than letting it fail silently downstream. */
+    const check = checkLineCount(out.text, page.stats.lines);
+    if (check.ok) {
+      ocrNote(`Read by ${out.provider}. ${check.got} lines, matching the page. Check it, fix anything wrong, then build.`, 'ok');
+    } else {
+      ocrNote(check.hint + ' Fix the line breaks before building.', 'warn');
+    }
+  } catch (err) {
+    ocrNote(err.message, 'bad');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = was;
+  }
+});
 
 $('file').addEventListener('change', async e => {
   const f = e.target.files[0];
@@ -122,6 +161,7 @@ $('file').addEventListener('change', async e => {
     /* Luminance, not the red channel: there are no blue guides to drop here,
        and luminance keeps a blue ballpoint as dark as a black one. */
     scan = { gray: luminance(img), w, h, bmp, scale };
+    sourceFile = f;
     msg(`Loaded ${bmp.width}x${bmp.height}, working at ${w}x${h}. Press Analyse.`, 'ok');
     $('analyse').disabled = false;
   } catch (err) {
@@ -151,6 +191,18 @@ $('analyse').addEventListener('click', async () => {
   );
   $('transcript').placeholder = Array.from({ length: Math.min(s.lines, 6) }, (_, i) => 'line ' + (i + 1)).join('\n');
   $('build').disabled = false;
+
+  /* Transcription is a convenience, never a requirement. When it is not
+     configured the tool still works end to end by typing, so say that
+     instead of showing a dead button. */
+  if (ocrAvailable()) {
+    $('readIt').disabled = false;
+    $('readIt').title = 'Have a vision model transcribe the page, then check it';
+  } else {
+    $('readIt').disabled = true;
+    $('readIt').title = 'Not configured — see hand/config.js';
+    ocrNote('Automatic reading is not set up, so type the page below. See hand/config.js to enable it.', 'busy');
+  }
 });
 
 function draw() {
