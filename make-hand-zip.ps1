@@ -64,11 +64,38 @@ Write-Host 'Zipping...' -ForegroundColor Cyan
 if (Test-Path $out) { Remove-Item $out -Force }
 Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $out -CompressionLevel Optimal
 
+# Also build a .tar.gz.
+#
+# Shared hosts commonly run ClamAV with the Sanesecurity ruleset, whose
+# "Foxhole.JS_Zip" signature flags ANY zip containing .js files — the pattern
+# once used to mail JavaScript droppers. This build is ten .js modules in a
+# zip, so it trips that signature every time and the upload is rejected as a
+# virus. Nothing is wrong with the contents; the format is the problem.
+#
+# tar.gz is not covered by that signature, cPanel's File Manager extracts it
+# natively, and this repo already ships .tar.gz artifacts elsewhere.
+$tar = [IO.Path]::ChangeExtension($out, $null).TrimEnd('.') + '.tar.gz'
+if (Get-Command tar -ErrorAction SilentlyContinue) {
+    Write-Host 'Tarring (for hosts whose scanner rejects zipped .js)...' -ForegroundColor Cyan
+    if (Test-Path $tar) { Remove-Item $tar -Force }
+    Push-Location $stage
+    tar -czf $tar .
+    Pop-Location
+} else {
+    Write-Host '  tar not found - skipping the .tar.gz build' -ForegroundColor DarkYellow
+    $tar = $null
+}
+
 Remove-Item -Path $stage -Recurse -Force
 
 $size = [math]::Round((Get-Item $out).Length / 1KB)
 Write-Host ''
 Write-Host "Built $out ($size KB)" -ForegroundColor Green
+if ($tar -and (Test-Path $tar)) {
+    $tsize = [math]::Round((Get-Item $tar).Length / 1KB)
+    Write-Host "Built $tar ($tsize KB)" -ForegroundColor Green
+    Write-Host '  use the .tar.gz if your host rejects the zip as a virus' -ForegroundColor DarkGray
+}
 Write-Host ''
 
 if ($Local) {

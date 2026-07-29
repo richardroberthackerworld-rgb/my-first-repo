@@ -1,8 +1,33 @@
 # Deploying 7Hand to `7hand.7by.in`
 
-Build: `.\make-hand-zip.ps1` → `hand-site.zip` (78 KB)
+Build: `.\make-hand-zip.ps1` → **`hand-site.tar.gz` (66 KB)** and `hand-site.zip` (78 KB)
 
 Static files plus one PHP endpoint. No Node, no build step, no database.
+
+---
+
+## Use the .tar.gz, not the zip
+
+Uploading the zip to a shared host will probably be rejected as a virus:
+
+```
+Sanesecurity.Foxhole.JS_Zip_12.UNOFFICIAL FOUND
+```
+
+**That is a false positive and there is nothing wrong with the build.** Most
+cPanel hosts run ClamAV with the Sanesecurity ruleset, and its `Foxhole.JS_Zip`
+signature flags *any zip archive containing `.js` files*. The signature exists
+because attackers once mailed zipped JavaScript droppers, so the combination of
+"zip" and "`.js`" is treated as suspicious on its own — the contents are never
+examined. This build is ten JavaScript modules in a zip, so it matches every
+time.
+
+The signature is zip-specific. `hand-site.tar.gz` uploads cleanly, cPanel's File
+Manager extracts it natively, and this repo already ships `.tar.gz` artifacts
+elsewhere. It also preserves the two `.htaccess` files explicitly, so you can
+skip the hidden-files step the zip needs.
+
+The zip is still built for anywhere that prefers it.
 
 ---
 
@@ -47,16 +72,22 @@ Then **SSL/TLS Status → Run AutoSSL** so `https://` works.
 ## 2. Upload
 
 1. File Manager → open `/home/USER/7hand.7by.in`
-2. Upload `hand-site.zip`
+2. Upload **`hand-site.tar.gz`**
 3. **Extract** it there
-4. Delete the zip
+4. Delete the archive
 
 The folder should now contain `index.html`, `app.html`, `sheet.html`, `src/`,
 `tools/`, `api/`, `.htaccess`, `robots.txt`, `sitemap.xml`, `favicon.svg`.
 
-> If `.htaccess` did not appear, turn on **Settings → Show Hidden Files** in
-> File Manager and extract again. Without it, clean URLs and the caching rules
-> are missing.
+Turn on **Settings → Show Hidden Files** in File Manager to see `.htaccess`.
+It should be there — without it, clean URLs and the caching rules are missing
+and `/app` will 404 while `/app.html` still works.
+
+If you can use SSH instead, this is one command:
+
+```bash
+cd ~/7hand.7by.in && tar -xzf hand-site.tar.gz && rm hand-site.tar.gz
+```
 
 ## 3. Check it before configuring anything
 
