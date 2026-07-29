@@ -62,6 +62,10 @@ import { makeRng, hashSeed, makeDrift, makeVariantPicker, DEFAULT_JITTER } from 
 import { layout, styleScale, DEFAULT_PAGE } from './src/layout.js';
 import { buildGlyphDefs, pageSVG, variantPath } from './src/render.js';
 import { buildPdf, glyphMatrix, variantPdfOps } from './src/pdf.js';
+import {
+  estimateSkew, rotateGray, findLines, findWords, findLetters,
+  analysePage, lineMetrics, alignTranscript
+} from './src/page.js';
 
 /* ---------- tiny assertion harness ---------- */
 const out = document.getElementById('visual');
@@ -1439,6 +1443,219 @@ atest('a multi-page document emits one page object per page', async () => {
   eq(out.pages, doc.stats.pages);
   const kids = text.match(/\/Kids \[([^\]]*)\]/)[1].trim().split(/\s+0 R/).filter(Boolean);
   eq(kids.length, doc.stats.pages, 'page tree must list every page');
+});
+
+/* ================= Learning from a written page ================= */
+section('Page analysis — no template, no grid, nothing known');
+
+/**
+ * Render text as a "photographed page": a real font, rotated by a known
+ * skew, with a little noise. Not handwriting, but it has the properties that
+ * matter here — irregular word widths, ascenders, descenders, and no grid.
+ */
+function fakePage(lines, { skew = 0, size = 30, noise = 0 } = {}) {
+  const W = 900, H = 90 + lines.length * Math.round(size * 2.1);
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d', { willReadFrequently: true });
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+  ctx.translate(W / 2, H / 2); ctx.rotate(skew * Math.PI / 180); ctx.translate(-W / 2, -H / 2);
+  ctx.fillStyle = '#14213a';
+  ctx.font = size + 'px Georgia, serif';
+  ctx.textBaseline = 'alphabetic';
+  lines.forEach((t, i) => ctx.fillText(t, 60, 70 + i * Math.round(size * 2.1)));
+  const img = ctx.getImageData(0, 0, W, H);
+  const gray = luminance(img);
+  if (noise) {
+    const rnd = makeRng(9);
+    for (let i = 0; i < gray.length; i++) {
+      gray[i] = Math.max(0, Math.min(255, gray[i] + (rnd() * 2 - 1) * noise));
+    }
+  }
+  return { gray, w: W, h: H };
+}
+
+test('estimateSkew recovers a known tilt', () => {
+  for (const truth of [-3.5, 0, 2.75]) {
+    const p = fakePage(['handwriting sample text', 'second line of writing', 'third line here'], { skew: truth });
+    const bin = binarize(p.gray, otsuThreshold(p.gray));
+    const found = estimateSkew(bin, p.w, p.h);
+    near(found, truth, 0.6, `skew ${truth}° was measured as ${found}°`);
+  }
+});
+
+test('rotateGray leaves a straight page alone', () => {
+  const p = fakePage(['abc def'], { skew: 0 });
+  eq(rotateGray(p.gray, p.w, p.h, 0), p.gray, 'a zero rotation should not copy or resample');
+});
+
+test('findLines counts the lines on a page', () => {
+  const lines = ['first line of text', 'second line of text', 'third line', 'fourth line here'];
+  const p = fakePage(lines);
+  const bin = binarize(p.gray, otsuThreshold(p.gray));
+  eq(findLines(bin, p.w, p.h).length, lines.length);
+});
+
+test('findWords splits a line at the spaces, not inside words', () => {
+  const p = fakePage(['one two three four five']);
+  const bin = binarize(p.gray, otsuThreshold(p.gray));
+  const line = findLines(bin, p.w, p.h)[0];
+  eq(findWords(bin, p.w, p.h, line).length, 5);
+});
+
+test('word splitting adapts to writing size instead of using a fixed gap', () => {
+  /* The same words at two sizes must still be five words. A fixed pixel gap
+     would glue the small one together or shatter the large one. */
+  for (const size of [18, 46]) {
+    const p = fakePage(['one two three four five'], { size });
+    const bin = binarize(p.gray, otsuThreshold(p.gray));
+    const line = findLines(bin, p.w, p.h)[0];
+    eq(findWords(bin, p.w, p.h, line).length, 5, 'at size ' + size);
+  }
+});
+
+test('findLetters merges the dot of an i with its stem', () => {
+  const p = fakePage(['ii'], { size: 44 });
+  const bin = binarize(p.gray, otsuThreshold(p.gray));
+  const line = findLines(bin, p.w, p.h)[0];
+  const word = findWords(bin, p.w, p.h, line)[0];
+  eq(findLetters(bin, p.w, word).length, 2, 'two i letters, not four blobs');
+});
+
+test('findLetters drops specks below the floor', () => {
+  const p = fakePage(['no'], { size: 40 });
+  const bin = binarize(p.gray, otsuThreshold(p.gray));
+  const line = findLines(bin, p.w, p.h)[0];
+  const word = findWords(bin, p.w, p.h, line)[0];
+  /* Plant a 2px speck inside the word box. */
+  bin[(word.top + 2) * p.w + (word.left + 2)] = 1;
+  bin[(word.top + 2) * p.w + (word.left + 3)] = 1;
+  eq(findLetters(bin, p.w, word, { minArea: 12 }).length, 2, 'the speck must not become a third letter');
+});
+
+section('Page analysis — baseline from the letters themselves');
+
+test('descenders do not drag the baseline down', () => {
+  /* "gypsy pygmy" is almost all descenders; "nonsense" has none. The baseline
+     the two produce must be close, because the mode ignores descenders where
+     a mean would be pulled down by them. */
+  const a = fakePage(['nonsense scene'], { size: 34 });
+  const b = fakePage(['gypsy pygmy'], { size: 34 });
+  const mA = lineMetrics(analysePage(a.gray, a.w, a.h).lines[0]);
+  const mB = lineMetrics(analysePage(b.gray, b.w, b.h).lines[0]);
+  ok(mA && mB, 'both lines should yield metrics');
+  near(mB.baseline, mA.baseline, 4,
+    `descender-heavy baseline ${mB.baseline.toFixed(1)} vs plain ${mA.baseline.toFixed(1)}`);
+});
+
+test('x-height is measured from short letters, not ascenders', () => {
+  const p = fakePage(['nose worn menu'], { size: 36 });
+  const m = lineMetrics(analysePage(p.gray, p.w, p.h).lines[0]);
+  ok(m.confident, 'this line should be confident');
+  ok(m.xHeightPx > 5, 'x-height came out as ' + m.xHeightPx);
+  ok(m.xheight < m.baseline, 'x-height line must sit above the baseline');
+});
+
+test('a line with too little to go on is flagged, not guessed', () => {
+  const p = fakePage(['l'], { size: 36 });
+  const page = analysePage(p.gray, p.w, p.h);
+  if (page.lines.length) {
+    const m = lineMetrics(page.lines[0]);
+    eq(m.confident, false, 'one tall letter is not enough to place a baseline');
+  }
+});
+
+section('Page analysis — alignment');
+
+test('a matched word maps one blob to one letter, in order', () => {
+  const p = fakePage(['one two three'], { size: 34 });
+  const page = analysePage(p.gray, p.w, p.h);
+  const a = alignTranscript(page, 'one two three');
+  ok(a.matched >= 2, `only ${a.matched} of 3 words matched`);
+  for (const r of a.results.filter(r => r.pairs)) {
+    eq(r.pairs.length, [...r.text].length, 'a matched word must pair every letter');
+    /* Blobs must be handed out left to right, or "on" becomes "no". */
+    const xs = r.pairs.map(p => p.letter.left);
+    eq(JSON.stringify(xs), JSON.stringify(xs.slice().sort((a, b) => a - b)), 'pairs must run left to right');
+  }
+});
+
+test('a word whose blob count disagrees is SKIPPED, never guessed at', () => {
+  /* The whole safety property. One mislabelled glyph means every future "a"
+     is actually an "o", and nothing downstream would ever flag it. Skipping
+     is not a failure mode here, it is the design: a page has hundreds of
+     words and a style needs five samples per letter. */
+  const p = fakePage(['one two three'], { size: 34 });
+  const page = analysePage(p.gray, p.w, p.h);
+  const bad = alignTranscript(page, 'oneXX twoXX threeXX');
+  eq(bad.matched, 0, 'no word should match a transcript with extra letters');
+  eq(bad.skipped, bad.results.length);
+  ok(bad.results.every(r => /ink blob/.test(r.reason)), 'every skip must say why');
+});
+
+test('ligature-prone words are skipped without taking the good ones down', () => {
+  const p = fakePage(['one two three'], { size: 34 });
+  const page = analysePage(p.gray, p.w, p.h);
+  const a = alignTranscript(page, 'one two three');
+  ok(a.matched + a.skipped === a.results.length, 'every word must be accounted for');
+  ok(a.matched > 0, 'at least some words must survive, or the yield is unusable');
+});
+
+test('missing transcript lines are reported, not crashed on', () => {
+  const p = fakePage(['first line', 'second line'], { size: 32 });
+  const page = analysePage(p.gray, p.w, p.h);
+  const a = alignTranscript(page, 'first line');
+  ok(a.skipped >= 2, 'the untranscribed line should be skipped');
+  ok(a.results.some(r => /no transcript/.test(r.reason || '')), 'and say so');
+});
+
+test('end to end: a tilted page becomes labelled glyph samples', () => {
+  const lines = ['one two three', 'nose worn menu', 'never mind me'];
+  const p = fakePage(lines, { skew: -2.5, noise: 8 });
+  const page = analysePage(p.gray, p.w, p.h);
+  eq(page.stats.lines, 3, 'three lines after deskew');
+  near(page.skew, -2.5, 0.8, 'skew should be corrected');
+
+  const align = alignTranscript(page, lines.join('\n'));
+  /* Yield is expected to be partial — joined letters and split strokes get
+     discarded on purpose. What matters is that enough survives to build a
+     style from one page, not that every word is used. */
+  ok(align.matched >= 5, `only ${align.matched} of 9 words aligned — yield too low to be useful`);
+
+  const style = createStyle('from page');
+  let added = 0, failed = 0;
+  page.lines.forEach((line, li) => {
+    const m = lineMetrics(line);
+    if (!m || !m.confident) return;
+    for (const r of align.results.filter(r => r.line === li && r.pairs)) {
+      for (const { ch, letter } of r.pairs) {
+        try {
+          addVariant(style, ch, makeVariant({
+            mask: letter.mask, w: letter.w, h: letter.h,
+            baseline: m.baseline - letter.top, xheight: m.xheight - letter.top
+          }));
+          added++;
+        } catch (e) { failed++; }
+      }
+    }
+  });
+  /* Yield, not raw count: what matters is the fraction of the page's letters
+     that survive. Around 60% is normal with a font that joins letters, and a
+     real hand that lifts the pen between letters does better. */
+  const onPage = lines.join('').replace(/\s/g, '').length;
+  const yieldPct = added / onPage;
+  ok(yieldPct >= 0.4, `only ${Math.round(yieldPct * 100)}% of the page's letters were captured`);
+  ok(Object.keys(style.glyphs).length >= 8, 'expected a decent character spread');
+
+  /* Every pairing that survived alignment must convert. A failure here means
+     alignment handed out a blob that was not a usable glyph. */
+  eq(failed, 0, failed + ' aligned glyphs failed to convert');
+
+  /* And the captured glyphs must actually be traceable into curves. */
+  const ch = Object.keys(style.glyphs)[0];
+  const v = style.glyphs[ch][0];
+  const d = maskToPath(variantMask(v), v.w, v.h);
+  ok(d.startsWith('M') && !/NaN/.test(d), 'a captured glyph did not trace cleanly');
 });
 
 /* ---------- visual check ---------- */
