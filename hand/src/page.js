@@ -86,6 +86,129 @@ export function rotateGray(gray, w, h, deg) {
   return out;
 }
 
+/* ---------- printed ruling ---------------------------------------------- */
+
+/**
+ * Find the printed rules on notebook paper.
+ *
+ * This has to run before anything else, and missing it is fatal rather than
+ * merely degrading: a printed rule spans the full width, so it welds every
+ * line of writing to the ones above and below (one giant text band instead of
+ * thirty) AND removes every vertical gap (one giant "word" per line).
+ * Segmentation cannot recover from either.
+ *
+ * The discriminator is length. A ruling crosses most of the page; the longest
+ * horizontal stroke in handwriting is a few characters wide. So a row whose
+ * longest unbroken run of ink covers `minFrac` of the page is part of a rule.
+ */
+export function detectRuling(bin, w, h, { minFrac = 0.5, growFrac = 0.25 } = {}) {
+  const longestRun = (get, n) => {
+    let best = 0, run = 0;
+    for (let i = 0; i < n; i++) {
+      if (get(i)) { run++; if (run > best) best = run; }
+      else run = 0;
+    }
+    return best;
+  };
+
+  /**
+   * Find core rule positions, then GROW each band outward.
+   *
+   * A printed rule is one or two pixels of solid colour with antialiased
+   * shoulders on either side. Only the core is dark enough to clear the main
+   * threshold, so detecting the core alone leaves the shoulders behind — and
+   * a leftover shoulder is a full-page-long streak of ink, which is worse
+   * than useless: it forms a phantom "word" at the page margin that shifts
+   * every real word out of alignment.
+   *
+   * The shoulder is still a rule, so it still spans the page. Growing while
+   * the neighbouring row remains long (a quarter of the page) picks it up.
+   * Handwriting never produces a run that long, so this cannot eat text.
+   */
+  const bandsFrom = (runs, n, span) => {
+    const core = runs.map(r => r >= span * minFrac);
+    const out = [];
+    let i = 0;
+    while (i < n) {
+      if (!core[i]) { i++; continue; }
+      let from = i, to = i;
+      while (to + 1 < n && core[to + 1]) to++;
+      while (from > 0 && runs[from - 1] >= span * growFrac) from--;
+      while (to < n - 1 && runs[to + 1] >= span * growFrac) to++;
+      out.push({ from, to });
+      i = to + 1;
+    }
+    return out;
+  };
+
+  const hRuns = new Array(h);
+  for (let y = 0; y < h; y++) hRuns[y] = longestRun(x => bin[y * w + x], w);
+
+  const vRuns = new Array(w);
+  for (let x = 0; x < w; x++) vRuns[x] = longestRun(y => bin[y * w + x], h);
+
+  return {
+    horizontal: bandsFrom(hRuns, h, w),
+    vertical: bandsFrom(vRuns, w, h)
+  };
+}
+
+/**
+ * Erase the printed ruling, keeping the handwriting that crosses it.
+ *
+ * Blanking the rule rows outright would slice through every descender and
+ * every letter sitting on the line, which on ruled paper is most of them. So
+ * a pixel inside a rule is cleared only when there is no ink continuing on
+ * both sides of it at that column — that is, when nothing is passing through.
+ * Where a stroke does cross, its pixels stay and the letter survives.
+ */
+export function removeRuling(bin, w, h, ruling, { probe = 3, slack = 1 } = {}) {
+  const out = new Uint8Array(bin);
+
+  const inkRow = (x, y) => {
+    if (y < 0 || y >= h) return false;
+    for (let dx = -slack; dx <= slack; dx++) {
+      const xx = x + dx;
+      if (xx >= 0 && xx < w && bin[y * w + xx]) return true;
+    }
+    return false;
+  };
+  const inkCol = (x, y) => {
+    if (x < 0 || x >= w) return false;
+    for (let dy = -slack; dy <= slack; dy++) {
+      const yy = y + dy;
+      if (yy >= 0 && yy < h && bin[yy * w + x]) return true;
+    }
+    return false;
+  };
+
+  for (const r of ruling.horizontal) {
+    for (let x = 0; x < w; x++) {
+      let above = false, below = false;
+      for (let d = 1; d <= probe; d++) {
+        if (inkRow(x, r.from - d)) above = true;
+        if (inkRow(x, r.to + d)) below = true;
+      }
+      if (above && below) continue;
+      for (let y = r.from; y <= r.to; y++) out[y * w + x] = 0;
+    }
+  }
+
+  for (const r of ruling.vertical) {
+    for (let y = 0; y < h; y++) {
+      let left = false, right = false;
+      for (let d = 1; d <= probe; d++) {
+        if (inkCol(r.from - d, y)) left = true;
+        if (inkCol(r.to + d, y)) right = true;
+      }
+      if (left && right) continue;
+      for (let x = r.from; x <= r.to; x++) out[y * w + x] = 0;
+    }
+  }
+
+  return out;
+}
+
 /* ---------- lines ------------------------------------------------------- */
 
 function smooth(arr, radius) {
@@ -134,18 +257,25 @@ export function findLines(bin, w, h, { minInkFrac = 0.06, minHeight = 6 } = {}) 
   /* Rejoin bands that are really one line.
    *
    * Dots, tittles and accents float above the body of a line, and where a
-   * line is sparse enough there is clean white between them and the letters
-   * underneath. That reads as two lines, and everything downstream then
-   * segments the dots as though they were words. Merge a band into the one
-   * above it when the gap between them is small next to the bands themselves;
-   * a genuine line break is a much wider gap than a tittle's. */
+   * line is sparse there is clean white between them and the letters below.
+   * That reads as two lines, and the dots then get segmented as words.
+   *
+   * But this merge must be narrow. On ruled paper the lines of writing sit
+   * close together, and a loose rule swallows the whole page into one band —
+   * which is exactly what a too-generous 0.9 threshold did. A dot band is
+   * both CLOSE to its line and much THINNER than it, so require both. Two
+   * adjacent lines of writing are similar heights and fail the second test
+   * no matter how tightly they are spaced. */
   const merged = [];
   for (const b of bands) {
     const prev = merged[merged.length - 1];
     if (prev) {
       const gap = b.top - prev.bottom - 1;
-      const reference = Math.max(prev.bottom - prev.top + 1, b.bottom - b.top + 1);
-      if (gap <= reference * 0.9) { prev.bottom = b.bottom; continue; }
+      const hPrev = prev.bottom - prev.top + 1;
+      const hCur = b.bottom - b.top + 1;
+      const close = gap <= Math.max(hPrev, hCur) * 0.35;
+      const oneIsThin = Math.min(hPrev, hCur) <= Math.max(hPrev, hCur) * 0.5;
+      if (close && oneIsThin) { prev.bottom = b.bottom; continue; }
     }
     merged.push({ ...b });
   }
@@ -182,16 +312,40 @@ function wordGapThreshold(cols, w, lineH, gapFrac) {
   const floor = Math.max(2, Math.round(lineH * 0.08));
   if (gaps.length < 2) return Math.max(floor, Math.round(lineH * gapFrac));
 
-  const sorted = gaps.slice().sort((a, b) => a - b);
-  let cut = -1, jump = 0;
-  for (let i = 0; i < sorted.length - 1; i++) {
-    const d = sorted[i + 1] - sorted[i];
-    if (d > jump) { jump = d; cut = i; }
+  const max = Math.max(...gaps);
+  if (max < 3) return w + 1;                 // nothing here is a word gap
+
+  /* Otsu over the gap lengths.
+   *
+   * Cutting at the biggest jump in the sorted gaps was wrong, and wrong in a
+   * way that looked fine on one test line. On [1,1,1,1,2,2,2,2,2,7,8,15] the
+   * biggest jump is 8 to 15 — an outlier in the tail — so the threshold lands
+   * above every real word gap and the whole line becomes one word. The
+   * boundary that matters is 2 to 7, and it is not the biggest step.
+   *
+   * Otsu finds the split that best separates the two clusters rather than the
+   * largest single step, which is exactly the question being asked. It also
+   * errs the safe way: an over-split word simply fails the letter-count check
+   * and is skipped, whereas an under-split line yields nothing at all and
+   * gives no clue why. */
+  const hist = new Uint32Array(max + 1);
+  for (const g of gaps) hist[g]++;
+
+  let sum = 0;
+  for (let i = 0; i <= max; i++) sum += i * hist[i];
+  let sumB = 0, wB = 0, best = 1, bestVar = -1;
+  for (let t = 0; t < max; t++) {
+    wB += hist[t];
+    if (wB === 0) continue;
+    const wF = gaps.length - wB;
+    if (wF === 0) break;
+    sumB += t * hist[t];
+    const between = wB * wF * (sumB / wB - (sum - sumB) / wF) ** 2;
+    if (between > bestVar) { bestVar = between; best = t; }
   }
-  /* A real word gap is markedly wider than a letter gap. Without that margin
-     the "biggest jump" is just noise between two similar letter gaps. */
-  if (cut < 0 || sorted[cut + 1] < sorted[cut] * 1.6) return w + 1;   // one word
-  return Math.max(floor, Math.ceil((sorted[cut] + sorted[cut + 1]) / 2));
+
+  /* `best` is the last letter-gap length, so a word gap is anything above it. */
+  return Math.max(floor, best + 1);
 }
 
 /**
@@ -338,22 +492,39 @@ export function analysePage(gray, w, h, opts = {}) {
   const skew = opts.skew != null ? opts.skew : estimateSkew(rough, w, h, opts);
   const straight = rotateGray(gray, w, h, skew);
   const t = otsuThreshold(straight);
-  const bin = binarize(straight, t);
+  let bin = binarize(straight, t);
+
+  /* Ruled paper first. Almost every page a student writes on is ruled, and
+     the printed rules destroy both line and word segmentation if they reach
+     the next stage. Skew is corrected before this so the rules are horizontal
+     and their full length is visible in a single row. */
+  let ruling = { horizontal: [], vertical: [] };
+  if (opts.removeRuling !== false) {
+    ruling = detectRuling(bin, w, h, opts);
+    if (ruling.horizontal.length || ruling.vertical.length) {
+      bin = removeRuling(bin, w, h, ruling, opts);
+    }
+  }
 
   const lines = findLines(bin, w, h, opts).map(line => {
-    const words = findWords(bin, w, h, line, opts).map(word => ({
-      ...word,
-      letters: findLetters(bin, w, word, opts)
-    }));
+    const words = findWords(bin, w, h, line, opts)
+      .map(word => ({ ...word, letters: findLetters(bin, w, word, opts) }))
+      /* A word with no extractable letters must never survive. It is a smudge,
+         a speck, or a scrap of margin rule — and because alignment pairs the
+         Nth ink word with the Nth transcript word, one phantom word at the
+         start of a line shifts every real word after it by one. The page then
+         yields almost nothing and the reason is invisible. */
+      .filter(word => word.letters.length > 0);
     return { ...line, words };
   }).filter(l => l.words.length);
 
   return {
-    bin, w, h, skew, threshold: t, lines,
+    bin, w, h, skew, threshold: t, lines, ruling,
     stats: {
       lines: lines.length,
       words: lines.reduce((a, l) => a + l.words.length, 0),
-      letters: lines.reduce((a, l) => a + l.words.reduce((b, wd) => b + wd.letters.length, 0), 0)
+      letters: lines.reduce((a, l) => a + l.words.reduce((b, wd) => b + wd.letters.length, 0), 0),
+      rulesRemoved: ruling.horizontal.length + ruling.vertical.length
     }
   };
 }

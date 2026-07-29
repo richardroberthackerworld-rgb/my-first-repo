@@ -190,11 +190,27 @@ $('analyse').addEventListener('click', async () => {
   draw();
   const s = page.stats;
   const weak = page.lines.filter(l => { const m = lineMetrics(l); return !m || !m.confident; }).length;
+  const avgWords = s.lines ? s.words / s.lines : 0;
+
   msg(
-    `${s.lines} lines, ${s.words} words, ${s.letters} letter shapes. Skew corrected ${page.skew.toFixed(2)}°.` +
+    `${s.lines} lines, ${s.words} words, ${s.letters} letter shapes. ` +
+    `Skew corrected ${page.skew.toFixed(2)}°.` +
+    (s.rulesRemoved ? ` Removed ${s.rulesRemoved} printed rule(s) from the paper.` : '') +
     (weak ? ` ${weak} line(s) had too few plain letters to place a baseline confidently.` : ''),
     weak ? 'warn' : 'ok'
   );
+
+  /* A page that comes back as a couple of huge "words" means segmentation
+     failed, not that the page is odd. Say so, rather than letting the user
+     type a whole transcript against a page that cannot use it. */
+  if (s.lines > 0 && avgWords < 1.6 && s.letters > 20) {
+    ocrNote(
+      `Only ${s.words} word(s) were found across ${s.lines} line(s), which is too few — ` +
+      `word splitting has failed on this page. Typing the transcript will not help until it is fixed. ` +
+      `Try a photo with more even lighting, or raise the Speck floor if the paper is textured.`,
+      'bad'
+    );
+  }
   $('transcript').placeholder = Array.from({ length: Math.min(s.lines, 6) }, (_, i) => 'line ' + (i + 1)).join('\n');
   $('build').disabled = false;
 

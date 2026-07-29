@@ -64,7 +64,7 @@ import { buildGlyphDefs, pageSVG, variantPath } from './src/render.js';
 import { buildPdf, glyphMatrix, variantPdfOps } from './src/pdf.js';
 import {
   estimateSkew, rotateGray, findLines, findWords, findLetters,
-  analysePage, lineMetrics, alignTranscript
+  analysePage, lineMetrics, alignTranscript, detectRuling, removeRuling
 } from './src/page.js';
 import { transcribe, prepareImage, checkLineCount, VISION_PROVIDERS } from './src/ocr.js';
 
@@ -1532,6 +1532,150 @@ test('findLetters drops specks below the floor', () => {
   bin[(word.top + 2) * p.w + (word.left + 2)] = 1;
   bin[(word.top + 2) * p.w + (word.left + 3)] = 1;
   eq(findLetters(bin, p.w, word, { minArea: 12 }).length, 2, 'the speck must not become a third letter');
+});
+
+section('Page analysis — RULED notebook paper');
+
+/**
+ * A page of ruled notebook paper, which is what students actually write on.
+ * Printed rules run edge to edge, plus the red margin rule down the left.
+ * Writing sits ON the lines, so strokes cross them and descenders hang
+ * through them — exactly the case that must survive rule removal.
+ */
+function ruledPage(lines, { size = 30, pitch = 76, skew = 0, ruleGrey = 150 } = {}) {
+  const W = 900, H = 100 + lines.length * pitch + 60;
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d', { willReadFrequently: true });
+  ctx.fillStyle = '#fdfdf8'; ctx.fillRect(0, 0, W, H);
+  ctx.translate(W / 2, H / 2); ctx.rotate(skew * Math.PI / 180); ctx.translate(-W / 2, -H / 2);
+
+  /* printed horizontal ruling, all the way across */
+  ctx.strokeStyle = `rgb(${ruleGrey},${ruleGrey + 12},${ruleGrey + 24})`;
+  ctx.lineWidth = 1.6;
+  for (let i = 0; i < lines.length + 4; i++) {
+    const y = 60 + i * pitch + 0.5;
+    ctx.beginPath(); ctx.moveTo(20, y); ctx.lineTo(W - 20, y); ctx.stroke();
+  }
+  /* red margin rule */
+  ctx.strokeStyle = 'rgb(190,120,130)';
+  ctx.beginPath(); ctx.moveTo(64.5, 10); ctx.lineTo(64.5, H - 10); ctx.stroke();
+
+  /* writing, sitting on the rules */
+  ctx.fillStyle = '#16233f';
+  ctx.font = size + 'px Georgia, serif';
+  ctx.textBaseline = 'alphabetic';
+  lines.forEach((t, i) => ctx.fillText(t, 80, 60 + i * pitch));
+
+  return { gray: luminance(ctx.getImageData(0, 0, W, H)), w: W, h: H };
+}
+
+const RULED = ['one two three', 'nose worn menu', 'never mind me', 'pack my box now'];
+
+test('printed ruling is detected', () => {
+  const p = ruledPage(RULED);
+  const bin = binarize(p.gray, otsuThreshold(p.gray));
+  const ruling = detectRuling(bin, p.w, p.h);
+  ok(ruling.horizontal.length >= RULED.length,
+    `found ${ruling.horizontal.length} horizontal rules, expected at least ${RULED.length}`);
+  ok(ruling.vertical.length >= 1, 'the red margin rule should be found');
+});
+
+test('blank paper has no ruling to find', () => {
+  const p = fakePage(RULED, { size: 30 });
+  const bin = binarize(p.gray, otsuThreshold(p.gray));
+  const ruling = detectRuling(bin, p.w, p.h);
+  eq(ruling.horizontal.length, 0, 'invented a rule on blank paper');
+  eq(ruling.vertical.length, 0, 'invented a margin rule on blank paper');
+});
+
+test('removing the ruling keeps the strokes that cross it', () => {
+  const p = ruledPage(RULED);
+  const bin = binarize(p.gray, otsuThreshold(p.gray));
+  const ruling = detectRuling(bin, p.w, p.h);
+  const cleaned = removeRuling(bin, p.w, p.h, ruling);
+
+  const before = bin.reduce((a, v) => a + v, 0);
+  const after = cleaned.reduce((a, v) => a + v, 0);
+  ok(after < before * 0.85, 'the rules should be gone: ' + before + ' -> ' + after);
+  /* but the writing must survive. Ink inside the text columns, away from the
+     rule rows, should be almost untouched. */
+  let kept = 0, total = 0;
+  const ruleRow = new Uint8Array(p.h);
+  for (const r of ruling.horizontal) for (let y = r.from; y <= r.to; y++) ruleRow[y] = 1;
+  for (let y = 0; y < p.h; y++) {
+    if (ruleRow[y]) continue;
+    for (let x = 80; x < p.w - 40; x++) {
+      if (bin[y * p.w + x]) { total++; if (cleaned[y * p.w + x]) kept++; }
+    }
+  }
+  ok(kept / total > 0.99, `only ${Math.round(kept / total * 100)}% of the writing survived`);
+});
+
+test('THE BUG: a ruled page segments into its real lines and words', () => {
+  /* Reported from a real photo: a ruled page came back as "2 lines, 2 words"
+     because the printed rules welded every line together and filled every
+     word gap. Every earlier test used blank paper, which is the one kind of
+     page a student never writes on. */
+  const p = ruledPage(RULED, { skew: -1.5 });
+  const page = analysePage(p.gray, p.w, p.h);
+
+  ok(page.stats.rulesRemoved > 0, 'no ruling was removed');
+  eq(page.stats.lines, RULED.length, `got ${page.stats.lines} lines, expected ${RULED.length}`);
+
+  const expectedWords = RULED.reduce((a, l) => a + l.split(' ').length, 0);
+  ok(page.stats.words >= expectedWords - 1,
+    `got ${page.stats.words} words, expected about ${expectedWords}`);
+  ok(page.stats.words <= expectedWords + 2, `got ${page.stats.words} words, too many`);
+});
+
+test('a ruled page still yields usable glyph samples', () => {
+  const p = ruledPage(RULED);
+  const page = analysePage(p.gray, p.w, p.h);
+  const align = alignTranscript(page, RULED.join('\n'));
+  ok(align.matched >= 6, `only ${align.matched} of ${RULED.reduce((a,l)=>a+l.split(' ').length,0)} words aligned on ruled paper`);
+
+  let confident = 0;
+  for (const line of page.lines) { const m = lineMetrics(line); if (m && m.confident) confident++; }
+  ok(confident >= RULED.length - 1, `only ${confident} of ${page.lines.length} lines had a confident baseline`);
+});
+
+test('faint ruling is removed as well as dark ruling', () => {
+  for (const grey of [110, 150, 185]) {
+    const p = ruledPage(RULED, { ruleGrey: grey });
+    const page = analysePage(p.gray, p.w, p.h);
+    eq(page.stats.lines, RULED.length, `at rule grey ${grey}: got ${page.stats.lines} lines`);
+  }
+});
+
+test('without rule removal the words collapse, proving the fix does the work', () => {
+  const p = ruledPage(RULED);
+  const off = analysePage(p.gray, p.w, p.h, { removeRuling: false });
+  eq(off.stats.rulesRemoved, 0);
+  /* A printed rule runs the full width, so with it present every column in a
+     line has ink and there is no gap left to split words on. The whole line
+     becomes one word. */
+  ok(off.stats.words <= off.stats.lines + 1,
+    `expected the rules to weld each line into one word, got ${off.stats.words} words across ${off.stats.lines} lines`);
+
+  const on = analysePage(p.gray, p.w, p.h);
+  ok(on.stats.words > off.stats.words * 2,
+    `removal should recover the real words: ${off.stats.words} -> ${on.stats.words}`);
+});
+
+test('a word containing no letters is never emitted', () => {
+  /* The bug that made a real page yield 1 match from 13 words: a scrap of the
+     margin rule survived as a wordless smudge at the start of every line, and
+     alignment pairs the Nth ink word with the Nth transcript word — so every
+     real word after it was compared against its neighbour's text. */
+  const p = ruledPage(RULED);
+  const page = analysePage(p.gray, p.w, p.h);
+  for (const line of page.lines) {
+    for (const word of line.words) {
+      ok(word.letters.length > 0,
+        `an empty word at x=${word.left}..${word.right} would shift every word after it`);
+    }
+  }
 });
 
 section('Page analysis — baseline from the letters themselves');
