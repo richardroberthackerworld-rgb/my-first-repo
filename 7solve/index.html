@@ -44,7 +44,7 @@ if ('serviceWorker' in navigator) {
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700;900&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Serif+Devanagari:wght@400;600&family=Noto+Serif+Telugu:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700;900&family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Caveat:wght@500;600;700&family=Noto+Serif+Devanagari:wght@400;600&family=Noto+Serif+Telugu:wght@400;600&display=swap" rel="stylesheet">
 <style>
 /* ============ BOOK THEME ============ */
 :root{
@@ -649,158 +649,247 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
 <body>
 
 <!-- ============================================================
-     7SOLVE PRELOADER — a real notebook opening on a study desk.
-     Purely additive: it sits over the app and removes itself. The
-     fade-out is a CSS animation with fill:forwards, so even if the
-     JS below never runs the overlay still disappears — a preloader
-     must never be able to hide a working app.
+     7SOLVE PRELOADER — a classroom blackboard, written in chalk.
+     Mobile-first: everything lives in one 400x560 SVG viewBox with
+     preserveAspectRatio, so nothing can ever crop on a phone. Text is
+     revealed by clip rects travelling with the chalk (real handwriting
+     motion); the figures are stroke-drawn with dashoffset. Desktop adds
+     the classroom around the board and a slow camera push.
+     Additive overlay — the fade-out is a CSS animation with fill:forwards
+     and two JS timeouts, so it can never hide a working app.
      ============================================================ -->
-<div id="pl" class="pl" aria-hidden="true">
-  <div class="pl-desk"></div>
-  <div class="pl-sun"></div>
-  <div class="pl-scene">
-    <div class="pl-shadow"></div>
-    <div class="pl-book">
-      <!-- inside page, revealed as the cover swings open -->
-      <div class="pl-page">
-        <div class="pl-rules"></div>
-        <div class="pl-margin"></div>
-        <div class="pl-clip"></div>
-        <div class="pl-note">Doubt<br><span>solved ✓</span></div>
-        <div class="pl-ink">
-          <svg viewBox="0 0 300 200" preserveAspectRatio="xMidYMid meet">
-            <!-- heading stroke -->
-            <path class="pl-w pl-w1" d="M28 34 H150"/>
-            <!-- two handwritten lines -->
-            <path class="pl-w pl-w2" d="M28 62c14-7 20 6 33 0s18-8 30-2 21 6 34 0 20-7 33-2 22 5 35 0"/>
-            <path class="pl-w pl-w3" d="M28 84c12-6 19 5 31 0s17-7 28-2 20 6 32 0 19-6 31-2"/>
-            <!-- formula box -->
-            <rect class="pl-box" x="26" y="104" width="150" height="40" rx="5"/>
-            <path class="pl-w pl-w4" d="M40 130 h18 M64 118 v24 M64 130 h14 M92 118 c14 0 14 24 0 24 M108 130 h30"/>
-            <!-- underline sweep -->
-            <path class="pl-w pl-w5" d="M28 162 H190"/>
-          </svg>
-        </div>
-        <div class="pl-hl"></div>
-      </div>
-      <!-- hard cover -->
-      <div class="pl-cover">
-        <div class="pl-spine"></div>
-        <div class="pl-band"></div>
-        <div class="pl-title">7Solve</div>
-        <div class="pl-tag">Where Every Doubt<br>Becomes Understanding.</div>
-        <div class="pl-by">Designed by 7By.in</div>
-        <div class="pl-ribbon"></div>
-      </div>
-    </div>
-    <div class="pl-pencil"></div>
+<div id="pl" class="cb" aria-hidden="true">
+  <div class="cb-room">
+    <div class="cb-beam"></div>
+    <div class="cb-clock"><i></i></div>
+    <div class="cb-globe"></div>
+    <div class="cb-books"><i></i><i></i><i></i><i></i></div>
   </div>
-  <button class="pl-skip" type="button">Skip</button>
+  <div class="cb-stage">
+    <div class="cb-frame">
+      <div class="cb-board">
+        <div class="cb-grain"></div>
+        <div class="cb-smudge"></div>
+        <svg class="cb-svg" viewBox="0 0 400 560" preserveAspectRatio="xMidYMid meet" role="img" aria-label="7Solve">
+          <defs>
+            <filter id="cbRough"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" result="n"/>
+              <feDisplacementMap in="SourceGraphic" in2="n" scale="1.4"/></filter>
+            <clipPath id="c1"><rect class="rv r1" x="24" y="60"  width="0" height="70"/></clipPath>
+            <clipPath id="c2"><rect class="rv r2" x="24" y="132" width="0" height="30"/></clipPath>
+            <clipPath id="c3"><rect class="rv r3" x="24" y="158" width="0" height="30"/></clipPath>
+            <clipPath id="c4"><rect class="rv r4" x="24" y="186" width="0" height="24"/></clipPath>
+            <clipPath id="c5"><rect class="rv r5" x="24" y="232" width="0" height="34"/></clipPath>
+            <clipPath id="c6"><rect class="rv r6" x="24" y="272" width="0" height="40"/></clipPath>
+            <clipPath id="c7"><rect class="rv r7" x="24" y="326" width="0" height="34"/></clipPath>
+          </defs>
+          <g filter="url(#cbRough)" class="cb-ink">
+            <!-- branding -->
+            <text class="t1" x="30" y="112" clip-path="url(#c1)">7Solve</text>
+            <text class="t2" x="30" y="154" clip-path="url(#c2)">Where Every Doubt</text>
+            <text class="t2" x="30" y="180" clip-path="url(#c3)">Becomes Understanding.</text>
+            <text class="t3" x="30" y="204" clip-path="url(#c4)">DESIGNED BY 7BY.IN</text>
+            <path class="ln l1" d="M28 216 H372"/>
+            <!-- lesson -->
+            <text class="t4" x="30" y="258" clip-path="url(#c5)">Today's Topic</text>
+            <text class="t5" x="30" y="303" clip-path="url(#c6)">"Let's Solve Together"</text>
+            <text class="t6" x="30" y="352" clip-path="url(#c7)">a² + b² = c²</text>
+            <!-- geometry: right triangle -->
+            <path class="ln l2" d="M250 404 L250 336 L338 404 Z"/>
+            <path class="ln l3" d="M250 392 h12 v12"/>
+            <!-- chemistry: benzene -->
+            <path class="ln l4" d="M75 428 L101 443 L101 473 L75 488 L49 473 L49 443 Z"/>
+            <circle class="ln l5" cx="75" cy="458" r="16" fill="none"/>
+            <!-- biology: leaf -->
+            <path class="ln l6" d="M186 424 C208 442 208 478 186 496 C164 478 164 442 186 424 Z"/>
+            <path class="ln l7" d="M186 424 V496 M186 444 l14 8 M186 462 l14 8 M186 444 l-14 8 M186 462 l-14 8"/>
+            <!-- physics: graph -->
+            <path class="ln l8" d="M272 496 V428 M272 496 H366"/>
+            <path class="ln l9" d="M278 490 Q312 434 362 438"/>
+            <circle class="dot d1" cx="300" cy="466" r="3.2"/>
+            <circle class="dot d2" cx="332" cy="444" r="3.2"/>
+          </g>
+          <!-- the chalk stick, in the same coordinate space as the writing -->
+          <g class="cb-chalk">
+            <rect x="-5" y="-16" width="10" height="30" rx="3" fill="#fdfdf8"/>
+            <rect x="-5" y="8" width="10" height="6" rx="2" fill="#e6e4d8"/>
+            <rect x="-5" y="-16" width="4" height="30" rx="2" fill="#ffffff" opacity=".7"/>
+          </g>
+        </svg>
+        <div class="cb-dust"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="cb-hand"><span class="cb-duster"></span></div>
+        <div class="cb-glow"></div>
+      </div>
+      <div class="cb-tray"><b></b><b class="s"></b><span class="cb-point"></span></div>
+    </div>
+  </div>
+  <button class="cb-skip" type="button">Skip intro</button>
 </div>
 <style>
-.pl{position:fixed;inset:0;z-index:99999;overflow:hidden;background:#1b1207;
-  display:flex;align-items:center;justify-content:center;
-  animation:plOut .6s ease 3.15s forwards}
-.pl-desk{position:absolute;inset:0;
-  background:
-    repeating-linear-gradient(90deg,rgba(0,0,0,.06) 0 2px,transparent 2px 7px),
-    repeating-linear-gradient(90deg,rgba(255,255,255,.03) 0 1px,transparent 1px 23px),
-    linear-gradient(160deg,#6b4a26 0%,#4e3419 45%,#38240f 100%)}
-.pl-sun{position:absolute;inset:0;pointer-events:none;opacity:0;
-  background:radial-gradient(120% 90% at 78% -15%,rgba(255,236,190,.75) 0%,rgba(255,224,160,.28) 32%,transparent 62%);
-  animation:plFade .9s ease .05s forwards}
-.pl-scene{position:relative;width:min(86vw,430px);aspect-ratio:1/.78;perspective:1500px;
-  transform:translateY(14px) scale(.94);opacity:0;
-  animation:plSettle .8s cubic-bezier(.22,1,.36,1) .1s forwards}
-.pl-shadow{position:absolute;left:6%;right:2%;bottom:-5%;height:16%;border-radius:50%;
-  background:radial-gradient(50% 50%,rgba(0,0,0,.55),transparent 70%);filter:blur(9px)}
-.pl-book{position:absolute;inset:0;transform-style:preserve-3d}
-/* ---- inside page ---- */
-.pl-page{position:absolute;inset:0;border-radius:4px 9px 9px 4px;overflow:hidden;
-  background:linear-gradient(105deg,#fffdf6 0%,#fdf8ea 55%,#f6efdc 100%);
-  box-shadow:inset 14px 0 22px -16px rgba(90,60,20,.5),0 2px 5px rgba(0,0,0,.25)}
-.pl-rules{position:absolute;left:14%;right:7%;top:15%;bottom:9%;
-  background:repeating-linear-gradient(180deg,transparent 0 21px,rgba(96,126,150,.28) 21px 22px)}
-.pl-margin{position:absolute;left:13%;top:0;bottom:0;width:1.5px;background:rgba(200,70,70,.5)}
-.pl-ink{position:absolute;left:8%;right:6%;top:12%;bottom:8%}
-.pl-ink svg{width:100%;height:100%;overflow:visible}
-.pl-w{fill:none;stroke:#1f3d8f;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;
-  stroke-dasharray:var(--l,400);stroke-dashoffset:var(--l,400)}
-.pl-w1{--l:130;stroke-width:4;stroke:#16306f;animation:plWrite .34s ease 1.72s forwards}
-.pl-w2{--l:300;animation:plWrite .52s ease 2.02s forwards}
-.pl-w3{--l:270;animation:plWrite .48s ease 2.30s forwards}
-.pl-w4{--l:200;stroke:#16306f;animation:plWrite .46s ease 2.62s forwards}
-.pl-w5{--l:170;stroke:#c2410c;stroke-width:3;animation:plWrite .34s ease 2.90s forwards}
-.pl-box{fill:none;stroke:rgba(31,61,143,.45);stroke-width:1.6;stroke-dasharray:400;stroke-dashoffset:400;
-  animation:plWrite .5s ease 2.50s forwards}
-.pl-hl{position:absolute;left:9%;top:31%;height:9px;width:0;border-radius:2px;
-  background:rgba(253,224,71,.62);mix-blend-mode:multiply;animation:plHl .42s ease 2.44s forwards}
-.pl-clip{position:absolute;right:11%;top:-3%;width:15px;height:46px;border-radius:8px;
-  border:2.5px solid #b9c2cc;border-bottom-color:transparent;opacity:0;transform:rotate(8deg);
-  box-shadow:0 1px 2px rgba(0,0,0,.25);animation:plPop .4s cubic-bezier(.34,1.56,.64,1) 2.24s forwards}
-.pl-note{position:absolute;right:7%;bottom:11%;width:23%;padding:8px 6px;border-radius:2px;
-  font:600 11px/1.35 'Lora',Georgia,serif;color:#4a3a12;text-align:center;
-  background:linear-gradient(#fef3a8,#fde68a);box-shadow:2px 3px 7px rgba(0,0,0,.22);
-  transform:rotate(-4deg) scale(.7);opacity:0;animation:plPop .42s cubic-bezier(.34,1.56,.64,1) 2.72s forwards}
-.pl-note span{font-weight:700;color:#166534}
-/* ---- hard cover ---- */
-.pl-cover{position:absolute;inset:0;transform-origin:left center;transform-style:preserve-3d;
-  border-radius:5px 10px 10px 5px;backface-visibility:hidden;
-  background:linear-gradient(118deg,#0d6f63 0%,#0a5c53 42%,#07463f 100%);
-  box-shadow:0 12px 30px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.14);
-  animation:plOpen 1s cubic-bezier(.62,.02,.3,1) 1.32s forwards}
-.pl-spine{position:absolute;left:0;top:0;bottom:0;width:9%;border-radius:5px 0 0 5px;
-  background:linear-gradient(90deg,rgba(0,0,0,.45),rgba(0,0,0,.12) 60%,transparent);
-  box-shadow:inset -1px 0 0 rgba(255,255,255,.07)}
-.pl-band{position:absolute;left:9%;right:0;top:20%;height:1px;background:rgba(212,175,106,.5);
-  box-shadow:0 34px 0 rgba(212,175,106,.5)}
-.pl-title{position:absolute;left:0;right:0;top:33%;text-align:center;
-  font:700 clamp(30px,8.4vw,46px)/1 'Playfair Display',Georgia,serif;color:#fdfbf4;
-  letter-spacing:.5px;text-shadow:0 2px 10px rgba(0,0,0,.4);opacity:0;
-  animation:plUp .6s ease .62s forwards}
-.pl-tag{position:absolute;left:8%;right:8%;top:50%;text-align:center;
-  font:italic 400 clamp(11px,3.1vw,14px)/1.55 'Lora',Georgia,serif;color:rgba(255,250,235,.82);
-  opacity:0;animation:plUp .6s ease .84s forwards}
-.pl-by{position:absolute;left:0;right:0;bottom:9%;text-align:center;
-  font:600 9.5px/1 'Lora',Georgia,serif;letter-spacing:2.4px;text-transform:uppercase;
-  color:rgba(212,175,106,.85);opacity:0;animation:plUp .6s ease 1.02s forwards}
-.pl-ribbon{position:absolute;right:16%;top:0;width:9px;height:0;border-radius:0 0 3px 3px;
-  background:linear-gradient(#c2410c,#9a3412);box-shadow:0 1px 3px rgba(0,0,0,.35);
-  animation:plRib .5s ease .5s forwards}
-/* ---- pencil ---- */
-.pl-pencil{position:absolute;left:-28%;bottom:6%;width:34%;height:9px;border-radius:2px;opacity:0;
-  background:linear-gradient(90deg,#f5c04a 0 78%,#e8b23c 78% 88%,#f7e6c8 88% 96%,#3b3b3b 96%);
-  box-shadow:0 2px 4px rgba(0,0,0,.35);animation:plRoll .85s cubic-bezier(.3,.9,.4,1) .5s forwards}
-@keyframes plFade{to{opacity:1}}
-@keyframes plSettle{to{transform:translateY(0) scale(1);opacity:1}}
-@keyframes plUp{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
-@keyframes plRib{to{height:26%}}
-@keyframes plRoll{0%{opacity:0;transform:translateX(0) rotate(0)}
-  12%{opacity:1}100%{opacity:1;transform:translateX(150%) rotate(760deg)}}
-@keyframes plOpen{to{transform:rotateY(-166deg)}}
-@keyframes plWrite{to{stroke-dashoffset:0}}
-@keyframes plHl{to{width:44%}}
-@keyframes plPop{to{opacity:1;transform:rotate(-4deg) scale(1)}}
-@keyframes plOut{to{opacity:0;visibility:hidden}}
-.pl-skip{position:absolute;right:16px;bottom:14px;z-index:2;cursor:pointer;
-  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.24);color:rgba(255,255,255,.8);
-  font:600 11px/1 'Lora',Georgia,serif;letter-spacing:1.4px;text-transform:uppercase;
-  padding:8px 14px;border-radius:20px;transition:background .2s}
-.pl-skip:hover{background:rgba(255,255,255,.2);color:#fff}
-.pl-done{display:none!important}
-@media (prefers-reduced-motion:reduce){.pl{display:none!important}}
+.cb{position:fixed;inset:0;z-index:99999;overflow:hidden;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(120% 90% at 50% 0,#3a3529 0%,#221f18 55%,#14120e 100%);
+  animation:cbOut .55s ease 5.15s forwards}
+/* ---- classroom (desktop dressing) ---- */
+.cb-room{position:absolute;inset:0;pointer-events:none;opacity:0;animation:cbFade .9s ease .1s forwards}
+.cb-beam{position:absolute;left:-10%;top:-30%;width:70%;height:150%;transform:rotate(14deg);
+  background:linear-gradient(90deg,transparent,rgba(255,241,200,.13) 35%,rgba(255,236,180,.05) 60%,transparent);
+  filter:blur(9px)}
+.cb-clock,.cb-globe,.cb-books{display:none}
+@media(min-width:900px){
+  .cb-clock{display:block;position:absolute;right:7%;top:11%;width:56px;height:56px;border-radius:50%;
+    border:4px solid #6b5433;background:radial-gradient(circle at 40% 35%,#fbf7ec,#ded6c2);
+    box-shadow:0 6px 18px rgba(0,0,0,.45)}
+  .cb-clock i{position:absolute;left:50%;top:50%;width:2px;height:17px;background:#4a4032;transform-origin:bottom;
+    transform:translate(-50%,-100%) rotate(38deg)}
+  .cb-clock::after{content:'';position:absolute;left:50%;top:50%;width:2px;height:12px;background:#7a6a52;
+    transform-origin:bottom;transform:translate(-50%,-100%) rotate(-58deg)}
+  .cb-globe{display:block;position:absolute;left:6%;bottom:14%;width:74px;height:74px;border-radius:50%;
+    background:radial-gradient(circle at 34% 30%,#7fb6d8,#33698f 62%,#1d4260);
+    box-shadow:0 12px 26px rgba(0,0,0,.5),inset -8px -8px 18px rgba(0,0,0,.35)}
+  .cb-globe::after{content:'';position:absolute;left:50%;bottom:-14px;width:8px;height:16px;background:#6b5433;
+    transform:translateX(-50%);border-radius:2px}
+  .cb-books{display:flex;position:absolute;right:5%;bottom:9%;gap:4px;align-items:flex-end;transform:rotate(-1deg)}
+  .cb-books i{display:block;width:15px;border-radius:2px 2px 0 0;box-shadow:0 4px 12px rgba(0,0,0,.4)}
+  .cb-books i:nth-child(1){height:76px;background:linear-gradient(#8d4a3f,#6d382f)}
+  .cb-books i:nth-child(2){height:64px;background:linear-gradient(#3f6a8d,#2d4f6b)}
+  .cb-books i:nth-child(3){height:82px;background:linear-gradient(#5c7a4a,#425838)}
+  .cb-books i:nth-child(4){height:58px;background:linear-gradient(#8a7440,#6a5930)}
+}
+/* ---- board ---- */
+.cb-stage{position:relative;width:min(94vw,560px);
+  transform:scale(.965);opacity:0;
+  animation:cbIn .9s cubic-bezier(.22,1,.36,1) .1s forwards, cbPush 5.2s ease-in .05s forwards}
+@media(min-width:900px){.cb-stage{width:min(70vw,660px)}}
+.cb-frame{position:relative;padding:13px 13px 0;border-radius:9px;
+  background:linear-gradient(160deg,#8a6534 0%,#6b4a26 45%,#513718 100%);
+  box-shadow:0 24px 60px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.16)}
+.cb-board{position:relative;aspect-ratio:400/560;border-radius:4px;overflow:hidden;
+  background:radial-gradient(120% 80% at 30% 12%,#2f4b3c 0%,#22392e 48%,#16261f 100%);
+  box-shadow:inset 0 0 60px rgba(0,0,0,.55),inset 0 2px 0 rgba(0,0,0,.4)}
+.cb-grain{position:absolute;inset:0;opacity:.5;pointer-events:none;
+  background:repeating-linear-gradient(97deg,rgba(255,255,255,.022) 0 2px,transparent 2px 6px),
+    repeating-linear-gradient(3deg,rgba(0,0,0,.05) 0 3px,transparent 3px 9px)}
+.cb-smudge{position:absolute;inset:0;pointer-events:none;opacity:.5;
+  background:radial-gradient(38% 22% at 76% 20%,rgba(255,255,255,.09),transparent 70%),
+    radial-gradient(30% 18% at 22% 78%,rgba(255,255,255,.07),transparent 70%)}
+.cb-svg{position:absolute;inset:0;width:100%;height:100%}
+.cb-ink text{fill:#f4f3e7;font-family:'Caveat','Segoe Script','Bradley Hand',cursive;
+  paint-order:stroke;stroke:rgba(255,255,255,.1);stroke-width:.4}
+.t1{font-size:56px;font-weight:700}
+.t2{font-size:21px;font-weight:500;fill:#e7e6d6}
+.t3{font-family:'Lora',Georgia,serif;font-size:9.5px;letter-spacing:2.6px;fill:#b9c9b4}
+.t4{font-size:25px;font-weight:600;fill:#ffe9a8}
+.t5{font-size:29px;font-weight:700;fill:#f7f6ea}
+.t6{font-size:25px;font-weight:600;fill:#cfe8d6}
+.cb-ink .ln{fill:none;stroke:#eceadc;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round;
+  stroke-dasharray:var(--l,420);stroke-dashoffset:var(--l,420);opacity:.92}
+.cb-ink .dot{fill:#ffe9a8;opacity:0}
+/* text reveal — the clip rect travels with the chalk */
+.rv{animation:cbRv .1s linear forwards}
+.r1{--w:250;animation-duration:.62s;animation-delay:.55s}
+.r2{--w:300;animation-duration:.42s;animation-delay:1.24s}
+.r3{--w:330;animation-duration:.44s;animation-delay:1.66s}
+.r4{--w:210;animation-duration:.26s;animation-delay:2.10s}
+.r5{--w:220;animation-duration:.30s;animation-delay:2.52s}
+.r6{--w:330;animation-duration:.38s;animation-delay:2.86s}
+.r7{--w:210;animation-duration:.32s;animation-delay:3.28s}
+@keyframes cbRv{to{width:var(--w)}}
+.l1{--l:350;animation:cbDraw .26s ease 2.36s forwards}
+.l2{--l:260;animation:cbDraw .40s ease 3.62s forwards}
+.l3{--l:30; animation:cbDraw .16s ease 4.00s forwards}
+.l4{--l:180;animation:cbDraw .40s ease 3.70s forwards}
+.l5{--l:105;animation:cbDraw .26s ease 4.06s forwards}
+.l6{--l:150;animation:cbDraw .38s ease 3.86s forwards}
+.l7{--l:130;animation:cbDraw .30s ease 4.16s forwards}
+.l8{--l:165;animation:cbDraw .30s ease 3.94s forwards}
+.l9{--l:120;animation:cbDraw .34s ease 4.22s forwards}
+.d1{animation:cbPop .2s ease 4.44s forwards}
+.d2{animation:cbPop .2s ease 4.52s forwards}
+@keyframes cbDraw{to{stroke-dashoffset:0}}
+@keyframes cbPop{to{opacity:.95}}
+/* chalk stick travelling the writing path */
+.cb-chalk{opacity:0;animation:cbChalk 5s cubic-bezier(.4,0,.5,1) .3s forwards}
+@keyframes cbChalk{
+  0%   {opacity:0;transform:translate(-30px,110px) rotate(-26deg)}
+  4%   {opacity:1;transform:translate(34px,108px) rotate(-24deg)}
+  15%  {transform:translate(272px,104px) rotate(-19deg)}
+  19%  {transform:translate(36px,150px) rotate(-26deg)}
+  27%  {transform:translate(320px,150px) rotate(-21deg)}
+  30%  {transform:translate(36px,176px) rotate(-26deg)}
+  38%  {transform:translate(350px,176px) rotate(-22deg)}
+  41%  {transform:translate(36px,200px) rotate(-25deg)}
+  47%  {transform:translate(230px,200px) rotate(-21deg)}
+  52%  {transform:translate(36px,254px) rotate(-26deg)}
+  57%  {transform:translate(238px,254px) rotate(-20deg)}
+  60%  {transform:translate(36px,299px) rotate(-26deg)}
+  66%  {transform:translate(348px,299px) rotate(-21deg)}
+  69%  {transform:translate(36px,348px) rotate(-25deg)}
+  74%  {transform:translate(232px,348px) rotate(-20deg)}
+  79%  {transform:translate(90px,452px) rotate(-30deg)}
+  86%  {transform:translate(292px,404px) rotate(-24deg)}
+  93%  {opacity:1;transform:translate(346px,452px) rotate(-18deg)}
+  100% {opacity:0;transform:translate(392px,470px) rotate(-12deg)}
+}
+/* chalk dust */
+.cb-dust{position:absolute;inset:0;pointer-events:none}
+.cb-dust i{position:absolute;width:2.5px;height:2.5px;border-radius:50%;background:rgba(255,255,255,.5);
+  opacity:0;animation:cbDust 5.4s linear infinite}
+.cb-dust i:nth-child(1){left:14%;top:26%;animation-delay:.7s}
+.cb-dust i:nth-child(2){left:38%;top:18%;animation-delay:1.5s}
+.cb-dust i:nth-child(3){left:62%;top:34%;animation-delay:.4s}
+.cb-dust i:nth-child(4){left:78%;top:22%;animation-delay:2.2s}
+.cb-dust i:nth-child(5){left:26%;top:58%;animation-delay:1.1s}
+.cb-dust i:nth-child(6){left:52%;top:66%;animation-delay:2.8s}
+.cb-dust i:nth-child(7){left:70%;top:52%;animation-delay:1.9s}
+.cb-dust i:nth-child(8){left:44%;top:78%;animation-delay:3.3s}
+@keyframes cbDust{0%{opacity:0;transform:translate(0,0)}
+  12%{opacity:.75}100%{opacity:0;transform:translate(16px,52px)}}
+/* teacher's hand + duster wiping a corner */
+.cb-hand{position:absolute;right:-32%;top:9%;width:30%;height:15%;opacity:0;
+  animation:cbWipe 1.05s ease 4.30s forwards}
+.cb-duster{position:absolute;inset:0;border-radius:5px;
+  background:linear-gradient(#7a5a30,#553c1d);box-shadow:0 4px 12px rgba(0,0,0,.5)}
+.cb-duster::after{content:'';position:absolute;left:3%;right:3%;bottom:-27%;height:34%;border-radius:3px;
+  background:linear-gradient(#f2efe2,#d8d4c2)}
+@keyframes cbWipe{0%{opacity:0;transform:translateX(0)}
+  18%{opacity:1}62%{opacity:1;transform:translateX(-118%)}100%{opacity:0;transform:translateX(-150%)}}
+/* board glow, then the camera enters the board */
+.cb-glow{position:absolute;inset:0;pointer-events:none;opacity:0;
+  background:radial-gradient(70% 55% at 50% 45%,rgba(214,255,232,.5),rgba(180,240,210,.12) 45%,transparent 72%);
+  animation:cbGlow 1.1s ease 4.55s forwards}
+@keyframes cbGlow{0%{opacity:0}55%{opacity:1}100%{opacity:.25}}
+@keyframes cbIn{to{opacity:1;transform:scale(1)}}
+@keyframes cbPush{0%,72%{transform:scale(1)}100%{transform:scale(1.5)}}
+@keyframes cbFade{to{opacity:1}}
+@keyframes cbOut{to{opacity:0;visibility:hidden}}
+/* chalk tray + pointer */
+.cb-tray{position:relative;height:16px;border-radius:0 0 8px 8px;
+  background:linear-gradient(#6f4d27,#432d13);box-shadow:inset 0 2px 4px rgba(0,0,0,.45)}
+.cb-tray b{position:absolute;top:4px;width:26px;height:6px;border-radius:3px;background:#f3f1e4;
+  box-shadow:0 1px 2px rgba(0,0,0,.4)}
+.cb-tray b:first-child{left:9%}
+.cb-tray b.s{left:19%;width:14px;background:#e2dfd0}
+.cb-point{position:absolute;right:8%;top:5px;width:33%;height:4px;border-radius:2px;
+  background:linear-gradient(90deg,#8a6534,#c8a165 70%,#f0e6d2)}
+.cb-skip{position:absolute;right:16px;bottom:16px;z-index:3;cursor:pointer;opacity:0;
+  background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.24);color:rgba(255,255,255,.82);
+  font:600 11px/1 'Lora',Georgia,serif;letter-spacing:1.5px;text-transform:uppercase;
+  padding:9px 15px;border-radius:20px;animation:cbFade .4s ease 2s forwards}
+.cb-skip:hover{background:rgba(255,255,255,.2);color:#fff}
+.cb-done{display:none!important}
+@media(max-width:420px){.t1{font-size:50px}.t5{font-size:26px}}
+@media (prefers-reduced-motion:reduce){.cb{display:none!important}}
 </style>
 <script>
 (function(){
   var pl = document.getElementById('pl');
   if (!pl) return;
-  // seen it already this visit? don't make people sit through it again
-  try { if (sessionStorage.getItem('pl7solve')) { pl.className = 'pl pl-done'; return; } } catch(e){}
+  try { if (sessionStorage.getItem('pl7solve2')) { pl.className = 'cb cb-done'; return; } } catch(e){}
   function done(){ if (pl && pl.parentNode) pl.parentNode.removeChild(pl); }
-  try { sessionStorage.setItem('pl7solve','1'); } catch(e){}
-  pl.querySelector('.pl-skip').addEventListener('click', done);
-  setTimeout(done, 3900);                 // after the fade-out finishes
-  setTimeout(function(){ done(); }, 7000); // hard stop, whatever happens
+  try { sessionStorage.setItem('pl7solve2','1'); } catch(e){}
+  var skip = pl.querySelector('.cb-skip');
+  if (skip) skip.addEventListener('click', done);
+  setTimeout(done, 5750);   // just after the fade-out completes
+  setTimeout(done, 8000);   // hard stop, whatever happens
 })();
 </script>
 
