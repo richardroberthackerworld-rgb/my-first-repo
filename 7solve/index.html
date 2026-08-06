@@ -553,6 +553,162 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
 </head>
 <body>
 
+<!-- ============================================================
+     7SOLVE PRELOADER — a real notebook opening on a study desk.
+     Purely additive: it sits over the app and removes itself. The
+     fade-out is a CSS animation with fill:forwards, so even if the
+     JS below never runs the overlay still disappears — a preloader
+     must never be able to hide a working app.
+     ============================================================ -->
+<div id="pl" class="pl" aria-hidden="true">
+  <div class="pl-desk"></div>
+  <div class="pl-sun"></div>
+  <div class="pl-scene">
+    <div class="pl-shadow"></div>
+    <div class="pl-book">
+      <!-- inside page, revealed as the cover swings open -->
+      <div class="pl-page">
+        <div class="pl-rules"></div>
+        <div class="pl-margin"></div>
+        <div class="pl-clip"></div>
+        <div class="pl-note">Doubt<br><span>solved ✓</span></div>
+        <div class="pl-ink">
+          <svg viewBox="0 0 300 200" preserveAspectRatio="xMidYMid meet">
+            <!-- heading stroke -->
+            <path class="pl-w pl-w1" d="M28 34 H150"/>
+            <!-- two handwritten lines -->
+            <path class="pl-w pl-w2" d="M28 62c14-7 20 6 33 0s18-8 30-2 21 6 34 0 20-7 33-2 22 5 35 0"/>
+            <path class="pl-w pl-w3" d="M28 84c12-6 19 5 31 0s17-7 28-2 20 6 32 0 19-6 31-2"/>
+            <!-- formula box -->
+            <rect class="pl-box" x="26" y="104" width="150" height="40" rx="5"/>
+            <path class="pl-w pl-w4" d="M40 130 h18 M64 118 v24 M64 130 h14 M92 118 c14 0 14 24 0 24 M108 130 h30"/>
+            <!-- underline sweep -->
+            <path class="pl-w pl-w5" d="M28 162 H190"/>
+          </svg>
+        </div>
+        <div class="pl-hl"></div>
+      </div>
+      <!-- hard cover -->
+      <div class="pl-cover">
+        <div class="pl-spine"></div>
+        <div class="pl-band"></div>
+        <div class="pl-title">7Solve</div>
+        <div class="pl-tag">Where Every Doubt<br>Becomes Understanding.</div>
+        <div class="pl-by">Designed by 7By.in</div>
+        <div class="pl-ribbon"></div>
+      </div>
+    </div>
+    <div class="pl-pencil"></div>
+  </div>
+  <button class="pl-skip" type="button">Skip</button>
+</div>
+<style>
+.pl{position:fixed;inset:0;z-index:99999;overflow:hidden;background:#1b1207;
+  display:flex;align-items:center;justify-content:center;
+  animation:plOut .6s ease 3.15s forwards}
+.pl-desk{position:absolute;inset:0;
+  background:
+    repeating-linear-gradient(90deg,rgba(0,0,0,.06) 0 2px,transparent 2px 7px),
+    repeating-linear-gradient(90deg,rgba(255,255,255,.03) 0 1px,transparent 1px 23px),
+    linear-gradient(160deg,#6b4a26 0%,#4e3419 45%,#38240f 100%)}
+.pl-sun{position:absolute;inset:0;pointer-events:none;opacity:0;
+  background:radial-gradient(120% 90% at 78% -15%,rgba(255,236,190,.75) 0%,rgba(255,224,160,.28) 32%,transparent 62%);
+  animation:plFade .9s ease .05s forwards}
+.pl-scene{position:relative;width:min(86vw,430px);aspect-ratio:1/.78;perspective:1500px;
+  transform:translateY(14px) scale(.94);opacity:0;
+  animation:plSettle .8s cubic-bezier(.22,1,.36,1) .1s forwards}
+.pl-shadow{position:absolute;left:6%;right:2%;bottom:-5%;height:16%;border-radius:50%;
+  background:radial-gradient(50% 50%,rgba(0,0,0,.55),transparent 70%);filter:blur(9px)}
+.pl-book{position:absolute;inset:0;transform-style:preserve-3d}
+/* ---- inside page ---- */
+.pl-page{position:absolute;inset:0;border-radius:4px 9px 9px 4px;overflow:hidden;
+  background:linear-gradient(105deg,#fffdf6 0%,#fdf8ea 55%,#f6efdc 100%);
+  box-shadow:inset 14px 0 22px -16px rgba(90,60,20,.5),0 2px 5px rgba(0,0,0,.25)}
+.pl-rules{position:absolute;left:14%;right:7%;top:15%;bottom:9%;
+  background:repeating-linear-gradient(180deg,transparent 0 21px,rgba(96,126,150,.28) 21px 22px)}
+.pl-margin{position:absolute;left:13%;top:0;bottom:0;width:1.5px;background:rgba(200,70,70,.5)}
+.pl-ink{position:absolute;left:8%;right:6%;top:12%;bottom:8%}
+.pl-ink svg{width:100%;height:100%;overflow:visible}
+.pl-w{fill:none;stroke:#1f3d8f;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;
+  stroke-dasharray:var(--l,400);stroke-dashoffset:var(--l,400)}
+.pl-w1{--l:130;stroke-width:4;stroke:#16306f;animation:plWrite .34s ease 1.72s forwards}
+.pl-w2{--l:300;animation:plWrite .52s ease 2.02s forwards}
+.pl-w3{--l:270;animation:plWrite .48s ease 2.30s forwards}
+.pl-w4{--l:200;stroke:#16306f;animation:plWrite .46s ease 2.62s forwards}
+.pl-w5{--l:170;stroke:#c2410c;stroke-width:3;animation:plWrite .34s ease 2.90s forwards}
+.pl-box{fill:none;stroke:rgba(31,61,143,.45);stroke-width:1.6;stroke-dasharray:400;stroke-dashoffset:400;
+  animation:plWrite .5s ease 2.50s forwards}
+.pl-hl{position:absolute;left:9%;top:31%;height:9px;width:0;border-radius:2px;
+  background:rgba(253,224,71,.62);mix-blend-mode:multiply;animation:plHl .42s ease 2.44s forwards}
+.pl-clip{position:absolute;right:11%;top:-3%;width:15px;height:46px;border-radius:8px;
+  border:2.5px solid #b9c2cc;border-bottom-color:transparent;opacity:0;transform:rotate(8deg);
+  box-shadow:0 1px 2px rgba(0,0,0,.25);animation:plPop .4s cubic-bezier(.34,1.56,.64,1) 2.24s forwards}
+.pl-note{position:absolute;right:7%;bottom:11%;width:23%;padding:8px 6px;border-radius:2px;
+  font:600 11px/1.35 'Lora',Georgia,serif;color:#4a3a12;text-align:center;
+  background:linear-gradient(#fef3a8,#fde68a);box-shadow:2px 3px 7px rgba(0,0,0,.22);
+  transform:rotate(-4deg) scale(.7);opacity:0;animation:plPop .42s cubic-bezier(.34,1.56,.64,1) 2.72s forwards}
+.pl-note span{font-weight:700;color:#166534}
+/* ---- hard cover ---- */
+.pl-cover{position:absolute;inset:0;transform-origin:left center;transform-style:preserve-3d;
+  border-radius:5px 10px 10px 5px;backface-visibility:hidden;
+  background:linear-gradient(118deg,#0d6f63 0%,#0a5c53 42%,#07463f 100%);
+  box-shadow:0 12px 30px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.14);
+  animation:plOpen 1s cubic-bezier(.62,.02,.3,1) 1.32s forwards}
+.pl-spine{position:absolute;left:0;top:0;bottom:0;width:9%;border-radius:5px 0 0 5px;
+  background:linear-gradient(90deg,rgba(0,0,0,.45),rgba(0,0,0,.12) 60%,transparent);
+  box-shadow:inset -1px 0 0 rgba(255,255,255,.07)}
+.pl-band{position:absolute;left:9%;right:0;top:20%;height:1px;background:rgba(212,175,106,.5);
+  box-shadow:0 34px 0 rgba(212,175,106,.5)}
+.pl-title{position:absolute;left:0;right:0;top:33%;text-align:center;
+  font:700 clamp(30px,8.4vw,46px)/1 'Playfair Display',Georgia,serif;color:#fdfbf4;
+  letter-spacing:.5px;text-shadow:0 2px 10px rgba(0,0,0,.4);opacity:0;
+  animation:plUp .6s ease .62s forwards}
+.pl-tag{position:absolute;left:8%;right:8%;top:50%;text-align:center;
+  font:italic 400 clamp(11px,3.1vw,14px)/1.55 'Lora',Georgia,serif;color:rgba(255,250,235,.82);
+  opacity:0;animation:plUp .6s ease .84s forwards}
+.pl-by{position:absolute;left:0;right:0;bottom:9%;text-align:center;
+  font:600 9.5px/1 'Lora',Georgia,serif;letter-spacing:2.4px;text-transform:uppercase;
+  color:rgba(212,175,106,.85);opacity:0;animation:plUp .6s ease 1.02s forwards}
+.pl-ribbon{position:absolute;right:16%;top:0;width:9px;height:0;border-radius:0 0 3px 3px;
+  background:linear-gradient(#c2410c,#9a3412);box-shadow:0 1px 3px rgba(0,0,0,.35);
+  animation:plRib .5s ease .5s forwards}
+/* ---- pencil ---- */
+.pl-pencil{position:absolute;left:-28%;bottom:6%;width:34%;height:9px;border-radius:2px;opacity:0;
+  background:linear-gradient(90deg,#f5c04a 0 78%,#e8b23c 78% 88%,#f7e6c8 88% 96%,#3b3b3b 96%);
+  box-shadow:0 2px 4px rgba(0,0,0,.35);animation:plRoll .85s cubic-bezier(.3,.9,.4,1) .5s forwards}
+@keyframes plFade{to{opacity:1}}
+@keyframes plSettle{to{transform:translateY(0) scale(1);opacity:1}}
+@keyframes plUp{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+@keyframes plRib{to{height:26%}}
+@keyframes plRoll{0%{opacity:0;transform:translateX(0) rotate(0)}
+  12%{opacity:1}100%{opacity:1;transform:translateX(150%) rotate(760deg)}}
+@keyframes plOpen{to{transform:rotateY(-166deg)}}
+@keyframes plWrite{to{stroke-dashoffset:0}}
+@keyframes plHl{to{width:44%}}
+@keyframes plPop{to{opacity:1;transform:rotate(-4deg) scale(1)}}
+@keyframes plOut{to{opacity:0;visibility:hidden}}
+.pl-skip{position:absolute;right:16px;bottom:14px;z-index:2;cursor:pointer;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.24);color:rgba(255,255,255,.8);
+  font:600 11px/1 'Lora',Georgia,serif;letter-spacing:1.4px;text-transform:uppercase;
+  padding:8px 14px;border-radius:20px;transition:background .2s}
+.pl-skip:hover{background:rgba(255,255,255,.2);color:#fff}
+.pl-done{display:none!important}
+@media (prefers-reduced-motion:reduce){.pl{display:none!important}}
+</style>
+<script>
+(function(){
+  var pl = document.getElementById('pl');
+  if (!pl) return;
+  // seen it already this visit? don't make people sit through it again
+  try { if (sessionStorage.getItem('pl7solve')) { pl.className = 'pl pl-done'; return; } } catch(e){}
+  function done(){ if (pl && pl.parentNode) pl.parentNode.removeChild(pl); }
+  try { sessionStorage.setItem('pl7solve','1'); } catch(e){}
+  pl.querySelector('.pl-skip').addEventListener('click', done);
+  setTimeout(done, 3900);                 // after the fade-out finishes
+  setTimeout(function(){ done(); }, 7000); // hard stop, whatever happens
+})();
+</script>
+
 <header class="cover">
   <div class="brand">7<span class="snap">Solve</span> <span style="font-size:.7em">✅</span></div>
   <div class="tagline" data-i18n="tagline">Snap a photo of any doubt — get the exact answer, explained like a good teacher.</div>

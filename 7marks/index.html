@@ -568,6 +568,129 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
 </head>
 <body>
 
+<!-- ============================================================
+     7MARKS PRELOADER — an exam paper being printed onto the desk.
+     Additive only; the fade-out is a CSS animation with fill:forwards
+     so the overlay clears itself even if the JS never runs.
+     ============================================================ -->
+<div id="pl" class="pl" aria-hidden="true">
+  <div class="pl-desk"></div>
+  <div class="pl-lamp"></div>
+  <div class="pl-stage">
+    <div class="pl-printer"><i></i></div>
+    <div class="pl-sheet">
+      <div class="pl-shadow"></div>
+      <div class="pl-doc">
+        <div class="pl-brand">
+          <div class="pl-logo">7M</div>
+          <div class="pl-name">7Marks</div>
+          <div class="pl-sub">AI Question Paper Generator</div>
+          <div class="pl-by">Designed by 7By.in</div>
+        </div>
+        <div class="pl-meta">
+          <span>Subject: <u></u></span><span>Class: <u></u></span>
+          <span>Time: <b>3 Hours</b></span><span>Max. Marks: <b>80</b></span>
+          <span>Date: <u></u></span><span>Section: <u></u></span>
+        </div>
+        <div class="pl-instr"><b>General Instructions:</b> All questions are compulsory. Marks are indicated against each question.</div>
+        <div class="pl-secs">
+          <div class="pl-sec"><span>SECTION A &mdash; Multiple Choice</span><em>20 &times; 1 = 20</em></div>
+          <div class="pl-q"><i>1.</i><u></u><em>1</em></div>
+          <div class="pl-q"><i>2.</i><u></u><em>1</em></div>
+          <div class="pl-sec"><span>SECTION B &mdash; Short Answer</span><em>10 &times; 2 = 20</em></div>
+          <div class="pl-q"><i>3.</i><u></u><em>2</em></div>
+          <div class="pl-sec"><span>SECTION C &mdash; Long Answer</span><em>6 &times; 5 = 30</em></div>
+          <div class="pl-q"><i>4.</i><u></u><em>5</em></div>
+          <div class="pl-sec"><span>SECTION D &mdash; Case Study</span><em>1 &times; 10 = 10</em></div>
+        </div>
+      </div>
+      <div class="pl-bar"></div>
+    </div>
+  </div>
+  <button class="pl-skip" type="button">Skip</button>
+</div>
+<style>
+.pl{position:fixed;inset:0;z-index:99999;overflow:hidden;background:#17131f;
+  display:flex;align-items:center;justify-content:center;
+  animation:plOut .6s ease 3.3s forwards}
+.pl-desk{position:absolute;inset:0;
+  background:
+    repeating-linear-gradient(90deg,rgba(0,0,0,.07) 0 2px,transparent 2px 8px),
+    linear-gradient(160deg,#4a3f6b 0%,#2f2848 46%,#1d1830 100%)}
+.pl-lamp{position:absolute;inset:0;pointer-events:none;opacity:0;
+  background:radial-gradient(105% 80% at 50% -18%,rgba(226,232,255,.5) 0%,rgba(180,190,240,.18) 34%,transparent 64%);
+  animation:plFade .8s ease .05s forwards}
+.pl-stage{position:relative;width:min(88vw,392px)}
+.pl-printer{height:16px;border-radius:5px 5px 2px 2px;position:relative;
+  background:linear-gradient(#3a3550,#241f38);box-shadow:0 5px 14px rgba(0,0,0,.5);
+  transform:translateY(-6px) scaleX(.9);opacity:0;animation:plUp .5s ease .05s forwards}
+.pl-printer i{position:absolute;left:8%;right:8%;bottom:2px;height:3px;border-radius:2px;
+  background:linear-gradient(90deg,transparent,rgba(160,170,255,.55),transparent)}
+/* ---- the sheet ---- */
+.pl-sheet{position:relative;margin-top:-2px;transform-origin:top center;
+  animation:plFeed .85s cubic-bezier(.25,1,.4,1) .28s backwards, plFold .5s ease 2.9s forwards}
+.pl-shadow{position:absolute;left:4%;right:4%;bottom:-9px;height:16px;border-radius:50%;
+  background:radial-gradient(50% 50%,rgba(0,0,0,.5),transparent 72%);filter:blur(7px)}
+.pl-doc{position:relative;background:#fdfdfb;border-radius:1px;padding:16px 16px 20px;
+  box-shadow:0 14px 34px rgba(0,0,0,.5),inset 0 0 0 1px rgba(0,0,0,.05);
+  font-family:'Lora',Georgia,serif;color:#141414;
+  /* the "printing" reveal — content appears top-down like paper feeding out */
+  clip-path:inset(0 0 100% 0);animation:plPrint 2.05s steps(26,end) .72s forwards}
+.pl-doc::after{content:'';position:absolute;inset:0;pointer-events:none;border-radius:1px;
+  background:repeating-linear-gradient(180deg,rgba(0,0,0,.022) 0 1px,transparent 1px 3px)}
+.pl-brand{text-align:center;border-bottom:2px solid #141414;padding-bottom:8px;margin-bottom:8px;position:relative}
+.pl-logo{position:absolute;left:0;top:0;width:30px;height:30px;border:1.5px solid #141414;border-radius:3px;
+  display:flex;align-items:center;justify-content:center;font:700 11px/1 'Playfair Display',serif}
+.pl-name{font:700 25px/1.1 'Playfair Display',Georgia,serif;letter-spacing:.4px}
+.pl-sub{font-size:10.5px;letter-spacing:1.6px;text-transform:uppercase;margin-top:3px}
+.pl-by{font-size:8px;letter-spacing:2.2px;text-transform:uppercase;color:#555;margin-top:5px}
+.pl-meta{display:grid;grid-template-columns:1fr 1fr;gap:3px 12px;font-size:10px;
+  border-bottom:1px solid #141414;padding-bottom:7px;margin-bottom:7px}
+.pl-meta u{display:inline-block;width:52px;border-bottom:1px dotted #666;text-decoration:none}
+.pl-meta b{font-weight:700}
+.pl-instr{font-size:9px;line-height:1.5;border:1px solid #333;padding:5px 7px;margin-bottom:9px}
+.pl-sec{display:flex;justify-content:space-between;align-items:baseline;gap:8px;
+  background:#f0f0ee;border-top:1px solid #141414;border-bottom:1px solid #141414;
+  padding:3px 6px;margin:8px 0 5px;font:700 10px/1.4 'Playfair Display',serif;letter-spacing:.4px}
+.pl-sec em{font-style:normal;font-size:9px;font-family:'Lora',serif;white-space:nowrap}
+.pl-q{display:flex;align-items:center;gap:6px;font-size:10px;margin:4px 0}
+.pl-q i{font-style:normal;font-weight:700;width:14px}
+.pl-q u{flex:1;border-bottom:1px dotted #999;text-decoration:none;height:9px}
+.pl-q em{font-style:normal;font-size:9px;min-width:16px;text-align:right;
+  border:1px solid #bbb;padding:0 4px;border-radius:2px}
+/* print head sweeping down the page */
+.pl-bar{position:absolute;left:-4px;right:-4px;top:0;height:11px;border-radius:2px;pointer-events:none;
+  background:linear-gradient(180deg,rgba(120,130,255,.5),rgba(120,130,255,0));
+  box-shadow:0 0 12px rgba(140,150,255,.65);opacity:0;
+  animation:plHead 2.05s steps(26,end) .72s forwards}
+@keyframes plFade{to{opacity:1}}
+@keyframes plUp{to{opacity:1;transform:translateY(0) scaleX(1)}}
+@keyframes plFeed{from{transform:translateY(-46%) scaleY(.9);opacity:0}to{transform:none;opacity:1}}
+@keyframes plPrint{from{clip-path:inset(0 0 100% 0)}to{clip-path:inset(0 0 0 0)}}
+@keyframes plHead{0%{opacity:1;top:0}92%{opacity:1}100%{opacity:0;top:100%}}
+@keyframes plFold{to{transform:perspective(760px) rotateX(7deg) scale(.965)}}
+@keyframes plOut{to{opacity:0;visibility:hidden}}
+.pl-skip{position:absolute;right:16px;bottom:14px;z-index:2;cursor:pointer;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.24);color:rgba(255,255,255,.8);
+  font:600 11px/1 'Lora',Georgia,serif;letter-spacing:1.4px;text-transform:uppercase;
+  padding:8px 14px;border-radius:20px;transition:background .2s}
+.pl-skip:hover{background:rgba(255,255,255,.2);color:#fff}
+.pl-done{display:none!important}
+@media (prefers-reduced-motion:reduce){.pl{display:none!important}}
+</style>
+<script>
+(function(){
+  var pl = document.getElementById('pl');
+  if (!pl) return;
+  try { if (sessionStorage.getItem('pl7marks')) { pl.className = 'pl pl-done'; return; } } catch(e){}
+  function done(){ if (pl && pl.parentNode) pl.parentNode.removeChild(pl); }
+  try { sessionStorage.setItem('pl7marks','1'); } catch(e){}
+  pl.querySelector('.pl-skip').addEventListener('click', done);
+  setTimeout(done, 4050);
+  setTimeout(function(){ done(); }, 7000);
+})();
+</script>
+
 <header class="cover">
   <div class="brand">7<span class="bank">Marks</span> <span style="font-size:.7em">💯</span></div>
   <div class="tagline" data-i18n="tagline">Pick a subject & topic — or snap your textbook — and get a full question bank with answers.</div>
