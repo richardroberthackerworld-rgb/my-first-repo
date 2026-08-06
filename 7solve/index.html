@@ -550,6 +550,101 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
 }
 </style>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8250159057339426" crossorigin="anonymous"></script>
+<style>
+/* ================= NOTEBOOK ANSWER ENGINE (Phase 2) =================
+   Answers stop being a chat blob and become real notebook pages:
+   spiral binding, ruled lines, a red margin, and the AI's own section
+   headings turned into study cards. Purely presentational — if any of
+   it throws, showAnswer() falls back to plain markdown. */
+.nb-book{--nb-line:27px;position:relative}
+.nb-toc{background:var(--paper);border:1.5px solid var(--rule);border-radius:10px;
+  padding:14px 16px;margin-bottom:18px;box-shadow:0 2px 8px rgba(6,40,34,.06)}
+.nb-toc-h{font:700 10.5px/1 'Lora',Georgia,serif;letter-spacing:2px;text-transform:uppercase;
+  color:var(--ink-faint);margin-bottom:9px}
+.nb-toc ol{margin:0;padding-left:18px}
+.nb-toc li{margin:3px 0;font-size:13.5px}
+.nb-toc a{color:var(--maroon);text-decoration:none;font-weight:600}
+.nb-toc a:hover{text-decoration:underline}
+.nb-toc .pg{float:right;color:var(--ink-faint);font-weight:400;font-size:12px}
+/* ---- the page ---- */
+.nb-page{position:relative;margin:0 0 22px;padding:26px 22px 40px 62px;border-radius:3px 8px 8px 3px;
+  background:
+    linear-gradient(90deg,transparent 45px,rgba(190,60,55,.32) 45px,rgba(190,60,55,.32) 46px,transparent 46px),
+    repeating-linear-gradient(180deg,transparent 0 calc(var(--nb-line) - 1px),rgba(70,110,150,.17) calc(var(--nb-line) - 1px) var(--nb-line)),
+    linear-gradient(#fffdf7,#fdfaf0);
+  background-position:0 0,0 26px,0 0;
+  box-shadow:0 1px 2px rgba(60,45,20,.14),0 10px 26px -14px rgba(60,45,20,.3),
+    inset 20px 0 24px -22px rgba(120,90,40,.35);
+  border:1px solid rgba(160,140,100,.28);overflow:hidden}
+.nb-page::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(120% 60% at 50% 0,rgba(255,255,255,.5),transparent 60%)}
+.nb-spiral{position:absolute;left:14px;top:0;bottom:0;width:20px;display:flex;
+  flex-direction:column;justify-content:space-around;padding:16px 0;pointer-events:none}
+.nb-spiral i{display:block;width:15px;height:15px;border-radius:50%;
+  background:radial-gradient(circle at 38% 32%,#fff,#cfd6dd 45%,#8c98a6 78%,#66707c);
+  box-shadow:inset 0 -1px 2px rgba(0,0,0,.35),1px 1px 2px rgba(0,0,0,.22)}
+.nb-pgnum{position:absolute;right:20px;bottom:12px;font:600 11.5px/1 'Lora',Georgia,serif;
+  color:var(--ink-faint);letter-spacing:1px}
+.nb-page.turn{animation:nbTurn .5s cubic-bezier(.3,.9,.4,1) both}
+@keyframes nbTurn{from{opacity:0;transform:perspective(1200px) rotateY(-9deg) translateY(10px)}
+  to{opacity:1;transform:none}}
+/* ---- body text sits on the ruled lines ---- */
+.nb-page h2{font:700 18px/var(--nb-line) 'Playfair Display',Georgia,serif;color:var(--maroon);
+  margin:0 0 2px;padding-top:2px;border:0}
+.nb-page h3{font:700 15.5px/var(--nb-line) 'Playfair Display',Georgia,serif;color:var(--ink);margin:6px 0 0}
+.nb-page p,.nb-page li{font:400 15px/var(--nb-line) 'Lora',Georgia,serif;color:#16305e;margin:0}
+.nb-page ul,.nb-page ol{margin:0 0 0 20px;padding:0}
+.nb-page strong{color:#0d2350;font-weight:700}
+.nb-page code{background:rgba(70,110,150,.09);border-radius:3px;padding:1px 5px;font-size:13.5px}
+.nb-page svg{max-width:100%;height:auto;display:block;margin:8px auto}
+/* ---- study cards ---- */
+.nb-card{position:relative;margin:14px 0;padding:13px 15px 13px 46px;border-radius:9px;
+  line-height:1.62;box-shadow:0 2px 8px rgba(60,45,20,.1)}
+.nb-card .ic{position:absolute;left:13px;top:12px;font-size:19px;line-height:1}
+.nb-card .hd{font:700 10.5px/1 'Lora',Georgia,serif;letter-spacing:1.8px;text-transform:uppercase;
+  margin-bottom:6px;opacity:.85}
+.nb-card p,.nb-card li{font-family:'Lora',Georgia,serif;font-size:14.5px;line-height:1.62;margin:3px 0}
+.nb-card ul{margin:2px 0 0 18px}
+.nb-answer{background:linear-gradient(#fffdf0,#fdf6dc);border:1.5px solid #d4a72c;color:#3f3208}
+.nb-answer .hd{color:#8a6a10}
+.nb-tip{background:linear-gradient(#fef9dd,#fdf3c4);border:1.5px solid #e0c34a;color:#4a3a12;
+  transform:rotate(-.35deg)}
+.nb-tip .hd{color:#7a5f14}
+.nb-mistake{background:linear-gradient(#fff1f0,#ffe4e2);border:1.5px solid #e39b95;color:#5a1f1a}
+.nb-mistake .hd{color:#a03028}
+.nb-remember{background:linear-gradient(#eef4ff,#e2ecff);border:1.5px solid #9fbdea;color:#17325e}
+.nb-remember .hd{color:#2b5aa8}
+.nb-shortcut{background:linear-gradient(#eefaf3,#dcf3e7);border:1.5px solid #8fcfae;color:#124b30}
+.nb-shortcut .hd{color:#1c7a4a}
+.nb-expected{background:linear-gradient(#f6f0ff,#ece0ff);border:1.5px solid #bda3e8;color:#3b2263}
+.nb-expected .hd{color:#6b3fc0}
+/* ---- formula box ---- */
+.nb-formula{margin:11px 0;padding:11px 14px;border:1.6px solid var(--gold-soft);border-radius:8px;
+  background:linear-gradient(#ffffff,#f2fbf9);font-family:'Lora',Georgia,serif;font-size:15.5px;
+  color:#0b3b34;box-shadow:0 2px 7px rgba(13,148,136,.1);position:relative}
+.nb-formula::before{content:'ƒ';position:absolute;right:11px;top:6px;font:700 15px/1 'Playfair Display',serif;
+  color:var(--gold-soft);opacity:.6}
+/* ---- teacher marks ---- */
+.nb-stamp{position:absolute;right:16px;top:14px;transform:rotate(8deg);
+  font:700 11px/1 'Playfair Display',serif;letter-spacing:1.4px;text-transform:uppercase;
+  color:#c2352b;border:2px solid #c2352b;border-radius:5px;padding:5px 9px;opacity:0;
+  animation:nbStamp .45s cubic-bezier(.34,1.56,.64,1) forwards}
+@keyframes nbStamp{from{opacity:0;transform:rotate(8deg) scale(1.7)}to{opacity:.82;transform:rotate(8deg) scale(1)}}
+/* ---- pen writing reveal ---- */
+.nb-w{opacity:0;animation:nbWrite .42s ease forwards;animation-delay:calc(var(--i,0) * 85ms)}
+@keyframes nbWrite{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+.nb-pen{position:absolute;width:26px;height:26px;pointer-events:none;z-index:5;
+  transition:transform .3s ease, opacity .3s;font-size:22px;line-height:1}
+@media(max-width:640px){
+  .nb-page{padding:20px 14px 34px 46px}
+  .nb-spiral{left:9px;width:15px}.nb-spiral i{width:11px;height:11px}
+  .nb-page h2{font-size:16.5px}.nb-page p,.nb-page li{font-size:14.2px}
+}
+@media (prefers-reduced-motion:reduce){
+  .nb-w,.nb-page.turn,.nb-stamp{animation:none!important;opacity:1!important;transform:none!important}
+}
+@media print{.nb-spiral,.nb-pen{display:none}.nb-page{box-shadow:none;page-break-after:always}}
+</style>
 </head>
 <body>
 
@@ -2409,6 +2504,141 @@ function updateModePill(){
 $('qtext').addEventListener('input', updateModePill);
 $('subjectSel').addEventListener('change', updateModePill);
 
+/* ================= Notebook answer engine =================
+   Turns the AI's markdown into real notebook pages: its own section
+   headings become study cards, formulas get boxed, and the content is
+   paginated with spiral binding and page numbers. Presentation only —
+   nbRender() falls back to plain markdown if anything here throws, so a
+   styling bug can never cost a student the answer they paid a credit for. */
+const NB_KINDS = [
+  { re:/^(✅|final answer|answer\b)/i,               cls:'nb-answer',   ic:'✅', hd:'Final Answer' },
+  { re:/(common mistake|⚠️|mistake)/i,               cls:'nb-mistake',  ic:'⚠️', hd:'Common Mistake' },
+  { re:/(quick tip|💡|exam tip|tip\b)/i,             cls:'nb-tip',      ic:'💡', hd:'Exam Tip' },
+  { re:/(remember|keep in mind|📌)/i,                cls:'nb-remember', ic:'📌', hd:'Remember' },
+  { re:/(shortcut|trick|faster way|⚡)/i,            cls:'nb-shortcut', ic:'⚡', hd:'Shortcut' },
+  { re:/(expected question|likely question|🎯)/i,    cls:'nb-expected', ic:'🎯', hd:'Expected Question' },
+];
+const nbKind = txt => NB_KINDS.find(k => k.re.test(txt)) || null;
+const NB_MATHY = /[=×÷√∑∫]|\b\d+\s*[+\-*/]\s*\d+/;
+
+function nbNewPage(book, n){
+  const p = document.createElement('div');
+  p.className = 'nb-page' + (n > 1 ? ' turn' : '');
+  const sp = document.createElement('div'); sp.className = 'nb-spiral';
+  sp.innerHTML = '<i></i>'.repeat(11);
+  const num = document.createElement('div'); num.className = 'nb-pgnum';
+  num.textContent = 'Page ' + n;
+  p.appendChild(sp); p.appendChild(num);
+  book.appendChild(p);
+  return p;
+}
+/* group the flat markdown output into [heading, ...content] sections */
+function nbSections(root){
+  const out = []; let cur = null;
+  Array.from(root.childNodes).forEach(node => {
+    if (node.nodeType !== 1) return;
+    if (/^H[12]$/.test(node.tagName)) { cur = { head: node, body: [] }; out.push(cur); }
+    else if (cur) cur.body.push(node);
+    else { cur = { head: null, body: [node] }; out.push(cur); }
+  });
+  return out;
+}
+function nbRender(mount, md){
+  try {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = mdToHtml(md);
+    const book = document.createElement('div'); book.className = 'nb-book';
+    const toc = document.createElement('div'); toc.className = 'nb-toc';
+    const list = document.createElement('ol');
+    mount.innerHTML = ''; mount.appendChild(book);
+
+    const maxH = window.innerWidth < 640 ? 900 : 1120;
+    let pageNo = 1, page = nbNewPage(book, pageNo), order = 0, entries = 0;
+
+    const place = el => {                       // append, and start a new page if it overflows
+      page.appendChild(el);
+      if (page.offsetHeight > maxH && page.querySelectorAll('.nb-w').length > 1) {
+        page.removeChild(el);
+        page = nbNewPage(book, ++pageNo);
+        page.appendChild(el);
+      }
+      el.style.setProperty('--i', Math.min(order++, 26));   // cap the stagger on long answers
+      el.classList.add('nb-w');
+    };
+    const mark = el => { el.style.setProperty('--i', Math.min(order++, 26)); el.classList.add('nb-w'); };
+    /* A long <ol>/<ul> is a single node, so it cannot be split by place() and
+       would blow past the page height. Walk the items instead and continue the
+       list on a fresh page, keeping the numbering running. */
+    const placeList = node => {
+      const tag = node.tagName;
+      let list = document.createElement(tag);
+      place(list);
+      let n = parseInt(node.getAttribute('start') || '1', 10);
+      Array.from(node.children).forEach(li => {
+        list.appendChild(li);
+        if (page.offsetHeight > maxH && list.children.length > 1) {
+          list.removeChild(li);                     // this item starts the next page
+          page = nbNewPage(book, ++pageNo);
+          list = document.createElement(tag);
+          if (tag === 'OL') list.setAttribute('start', n);
+          page.appendChild(list); mark(list);
+          list.appendChild(li);
+        }
+        n++;
+      });
+    };
+
+    nbSections(tmp).forEach(sec => {
+      const headTxt = sec.head ? sec.head.textContent.trim() : '';
+      const kind = headTxt ? nbKind(headTxt) : null;
+
+      if (kind) {                                            // a section that reads as a study card
+        const card = document.createElement('div');
+        card.className = 'nb-card ' + kind.cls;
+        card.innerHTML = '<span class="ic">' + kind.ic + '</span><div class="hd">' + kind.hd + '</div>';
+        sec.body.forEach(n => card.appendChild(n.cloneNode(true)));
+        if (kind.cls === 'nb-answer') {
+          const st = document.createElement('div');
+          st.className = 'nb-stamp'; st.textContent = 'Checked ✓';
+          card.appendChild(st);
+        }
+        place(card);
+      } else {
+        if (sec.head) {
+          const h = sec.head.cloneNode(true);
+          const id = 'nbs' + (++entries);
+          h.id = id;
+          place(h);
+          const li = document.createElement('li');
+          li.innerHTML = '<a href="#' + id + '">' + h.textContent.replace(/[<>]/g,'') +
+                         '</a><span class="pg">p.' + pageNo + '</span>';
+          list.appendChild(li);
+        }
+        sec.body.forEach(n => {
+          const c = n.cloneNode(true);
+          // a short mathy line reads as a formula, so give it a box
+          if (c.tagName === 'P' && NB_MATHY.test(c.textContent) && c.textContent.trim().length < 90) {
+            const f = document.createElement('div'); f.className = 'nb-formula';
+            f.innerHTML = c.innerHTML; place(f);
+          } else if ((c.tagName === 'OL' || c.tagName === 'UL') && c.children.length > 3) {
+            placeList(c);
+          } else place(c);
+        });
+      }
+    });
+
+    if (list.children.length > 1) {               // only worth showing when there's something to jump to
+      toc.innerHTML = '<div class="nb-toc-h">Contents</div>';
+      toc.appendChild(list);
+      book.insertBefore(toc, book.firstChild);
+    }
+    return true;
+  } catch (e) {
+    mount.innerHTML = mdToHtml(md);               // never let styling swallow the answer
+    return false;
+  }
+}
+
 function showAnswer(md){
   const lv = LEVELS.find(l=>l.id===state.level);
   $('answerMeta').innerHTML =
@@ -2417,7 +2647,7 @@ function showAnswer(md){
     (state.imageData?`<span>📷 ${t('imgAttached')}</span>`:'') +
     (isOwnerView() && state.lastVia?`<span class="via">🤖 ${state.lastVia}</span>`:'') +
     `<span>🕰️ ${new Date().toLocaleString()}</span>`;
-  $('answerBody').innerHTML = mdToHtml(md);
+  nbRender($('answerBody'), md);
   $('tutorPanel').style.display='none'; $('checkBox').style.display='none';   // a fresh answer supersedes an open lesson
   $('answerPage').style.display='block';
   $('answerPage').scrollIntoView({behavior:'smooth', block:'start'});
@@ -2466,7 +2696,7 @@ function renderNotebook(){
     d.innerHTML = `<span class="nq">📌 ${escapeHtml(String(n.q||'').slice(0,90))}</span>`+
       `<span class="nm">${escapeHtml(String(n.meta||''))} · ${new Date(n.when).toLocaleDateString()}</span>`+
       `<button class="del-btn" title="${t('del')}">✕</button>`;
-    d.onclick = ()=>{ state.lastAnswer=n.a; state.lastQ=n.q; $('answerMeta').innerHTML=`<span>📚 ${escapeHtml(String(n.meta||''))}</span>`+(isOwnerView() && n.via?`<span class="via">🤖 ${escapeHtml(String(n.via))}</span>`:'')+`<span>🕰️ ${new Date(n.when).toLocaleString()}</span>`; $('answerBody').innerHTML=mdToHtml(n.a); $('tutorPanel').style.display='none'; $('checkBox').style.display='none'; $('answerPage').style.display='block'; $('answerPage').scrollIntoView({behavior:'smooth'}); };
+    d.onclick = ()=>{ state.lastAnswer=n.a; state.lastQ=n.q; $('answerMeta').innerHTML=`<span>📚 ${escapeHtml(String(n.meta||''))}</span>`+(isOwnerView() && n.via?`<span class="via">🤖 ${escapeHtml(String(n.via))}</span>`:'')+`<span>🕰️ ${new Date(n.when).toLocaleString()}</span>`; nbRender($('answerBody'), n.a); $('tutorPanel').style.display='none'; $('checkBox').style.display='none'; $('answerPage').style.display='block'; $('answerPage').scrollIntoView({behavior:'smooth'}); };
     d.querySelector('.del-btn').onclick = e=>{ e.stopPropagation(); deleteNote(i); };
     list.appendChild(d);
   });
