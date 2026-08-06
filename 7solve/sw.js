@@ -1,7 +1,7 @@
 /* 7solve service worker — network-first so the app always shows the latest
    site (you update the website, users get it immediately), with a cached
    shell as the offline fallback. Required for Play Store (TWA) install. */
-const CACHE = '7solve-shell-v1';
+const CACHE = '7solve-shell-v2';
 const SHELL = ['./', './index.html', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (e) => {
