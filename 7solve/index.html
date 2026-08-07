@@ -7,7 +7,7 @@
 <meta name="description" content="7Solve — take a photo of any question from Class 1 to 10, Inter (MPC/BiPC/CEC/MEC), Degree, CA/CMA/US CMA, Jobs & Current Affairs, and get the exact answer with a step-by-step explanation in English, Hindi or Telugu.">
 <link rel="icon" href="favicon.ico?v=7by3" sizes="any">
 <link rel="icon" href="favicon.png?v=7by3" type="image/png" sizes="96x96">
-<meta name="theme-color" content="#0b6b5f">
+<meta name="theme-color" content="#fdfaf0">
 <!-- PWA / Play Store (TWA) -->
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="apple-touch-icon.png?v=7by3">
@@ -177,6 +177,21 @@ body{
   background:linear-gradient(315deg,#eee6d2 0%,#fdfbf4 44%,transparent 45%);
   box-shadow:-5px -5px 14px rgba(120,95,50,.3);border-radius:0 0 14px 0}
 @media(max-width:640px){.page-curl{width:52px;height:52px}}
+
+/* ---------- full-bleed notebook on phones ---------- */
+@media(max-width:640px){
+  .sheet{
+    max-width:100vw;width:100vw;margin:18px 0 0;border-radius:0;
+    padding-left:42px;padding-right:13px;
+  }
+  /* the stacked page edges hang off the right; at full bleed there is no
+     desk left for them to sit on, so they go rather than get clipped */
+  .sheet::after{display:none}
+  .spiral{left:4px;width:24px}          /* binding sits on the page, not beside it */
+  .sheet::before{left:34px}             /* red margin clears the binding */
+  .clip-l{left:17%}
+  .page-curl{width:44px;height:44px}
+}
 
 /* paper clips over the top edge */
 .clip{position:absolute;top:-16px;width:26px;height:62px;z-index:7;pointer-events:none;
