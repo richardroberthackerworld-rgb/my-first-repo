@@ -163,14 +163,31 @@ body{
   box-shadow:2px 0 6px rgba(60,45,20,.25)}
 
 /* spiral binding down the left edge */
-.spiral{position:absolute;left:-13px;top:14px;bottom:14px;width:34px;z-index:6;pointer-events:none;
-  display:flex;flex-direction:column;justify-content:space-between;gap:10px}
-.spiral i{display:block;flex:1 0 22px;max-height:30px;border-radius:50%/50%;
-  background:linear-gradient(103deg,#dfe4ea,#8d97a4 30%,#454e59 60%,#1e232a);
-  -webkit-mask:radial-gradient(closest-side,transparent 52%,#000 53%);
-          mask:radial-gradient(closest-side,transparent 52%,#000 53%);
-  filter:drop-shadow(1px 2px 2px rgba(0,0,0,.4))}
-@media(max-width:640px){.spiral{left:-9px;width:24px}}
+.spiral{
+  position:absolute;left:-15px;top:10px;bottom:10px;width:38px;z-index:6;pointer-events:none;
+  background:repeating-linear-gradient(173deg,
+    transparent 0 17px,
+    #f4f7fa  17px 19px,
+    #c2cad4  19px 23px,
+    #77808b  23px 26px,
+    #3b424b  26px 28px,
+    transparent 28px 31px);
+  /* the coil disappears behind the page rather than stopping dead on it */
+  -webkit-mask:linear-gradient(90deg,#000 0 58%,rgba(0,0,0,.35) 84%,transparent 100%);
+          mask:linear-gradient(90deg,#000 0 58%,rgba(0,0,0,.35) 84%,transparent 100%);
+  filter:drop-shadow(1px 2px 2px rgba(0,0,0,.38));
+}
+/* the punched edge of the paper the wire threads through */
+.spiral::after{content:'';position:absolute;right:0;top:0;bottom:0;width:9px;
+  background:linear-gradient(90deg,rgba(90,70,40,.28),transparent);
+  border-radius:2px}
+.spiral i{display:none}                 /* the wire is drawn, not assembled */
+@media(max-width:640px){
+  .spiral{left:2px;width:26px;
+    background:repeating-linear-gradient(173deg,
+      transparent 0 13px,#f4f7fa 13px 15px,#c2cad4 15px 18px,
+      #77808b 18px 21px,#3b424b 21px 22px,transparent 22px 25px)}
+}
 
 /* the outer corner lifts off the desk */
 .page-curl{position:absolute;right:0;bottom:0;width:74px;height:74px;pointer-events:none;z-index:4;
@@ -951,11 +968,20 @@ footer .fleuron{color:var(--blue);font-size:19px;display:block;margin-bottom:7px
   border:1px solid rgba(160,140,100,.28);overflow:hidden}
 .nb-page::after{content:'';position:absolute;inset:0;pointer-events:none;
   background:radial-gradient(120% 60% at 50% 0,rgba(255,255,255,.5),transparent 60%)}
-.nb-spiral{position:absolute;left:14px;top:0;bottom:0;width:20px;display:flex;
-  flex-direction:column;justify-content:space-around;padding:16px 0;pointer-events:none}
-.nb-spiral i{display:block;width:15px;height:15px;border-radius:50%;
-  background:radial-gradient(circle at 38% 32%,#fff,#cfd6dd 45%,#8c98a6 78%,#66707c);
-  box-shadow:inset 0 -1px 2px rgba(0,0,0,.35),1px 1px 2px rgba(0,0,0,.22)}
+.nb-spiral{
+  position:absolute;left:10px;top:8px;bottom:8px;width:26px;pointer-events:none;
+  background:repeating-linear-gradient(173deg,
+    transparent 0 12px,
+    #f4f7fa 12px 14px,
+    #c6ced7 14px 17px,
+    #7d858f 17px 20px,
+    #434a53 20px 21px,
+    transparent 21px 24px);
+  -webkit-mask:linear-gradient(90deg,#000 0 55%,rgba(0,0,0,.3) 82%,transparent 100%);
+          mask:linear-gradient(90deg,#000 0 55%,rgba(0,0,0,.3) 82%,transparent 100%);
+  filter:drop-shadow(1px 1px 1.5px rgba(0,0,0,.3));
+}
+.nb-spiral i{display:none}
 .nb-pgnum{position:absolute;right:20px;bottom:12px;font:400 13px/1 var(--hand);
   color:var(--ink-faint);letter-spacing:1px}
 .nb-page.turn{animation:nbTurn .5s cubic-bezier(.3,.9,.4,1) both}
@@ -1382,14 +1408,20 @@ footer .fleuron{color:var(--blue);font-size:19px;display:block;margin-bottom:7px
   background:linear-gradient(315deg,#efe7d3 0%,#fdfbf4 44%,transparent 45%);
   box-shadow:-4px -4px 12px rgba(120,95,50,.3);border-radius:0 0 12px 0}
 /* spiral binding */
-.nbp-spiral{position:absolute;left:-3.4%;top:2%;bottom:2%;width:9%;z-index:4;
-  display:flex;flex-direction:column;justify-content:space-between;pointer-events:none}
-.nbp-spiral i{display:block;height:4.2%;border-radius:50%/50%;
-  border:3.5px solid transparent;
-  background:linear-gradient(103deg,#dfe4ea,#8d97a4 30%,#454e59 60%,#1e232a);
-  -webkit-mask:radial-gradient(closest-side,transparent 52%,#000 53%);
-  mask:radial-gradient(closest-side,transparent 52%,#000 53%);
+/* same drawn wire as the app, so the binding does not change shape when
+   the preloader hands over to the page */
+.nbp-spiral{position:absolute;left:-3.4%;top:2%;bottom:2%;width:9%;z-index:4;pointer-events:none;
+  background:repeating-linear-gradient(173deg,
+    transparent 0 14px,
+    #f4f7fa 14px 16px,
+    #c2cad4 16px 20px,
+    #77808b 20px 23px,
+    #3b424b 23px 25px,
+    transparent 25px 28px);
+  -webkit-mask:linear-gradient(90deg,#000 0 58%,rgba(0,0,0,.35) 84%,transparent 100%);
+          mask:linear-gradient(90deg,#000 0 58%,rgba(0,0,0,.35) 84%,transparent 100%);
   filter:drop-shadow(1px 2px 2px rgba(0,0,0,.4))}
+.nbp-spiral i{display:none}
 /* the cover that opens */
 .nbp-cover{position:absolute;inset:0;z-index:6;border-radius:4px 12px 12px 4px;transform-origin:left center;
   background:linear-gradient(128deg,#20456e 0%,#16304e 52%,#0f2337 100%);
@@ -1617,7 +1649,7 @@ footer .fleuron{color:var(--blue);font-size:19px;display:block;margin-bottom:7px
      reads as the intro's page still being open.
      ============================================================ -->
 <div class="sheet">
-  <div class="spiral" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <div class="spiral" aria-hidden="true"></div>
   <span class="clip clip-l" aria-hidden="true"></span>
   <span class="clip clip-r" aria-hidden="true"></span>
   <div class="note-tape note-l">Keep<br>Going!<b>&#9786;</b></div>
@@ -3736,7 +3768,6 @@ function nbNewPage(book, n){
   const p = document.createElement('div');
   p.className = 'nb-page' + (n > 1 ? ' turn' : '');
   const sp = document.createElement('div'); sp.className = 'nb-spiral';
-  sp.innerHTML = '<i></i>'.repeat(11);
   const num = document.createElement('div'); num.className = 'nb-pgnum';
   num.textContent = 'Page ' + n;
   p.appendChild(sp); p.appendChild(num);
