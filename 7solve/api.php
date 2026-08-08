@@ -306,7 +306,16 @@ $url  = str_replace('{model}', rawurlencode($model), $ENDPOINTS[$provider]);
 $body = json_encode($payload);
 $last = ['code' => 502, 'text' => '{"error":{"message":"Upstream failed"}}'];
 
+// Wall-clock budget for this whole request, retries included. Without it a
+// worker can be held for per-call-timeout x number-of-keys.
+$perCall  = (int)($CFG['timeout'] ?? 45);
+$budget   = (int)($CFG['total_budget'] ?? max($perCall + 15, 60));
+$deadline = microtime(true) + $budget;
+
 foreach ($keys as $k) {
+    // no time left for a meaningful attempt — stop rather than hold the worker
+    $left = (int)floor($deadline - microtime(true));
+    if ($left < 8) break;
     $headers = ['Content-Type: application/json'];
     if ($provider === 'gemini') {
         $headers[] = 'x-goog-api-key: ' . $k;
@@ -320,8 +329,8 @@ foreach ($keys as $k) {
         CURLOPT_POSTFIELDS     => $body,
         CURLOPT_HTTPHEADER     => $headers,
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT        => (int)($CFG['timeout'] ?? 120),
-        CURLOPT_CONNECTTIMEOUT => 15,
+        CURLOPT_TIMEOUT        => max(8, min($perCall, $left)),
+        CURLOPT_CONNECTTIMEOUT => 10,
     ]);
     $text = curl_exec($ch);
     $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);

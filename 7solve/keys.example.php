@@ -116,6 +116,10 @@ return [
 
     /* ---- advanced (safe to leave alone) ---- */
     'max_body_mb' => 12,   // photo uploads need room
-    'timeout'     => 120,  // seconds to wait for the AI
+    'timeout'     => 45,   // seconds to wait for ONE attempt at the AI
+    // Hard ceiling for the whole request including key-rotation retries.
+    // Each in-flight call holds a PHP worker, and cPanel caps concurrent
+    // processes — so this is what stops a slow provider taking the site down.
+    'total_budget' => 60,
     // 'rate_dir' => '/home/USER/7by-ratelimit',  // set if your host's temp dir is wiped often
 ];
