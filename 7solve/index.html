@@ -2009,10 +2009,18 @@ footer .fleuron{color:var(--blue);font-size:19px;display:block;margin-bottom:7px
     // credentials:'omit' — do NOT send the shared *.7by.in session cookie. Each tool
     // authenticates only with its own token in its own (per-origin) localStorage, so
     // signing into 7Marks does not sign you into 7Solve. They are fully separate logins.
-    const r = await fetch(Pay.hub + '/api.php?action=' + action, {
-      method: method, headers: h, credentials: 'omit',
-      body: body ? JSON.stringify(body) : undefined
-    });
+    let r;
+    try {
+      r = await fetch(Pay.hub + '/api.php?action=' + action, {
+        method: method, headers: h, credentials: 'omit',
+        body: body ? JSON.stringify(body) : undefined
+      });
+    } catch (e) {
+      // fetch only rejects for network/CORS/offline — never for an HTTP error code
+      throw new Error(Pay.T('errHubDown') || 'Cannot reach the accounts server. Please try again shortly.');
+    }
+    // 5xx means the hub answers as a host but its PHP is not running
+    if (r.status >= 500) throw new Error(Pay.T('errHubDown') || 'The accounts server is not responding. Please try again shortly.');
     const d = await r.json().catch(() => ({}));
     if (!r.ok || d.ok === false) throw new Error(d.error || ('HTTP ' + r.status));
     return d;
@@ -2779,6 +2787,8 @@ const I18N = {
     siteChip:'Every doubt deserves a good answer',
     noEngine:'No AI key set — add one in config.js', engines:'Engines',
     errNoEngine:'No AI key found. Please add at least one free key in config.js (e.g. Gemini).',
+    errServerDown:'The server is not responding, so the app cannot reach the AI. Your keys and settings are fine — this is a hosting problem, not something to fix here. Please try again in a few minutes.',
+    errHubDown:'Cannot reach the accounts server right now. Please try again in a few minutes.',
     errNoVision:'Photo questions need a vision key. Add a Gemini or OpenRouter key in config.js.',
     errNoQ:'Please type your doubt or upload a photo of it.',
     errApi:'The AI could not answer. Check your keys / internet and try again.',
@@ -2836,6 +2846,8 @@ const I18N = {
     siteChip:'हर डाउट एक अच्छे उत्तर का हकदार है',
     noEngine:'कोई AI कुंजी सेट नहीं — config.js में जोड़ें', engines:'इंजन',
     errNoEngine:'कोई AI कुंजी नहीं मिली। कृपया config.js में कम से कम एक फ्री कुंजी जोड़ें (जैसे Gemini)।',
+    errServerDown:'सर्वर जवाब नहीं दे रहा, इसलिए ऐप AI तक नहीं पहुँच पा रहा। आपकी कुंजियाँ और सेटिंग्स ठीक हैं — यह होस्टिंग की समस्या है। कुछ मिनट बाद फिर कोशिश करें।',
+    errHubDown:'अकाउंट सर्वर से अभी संपर्क नहीं हो पा रहा। कुछ मिनट बाद फिर कोशिश करें।',
     errNoVision:'फोटो प्रश्नों के लिए विज़न कुंजी चाहिए। config.js में Gemini या OpenRouter कुंजी जोड़ें।',
     errNoQ:'कृपया अपना डाउट लिखें या उसकी फोटो अपलोड करें।',
     errApi:'AI उत्तर नहीं दे सका। कुंजियाँ / इंटरनेट जाँचें और फिर कोशिश करें।',
@@ -2893,6 +2905,8 @@ const I18N = {
     siteChip:'ప్రతి డౌట్ కు మంచి సమాధానం దక్కాలి',
     noEngine:'AI కీ సెట్ చేయలేదు — config.js లో జోడించండి', engines:'ఇంజన్లు',
     errNoEngine:'AI కీ కనబడలేదు. దయచేసి config.js లో కనీసం ఒక ఫ్రీ కీ జోడించండి (ఉదా. Gemini).',
+    errServerDown:'సర్వర్ స్పందించడం లేదు, అందుకే యాప్ AI ని చేరుకోలేకపోతోంది. మీ కీలు, సెట్టింగ్‌లు సరిగ్గానే ఉన్నాయి — ఇది హోస్టింగ్ సమస్య. కొన్ని నిమిషాల తర్వాత మళ్లీ ప్రయత్నించండి.',
+    errHubDown:'ఖాతా సర్వర్‌ను ప్రస్తుతం చేరుకోలేకపోతున్నాం. కొన్ని నిమిషాల తర్వాత మళ్లీ ప్రయత్నించండి.',
     errNoVision:'ఫోటో ప్రశ్నలకు విజన్ కీ అవసరం. config.js లో Gemini లేదా OpenRouter కీ జోడించండి.',
     errNoQ:'దయచేసి మీ డౌట్ టైప్ చేయండి లేదా దాని ఫోటో అప్‌లోడ్ చేయండి.',
     errApi:'AI సమాధానం ఇవ్వలేకపోయింది. కీలు / ఇంటర్నెట్ చెక్ చేసి మళ్లీ ప్రయత్నించండి.',
@@ -3133,15 +3147,25 @@ const keysOf = id => PROXY
 const key = id => keysOf(id)[0] || '';
 const active = id => keysOf(id).length > 0;
 const anyEngine = () => PROXY ? proxyProviders.length > 0 : Object.keys(CFG).some(active);
+let proxyDown = false;          // reached the server, but it could not answer
 async function initProxy(){
   if(!PROXY) return;
+  proxyDown = false;
   try{
     const r = await fetch(PROXY + '?action=providers', {headers:{'Accept':'application/json'}});
-    const j = await r.json();
-    proxyProviders = Array.isArray(j.providers) ? j.providers : [];
-  }catch(e){ proxyProviders = []; }
+    if(!r.ok){                                     // 5xx/4xx — the proxy is there but broken
+      proxyDown = true; proxyProviders = [];
+    } else {
+      const j = await r.json();
+      proxyProviders = Array.isArray(j.providers) ? j.providers : [];
+      // reachable and answering, but holding no keys → that IS a config problem
+    }
+  }catch(e){ proxyDown = true; proxyProviders = []; }   // network / CORS / offline
   updateEngineBadge();
 }
+/* "no key" and "the server is not answering" need different advice — one is a
+   file to edit, the other is nothing the reader can fix by editing anything. */
+const engineErr = () => t(PROXY && proxyDown ? 'errServerDown' : 'errNoEngine');
 // true when the error means "this key is out of quota / rate-limited" → try the next key
 const isQuotaErr = e => /429|quota|rate.?limit|exhaust|too many requests|billing/i.test(e && e.message || '');
 const PROV_NAME = { gemini:'Google Gemini', groq:'Groq', cerebras:'Cerebras', openrouter:'OpenRouter', mistral:'Mistral', github:'GitHub Models' };
@@ -3462,7 +3486,7 @@ async function solve(extraQuestion){
      && assessComplexity(typed || '', !!state.imageData) === 'deep'){
     Pay.open('premium'); return;
   }
-  if(!anyEngine()){ $('errMsg').textContent = t('errNoEngine'); updateEngineBadge(); return; }
+  if(!anyEngine()){ $('errMsg').textContent = engineErr(); updateEngineBadge(); return; }
   $('hintBox').style.display='none';   // full solution supersedes any hint
 
   let userText = typed || 'Please read the question in the attached photo and solve it fully.';
@@ -3498,7 +3522,7 @@ async function getHint(){
   $('errMsg').textContent='';
   const typed = $('qtext').value.trim();
   if(!typed && !state.imageData){ $('errMsg').textContent = t('errNoQ'); return; }
-  if(!anyEngine()){ $('errMsg').textContent = t('errNoEngine'); updateEngineBadge(); return; }
+  if(!anyEngine()){ $('errMsg').textContent = engineErr(); updateEngineBadge(); return; }
   const userText = typed || 'Read the question in the attached photo and give a hint only.';
   state.busy = true; state.hintMode = true; $('solveBtn').disabled = true; $('hintBtn').disabled = true; $('quill').classList.add('on');
   try{
@@ -3613,7 +3637,7 @@ const tutorFailHtml = () => `<div class="tutor-head">${t('tutorMode')}</div><div
   `<button class="mini-btn" onclick="document.getElementById('tutorPanel').style.display='none'">✕ ${t('close')}</button></div>`;
 async function startTutorMode(){
   if(state.busy) return;
-  if(!anyEngine()){ $('errMsg').textContent=t('errNoEngine'); return; }
+  if(!anyEngine()){ $('errMsg').textContent=engineErr(); return; }
   const panel=$('tutorPanel');
   panel.style.display='block';
   panel.innerHTML=`<div class="tutor-head">${t('tutorMode')}</div><div class="tutor-progress">${t('tutorLoading')}</div>`;
