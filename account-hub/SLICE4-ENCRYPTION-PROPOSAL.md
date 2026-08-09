@@ -1,6 +1,24 @@
 # Slice 4 — API-key encryption at rest
 
-**Status: proposal. No code written. Awaiting approval.**
+**Status: architecture APPROVED. No code written yet — implementation is
+gated on a green production Slice 3 self-test.**
+
+Approved decisions, recorded so implementation cannot drift from them:
+
+| Decision | Approved value |
+|---|---|
+| Secret | dedicated `OPS_KEY_SECRET`, **never** `app_secret` |
+| Cipher | AES-256-GCM |
+| Key derivation | HKDF-SHA256, **per row** |
+| Nonce | CSPRNG, fresh on **every** encryption |
+| AAD | `provider:id` |
+| Versioning | `enc_v` column |
+| Decryption | server-side only, never in any response |
+| Secret home | cPanel environment variable, outside the document root |
+| Existing keys | **import, don't move** — `keys.php` stays as rollback |
+| Migration | additive, idempotent, non-destructive |
+| Admin display | masked only — **no "show full key" feature, ever** |
+| Rotation | non-destructive, version-migratable, never automatic |
 
 This covers the ten points you listed, plus the two extra questions:
 whether keys are encrypted individually, and how the metadata is stored.
@@ -231,13 +249,163 @@ mangled by a charset conversion during a database export/import.
 
 ---
 
-## What I need from you before writing code
+---
 
-1. **Approve or amend this design.**
-2. **Choose the secret's home** — cPanel env var (preferred) or a file
-   outside the document root.
-3. **Confirm the migration stance:** import into `api_keys` while leaving
-   `keys.php` intact as the rollback, and cut over only after the panel is
-   proven.
+# Operations manual
 
-No Slice 4 code until you have said yes.
+Everything below is procedure, not code. Read it before the secret is
+generated, because two of these steps cannot be done retroactively.
+
+## A. Generating the secret
+
+Run **on the server**, over SSH. Never on a laptop, never in a chat
+window, never in a browser console.
+
+```bash
+php -r 'echo bin2hex(random_bytes(32)), PHP_EOL;'
+```
+
+64 hex characters. Copy it once. The terminal scrollback is now sensitive —
+clear it (`history -c` on the shell, and clear your terminal app's buffer).
+
+## B. Installing it as an environment variable
+
+**cPanel → Setup PHP → Environment Variables** *(some hosts label this
+"MultiPHP INI Editor → Environment" or expose it under Application
+Manager)*:
+
+| Field | Value |
+|---|---|
+| Name | `OPS_KEY_SECRET` |
+| Value | the 64 hex characters |
+| Scope | the `account.7by.in` application |
+
+Then restart PHP so the variable is picked up (cPanel usually offers
+**Restart** next to the app; otherwise touching `.htaccess` recycles the
+worker on LiteSpeed).
+
+**If your host has no environment-variable UI**, the fallback is a file
+*outside* the document root:
+
+```bash
+mkdir -p /home/byin/secrets
+printf '<?php return "PASTE_HEX_HERE";' > /home/byin/secrets/keys-secret.php
+chmod 600 /home/byin/secrets/keys-secret.php
+```
+
+`/home/byin/secrets/` must **not** be inside `public_html` or any domain's
+document root. Verify it is unreachable:
+
+```bash
+curl -sI https://account.7by.in/../secrets/keys-secret.php | head -1   # expect 404/403
+```
+
+## C. Verifying it — without ever displaying it
+
+Two commands, neither of which prints the secret:
+
+```bash
+php ops-keys.php --fingerprint
+#  → OPS_KEY_SECRET fingerprint: 3f9a21c7   (present, 32 bytes)
+```
+
+The fingerprint is the first 8 hex characters of `SHA-256(secret)`. It is
+enough to confirm *"the server holds the same secret I backed up"* by
+comparing against the fingerprint recorded with the backup, and it is
+useless to an attacker — you cannot work backwards from it.
+
+```bash
+php ops-keys.php --verify
+#  → 6 keys, 6 decrypted OK, 0 failed
+```
+
+This decrypts every stored key and reports **counts only**. No plaintext,
+no hints, no key material reaches the terminal. This is the command to run
+after any restore, any migration, and as part of the deploy checklist.
+
+Both are CLI-only. Neither is reachable over HTTP, and the admin panel
+will not surface the secret, its fingerprint, or any decrypted key.
+
+## D. Backing up the secret
+
+**1. How to back it up.** Copy the 64 hex characters into a password
+manager entry titled `7By — OPS_KEY_SECRET`. Record alongside it: the
+fingerprint from `--fingerprint`, the date, and the server it belongs to.
+The fingerprint is what lets you confirm a restore later without revealing
+anything.
+
+**2. Where it should live.** A password manager with a strong master
+password and 2FA (Bitwarden, 1Password, KeePass). A sealed paper copy in a
+physical safe is an acceptable second copy.
+
+**Never:** the same backup archive as the database, git, email to
+yourself, cloud notes, a screenshot, or a chat message. **A database
+backup and this secret in the same place defeats the entire scheme** —
+whoever holds both holds the keys.
+
+**3. Who should have access.** You. Add a second holder only if someone
+else would genuinely need to restore service while you are unreachable —
+and if so, a named person, not a shared team account.
+
+**4. How to restore it.** Re-enter it in cPanel exactly as in step B,
+restart PHP, then run `--fingerprint` and confirm it matches the value
+recorded with the backup.
+
+**5. How to verify the restore.** `--fingerprint` proves it is the *same*
+secret. `--verify` proves the stored keys actually decrypt under it. Run
+both; the first alone is not sufficient, because a correct secret with a
+corrupted table still fails.
+
+**6. If it is permanently lost.** The stored API keys are gone —
+mathematically, not "difficult". There is no backdoor, no recovery key and
+no vendor escape hatch, and there will not be one: a recovery mechanism is
+just a second key, and a second key is a second thing to steal.
+
+Recovery is:
+
+1. Revoke the old keys at each provider — assume they are compromised,
+   because you no longer know their state.
+2. Issue new ones (Gemini, Groq, Cerebras, OpenRouter, Mistral, GitHub).
+3. Generate a **new** `OPS_KEY_SECRET` per step A.
+4. `DELETE FROM api_keys` — those rows are now undecryptable ballast.
+5. Add the new keys through the admin panel.
+6. `--verify` to confirm.
+
+Roughly fifteen minutes. **Only the API keys are affected.** No user,
+payment, subscription or support data is encrypted with this secret, so
+nothing about your customers is at risk from losing it.
+
+## E. Rollback during migration
+
+`keys.php` is not touched by the import and stays the live source until
+you say otherwise. If anything about the encrypted path misbehaves, the
+rollback is a one-line revert in `api.php` back to `keys.php` — no data
+migration, no re-entry of keys.
+
+Emptying `keys.php` is a **separate, later, deliberate** step, taken only
+once the panel has been proven, and never in the same change as the
+cutover.
+
+---
+
+## Post-implementation test plan (agreed)
+
+To be written alongside the code, not after:
+
+encrypt/decrypt round trip · wrong secret · modified ciphertext · modified
+nonce · modified auth tag · wrong provider AAD · wrong `enc_v` · multiple
+keys per provider · failover to the next healthy key · disabled key
+skipped · rotation across versions · migration rollback · **no plaintext
+leakage**.
+
+The leakage check is a source and response inspection: no API key may
+appear in any HTTP response body, HTML, JavaScript, log line, URL, or
+browser storage. That is asserted mechanically, not eyeballed.
+
+---
+
+## Status
+
+Architecture approved. Implementation is blocked on a **green production
+Slice 3 self-test** — which must be run on the server, since it needs the
+live MySQL database.
