@@ -594,7 +594,15 @@ function ops_error($type, $severity, $message, array $ctx = []) {
     try {
         $route = $ctx['route'] ?? ($_SERVER['REQUEST_URI'] ?? 'cli');
         // Normalise volatile bits out of the message so retries group together
-        $norm  = preg_replace('/\d{3,}/', 'N', (string)$message);
+        // Normalise EVERY run of digits, not just long ones. "No scheduler run
+        // for 25 minutes" and "...for 40 minutes" are the same fault; leaving
+        // short numbers in the fingerprint made each check a fresh incident
+        // and therefore a fresh owner email — the exact spam grouping exists
+        // to prevent. Also strip hex ids and quoted values for the same reason.
+        $norm = preg_replace(
+            ['/\d+/', '/\b[0-9a-f]{8,}\b/i', '/"[^"]*"/', "/'[^']*'/"],
+            ['N', 'H', '"S"', "'S'"],
+            (string)$message);
         $fp    = sha1($type . '|' . $route . '|' . substr($norm, 0, 200));
         $now   = date('Y-m-d H:i:s');
 

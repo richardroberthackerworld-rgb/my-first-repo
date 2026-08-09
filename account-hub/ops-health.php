@@ -26,10 +26,13 @@ header('Cache-Control: no-store');
    every five minutes, so this stays cheap even under load. */
 ops_sched_watchdog();
 
-$detailed = false;
-$tok = (string)ops_setting('health_token', '');
-if ($tok !== '' && hash_equals($tok, (string)($_GET['token'] ?? ''))) $detailed = true;
-
+/* Deliberately no detailed mode here.
+   An earlier draft had a token-gated block returning incident types, error
+   summaries and run history. Even behind a token that is the wrong place
+   for it: this endpoint is public, unauthenticated by design, and a token
+   in a query string ends up in browser history, proxy logs and referrers.
+   Diagnostics belong behind the admin session in slice 4. What is returned
+   below is up/down only — no messages, no paths, no config, no user data. */
 $out = ['ok' => true, 'time' => gmdate('c')];
 
 /* ---- database ---- */
@@ -68,26 +71,22 @@ try {
     if ($n) $out['ok'] = false;
 } catch (Throwable $e) { $out['incidents'] = 'unknown'; }
 
-/* ---- detail, for admins only ---- */
-if ($detailed) {
-    $out['detail'] = [
-        'scheduler_last_run' => $last,
-        'scheduler_gap_min'  => $gapMin,
-        'scheduler_summary'  => json_decode((string)ops_setting('sched_last_summary', '{}'), true),
-        'email_pending'      => (int)($q['pending'] ?? 0),
-        'email_failed'       => (int)($q['failed'] ?? 0),
-    ];
-    try {
-        $out['detail']['open_incidents'] = db()->query(
-            "SELECT ref, type, severity, occurrences, last_seen
-               FROM system_errors
-              WHERE status NOT IN ('resolved','ignored')
-              ORDER BY last_seen DESC LIMIT 20")->fetchAll(PDO::FETCH_ASSOC);
-        $out['detail']['recent_runs'] = db()->query(
-            "SELECT started_at, duration_ms, ok FROM scheduler_runs
-              ORDER BY id DESC LIMIT 10")->fetchAll(PDO::FETCH_ASSOC);
-    } catch (Throwable $e) {}
+/* Final scrub. Belt and braces against a future edit reintroducing detail:
+   only this exact set of keys may ever leave this endpoint, and every value
+   must be one of the fixed status words. Anything else is dropped rather
+   than leaked. */
+const HEALTH_ALLOWED_KEYS   = ['ok', 'time', 'database', 'scheduler', 'email', 'incidents'];
+const HEALTH_ALLOWED_VALUES = ['up', 'down', 'stale', 'never_run', 'degraded',
+                               'clear', 'attention', 'unknown'];
+$safe = [];
+foreach (HEALTH_ALLOWED_KEYS as $k) {
+    if (!array_key_exists($k, $out)) continue;
+    $v = $out[$k];
+    if ($k === 'ok')   { $safe[$k] = (bool)$v; continue; }
+    if ($k === 'time') { $safe[$k] = $v;       continue; }
+    $safe[$k] = in_array($v, HEALTH_ALLOWED_VALUES, true) ? $v : 'unknown';
 }
+$out = $safe;
 
 http_response_code($out['ok'] ? 200 : 503);
 echo json_encode($out, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), "\n";

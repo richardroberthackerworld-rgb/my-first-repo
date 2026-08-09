@@ -123,9 +123,10 @@ function sched_subscriptions(&$log) {
             AND plan_expires > DATE_SUB(NOW(), INTERVAL 3 DAY)
             AND plan_expires < DATE_ADD(NOW(), INTERVAL 31 DAY)")->fetchAll();
 
+    $skips = [];
     foreach ($rows as $u) {
         $sent += sched_ladder_for($u['id'], 'hub', $u['email'], $u['name'],
-                                  $u['plan'], $u['plan_expires']);
+                                  $u['plan'], $u['plan_expires'], $skips);
     }
     $log['users_in_window'] = count($rows);
 
@@ -141,16 +142,74 @@ function sched_subscriptions(&$log) {
 
     foreach ($rows as $r) {
         $sent += sched_ladder_for($r['user_id'], 'tool:' . $r['tool'], $r['email'], $r['name'],
-                                  $r['plan'], $r['plan_expires']);
+                                  $r['plan'], $r['plan_expires'], $skips);
     }
     $log['tool_plans_in_window'] = count($rows);
     $log['reminders_queued'] = $sent;
+    // visible in the run log, so "why did nobody get a reminder" is answerable
+    if ($skips) $log['skipped'] = $skips;
     return $sent;
 }
 
+/**
+ * Gate every candidate before it can be emailed. The SQL window is a coarse
+ * filter; this is the actual eligibility rule, and it fails CLOSED — anything
+ * it cannot positively confirm is skipped rather than mailed.
+ *
+ * Guards against, in order: missing address, unparseable or absurd expiry,
+ * a plan that is not really a plan, a refunded/cancelled transaction, and a
+ * newer term that has already superseded this row.
+ *
+ * Returns '' when eligible, or a short reason string when not.
+ */
+function sched_ineligible($userId, $plan, $email, $expiresAt) {
+    if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) return 'no_email';
+    if (!$plan || in_array(strtolower((string)$plan), ['none', 'free', 'cancelled', 'expired'], true)) return 'not_a_paid_plan';
+
+    $exp = strtotime((string)$expiresAt);
+    if (!$exp) return 'unparseable_expiry';
+    // a date decades out or long past is corrupt data, not a subscription
+    if ($exp > strtotime('+10 years') || $exp < strtotime('-1 year')) return 'implausible_expiry';
+
+    /* Already superseded? If any plan row for this user now ends LATER than
+       the row we are about to warn about, that row has been renewed and this
+       one is stale — warning about it would tell a paying customer they are
+       about to lose access they just bought. */
+    try {
+        $st = db()->prepare(
+            "SELECT GREATEST(
+                 COALESCE((SELECT MAX(plan_expires) FROM users        WHERE id      = ? AND plan <> 'none'), '1970-01-01'),
+                 COALESCE((SELECT MAX(plan_expires) FROM tool_credits WHERE user_id = ? AND plan <> 'none'), '1970-01-01')
+             ) AS latest");
+        $st->execute([$userId, $userId]);
+        $latest = strtotime((string)$st->fetchColumn());
+        if ($latest && $latest > $exp + 60) return 'superseded_by_newer_term';
+    } catch (Throwable $e) { return 'eligibility_check_failed'; }
+
+    /* Refunded or reversed? The transactions table is the payment record of
+       truth; a refund after purchase means we must not chase a renewal. */
+    try {
+        $st = db()->prepare(
+            "SELECT COUNT(*) FROM transactions
+              WHERE user_id = ? AND LOWER(status) IN ('refunded','reversed','chargeback','cancelled')
+                AND created_at >= DATE_SUB(?, INTERVAL 400 DAY)");
+        $st->execute([$userId, date('Y-m-d H:i:s', $exp)]);
+        if ((int)$st->fetchColumn() > 0) return 'refunded_or_cancelled';
+    } catch (Throwable $e) {
+        // transactions may not carry a status column on every install —
+        // absence of evidence is not grounds to skip a legitimate reminder
+    }
+
+    return '';
+}
+
 /** Queue whichever rung of the ladder this subscription has reached. */
-function sched_ladder_for($userId, $scope, $email, $name, $plan, $expiresAt) {
-    if (!$email) return 0;
+function sched_ladder_for($userId, $scope, $email, $name, $plan, $expiresAt, &$skips = null) {
+    $why = sched_ineligible($userId, $plan, $email, $expiresAt);
+    if ($why !== '') {
+        if (is_array($skips)) $skips[$why] = ($skips[$why] ?? 0) + 1;
+        return 0;
+    }
     $exp   = strtotime($expiresAt);
     $left  = ($exp - time()) / 86400;
     $base  = 'rem:' . $userId . ':' . $scope . ':' . $exp . ':';
@@ -217,7 +276,12 @@ function ops_on_renewal($userId, $email, $name, $plan, $newExpiry, $orderId = nu
         'amount' => $amount ?: '', 'order_id' => $orderId ?: '',
         'expiry_date' => date('j M Y', strtotime($newExpiry)),
         'dashboard_url' => ops_setting('dashboard_url', 'https://account.7by.in/'),
-    ], ['dedupe' => 'renewal:' . $userId . ':' . strtotime($newExpiry), 'user_id' => $userId]);
+        // Dedupe on the VERIFIED payment id, not the expiry date. A replayed
+        // webhook that re-extends the term would produce a different expiry
+        // and therefore a second email; the payment id is stable across
+        // replays, which is what actually makes this idempotent.
+    ], ['dedupe' => 'renewal:' . $userId . ':' . ($orderId ?: strtotime($newExpiry)),
+        'user_id' => $userId]);
 
     ops_notify('user', $userId, 'renewal', 'Your plan is renewed',
                'Active until ' . date('j M Y', strtotime($newExpiry)));
@@ -241,13 +305,27 @@ function ops_on_payment_failed($userId, $email, $name, $plan, $reason, $orderId 
 /* ------------------------------------------------------------------
    MAIN TICK
    ------------------------------------------------------------------ */
+/* Exit codes, so cPanel and any monitor can tell these apart:
+     0  a clean tick, or another run already holds the lock (both normal)
+     1  the tick threw — an incident was raised
+     2  the database is unreachable — nothing ran at all               */
+const SCHED_EXIT_OK = 0, SCHED_EXIT_FAILED = 1, SCHED_EXIT_NO_DB = 2;
+
 function sched_run() {
     $t0  = microtime(true);
     $log = [];
 
+    // Reach the database before anything else, so an outage exits with a
+    // distinct code instead of surfacing as a generic failure.
+    try { db()->query('SELECT 1'); }
+    catch (Throwable $e) {
+        fwrite(STDERR, "database unreachable: " . $e->getMessage() . "\n");
+        return SCHED_EXIT_NO_DB;
+    }
+
     if (!sched_lock()) {
         echo "another run holds the lock — exiting\n";
-        return 0;
+        return SCHED_EXIT_OK;
     }
 
     try {
@@ -278,7 +356,11 @@ function sched_run() {
     }
 
     echo json_encode($log, JSON_PRETTY_PRINT), "\n";
-    return empty($log['ok']) ? 1 : 0;
+    if (empty($log['ok'])) {
+        fwrite(STDERR, "scheduler tick failed: " . ($log['error'] ?? 'unknown') . "\n");
+        return SCHED_EXIT_FAILED;
+    }
+    return SCHED_EXIT_OK;
 }
 
 if (PHP_SAPI === 'cli' && empty($GLOBALS['OPS_SCHED_EMBED'])) {
