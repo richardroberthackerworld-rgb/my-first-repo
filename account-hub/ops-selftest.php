@@ -181,7 +181,127 @@ try {
     $st->execute([$FAKEU]);
     t('renewal confirmation queued once', (int)$st->fetchColumn(), 1);
 
-    echo "\n12. HEARTBEAT\n";
+    /* ---------------- slice 3 ----------------
+       Nothing below ever calls ops_mail_flush(), so not one message is
+       delivered. Rows are queued, counted, then deleted. Every recipient is
+       the .invalid test address and every user id is negative, so a real
+       customer cannot be reached even by accident. */
+    require_once __DIR__ . '/ops-events.php';
+
+    echo "\n12. SLICE 3 — SCHEMA\n";
+    $cols = db()->query("SHOW COLUMNS FROM email_queue LIKE 'provider_msg_id'")->fetchAll();
+    t('email_queue.provider_msg_id exists', count($cols), 1);
+    $cols = db()->query("SHOW COLUMNS FROM email_log LIKE 'provider_msg_id'")->fetchAll();
+    t('email_log.provider_msg_id exists',   count($cols), 1);
+    ops_migrate();
+    t('migration still idempotent after the ALTERs', true, true);
+
+    echo "\n13. SLICE 3 — TEMPLATES\n";
+    $tpl = ops_builtin_templates();
+    $need = ['purchase_success','renewal_success','payment_failed','expiry_30','expiry_15',
+             'expiry_5','expiry_3','expiry_1','expired','support_ticket_created','support_reply',
+             'owner_new_member','owner_purchase','owner_renewal','owner_payment_failed',
+             'owner_support_ticket','system_error','system_resolved','owner_email_failed'];
+    $missing = array_values(array_filter($need, fn($n) => !isset($tpl[$n])));
+    t('all 19 required templates present', $missing, []);
+    $probe = array_fill_keys(['name','email','plan','amount','order_id','start_date','expiry_date',
+        'dashboard_url','admin_url','support_url','renew_url','upgrade_url','ref','type','severity',
+        'route','message','occurrences','first_seen','last_seen','resolved_at','duration','resolution',
+        'sent_at','from','days_left','reason','ticket','subject','category','summary','reply','agent',
+        'when','template','recipient','attempts','queue_id'], 'x');
+    $unresolved = [];
+    foreach ($tpl as $n => $x) {
+        if (preg_match('/\{\{/', ops_render($x['subject'], $probe) . ops_render($x['body_html'], $probe))) {
+            $unresolved[] = $n;
+        }
+    }
+    t('every template renders with no unresolved variable', $unresolved, []);
+
+    /* synthetic payment — passed as arrays, so nothing is written to the
+       users or transactions tables at any point */
+    $PAY  = 'SELFTEST_PAY_' . bin2hex(random_bytes(3));
+    $fakeUser = ['id' => $FAKEU, 'name' => 'Self Test', 'email' => $EMAIL,
+                 'plan' => 'yearly', 'plan_expires' => date('Y-m-d H:i:s', strtotime('+1 year'))];
+    $fakeTx   = ['id' => -1, 'user_id' => $FAKEU, 'payment_id' => $PAY, 'order_id' => $PAY,
+                 'plan' => 'yearly', 'amount' => 49900, 'status' => 'paid'];
+    $cnt = function ($tplName) use ($FAKEU, $EMAIL) {
+        $st = db()->prepare('SELECT COUNT(*) FROM email_queue WHERE template = ? AND (user_id = ? OR to_email = ?)');
+        $st->execute([$tplName, $FAKEU, $EMAIL]);
+        return (int)$st->fetchColumn();
+    };
+
+    echo "\n14. SLICE 3 — PURCHASE\n";
+    ops_on_purchase($fakeTx, $fakeUser, false);
+    t('customer receipt queued exactly once', $cnt('purchase_success'), 1);
+    t('owner copy queued exactly once',       $cnt('owner_purchase'),   1);
+
+    echo "\n15. SLICE 3 — REPLAYED WEBHOOK\n";
+    ops_on_purchase($fakeTx, $fakeUser, false);
+    ops_on_purchase($fakeTx, $fakeUser, false);
+    t('customer receipt still 1 after 2 replays', $cnt('purchase_success'), 1);
+    t('owner copy still 1 after 2 replays',       $cnt('owner_purchase'),   1);
+
+    echo "\n16. SLICE 3 — RENEWAL\n";
+    $PAY2 = 'SELFTEST_RENEW_' . bin2hex(random_bytes(3));
+    $renewTx = array_merge($fakeTx, ['payment_id' => $PAY2, 'order_id' => $PAY2]);
+    ops_on_purchase($renewTx, $fakeUser, true);
+    ops_on_purchase($renewTx, $fakeUser, true);           // replay
+    t('renewal confirmation queued once', $cnt('renewal_success'), 1);
+    t('owner renewal queued once',        $cnt('owner_renewal'),   1);
+
+    echo "\n17. SLICE 3 — PAYMENT FAILURE\n";
+    ops_on_payment_failure($FAKEU, $EMAIL, 'Self Test', 'yearly', 'card declined', $PAY);
+    ops_on_payment_failure($FAKEU, $EMAIL, 'Self Test', 'yearly', 'card declined', $PAY);
+    t('customer notice queued once', $cnt('payment_failed'),       1);
+    t('owner notice queued once',    $cnt('owner_payment_failed'), 1);
+
+    echo "\n18. SLICE 3 — SUPPORT\n";
+    $tRef = ops_on_support_ticket($FAKEU, $EMAIL, 'Self Test', 'account',
+                                  'Selftest ticket', 'body of the selftest ticket');
+    t('ticket created with a ref', (bool)$tRef, true);
+    t('customer confirmation queued once', $cnt('support_ticket_created'), 1);
+    t('owner notification queued once',    $cnt('owner_support_ticket'),   1);
+    ops_on_support_reply($tRef, 'first reply', 'Selftest');
+    t('first reply queues one email',  $cnt('support_reply'), 1);
+    ops_on_support_reply($tRef, 'second reply', 'Selftest');
+    t('a SECOND reply queues another', $cnt('support_reply'), 2);
+
+    echo "\n19. SLICE 3 — EMAIL DELIVERY FAILURE\n";
+    ops_on_email_failed(-424242, 'purchase_success', $EMAIL, 3, 'connection refused');
+    ops_on_email_failed(-424242, 'purchase_success', $EMAIL, 3, 'connection refused');
+    $st = db()->prepare("SELECT COUNT(*) FROM email_queue WHERE dedupe_key = ?");
+    $st->execute(['emailfail:-424242']);
+    t('one owner alert per dead message', (int)$st->fetchColumn(), 1);
+    t('an owner_ template cannot trigger another owner alert',
+      strpos(file_get_contents(__DIR__ . '/ops.php'), "strpos(\$q['template'], 'owner_') !== 0") !== false, true);
+
+    echo "\n20. SLICE 3 — PROVIDER MESSAGE ID\n";
+    $st = db()->prepare('SELECT COUNT(*) FROM email_queue WHERE provider_msg_id IS NOT NULL AND to_email = ?');
+    $st->execute([$EMAIL]);
+    t('left NULL while SMTP returns only a boolean', (int)$st->fetchColumn(), 0);
+
+    echo "\n21. SLICE 3 — PAYMENT FLOW ORDERING (source assertions)\n";
+    $api = file_get_contents(__DIR__ . '/api.php');
+    $vBlock = substr($api, strpos($api, "case 'verify'"), 1800);
+    t('signature is checked before anything grants',
+      strpos($vBlock, 'if (!$okSig) fail(') !== false, true);
+    t('signature check precedes the email hook',
+      strpos($vBlock, 'if (!$okSig) fail(') < strpos($vBlock, 'ops_purchase_hook'), true);
+    t('ownership check precedes the email hook',
+      strpos($vBlock, 'WHERE order_id = ? AND user_id = ?') < strpos($vBlock, 'ops_purchase_hook'), true);
+    t('already-paid early return precedes the email hook',
+      strpos($vBlock, "if (\$tx['status'] === 'paid')") < strpos($vBlock, 'ops_purchase_hook'), true);
+    t('grant_from_tx precedes the email hook',
+      strpos($vBlock, 'grant_from_tx($tx);') < strpos($vBlock, 'ops_purchase_hook'), true);
+    t('a missing ops-events.php cannot fatal the payment flow',
+      strpos($api, "is_file(__DIR__ . '/ops-events.php')") !== false, true);
+    t('every hook call site is function_exists-guarded',
+      substr_count($api, 'function_exists(\'ops_purchase_hook\')')
+        + substr_count($api, 'function_exists(\'ops_signup_hook\')'),
+      substr_count($api, 'ops_purchase_hook(') - substr_count($api, "function_exists('ops_purchase_hook')")
+        + substr_count($api, 'ops_signup_hook(') - substr_count($api, "function_exists('ops_signup_hook')"));
+
+    echo "\n22. HEARTBEAT\n";
     ops_set_setting('sched_last_run', date('Y-m-d H:i:s', time() - 3600));
     ops_set_setting('sched_watchdog_at', null);
     ops_sched_watchdog();
@@ -212,6 +332,19 @@ try {
 
         $st = db()->prepare("DELETE FROM system_errors WHERE type = 'SCHEDULER_DOWN'");
         $st->execute(); $removed += $st->rowCount();
+
+        /* slice 3 rows */
+        $st = db()->prepare("DELETE FROM email_queue WHERE dedupe_key LIKE 'emailfail:-%'
+                             OR dedupe_key LIKE '%SELFTEST_PAY_%' OR dedupe_key LIKE '%SELFTEST_RENEW_%'");
+        $st->execute(); $removed += $st->rowCount();
+
+        // support_messages first — it references the ticket
+        $st = db()->prepare('DELETE sm FROM support_messages sm
+                             JOIN support_tickets st ON st.id = sm.ticket_id
+                             WHERE st.email = ?');
+        $st->execute([$EMAIL]); $removed += $st->rowCount();
+        $st = db()->prepare('DELETE FROM support_tickets WHERE email = ?');
+        $st->execute([$EMAIL]); $removed += $st->rowCount();
 
         $st = db()->prepare('DELETE FROM email_log WHERE to_email = ?');
         $st->execute([$EMAIL]); $removed += $st->rowCount();
