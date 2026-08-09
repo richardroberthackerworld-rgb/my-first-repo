@@ -257,8 +257,21 @@ function ops_migrate() {
 /* ------------------------------------------------------------------
    2. SETTINGS  — admin-editable, with a config.php fallback
    ------------------------------------------------------------------ */
-function ops_setting($key, $default = null) {
+/* The settings cache lives here rather than inside ops_setting() so the
+   setter can keep it in step. Previously the static was private to the
+   reader, so ops_set_setting() updated the database while the reader went
+   on returning the value it had cached at process start — a write
+   followed by a read in the same request returned the OLD value. Nothing
+   in production read a key back after writing it, so this never surfaced
+   there, but it is a trap for anything that will (an admin settings page
+   saving and re-rendering, for one). */
+function &ops_setting_cache() {
     static $cache = null;
+    return $cache;
+}
+
+function ops_setting($key, $default = null) {
+    $cache = &ops_setting_cache();
     if ($cache === null) {
         $cache = [];
         try {
@@ -274,6 +287,12 @@ function ops_set_setting($key, $val) {
     db()->prepare('INSERT INTO settings (skey, sval) VALUES (?,?)
                    ON DUPLICATE KEY UPDATE sval = VALUES(sval)')
         ->execute([$key, $val]);
+    // Keep the cache honest. Updating the one key rather than dropping the
+    // whole cache avoids a re-query, and mirrors what the database now
+    // holds — including a NULL, which is a present-but-empty setting and
+    // must not fall through to the caller's default.
+    $cache = &ops_setting_cache();
+    if ($cache !== null) $cache[$key] = $val;
 }
 
 /* Which mailbox a given kind of message comes from. Defaults to @7by.in

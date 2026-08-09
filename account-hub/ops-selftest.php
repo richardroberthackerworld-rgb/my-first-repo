@@ -358,7 +358,25 @@ try {
     t('all four are function_exists-guarded', $guards, 4);
     t('unguarded hook call sites', $calls - $guards, 0);
 
-    echo "\n22. HEARTBEAT\n";
+    echo "\n22. SETTINGS CACHE COHERENCE\n";
+    /* Section 23's heartbeat check depends on this contract, so it is
+       asserted directly first — a cache regression should name itself
+       rather than surface as a confusing heartbeat failure. */
+    $ck = '__selftest_cache_' . bin2hex(random_bytes(3));
+    ops_setting($ck);                                   // force the cache to load
+    ops_set_setting($ck, 'first');
+    t('write then read returns the new value', ops_setting($ck), 'first');
+    ops_set_setting($ck, 'second');
+    t('a second write is visible too',         ops_setting($ck), 'second');
+    ops_set_setting($ck, null);
+    t('a NULL setting reads as null, not the default',
+      ops_setting($ck, 'THE-DEFAULT'), null);
+    $st = db()->prepare('SELECT sval FROM settings WHERE skey = ?');
+    $st->execute([$ck]);
+    t('and the database agrees with the cache', $st->fetchColumn(), null);
+    db()->prepare('DELETE FROM settings WHERE skey = ?')->execute([$ck]);
+
+    echo "\n23. HEARTBEAT\n";
     ops_set_setting('sched_last_run', date('Y-m-d H:i:s', time() - 3600));
     ops_set_setting('sched_watchdog_at', null);
     ops_sched_watchdog();
@@ -371,7 +389,7 @@ try {
     echo "\n  EXCEPTION: " . $e->getMessage() . "\n";
 } finally {
     /* Runs even if an assertion threw, so the database is never left dirty. */
-    echo "\n13. CLEANUP\n";
+    echo "\n24. CLEANUP\n";
     $removed = 0;
     try {
         $st = db()->prepare('DELETE FROM email_queue
