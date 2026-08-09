@@ -218,6 +218,17 @@ function ops_migrate() {
         UNIQUE KEY uniq_email (email)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+    /* one row per scheduler tick — execution log and heartbeat history */
+    $pdo->exec("CREATE TABLE IF NOT EXISTS scheduler_runs (
+        id          BIGINT AUTO_INCREMENT PRIMARY KEY,
+        started_at  DATETIME NOT NULL,
+        duration_ms INT NOT NULL DEFAULT 0,
+        ok          TINYINT(1) NOT NULL DEFAULT 1,
+        summary     TEXT NULL,
+        KEY idx_when (started_at),
+        KEY idx_ok   (ok, started_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
     /* plans become data so new tiers need no frontend change (§10) */
     $pdo->exec("CREATE TABLE IF NOT EXISTS plans (
         code        VARCHAR(32) PRIMARY KEY,
@@ -374,6 +385,81 @@ function ops_builtin_templates() {
               . '</table>'
               . $p('<b>Resolution:</b> {{resolution}}'),
         ],
+        /* ---- subscription lifecycle ----
+           Urgency rises down the ladder, but the tone stays civil: these go
+           to someone who has already paid us once. */
+        'expiry_30' => [
+            'subject' => '⏰ Your 7Solve {{plan}} renews in a month',
+            'heading' => 'A month to go',
+            'body_html' =>
+                $p('Hi {{name}}, your <b>{{plan}}</b> plan runs until <b>{{expiry_date}}</b> — about a month away.')
+              . $p('Nothing to do today. This is just so the date is not a surprise.')
+              . $btn('{{renew_url}}', 'Renew early'),
+        ],
+        'expiry_15' => [
+            'subject' => '📚 15 days left on your 7Solve {{plan}}',
+            'heading' => '15 days left',
+            'body_html' =>
+                $p('Hi {{name}}, your <b>{{plan}}</b> plan ends on <b>{{expiry_date}}</b>.')
+              . $p('Renewing keeps your notebook, saved doubts and history exactly as they are.')
+              . $btn('{{renew_url}}', 'Renew now'),
+        ],
+        'expiry_5' => [
+            'subject' => '⚠️ 5 days left on your 7Solve {{plan}}',
+            'heading' => '5 days left',
+            'body_html' =>
+                $p('Hi {{name}}, your <b>{{plan}}</b> plan ends on <b>{{expiry_date}}</b> — that is 5 days away.')
+              . $btn('{{renew_url}}', 'Renew now')
+              . $p('Want more of everything instead? <a href="{{upgrade_url}}" style="color:#2647cf">Compare plans</a>.'),
+        ],
+        'expiry_3' => [
+            'subject' => '🚨 Only 3 days left on your 7Solve plan',
+            'heading' => 'Only 3 days left',
+            'body_html' =>
+                $p('Hi {{name}}, your <b>{{plan}}</b> plan ends on <b>{{expiry_date}}</b>.')
+              . $p('After that your account stays, but {{plan}} features pause until you renew.')
+              . $btn('{{renew_url}}', 'Renew now'),
+        ],
+        'expiry_1' => [
+            'subject' => '⏳ Your 7Solve plan ends tomorrow',
+            'heading' => 'Ends tomorrow',
+            'body_html' =>
+                $p('Hi {{name}}, this is the last reminder — your <b>{{plan}}</b> plan ends <b>tomorrow, {{expiry_date}}</b>.')
+              . $btn('{{renew_url}}', 'Renew now')
+              . $p('If you would rather not continue, no action is needed. Nothing will be charged automatically.'),
+        ],
+        'expired' => [
+            'subject' => 'Your 7Solve {{plan}} has expired',
+            'heading' => 'Your plan has expired',
+            'body_html' =>
+                $p('Hi {{name}}, your <b>{{plan}}</b> plan ended on <b>{{expiry_date}}</b>.')
+              . $p('Your account, notebook and saved doubts are all still here. Renewing switches the paid features straight back on.')
+              . $btn('{{renew_url}}', 'Renew my plan')
+              . $p('Or <a href="{{upgrade_url}}" style="color:#2647cf">look at the other plans</a> if your needs have changed.'),
+        ],
+        'renewal_success' => [
+            'subject' => '✅ Your 7Solve {{plan}} is renewed',
+            'heading' => 'Renewed — thank you',
+            'body_html' =>
+                $p('Hi {{name}}, your <b>{{plan}}</b> plan is renewed and active.')
+              . $rows
+              . '<tr><td style="padding:7px 0;color:#71718c">Plan</td><td style="padding:7px 0;text-align:right"><b>{{plan}}</b></td></tr>'
+              . '<tr><td style="padding:7px 0;color:#71718c">Amount</td><td style="padding:7px 0;text-align:right">{{amount}}</td></tr>'
+              . '<tr><td style="padding:7px 0;color:#71718c">Order ID</td><td style="padding:7px 0;text-align:right">{{order_id}}</td></tr>'
+              . '<tr><td style="padding:7px 0;color:#71718c">Now active until</td><td style="padding:7px 0;text-align:right"><b>{{expiry_date}}</b></td></tr>'
+              . '</table>'
+              . $btn('{{dashboard_url}}', 'Open my dashboard'),
+        ],
+        'payment_failed' => [
+            'subject' => 'We could not process your 7Solve payment',
+            'heading' => 'Payment did not go through',
+            'body_html' =>
+                $p('Hi {{name}}, your payment for <b>{{plan}}</b> did not complete, so nothing has been charged.')
+              . $p('Reason given by the payment provider: <b>{{reason}}</b>')
+              . $p('Your plan and data are untouched. You can try again whenever suits you.')
+              . $btn('{{renew_url}}', 'Try again')
+              . $p('If money did leave your account, reply to this email with order <b>{{order_id}}</b> and we will trace it.'),
+        ],
         'test_email' => [
             'subject' => '7By test email',
             'heading' => 'It works',
@@ -401,12 +487,17 @@ function ops_mail($senderKind, $to, $template, array $vars = [], array $opt = []
     try {
         $st = db()->prepare(
             'INSERT INTO email_queue
-             (dedupe_key, sender_kind, to_email, to_name, template, subject, vars, user_id, next_attempt, created_at)
-             VALUES (?,?,?,?,?,?,?,?,?,?)');
+             (dedupe_key, sender_kind, to_email, to_name, template, subject, vars, user_id, status, next_attempt, created_at)
+             VALUES (?,?,?,?,?,?,?,?,?,?,?)');
         $st->execute([
             $opt['dedupe'] ?? null, $senderKind, $to, $opt['name'] ?? null,
             $template, $subject, json_encode($vars, JSON_UNESCAPED_UNICODE),
-            $opt['user_id'] ?? null, $now, $now,
+            $opt['user_id'] ?? null,
+            // 'burn' claims the dedupe key without ever delivering. Used to
+            // retire reminder rungs that a more urgent one has overtaken, so
+            // they can never fire later.
+            !empty($opt['burn']) ? 'cancelled' : 'pending',
+            $now, $now,
         ]);
         return (int)db()->lastInsertId();
     } catch (PDOException $e) {
