@@ -24,7 +24,11 @@
 require_once __DIR__ . '/lib.php';
 require_once __DIR__ . '/ops.php';
 
-if (PHP_SAPI !== 'cli' && empty($GLOBALS['OPS_SCHED_EMBED'])) {
+/* Refuse to be fetched over the web — but only when this file is what was
+   requested. The same over-broad check that made the self-test exit also made
+   ops-health.php 404, because including this file under the web SAPI tripped
+   the guard and killed the including script. */
+if (PHP_SAPI !== 'cli' && ops_sched_is_entry_point()) {
     header('X-Robots-Tag: noindex, nofollow');
     http_response_code(404);
     exit("Not found\n");
@@ -363,6 +367,25 @@ function sched_run() {
     return SCHED_EXIT_OK;
 }
 
-if (PHP_SAPI === 'cli' && empty($GLOBALS['OPS_SCHED_EMBED'])) {
+/* Run a tick ONLY when this file is the script that was actually invoked.
+ *
+ * This previously keyed off PHP_SAPI plus an opt-out global, which meant any
+ * CLI script that require'd this file — the self-test included — silently ran
+ * a full scheduler tick against production and then exited on the spot. That
+ * is how the self-test came to stop after section 8 and how it sent live mail
+ * it was explicitly forbidden from sending.
+ *
+ * Detecting the entry point removes the need for every caller to remember a
+ * flag. A file that is merely included defines its functions and does nothing
+ * else, which is what an include should do. */
+if (ops_sched_is_entry_point()) {
     exit(sched_run());
+}
+
+function ops_sched_is_entry_point() {
+    $invoked = $_SERVER['SCRIPT_FILENAME'] ?? ($_SERVER['PHP_SELF'] ?? '');
+    if (!$invoked) return false;
+    $a = realpath($invoked);
+    $b = realpath(__FILE__);
+    return $a && $b && $a === $b;
 }
