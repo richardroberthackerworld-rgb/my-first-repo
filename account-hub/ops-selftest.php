@@ -263,47 +263,60 @@ try {
                  'plan' => 'yearly', 'plan_expires' => date('Y-m-d H:i:s', strtotime('+1 year'))];
     $fakeTx   = ['id' => -1, 'user_id' => $FAKEU, 'payment_id' => $PAY, 'order_id' => $PAY,
                  'plan' => 'yearly', 'amount' => 49900, 'status' => 'paid'];
-    $cnt = function ($tplName) use ($FAKEU, $EMAIL) {
-        $st = db()->prepare('SELECT COUNT(*) FROM email_queue WHERE template = ? AND (user_id = ? OR to_email = ?)');
-        $st->execute([$tplName, $FAKEU, $EMAIL]);
+    /* Count by DEDUPE KEY, not by recipient or user id.
+       Owner copies are deliberately queued with no user_id and go to
+       ops_owner_email(), so a counter keyed on the fake user or the
+       .invalid address cannot see them — that alone produced four of the
+       seven failures. The dedupe key is the one property every row of a
+       given event shares, and it is unique per event, so it also stops
+       one section's rows being counted by another's assertion. */
+    $cntKey = function ($prefix) {
+        /* Dedupe keys contain underscores (SELFTEST_PAY_aa), which LIKE would
+           otherwise treat as single-character wildcards. ESCAPE is declared
+           explicitly with '!' rather than leaning on the backslash default —
+           that default is MySQL-specific and disappears under
+           NO_BACKSLASH_ESCAPES, which would silently widen every match. */
+        $esc = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $prefix);
+        $st = db()->prepare("SELECT COUNT(*) FROM email_queue WHERE dedupe_key LIKE ? ESCAPE '!'");
+        $st->execute([$esc . '%']);
         return (int)$st->fetchColumn();
     };
 
     echo "\n14. SLICE 3 — PURCHASE\n";
     ops_on_purchase($fakeTx, $fakeUser, false);
-    t('customer receipt queued exactly once', $cnt('purchase_success'), 1);
-    t('owner copy queued exactly once',       $cnt('owner_purchase'),   1);
+    t('customer receipt queued exactly once', $cntKey('purchase:' . $PAY), 1);
+    t('owner copy queued exactly once',       $cntKey('ownerpurchase:' . $PAY), 1);
 
     echo "\n15. SLICE 3 — REPLAYED WEBHOOK\n";
     ops_on_purchase($fakeTx, $fakeUser, false);
     ops_on_purchase($fakeTx, $fakeUser, false);
-    t('customer receipt still 1 after 2 replays', $cnt('purchase_success'), 1);
-    t('owner copy still 1 after 2 replays',       $cnt('owner_purchase'),   1);
+    t('customer receipt still 1 after 2 replays', $cntKey('purchase:' . $PAY), 1);
+    t('owner copy still 1 after 2 replays',       $cntKey('ownerpurchase:' . $PAY), 1);
 
     echo "\n16. SLICE 3 — RENEWAL\n";
     $PAY2 = 'SELFTEST_RENEW_' . bin2hex(random_bytes(3));
     $renewTx = array_merge($fakeTx, ['payment_id' => $PAY2, 'order_id' => $PAY2]);
     ops_on_purchase($renewTx, $fakeUser, true);
     ops_on_purchase($renewTx, $fakeUser, true);           // replay
-    t('renewal confirmation queued once', $cnt('renewal_success'), 1);
-    t('owner renewal queued once',        $cnt('owner_renewal'),   1);
+    t('renewal confirmation queued once', $cntKey('renewal:' . $FAKEU . ':' . $PAY2), 1);
+    t('owner renewal queued once',        $cntKey('ownerrenew:' . $PAY2), 1);
 
     echo "\n17. SLICE 3 — PAYMENT FAILURE\n";
     ops_on_payment_failure($FAKEU, $EMAIL, 'Self Test', 'yearly', 'card declined', $PAY);
     ops_on_payment_failure($FAKEU, $EMAIL, 'Self Test', 'yearly', 'card declined', $PAY);
-    t('customer notice queued once', $cnt('payment_failed'),       1);
-    t('owner notice queued once',    $cnt('owner_payment_failed'), 1);
+    t('customer notice queued once', $cntKey('payfail:' . $FAKEU . ':' . $PAY), 1);
+    t('owner notice queued once',    $cntKey('ownerpayfail:' . $FAKEU . ':' . $PAY), 1);
 
     echo "\n18. SLICE 3 — SUPPORT\n";
     $tRef = ops_on_support_ticket($FAKEU, $EMAIL, 'Self Test', 'account',
                                   'Selftest ticket', 'body of the selftest ticket');
     t('ticket created with a ref', (bool)$tRef, true);
-    t('customer confirmation queued once', $cnt('support_ticket_created'), 1);
-    t('owner notification queued once',    $cnt('owner_support_ticket'),   1);
+    t('customer confirmation queued once', $cntKey('ticket:' . $tRef), 1);
+    t('owner notification queued once',    $cntKey('ownerticket:' . $tRef), 1);
     ops_on_support_reply($tRef, 'first reply', 'Selftest');
-    t('first reply queues one email',  $cnt('support_reply'), 1);
+    t('first reply queues one email',  $cntKey('reply:' . $tRef . ':'), 1);
     ops_on_support_reply($tRef, 'second reply', 'Selftest');
-    t('a SECOND reply queues another', $cnt('support_reply'), 2);
+    t('a SECOND reply queues another', $cntKey('reply:' . $tRef . ':'), 2);
 
     echo "\n19. SLICE 3 — EMAIL DELIVERY FAILURE\n";
     ops_on_email_failed(-424242, 'purchase_success', $EMAIL, 3, 'connection refused');
@@ -334,11 +347,16 @@ try {
       strpos($vBlock, 'grant_from_tx($tx);') < strpos($vBlock, 'ops_purchase_hook'), true);
     t('a missing ops-events.php cannot fatal the payment flow',
       strpos($api, "is_file(__DIR__ . '/ops-events.php')") !== false, true);
-    t('every hook call site is function_exists-guarded',
-      substr_count($api, 'function_exists(\'ops_purchase_hook\')')
-        + substr_count($api, 'function_exists(\'ops_signup_hook\')'),
-      substr_count($api, 'ops_purchase_hook(') - substr_count($api, "function_exists('ops_purchase_hook')")
-        + substr_count($api, 'ops_signup_hook(') - substr_count($api, "function_exists('ops_signup_hook')"));
+    /* The invariant is simply that no hook call is unguarded. The previous
+       form compared the NUMBER OF GUARDS against the number of unguarded
+       calls — two quantities that are never equal when the code is correct,
+       so it reported 4 vs 0 on a correctly guarded file. */
+    $guards = substr_count($api, "function_exists('ops_purchase_hook')")
+            + substr_count($api, "function_exists('ops_signup_hook')");
+    $calls  = substr_count($api, 'ops_purchase_hook(') + substr_count($api, 'ops_signup_hook(');
+    t('all four hook call sites present', $calls,  4);
+    t('all four are function_exists-guarded', $guards, 4);
+    t('unguarded hook call sites', $calls - $guards, 0);
 
     echo "\n22. HEARTBEAT\n";
     ops_set_setting('sched_last_run', date('Y-m-d H:i:s', time() - 3600));
