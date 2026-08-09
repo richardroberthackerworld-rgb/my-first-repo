@@ -73,6 +73,33 @@ function t($name, $got, $want) {
                        . "\n         want: " . var_export($want, true) . "\n"; }
 }
 
+/* ---------- pre-flight: clear anything a previous run left behind ----------
+   $EMAIL is randomised per run but $FAKEU is a fixed -999, so rows from an
+   earlier run stay visible to any query keyed on the user id. A run that
+   exits mid-way never reaches its finally block — exit() skips finally — so
+   an aborted run leaves rows that make the NEXT run's counts wrong. Purging
+   up front makes each run independent of how the last one ended.
+   Test-only scope: user id -999 and @selftest.invalid addresses. */
+$stale = 0;
+foreach ([
+    ['DELETE FROM email_queue WHERE user_id = ? OR to_email LIKE ?', [$FAKEU, '%@selftest.invalid']],
+    ['DELETE FROM email_log   WHERE to_email LIKE ?',                ['%@selftest.invalid']],
+    ['DELETE FROM notifications WHERE user_id = ?',                  [$FAKEU]],
+    ['DELETE FROM audit_logs  WHERE target = ?',                     ['user#' . $FAKEU]],
+    ["DELETE FROM system_errors WHERE type LIKE '__SELFTEST__%'",    []],
+] as [$sql, $args]) {
+    try { $s = db()->prepare($sql); $s->execute($args); $stale += $s->rowCount(); }
+    catch (Throwable $e) { /* table may not exist on a first run */ }
+}
+try {
+    $s = db()->prepare('DELETE sm FROM support_messages sm JOIN support_tickets st
+                        ON st.id = sm.ticket_id WHERE st.email LIKE ?');
+    $s->execute(['%@selftest.invalid']); $stale += $s->rowCount();
+    $s = db()->prepare('DELETE FROM support_tickets WHERE email LIKE ?');
+    $s->execute(['%@selftest.invalid']); $stale += $s->rowCount();
+} catch (Throwable $e) {}
+if ($stale) echo "pre-flight: removed $stale row(s) left by an earlier run\n\n";
+
 echo "7By ops self-test\n";
 echo "run id: $RUN\n";
 echo str_repeat('=', 52) . "\n\n";
@@ -159,11 +186,23 @@ try {
     $exp = date('Y-m-d H:i:s', strtotime('+2 days'));
     $q1 = sched_ladder_for($FAKEU, 'selftest', $EMAIL, 'Self Test', 'yearly', $exp);
     t('a customer at 2 days gets ONE email, not four', $q1, 1);
-    $st = db()->prepare("SELECT template, status FROM email_queue WHERE user_id = ? ORDER BY id");
+    /* Scope to the rows THIS ladder created. Section 6 also leaves a
+       cancelled row for the same user id, so counting every cancelled row
+       for $FAKEU measures the wrong population — it was reporting 6 rather
+       than the 3 burns. Reminder rows are the ones keyed 'rem:'. */
+    $st = db()->prepare("SELECT template, status, dedupe_key FROM email_queue
+                          WHERE user_id = ? AND dedupe_key LIKE 'rem:%' ORDER BY id");
     $st->execute([$FAKEU]);
     $rowsQ = $st->fetchAll();
+
+    // breakdown printed regardless, so a future mismatch explains itself
+    $byStatus = [];
+    foreach ($rowsQ as $r) $byStatus[$r['status']][] = $r['template'];
+    foreach ($byStatus as $s => $tpls) printf("     %-10s %d  (%s)\n", $s, count($tpls), implode(', ', $tpls));
+
     $sentT = array_values(array_filter($rowsQ, fn($r) => $r['status'] === 'pending'));
     t('and it is the most urgent rung', $sentT[0]['template'] ?? '', 'expiry_3');
+    t('exactly one rung left pending', count($sentT), 1);
     t('overtaken rungs burned, not queued',
       count(array_filter($rowsQ, fn($r) => $r['status'] === 'cancelled')), 3);
     t('re-running the tick sends nothing more',
