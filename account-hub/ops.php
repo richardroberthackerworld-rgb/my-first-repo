@@ -86,6 +86,7 @@ function ops_migrate() {
         attempts      INT NOT NULL DEFAULT 0,
         next_attempt  DATETIME NOT NULL,
         last_error    TEXT NULL,
+        provider_msg_id VARCHAR(191) NULL,
         created_at    DATETIME NOT NULL,
         sent_at       DATETIME NULL,
         UNIQUE KEY uniq_dedupe (dedupe_key),
@@ -106,6 +107,7 @@ function ops_migrate() {
         provider    VARCHAR(32) NULL,
         attempts    INT NOT NULL DEFAULT 1,
         error       TEXT NULL,
+        provider_msg_id VARCHAR(191) NULL,
         created_at  DATETIME NOT NULL,
         KEY idx_to     (to_email),
         KEY idx_status (status, created_at),
@@ -217,6 +219,14 @@ function ops_migrate() {
         created_at    DATETIME NOT NULL,
         UNIQUE KEY uniq_email (email)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    /* Columns added after the first deploy. CREATE TABLE IF NOT EXISTS will
+       not add them to a table that already exists, so they are ALTERed in
+       separately and the duplicate-column error is expected on re-run. */
+    foreach ([
+        "ALTER TABLE email_queue ADD COLUMN provider_msg_id VARCHAR(191) NULL",
+        "ALTER TABLE email_log   ADD COLUMN provider_msg_id VARCHAR(191) NULL",
+    ] as $sql) { try { $pdo->exec($sql); } catch (Throwable $e) { /* already present */ } }
 
     /* one row per scheduler tick — execution log and heartbeat history */
     $pdo->exec("CREATE TABLE IF NOT EXISTS scheduler_runs (
@@ -460,6 +470,96 @@ function ops_builtin_templates() {
               . $btn('{{renew_url}}', 'Try again')
               . $p('If money did leave your account, reply to this email with order <b>{{order_id}}</b> and we will trace it.'),
         ],
+        /* ---- support ---- */
+        'support_ticket_created' => [
+            'subject' => 'We have your message — ticket {{ticket}}',
+            'heading' => 'We have your message',
+            'body_html' =>
+                $p('Hi {{name}}, thanks for writing in. A person will read this — it has not gone into a void.')
+              . $rows
+              . '<tr><td style="padding:7px 0;color:#71718c">Ticket</td><td style="padding:7px 0;text-align:right"><b>{{ticket}}</b></td></tr>'
+              . '<tr><td style="padding:7px 0;color:#71718c">Subject</td><td style="padding:7px 0;text-align:right">{{subject}}</td></tr>'
+              . '<tr><td style="padding:7px 0;color:#71718c">Category</td><td style="padding:7px 0;text-align:right">{{category}}</td></tr>'
+              . '</table>'
+              . '<div style="margin:0 0 18px;padding:13px 15px;background:#f4f4f8;border-left:3px solid #2647cf;'
+              . 'border-radius:0 5px 5px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;'
+              . 'color:#43435c;white-space:pre-wrap">{{summary}}</div>'
+              . $p('Reply to this email to add anything — it lands on the same ticket.'),
+        ],
+        'support_reply' => [
+            'subject' => 'Re: {{subject}} — ticket {{ticket}}',
+            'heading' => 'A reply to your ticket',
+            'body_html' =>
+                $p('Hi {{name}}, {{agent}} has replied to <b>{{ticket}}</b>:')
+              . '<div style="margin:0 0 18px;padding:15px 17px;background:#f2f6ff;border-left:3px solid #2647cf;'
+              . 'border-radius:0 5px 5px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.65;'
+              . 'color:#26264a;white-space:pre-wrap">{{reply}}</div>'
+              . $p('Still stuck? Reply to this email and the thread stays together.'),
+        ],
+        /* ---- owner ---- */
+        'owner_new_member' => [
+            'subject' => '👤 New 7By member — {{email}}',
+            'heading' => 'New member',
+            'body_html' => $rows
+              . '<tr><td style="padding:7px 0;color:#71718c">Name</td><td style="padding:7px 0;text-align:right"><b>{{name}}</b></td></tr>'
+              . '<tr><td style="padding:7px 0;color:#71718c">Email</td><td style="padding:7px 0;text-align:right">{{email}}</td></tr>'
+              . '<tr><td style="padding:7px 0;color:#71718c">Signed up</td><td style="padding:7px 0;text-align:right">{{when}}</td></tr>'
+              . '</table>' . $btn('{{admin_url}}', 'Open admin'),
+        ],
+        'owner_renewal' => [
+            'subject' => '🔁 7Solve renewal — {{amount}}',
+            'heading' => 'Renewal',
+            'body_html' => $rows
+              . '<tr><td style="padding:7px 0;color:#71718c">Customer</td><td style="padding:7px 0;text-align:right"><b>{{name}}</b></td></tr>'
+              . '<tr><td style="padding:7px 0;color:#71718c">Email</td><td style="padding:7px 0;text-align:right">{{email}}</td></tr>'
+              . '<tr><td style="padding:7px 0;color:#71718c">Plan</td><td style="padding:7px 0;text-align:right">{{plan}}</td></tr>'
+              . '<tr><td style="padding:7px 0;color:#71718c">Amount</td><td style="padding:7px 0;text-align:right"><b>{{amount}}</b></td></tr>'
+              . '<tr><td style="padding:7px 0;color:#71718c">Payment ID</td><td style="padding:7px 0;text-align:right">{{order_id}}</td></tr>'
+              . '<tr><td style="padding:7px 0;color:#71718c">Now until</td><td style="padding:7px 0;text-align:right">{{expiry_date}}</td></tr>'
+              . '</table>' . $btn('{{admin_url}}', 'Open admin'),
+        ],
+        'owner_payment_failed' => [
+            'subject' => '⚠️ 7Solve payment failed — {{email}}',
+            'heading' => 'A payment failed',
+            'body_html' => $rows
+              . '<tr><td style="padding:7px 0;color:#71718c">Customer</td><td style="padding:7px 0;text-align:right"><b>{{name}}</b></td></tr>'
+              . '<tr><td style="padding:7px 0;color:#71718c">Email</td><td style="padding:7px 0;text-align:right">{{email}}</td></tr>'
+              . '<tr><td style="padding:7px 0;color:#71718c">Plan</td><td style="padding:7px 0;text-align:right">{{plan}}</td></tr>'
+              . '<tr><td style="padding:7px 0;color:#71718c">Amount</td><td style="padding:7px 0;text-align:right">{{amount}}</td></tr>'
+              . '<tr><td style="padding:7px 0;color:#71718c">Order</td><td style="padding:7px 0;text-align:right">{{order_id}}</td></tr>'
+              . '<tr><td style="padding:7px 0;color:#71718c">Reason</td><td style="padding:7px 0;text-align:right">{{reason}}</td></tr>'
+              . '</table>'
+              . $p('The customer has been told nothing was charged and can retry.'),
+        ],
+        'owner_support_ticket' => [
+            'subject' => '🎫 New ticket {{ticket}} — {{category}}',
+            'heading' => 'New support ticket',
+            'body_html' => $rows
+              . '<tr><td style="padding:7px 0;color:#71718c">Ticket</td><td style="padding:7px 0;text-align:right"><b>{{ticket}}</b></td></tr>'
+              . '<tr><td style="padding:7px 0;color:#71718c">From</td><td style="padding:7px 0;text-align:right">{{name}} &lt;{{email}}&gt;</td></tr>'
+              . '<tr><td style="padding:7px 0;color:#71718c">Category</td><td style="padding:7px 0;text-align:right">{{category}}</td></tr>'
+              . '<tr><td style="padding:7px 0;color:#71718c">Subject</td><td style="padding:7px 0;text-align:right">{{subject}}</td></tr>'
+              . '</table>'
+              . '<div style="margin:0 0 18px;padding:13px 15px;background:#f4f4f8;border-radius:5px;'
+              . 'font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#43435c;'
+              . 'white-space:pre-wrap">{{summary}}</div>'
+              . $btn('{{admin_url}}', 'Open ticket'),
+        ],
+        'owner_email_failed' => [
+            'subject' => '📧 7By email delivery failed — {{template}}',
+            'heading' => 'An email could not be delivered',
+            'body_html' =>
+                $p('A transactional email was abandoned after {{attempts}} attempts. It is kept in the email log, not discarded.')
+              . $rows
+              . '<tr><td style="padding:7px 0;color:#71718c">Template</td><td style="padding:7px 0;text-align:right"><b>{{template}}</b></td></tr>'
+              . '<tr><td style="padding:7px 0;color:#71718c">Recipient</td><td style="padding:7px 0;text-align:right">{{recipient}}</td></tr>'
+              . '<tr><td style="padding:7px 0;color:#71718c">Queue row</td><td style="padding:7px 0;text-align:right">#{{queue_id}}</td></tr>'
+              . '<tr><td style="padding:7px 0;color:#71718c">When</td><td style="padding:7px 0;text-align:right">{{when}}</td></tr>'
+              . '</table>'
+              . '<pre style="margin:0 0 18px;padding:12px;background:#f4f4f8;border-radius:6px;font-size:12px;'
+              . 'line-height:1.5;color:#43435c;white-space:pre-wrap;word-break:break-word">{{reason}}</pre>'
+              . $btn('{{admin_url}}', 'Open email log'),
+        ],
         'test_email' => [
             'subject' => '7By test email',
             'heading' => 'It works',
@@ -568,6 +668,11 @@ function ops_mail_flush($limit = 20) {
             ops_error('EMAIL_DELIVERY_FAILED', 'high',
                 'Gave up sending "' . $q['template'] . '" to ' . $q['to_email'] . ' after ' . $attempts . ' attempts',
                 ['route' => 'email_queue#' . $q['id'], 'detail' => $err]);
+            // A dedicated owner email as well as the incident — but never for
+            // an owner alert that itself failed, which would loop.
+            if (function_exists('ops_on_email_failed') && strpos($q['template'], 'owner_') !== 0) {
+                ops_on_email_failed($q['id'], $q['template'], $q['to_email'], $attempts, $err);
+            }
         } else {
             db()->prepare("UPDATE email_queue SET status='pending', attempts=?, last_error=?,
                            next_attempt = DATE_ADD(NOW(), INTERVAL ? SECOND) WHERE id=?")

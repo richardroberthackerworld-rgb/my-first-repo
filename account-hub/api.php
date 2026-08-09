@@ -5,6 +5,9 @@
  * Actions: me, signup, login, logout, google, order, verify, consume, webhook
  */
 require __DIR__ . '/lib.php';
+// Operational layer: incidents, email queue, lifecycle emails. Guarded so a
+// part-finished deploy leaves the hub working rather than fataling.
+if (is_file(__DIR__ . '/ops-events.php')) { require_once __DIR__ . '/ops-events.php'; }
 api_guard();
 cors();
 boot_session();
@@ -102,6 +105,12 @@ switch ($action) {
 		$st->execute(array($data['name'], $email, $data['password_hash'], (int)$CFG['free_signup_credits']));
 		clear_otp($email, 'signup');
 		$_SESSION['uid'] = db()->lastInsertId();
+		// Owner notification only. The member just completed an OTP round-trip,
+		// so they know the account exists; a "welcome" with nothing actionable
+		// in it would be marketing dressed as a transactional email.
+		if (function_exists('ops_signup_hook')) {
+			ops_signup_hook((int)$_SESSION['uid'], $email, $data['name']);
+		}
 		json_out(array('ok' => true, 'user' => public_user(current_user()), 'token' => issue_api_token($_SESSION['uid'])));
 		break;
 	}
@@ -278,6 +287,15 @@ switch ($action) {
 			->execute(array($payId, 'paid', $tx['id']));
 		// Grant exactly what this order promised — a tool unlock or a credit plan.
 		grant_from_tx($tx);
+		// Receipt + owner copy. Only reachable past the signature check and the
+		// already-paid guard above, so it cannot fire on an unverified claim or
+		// on a replay. $tx still holds the pre-update row, so pass the payment
+		// id that was just confirmed.
+		if (function_exists('ops_purchase_hook')) {
+			$tx['payment_id'] = $payId;
+			$tx['status'] = 'paid';
+			ops_purchase_hook($tx);
+		}
 		json_out(array('ok' => true, 'user' => public_user(current_user()),
 			'tools' => user_tools($u['id'])));
 		break;
@@ -328,6 +346,13 @@ switch ($action) {
 					db()->prepare('UPDATE transactions SET status = "paid", payment_id = ? WHERE id = ?')
 						->execute(array($p['id'] ?? '', $tx['id']));
 					grant_from_tx($tx);
+					// Webhooks are retried by the provider, so this WILL run more
+					// than once for the same payment. The dedupe key is the
+					// payment id, so only the first delivery queues an email.
+					if (function_exists('ops_purchase_hook')) {
+						$tx['payment_id'] = $p['id'] ?? '';
+						ops_purchase_hook($tx);
+					}
 				}
 			}
 		}
@@ -349,9 +374,16 @@ switch ($action) {
 			$st->execute(array($oid));
 			$tx = $st->fetch();
 			if ($tx) {
+				$pid = $evt['payload']['payment']['entity']['id'] ?? '';
 				db()->prepare('UPDATE transactions SET status = "paid", payment_id = ? WHERE id = ?')
-					->execute(array($evt['payload']['payment']['entity']['id'] ?? '', $tx['id']));
+					->execute(array($pid, $tx['id']));
 				grant_from_tx($tx);
+				// Same as above: Razorpay retries webhooks, the payment id
+				// dedupes, so a replay cannot send a second receipt.
+				if (function_exists('ops_purchase_hook')) {
+					$tx['payment_id'] = $pid;
+					ops_purchase_hook($tx);
+				}
 			}
 		}
 		json_out(array('ok' => true));
