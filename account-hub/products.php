@@ -67,4 +67,43 @@ return array(
 		),
 	),
 
+	/* ---- Student apps. These sell CREDITS (no 'unlock' block): every AI
+	        action costs 10 credits, and each app keeps its own wallet. ---- */
+
+	'7solve' => array(
+		'brand'    => '7Solve',
+		'title'    => '7Solve Premium — 7By Account',
+		'tool_url' => 'https://7solve.7by.in',
+		'accent'   => array('#059669', '#10b981'),
+		'hero'     => 'Premium credits for your<br><span class="grad">AI doubt solver.</span>',
+		'sub'      => 'Sign in to your 7By account to get credits for 7Solve. Every step-by-step answer, hint or follow-up costs 10 credits.',
+		'auth_sub' => 'Sign in to manage your 7Solve credits.',
+		'feats'    => array(
+			array('✅', 'Step-by-step answers, hints &amp; AI Tutor'),
+			array('⚡', '10 credits = 1 answer · English, हिंदी, తెలుగు'),
+			array('🔒', '100% safe &amp; secure payments'),
+		),
+		'card'       => '7SOLVE · CREDITS',
+		'unit_note'  => '10 credits = 1 step-by-step answer.',
+		'plan_notes' => array('monthly' => '≈ 100 answers', 'yearly' => '≈ 2,000 answers'),
+	),
+
+	'7marks' => array(
+		'brand'    => '7Marks',
+		'title'    => '7Marks Premium — 7By Account',
+		'tool_url' => 'https://7marks.7by.in',
+		'accent'   => array('#e11d48', '#f43f5e'),
+		'hero'     => 'Premium credits for your<br><span class="grad">question paper maker.</span>',
+		'sub'      => 'Sign in to your 7By account to get credits for 7Marks. Every generated question paper or answer key costs 10 credits.',
+		'auth_sub' => 'Sign in to manage your 7Marks credits.',
+		'feats'    => array(
+			array('💯', 'Question papers with answer keys &amp; diagrams'),
+			array('⚡', '10 credits = 1 paper · English, हिंदी, తెలుగు'),
+			array('🔒', '100% safe &amp; secure payments'),
+		),
+		'card'       => '7MARKS · CREDITS',
+		'unit_note'  => '10 credits = 1 question paper.',
+		'plan_notes' => array('monthly' => '≈ 100 papers', 'yearly' => '≈ 2,000 papers'),
+	),
+
 );

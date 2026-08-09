@@ -207,8 +207,11 @@ switch ($action) {
 			list($code, $order) = rzp_request('POST', '/orders', $payload);
 		}
 		if ($code >= 300 || empty($order['id'])) fail('Could not start payment. Please try again.', 502);
-		db()->prepare('INSERT INTO transactions (user_id, order_id, plan, amount, credits, currency, status) VALUES (?,?,?,?,?,?,?)')
-			->execute(array($u['id'], $order['id'], $plan, $d['amount_minor'], $d['credits'], $d['currency'], 'created'));
+		// 'product' MUST be stored: grant_from_tx() reads it to credit the right
+		// per-tool wallet (7Solve credits must never land in 7Marks, or in the
+		// legacy global balance that no tool spends from).
+		db()->prepare('INSERT INTO transactions (user_id, order_id, plan, amount, credits, currency, product, status) VALUES (?,?,?,?,?,?,?,?)')
+			->execute(array($u['id'], $order['id'], $plan, $d['amount_minor'], $d['credits'], $d['currency'], $product, 'created'));
 		json_out(array('ok' => true, 'gateway' => $gateway, 'order_id' => $order['id'], 'amount' => $d['amount_minor'],
 			'currency' => $d['currency'], 'credits' => $d['credits'],
 			'key_id' => $gateway === 'sevenpay' ? $CFG['sevenpay']['key_id'] : $CFG['razorpay']['key_id'],

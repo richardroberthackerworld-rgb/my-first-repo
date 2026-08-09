@@ -185,9 +185,11 @@
     btn.addEventListener('click', function () {
       var plan = btn.dataset.buy;
       dmsg('Starting secure checkout…', true);
-      // product tells the server which page this is (VocalRemover plans grant
-      // more credits); currency/amount are decided server-side by country.
-      post('order', { plan: plan, product: window.HUB.product || '' }).then(function (r) {
+      // product decides WHICH wallet gets the credits (each app has its own).
+      // On a product page it is fixed; on the generic page the buyer picks.
+      var sel = document.getElementById('buyTool');
+      var product = window.HUB.product || (sel ? sel.value : '');
+      post('order', { plan: plan, product: product }).then(function (r) {
         if (!r.body.ok) { dmsg(r.body.error || 'Could not start payment.'); return; }
         var o = r.body, p = window.HUB.plans[plan] || {};
         if (o.gateway === 'sevenpay') { paySevenPay(o, plan, p); return; }

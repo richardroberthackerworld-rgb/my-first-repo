@@ -25,3 +25,9 @@ RewriteRule ^ - [L]
 
 RewriteRule ^removebgpremiumaccount/?$      index.php?p=removebg     [L,QSA]
 RewriteRule ^vocalremoverpremiumaccount/?$  index.php?p=vocalremover [L,QSA]
+RewriteRule ^7solvepremiumaccount/?$        index.php?p=7solve       [L,QSA]
+RewriteRule ^7markspremiumaccount/?$        index.php?p=7marks       [L,QSA]
+
+# Legacy names — the apps were once called Doubt Snap / QBank. Keep old links alive.
+RewriteRule ^doubtsnappremiumaccount/?$     index.php?p=7solve       [L,QSA]
+RewriteRule ^qbankpremiumaccount/?$         index.php?p=7marks       [L,QSA]
