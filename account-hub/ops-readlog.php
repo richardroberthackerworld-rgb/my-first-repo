@@ -2,8 +2,15 @@
 /* ============================================================
    ops-readlog.php — TEMPORARY read-only diagnostic. DELETE AFTER USE.
 
-   Shows the last 20 rows of email_log so you can see exactly what the
-   self-test bug caused to be sent, with every address masked.
+   Step 1 inspects the schema via INFORMATION_SCHEMA, step 2 selects from
+   email_log using the columns that actually exist.
+
+   The first version of this script hard-coded `sent_at`, which lives on
+   email_queue, not email_log — email_log records when the attempt was
+   logged, in `created_at`. That produced SQLSTATE 42S22. Rather than
+   swapping one guessed name for another, the query is now built from the
+   real column list, so a schema difference reports itself instead of
+   failing.
 
    Why it does NOT use lib.php / db():
      db() runs CREATE TABLE IF NOT EXISTS and ALTER TABLE on connect.
@@ -13,7 +20,7 @@
 
    Guarantees:
      • CLI only — refuses to run under any web SAPI
-     • one SELECT, nothing else; the statement is a literal below
+     • SELECT statements only, against INFORMATION_SCHEMA and email_log
      • never prints the database user, password, host or name
      • email addresses masked before display
      • does not touch ops.php, ops-events.php or ops-scheduler.php, so no
@@ -63,38 +70,88 @@ function mask_email($e) {
          . $tld;
 }
 
-echo "email_log — last 20 rows (addresses masked)\n";
+/* ---------- STEP 1: metadata, read-only ----------
+   DATABASE() is used instead of naming the schema, so the database name
+   is never written into this file nor printed. */
+echo "STEP 1 — SCHEMA INSPECTION\n";
 echo str_repeat('=', 74), "\n";
 
-try {
-    $rows = $pdo->query(
-        'SELECT to_email, template, sent_at FROM email_log ORDER BY id DESC LIMIT 20'
-    )->fetchAll();
-} catch (Throwable $e) {
-    fwrite(STDERR, "Query failed. Does email_log exist yet? SQLSTATE: " . $e->getCode() . "\n");
-    exit(4);
+$tables = $pdo->query(
+    "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME IN ('email_log','email_queue')
+      ORDER BY TABLE_NAME")->fetchAll(PDO::FETCH_COLUMN);
+
+echo "email_log exists  : "   . (in_array('email_log', $tables, true)   ? 'yes' : 'NO') . "\n";
+echo "email_queue exists: "   . (in_array('email_queue', $tables, true) ? 'yes' : 'NO') . "\n\n";
+
+if (!in_array('email_log', $tables, true)) {
+    echo "email_log is not present. Nothing was ever recorded as sent or failed.\n";
+    echo "\nDelete this file when you are done.\n";
+    exit(0);
 }
+
+$cols = $pdo->query(
+    "SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'email_log'
+      ORDER BY ORDINAL_POSITION")->fetchAll();
+
+echo "email_log columns:\n";
+foreach ($cols as $c) printf("  %-20s %s\n", $c['COLUMN_NAME'], $c['DATA_TYPE']);
+
+$have = array_column($cols, 'COLUMN_NAME');
+$check = ['to_email', 'template', 'sent_at'];
+echo "\nthe three columns originally queried:\n";
+foreach ($check as $c) {
+    printf("  %-12s %s\n", $c, in_array($c, $have, true) ? 'present' : 'MISSING  <-- cause of 42S22');
+}
+
+/* ---------- STEP 2: the corrected SELECT ---------- */
+echo "\n\nSTEP 2 — LAST 20 EMAIL_LOG ROWS (addresses masked)\n";
+echo str_repeat('=', 74), "\n";
+
+// pick whichever timestamp this table actually carries
+$tsCol = in_array('sent_at', $have, true) ? 'sent_at'
+       : (in_array('created_at', $have, true) ? 'created_at' : null);
+
+$want = array_values(array_filter(
+    ['to_email', 'template', 'status', $tsCol],
+    fn($c) => $c !== null && in_array($c, $have, true)));
+
+if (!$want) { echo "none of the expected columns exist — schema is unrecognised\n"; exit(4); }
+
+$orderBy = in_array('id', $have, true) ? 'id' : $want[count($want) - 1];
+$sql = 'SELECT ' . implode(', ', $want) . ' FROM email_log ORDER BY ' . $orderBy . ' DESC LIMIT 20';
+echo "query: $sql\n\n";
+
+$rows = $pdo->query($sql)->fetchAll();
 
 if (!$rows) {
     echo "(no rows — nothing has been recorded as sent or failed)\n";
 } else {
-    printf("%-30s  %-26s  %s\n", 'RECIPIENT', 'TEMPLATE', 'SENT AT');
+    printf("%-30s  %-24s  %-7s  %s\n", 'RECIPIENT', 'TEMPLATE', 'STATUS', 'WHEN');
     echo str_repeat('-', 74), "\n";
     foreach ($rows as $r) {
-        printf("%-30s  %-26s  %s\n",
-            mask_email($r['to_email']),
-            substr((string)$r['template'], 0, 26),
-            (string)$r['sent_at']);
+        printf("%-30s  %-24s  %-7s  %s\n",
+            mask_email($r['to_email'] ?? ''),
+            substr((string)($r['template'] ?? ''), 0, 24),
+            substr((string)($r['status'] ?? '-'), 0, 7),
+            (string)($r[$tsCol] ?? ''));
     }
 }
 
-/* A count of the templates that actually reached a customer, so the
-   question "did a real person get mail" is answered directly. */
+/* Did a real person receive anything? .invalid addresses are the
+   self-test's own; anything else is a live recipient. */
 echo "\nby template (last 20):\n";
-$tally = [];
-foreach ($rows as $r) { $t = $r['template'] ?: '(none)'; $tally[$t] = ($tally[$t] ?? 0) + 1; }
+$tally = []; $real = 0;
+foreach ($rows as $r) {
+    $t = ($r['template'] ?? '') ?: '(none)';
+    $tally[$t] = ($tally[$t] ?? 0) + 1;
+    if (!str_ends_with(strtolower((string)($r['to_email'] ?? '')), '.invalid')) $real++;
+}
 arsort($tally);
 foreach ($tally as $t => $n) printf("  %-30s %d\n", $t, $n);
 
-echo "\nrows shown: " . count($rows) . "\n";
+echo "\nrows shown        : " . count($rows) . "\n";
+echo "to real addresses : $real   (the rest are .invalid self-test rows)\n";
 echo "\nDelete this file when you are done.\n";
