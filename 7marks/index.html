@@ -275,6 +275,13 @@ main.book::before{ /* page edge stack on the right */
 
 /* ---------- Chapter I : choose study level & subject ---------- */
 .level-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:18px}
+/* Phones: the 150px track only ever fitted one column, so the choices ran down
+   the page. Force two so the level picker stays scannable in a thumb's reach. */
+@media(max-width:640px){
+  .level-grid{grid-template-columns:repeat(2,1fr);gap:8px}
+  .level-card{padding:11px 6px;font-size:13.5px;line-height:1.3}
+  .level-card .em{font-size:21px}
+}
 .level-card{
   background:#fff;border:1.5px solid var(--rule);border-radius:10px;
   padding:12px 10px;text-align:center;cursor:pointer;transition:all .15s ease;
@@ -924,10 +931,20 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
 /* Small screens: the fine print would render at ~6px. Drop it rather than
    ship something unreadable — the intro keeps the hero, tagline and progress. */
 @media(max-width:700px){
-  .qp-stage{aspect-ratio:520/824;width:min(94vw,420px)}
-  .qp-note{width:22%;bottom:7%}
-  .qp-clip{left:2%;width:22%;height:11%}
+  /* Square again, because the whole paper is shown — and as large as the
+     screen allows, since every unit of width is legibility. */
+  .qp-stage{aspect-ratio:1/1;width:min(97vw,86vh)}
+  .qp-note{width:23%;bottom:6%}
+  .qp-clip{left:2%;width:23%;height:12%}
   .qp-pencil{display:none}
+  /* The fine print is ~13-19 units in a 1000-unit box; on a phone that lands
+     around 6px. Bump the small classes so the paper stays readable whole. */
+  .qp-svg .s13{font-size:18px}
+  .qp-svg .s14{font-size:20px}
+  .qp-svg .s15{font-size:22px}
+  .qp-svg .s16{font-size:23px}
+  .qp-svg .s18{font-size:25px}
+  .qp-svg .s20{font-size:26px}
 }
 @media (prefers-reduced-motion:reduce){
   .qp,.qp *{animation:none!important;transition:none!important}
@@ -945,22 +962,11 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   var gone = false;
   function done(){ if (gone) return; gone = true; if (pl && pl.parentNode) pl.parentNode.removeChild(pl); }
   try { sessionStorage.setItem('pl7marks2','1'); } catch(e){}
-  // Phones are not just a smaller desk: shrinking the whole 1000x1000 sheet
-  // renders body text at ~6px. Crop to the central column instead so the
-  // hero, tagline and progress stay large and legible.
-  try {
-    if (window.matchMedia('(max-width:700px)').matches) {
-      var svg = pl.querySelector('.qp-svg');
-      if (svg) {
-        svg.setAttribute('viewBox', '280 172 520 824');
-        // MARKS is ~686 units wide at 150px — too wide for a phone crop,
-        // so shrink the hero and re-seat it inside the narrower column
-        var h7 = pl.querySelector('.hero7'), hM = pl.querySelector('.heroM');
-        if (h7) { h7.style.fontSize = '108px'; h7.setAttribute('x', '300'); h7.setAttribute('y', '322'); }
-        if (hM) { hM.style.fontSize = '108px'; hM.setAttribute('x', '370'); hM.setAttribute('y', '322'); }
-      }
-    }
-  } catch(e){}
+  // Phones show the WHOLE paper. An earlier build cropped to the central
+  // column, which quietly hid the Q.P. Code, Roll No. boxes, the 100/100
+  // stamp, DO YOUR BEST, every side doodle and the instructions block —
+  // most of what makes it read as an exam paper. Nothing is cropped now;
+  // the sheet is simply sized to fill as much of the screen as it can.
   var skip = pl.querySelector('.qp-skip');
   if (skip) skip.addEventListener('click', done);
 
