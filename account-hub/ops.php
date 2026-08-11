@@ -226,6 +226,17 @@ function ops_migrate() {
     foreach ([
         "ALTER TABLE email_queue ADD COLUMN provider_msg_id VARCHAR(191) NULL",
         "ALTER TABLE email_log   ADD COLUMN provider_msg_id VARCHAR(191) NULL",
+        /* Which product a ticket/error/mail belongs to, so a per-tool admin can
+           filter. DELIBERATELY NULLABLE with no default: every existing row and
+           every existing code path keeps writing NULL and behaves exactly as
+           before, so 7Solve is untouched. Only code that explicitly sets it
+           (7Marks) will populate it. */
+        "ALTER TABLE support_tickets ADD COLUMN tool VARCHAR(24) NULL",
+        "ALTER TABLE system_errors   ADD COLUMN tool VARCHAR(24) NULL",
+        "ALTER TABLE email_queue     ADD COLUMN tool VARCHAR(24) NULL",
+        "ALTER TABLE email_log       ADD COLUMN tool VARCHAR(24) NULL",
+        "CREATE INDEX idx_tickets_tool ON support_tickets (tool, status)",
+        "CREATE INDEX idx_errors_tool  ON system_errors (tool, status)",
     ] as $sql) { try { $pdo->exec($sql); } catch (Throwable $e) { /* already present */ } }
 
     /* one row per scheduler tick — execution log and heartbeat history */
