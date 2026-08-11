@@ -703,7 +703,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
     <header class="qp-head">
       <span class="qp-box qp-box-l">TIME : UNLIMITED</span>
       <div class="qp-mast">
-        <h1 class="qp-title"><b>7</b> MARKS</h1>
+        <h1 class="qp-title"><img src="brand-mark.png?v=7m1" alt="7 Marks" width="512" height="512" decoding="async"></h1>
         <p class="qp-sub">&mdash; SNAP ANY DOUBT. GET THE <u>EXACT ANSWER</u>. &mdash;</p>
         <p class="qp-sub">EXPLAINED LIKE A <u>GOOD TEACHER</u>.</p>
       </div>
@@ -805,10 +805,13 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   border:1.5px solid #1a1a18;padding:clamp(4px,.7vw,9px) clamp(5px,.9vw,12px);white-space:nowrap;
   color:#1a1a18;opacity:0;animation:qpFade .4s ease 2.6s forwards}
 .qp-mast{text-align:center;min-width:0}
-.qp-title{font-family:'Playfair Display',Georgia,serif;font-weight:900;margin:0;color:#1a1a18;
-  font-size:clamp(30px,6.6vw,66px);line-height:1;letter-spacing:clamp(1px,.5vw,5px);
-  opacity:0;animation:qpStamp .6s cubic-bezier(.3,1.4,.5,1) 2.15s forwards}
-.qp-title b{color:#b6332a}
+/* The badge is the brand mark. Its paper was keyed out, so it prints onto
+   the sheet rather than sitting on its own off-white square. */
+.qp-title{margin:0;line-height:0;display:flex;justify-content:center;
+  opacity:0;animation:qpStamp .7s cubic-bezier(.3,1.4,.5,1) 2.15s forwards}
+.qp-title img{width:clamp(86px,15vw,168px);height:auto;display:block;
+  /* a touch of ink bleed so it reads as stamped, not pasted */
+  filter:contrast(1.06) drop-shadow(0 1px 0 rgba(26,26,24,.16))}
 .qp-sub{font-family:'Courier Prime',monospace;margin:clamp(4px,.8vw,8px) 0 0;color:#22201c;
   font-size:clamp(8.5px,1.32vw,15px);letter-spacing:.4px;line-height:1.5;
   opacity:0;animation:qpFade .5s ease 2.95s forwards}
