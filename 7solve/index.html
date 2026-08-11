@@ -1081,12 +1081,12 @@ footer .fleuron{color:var(--blue);font-size:19px;display:block;margin-bottom:7px
         <div class="nbp-margin"></div>
         <svg class="nbp-svg" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid meet" role="img" aria-label="7Solve — where every doubt becomes understanding">
           <defs>
-            <clipPath id="k1"><rect class="rv" style="--w:270px;--t:.95s;--d:2.05s" x="370" y="206" width="0" height="162"/></clipPath>
-            <clipPath id="k2"><rect class="rv" style="--w:260px;--t:.55s;--d:3.30s" x="370" y="377" width="0" height="52"/></clipPath>
-            <clipPath id="k3"><rect class="rv" style="--w:320px;--t:.62s;--d:3.90s" x="344" y="421" width="0" height="52"/></clipPath>
-            <clipPath id="k4"><rect class="rv" style="--w:150px;--t:.42s;--d:1.95s" x="428" y="66"  width="0" height="48"/></clipPath>
-            <clipPath id="k5"><rect class="rv" style="--w:230px;--t:.48s;--d:7.70s" x="391" y="694" width="0" height="48"/></clipPath>
-            <clipPath id="k6"><rect class="rv" style="--w:215px;--t:.50s;--d:8.90s" x="394" y="832" width="0" height="48"/></clipPath>
+            <clipPath id="k1"><rect class="rv" style="--t:.95s;--d:2.05s" x="370" y="206" width="270" height="162"/></clipPath>
+            <clipPath id="k2"><rect class="rv" style="--t:.55s;--d:3.30s" x="370" y="377" width="260" height="52"/></clipPath>
+            <clipPath id="k3"><rect class="rv" style="--t:.62s;--d:3.90s" x="344" y="421" width="320" height="52"/></clipPath>
+            <clipPath id="k4"><rect class="rv" style="--t:.42s;--d:1.95s" x="428" y="66" width="150" height="48"/></clipPath>
+            <clipPath id="k5"><rect class="rv" style="--t:.48s;--d:7.70s" x="391" y="694" width="230" height="48"/></clipPath>
+            <clipPath id="k6"><rect class="rv" style="--t:.50s;--d:8.90s" x="394" y="832" width="215" height="48"/></clipPath>
           </defs>
 
           <!-- ================= top of the page ================= -->
@@ -1401,8 +1401,9 @@ footer .fleuron{color:var(--blue);font-size:19px;display:block;margin-bottom:7px
   animation:nbpDraw var(--t,.32s) ease var(--d,0s) forwards}
 @keyframes nbpDraw{to{stroke-dashoffset:0}}
 /* handwriting revealed left-to-right, as if written */
-.rv{width:0;animation:nbpRv var(--t,.5s) linear var(--d,0s) forwards}
-@keyframes nbpRv{to{width:var(--w)}}
+.rv{transform:scaleX(0);transform-box:fill-box;transform-origin:left center;
+  animation:nbpRv var(--t,.5s) linear var(--d,0s) forwards}
+@keyframes nbpRv{to{transform:scaleX(1)}}
 .fx{opacity:0;animation:nbpFade .42s ease var(--d,0s) forwards}
 @keyframes nbpFade{to{opacity:1}}
 @keyframes nbpGlow{to{opacity:.42}}
@@ -1528,7 +1529,7 @@ footer .fleuron{color:var(--blue);font-size:19px;display:block;margin-bottom:7px
   .nbp-cover,.nbp-sun{display:none}
   .nbp-props{opacity:1}
   .dr{stroke-dashoffset:0}
-  .rv{width:var(--w)}
+  .rv{transform:none}
   .fill{width:319px}
   .fx,.dash,.nbp-note,.nbp-pencil{opacity:1!important}
   .bulbglow,.lampglow{opacity:.42}
