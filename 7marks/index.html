@@ -659,7 +659,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
    Appended last so it overrides the older notebook rules without any of them
    having to be deleted — every selector and handler stays exactly as it was. */
 header.cover{background:none;border:0;box-shadow:none;padding:6px 0 12px;position:relative}
-.paper-meta{display:flex;justify-content:space-between;gap:12px;
+.exam-meta{display:flex;justify-content:space-between;gap:12px;
   font-family:var(--mono);font-size:clamp(9px,1.18vw,14px);color:var(--ink);letter-spacing:.4px}
 .brand{display:flex;align-items:center;justify-content:center;gap:clamp(8px,1.4vw,16px);
   font-family:var(--display);font-weight:900;color:var(--ink);text-shadow:none;
@@ -763,12 +763,76 @@ footer{border-top:2px solid var(--ink);margin-top:clamp(10px,1.6vw,18px);
 @media(max-width:640px){
   .sheet{margin:6px auto;padding:12px 12px 10px;border-width:2px}
   .sheet::before{inset:4px}
-  .paper-meta{font-size:9.5px}
+  .exam-meta{font-size:9.5px}
   .chapter{gap:8px}
   .chapter h2{font-size:15px;letter-spacing:.5px;white-space:normal}
   .tagline-sub{overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;
     scrollbar-width:none;text-align:left}
   .tagline-sub::-webkit-scrollbar{display:none}
+}
+/* ================= SNAP / UPLOAD — a printed answer-sheet field ================= */
+.ask-wrap{gap:clamp(10px,1.6vw,20px)}
+#topicText{min-height:clamp(130px,17vw,190px);line-height:1.7;
+  /* faint writing rules inside the box, like a real answer space */
+  background-image:repeating-linear-gradient(180deg,transparent 0 27px,rgba(93,87,76,.22) 27px 28px)!important;
+  background-position:0 14px!important;background-attachment:local!important}
+.photo-box{border:1.5px dashed var(--ink)!important;border-radius:0!important;
+  background:var(--card)!important;box-shadow:none!important;
+  min-height:clamp(130px,17vw,190px);display:flex;align-items:center;justify-content:center;
+  transition:background .15s ease,border-color .15s ease}
+.photo-box:hover,.photo-box.drag{background:var(--paper-2)!important;border-style:solid!important}
+.photo-box .cam{filter:grayscale(1) contrast(1.2);font-size:clamp(24px,3vw,34px)}
+.pb-title{font-family:var(--display);font-weight:700;color:var(--ink);
+  font-size:clamp(12px,1.5vw,17px);letter-spacing:.4px;margin-top:6px}
+.pb-sub{font-family:var(--mono);color:var(--ink-faint);font-size:clamp(9px,1.05vw,12px);
+  letter-spacing:.3px;margin-top:5px}
+.photo-btns{margin-top:clamp(8px,1.2vw,13px)}
+/* uploaded files read as small pasted slips */
+.thumb{border:1.5px solid var(--ink)!important;border-radius:0!important;
+  box-shadow:2px 2px 0 rgba(20,19,16,.16)!important}
+.thumb .remove-img{border-radius:0!important;background:var(--ink)!important;color:#f7f4ec!important;
+  border:0!important;font-family:var(--mono)}
+
+/* ================= THE ANSWER SHEET ================= */
+.paper-sheet{background:var(--card);border:2px solid var(--ink);border-radius:0;
+  box-shadow:var(--lift);padding:clamp(14px,2.2vw,30px) clamp(12px,2.4vw,34px);position:relative}
+/* the examiner's margin, where the marks would go */
+.paper-sheet::before{content:'';position:absolute;top:0;bottom:0;left:clamp(30px,4.4vw,58px);
+  width:1px;background:var(--teacher);opacity:.35;pointer-events:none}
+.paper-sheet #paperMeta{font-family:var(--mono);font-size:clamp(9px,1.08vw,12.5px);
+  color:var(--ink-faint);letter-spacing:.6px;border-bottom:1.5px solid var(--ink);
+  padding-bottom:9px;margin-bottom:clamp(10px,1.5vw,16px);text-transform:uppercase}
+.paper-body{font-family:var(--serif);color:var(--ink);font-size:clamp(14px,1.5vw,17px);line-height:1.75}
+.paper-body h1,.paper-body h2,.paper-body h3{font-family:var(--display);color:var(--ink);
+  font-weight:900;letter-spacing:.4px;border-bottom:1.5px solid var(--ink);
+  padding-bottom:5px;margin:clamp(16px,2.2vw,26px) 0 clamp(8px,1.1vw,12px)}
+.paper-body h2{font-size:clamp(15px,1.9vw,22px);text-transform:uppercase}
+.paper-body h3{font-size:clamp(13.5px,1.6vw,18px);border-bottom-style:dashed}
+.paper-body ol,.paper-body ul{padding-left:clamp(20px,2.4vw,30px)}
+.paper-body li{margin:7px 0}
+.paper-body li::marker{font-family:var(--mono);font-weight:700;color:var(--ink)}
+.paper-body strong{color:var(--ink);font-weight:900}
+.paper-body code{font-family:var(--mono);background:var(--paper-2);border:1px solid var(--hair);
+  border-radius:0;padding:1px 5px;font-size:.92em}
+.paper-body pre{border:1.5px solid var(--ink);border-radius:0;background:var(--paper-2)}
+.paper-body table{border-collapse:collapse;width:100%}
+.paper-body th,.paper-body td{border:1px solid var(--ink);padding:7px 9px;font-size:.95em}
+.paper-body th{background:var(--paper-2);font-family:var(--mono);text-transform:uppercase;
+  font-size:.82em;letter-spacing:1px}
+.paper-body blockquote{border-left:3px solid var(--teacher);margin:12px 0;padding:4px 0 4px 14px;
+  color:var(--ink-soft);font-style:italic}
+/* the answer key is what the teacher wrote — red, and clearly a second pass */
+#answerKey{border-top:2px dashed var(--ink);margin-top:clamp(16px,2.4vw,28px);
+  padding-top:clamp(12px,1.8vw,20px)}
+#answerKey h2,#answerKey h3{color:var(--teacher);border-bottom-color:var(--teacher)}
+#answerKey strong{color:var(--teacher)}
+#answerKey::before{content:'ANSWER KEY — CHECKED ✓';display:inline-block;
+  font-family:var(--mono);font-size:clamp(8.5px,1vw,11.5px);letter-spacing:1.6px;
+  color:var(--teacher);border:1.5px solid var(--teacher);padding:4px 9px;margin-bottom:12px;
+  transform:rotate(-1.2deg)}
+@media(max-width:640px){
+  .paper-sheet{padding:12px 12px}
+  .paper-sheet::before{left:18px}
 }
 </style>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8250159057339426" crossorigin="anonymous"></script>
@@ -1096,7 +1160,7 @@ footer{border-top:2px solid var(--ink);margin-top:clamp(10px,1.6vw,18px);
   <span class="sheet-stamp" aria-hidden="true">MAX 100</span>
 
 <header class="cover">
-  <div class="paper-meta" aria-hidden="true">
+  <div class="exam-meta" aria-hidden="true">
     <span>Time : Unlimited</span><span>Max. Marks : 100</span>
   </div>
   <div class="brand"><img class="brand-mark" src="brand-mark.png?v=7m1" alt="" width="512" height="512" decoding="async">7<span class="bank">Marks</span></div>
