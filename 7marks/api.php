@@ -56,6 +56,56 @@ function keys_for(array $CFG, string $provider): array {
     return array_values(array_filter(array_map('trim', $list), fn($k) => $k !== ''));
 }
 
+/* ================= API key health =================
+   Without this a spent key is retried on EVERY request: each student waits
+   through a doomed call before the next key is tried. We record what each key
+   did and park a failing one for a while, so traffic flows to keys that work.
+   Keys are never written to disk — only a hash of them. */
+function kh_file(array $CFG): ?string {
+    $d = function_exists('bill_dir') ? bill_dir($CFG) : null;
+    return $d ? $d . '/keyhealth.json' : null;
+}
+function kh_load(array $CFG): array {
+    $f = kh_file($CFG);
+    if (!$f || !is_file($f)) return [];
+    $j = json_decode((string)@file_get_contents($f), true);
+    return is_array($j) ? $j : [];
+}
+function kh_save(array $CFG, array $h): void {
+    $f = kh_file($CFG); if (!$f) return;
+    @file_put_contents($f, json_encode($h), LOCK_EX);
+}
+function kh_id(string $provider, string $key): string {
+    return $provider . ':' . substr(hash('sha256', $key), 0, 16);   // never store the key itself
+}
+/** Order keys healthiest-first and drop any still cooling down. */
+function kh_order(array $CFG, string $provider, array $keys): array {
+    $h = kh_load($CFG); $now = time(); $ready = []; $cooling = [];
+    foreach ($keys as $k) {
+        $r = $h[kh_id($provider, $k)] ?? null;
+        if ($r && ($r['cool_until'] ?? 0) > $now) $cooling[] = $k;
+        else $ready[] = $k;
+    }
+    // if every key is cooling, try them anyway — our bookkeeping must never
+    // be the reason a student gets no answer at all
+    return $ready ?: $cooling;
+}
+/** Record the outcome. $status: 'ok' | 'spent' (429/402/403) | 'error'. */
+function kh_mark(array $CFG, string $provider, string $key, string $status): void {
+    $h = kh_load($CFG); $id = kh_id($provider, $key); $now = time();
+    $r = $h[$id] ?? ['ok' => 0, 'fail' => 0, 'streak' => 0, 'cool_until' => 0, 'last' => 0, 'tail' => ''];
+    $r['last'] = $now;
+    $r['tail'] = substr($key, -4);                       // for a masked admin display
+    if ($status === 'ok') { $r['ok']++; $r['streak'] = 0; $r['cool_until'] = 0; }
+    else {
+        $r['fail']++; $r['streak']++;
+        // back off harder the more it keeps failing: 5m, 15m, 45m … capped at 6h
+        $mins = min(360, 5 * (3 ** min(4, $r['streak'] - 1)));
+        if ($status === 'spent') $r['cool_until'] = $now + $mins * 60;
+    }
+    $h[$id] = $r; kh_save($CFG, $h);
+}
+
 /* ---------- only our own pages may use this proxy ---------- */
 function origin_allowed(array $CFG): bool {
     $allow = $CFG['allow_origins'] ?? [];
@@ -133,6 +183,33 @@ if ($action === 'providers') {
     $on = [];
     foreach (array_keys($ENDPOINTS) as $p) if (keys_for($CFG, $p)) $on[] = $p;
     out(200, ['providers' => $on]);
+}
+
+/* ---------- GET ?action=keyhealth → owner-only key status (masked) ----------
+   Requires the owner token from keys.php, so students can never reach it and
+   the keys themselves are never returned — only the last 4 characters. */
+if ($action === 'keyhealth') {
+    $secret = trim((string)($CFG['owner_token'] ?? ''));
+    $given  = (string)($_SERVER['HTTP_X_7BY_OWNER'] ?? ($_GET['owner'] ?? ''));
+    if ($secret === '' || !hash_equals($secret, $given)) out(404, ['error' => ['message' => 'Not found']]);
+    $h = kh_load($CFG); $now = time(); $rows = [];
+    foreach (array_keys($ENDPOINTS) as $p) {
+        foreach (keys_for($CFG, $p) as $i => $k) {
+            $r = $h[kh_id($p, $k)] ?? [];
+            $cool = (int)($r['cool_until'] ?? 0);
+            $rows[] = [
+                'provider'   => $p,
+                'label'      => $p . ' #' . ($i + 1),
+                'masked'     => str_repeat('•', 6) . substr($k, -4),
+                'ok'         => (int)($r['ok'] ?? 0),
+                'fail'       => (int)($r['fail'] ?? 0),
+                'last_used'  => (int)($r['last'] ?? 0),
+                'status'     => $cool > $now ? 'cooling' : 'ready',
+                'cools_in_s' => $cool > $now ? $cool - $now : 0,
+            ];
+        }
+    }
+    out(200, ['keys' => $rows, 'now' => $now]);
 }
 
 /* ---------- GET ?action=me → this visitor's plan / credits / free left ---------- */
@@ -306,7 +383,7 @@ $url  = str_replace('{model}', rawurlencode($model), $ENDPOINTS[$provider]);
 $body = json_encode($payload);
 $last = ['code' => 502, 'text' => '{"error":{"message":"Upstream failed"}}'];
 
-foreach ($keys as $k) {
+foreach (kh_order($CFG, $provider, $keys) as $k) {
     $headers = ['Content-Type: application/json'];
     if ($provider === 'gemini') {
         $headers[] = 'x-goog-api-key: ' . $k;
@@ -328,9 +405,17 @@ foreach ($keys as $k) {
     $cerr = curl_error($ch);
     curl_close($ch);
 
-    if ($text === false) { $last = ['code' => 502, 'text' => json_encode(['error' => ['message' => 'Network error: ' . $cerr]])]; continue; }
+    if ($text === false) {
+        kh_mark($CFG, $provider, $k, 'error');
+        $last = ['code' => 502, 'text' => json_encode(['error' => ['message' => 'Network error: ' . $cerr]])];
+        continue;
+    }
     $last = ['code' => $code ?: 502, 'text' => $text];
-    if ($code === 429 || $code === 402 || $code === 403) continue;  // key spent → next key
+    if ($code === 429 || $code === 402 || $code === 403) {
+        kh_mark($CFG, $provider, $k, 'spent');                      // park it, then try the next key
+        continue;
+    }
+    kh_mark($CFG, $provider, $k, $code === 200 ? 'ok' : 'error');
     break;                                                          // success or a real error → return it
 }
 
