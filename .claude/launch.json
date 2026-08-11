@@ -2,6 +2,12 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "inviteverse",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "inviteverse"],
+      "port": 3180
+    },
+    {
       "name": "vocal-remover",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["serve", "-p", "3000", "."],
@@ -42,6 +48,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["serve", "-p", "3050", "."],
       "port": 3050
+    },
+    {
+      "name": "7marks-app",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["-y", "http-server", "7marks", "-p", "3051", "-c-1", "--silent"],
+      "port": 3051
     },
     {
       "name": "removebg",
@@ -108,6 +120,42 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["serve", "-p", "3130", "."],
       "port": 3130
+    },
+    {
+      "name": "plant",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["-y", "http-server", "plant", "-p", "3140", "-c-1", "--silent"],
+      "port": 3140
+    },
+    {
+      "name": "forge-engine",
+      "runtimeExecutable": "U:\\New folder\\forge\\local-ai\\.venv\\Scripts\\python.exe",
+      "runtimeArgs": ["-m", "uvicorn", "app:app", "--app-dir", "U:\\New folder\\forge\\local-ai", "--host", "127.0.0.1", "--port", "7850"],
+      "port": 7850
+    },
+    {
+      "name": "forge",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "forge/frontend"],
+      "port": 3150
+    },
+    {
+      "name": "7xpro",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "7xpro"],
+      "port": 3160
+    },
+    {
+      "name": "sheet-api",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["sheet/server/src/index.mjs"],
+      "port": 7860
+    },
+    {
+      "name": "sheet",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "sheet/frontend"],
+      "port": 3170
     },
     {
       "name": "voxtwin",

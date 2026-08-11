@@ -1,0 +1,300 @@
+/* =====================================================================
+   7MARKS — shell chrome and views.
+   Each view is a function that returns markup for #page plus an optional
+   mount() for its behaviour, so views stay independent of one another.
+   ===================================================================== */
+(function (w, d) {
+  'use strict';
+  var M = w.M7, C = w.CATALOG;
+  var $ = M.qs, $$ = M.qsa, esc = M.esc, el = M.el;
+
+  /* ============================ chrome ============================ */
+  var NAV = [
+    ['MAIN', null],
+    ['home',        '🏠', 'Home'],
+    ['assistant',   '🤖', 'AI Study Assistant', 'new'],
+    ['correct',     '🧑‍🏫', 'AI Correct & Score', 'ai'],
+    ['practice',    '📘', 'My Practice'],
+    ['papers',      '📚', 'Question Papers'],
+    ['bookmarks',   '🔖', 'Bookmarks'],
+    ['planner',     '📅', 'Study Planner'],
+    ['notes',       '📒', 'Notes & Flashcards'],
+    ['performance', '📈', 'Performance'],
+    ['analytics',   '📊', 'Analytics'],
+    ['leaderboard', '🏅', 'Leaderboard'],
+    ['challenges',  '🧩', 'Challenges', 'hot'],
+    ['doubt',       '💡', 'Doubt Solver'],
+    ['invite',      '🎁', 'Invite & Earn'],
+    ['EXPLORE', null]
+  ];
+
+  function renderRail() {
+    var h = '';
+    NAV.forEach(function (n) {
+      if (n[1] === null) { h += '<div class="rail-h">' + esc(n[0]) + '</div>'; return; }
+      h += '<li><a class="nav-i" data-view="' + n[0] + '" href="#/' + n[0] + '">' +
+           '<span class="em">' + n[1] + '</span>' + esc(n[2]) +
+           (n[3] ? '<span class="tag ' + n[3] + '">' + n[3] + '</span>' : '') + '</a></li>';
+    });
+    C.cats.forEach(function (c) {
+      h += '<li><a class="nav-i" data-cat="' + c.id + '" href="#/explore?cat=' + c.id + '">' +
+           '<span class="em">' + c.em + '</span>' + esc(c.name) + '</a></li>';
+    });
+    h += '<div class="prem-card"><b>💎 Go Premium</b><ul>' +
+      ['Unlimited practice', 'AI correction & scores', 'Advanced analytics', 'Ad-free',
+       'Priority support'].map(function (x) {
+        return '<li>✓ ' + esc(x) + '</li>';
+      }).join('') +
+      '</ul><a class="go" href="#/premium">Upgrade Now ⚡</a></div>';
+
+    var mins = M.store.get('todayMins', 0);
+    h += '<div class="goal"><b>🎯 Daily Goal</b><div class="bar"><i style="width:' +
+         M.clamp(mins / 30 * 100, 4, 100) + '%"></i></div>' +
+         '<small>' + mins + ' / 30 min · keep it up!</small></div>' +
+         '<p class="rail-quip">Practice today,<br>ace tomorrow!</p>';
+    $('#rail').innerHTML = h;
+  }
+
+  function renderTop() {
+    $('#top').innerHTML =
+      '<button class="burger" id="burger" aria-label="Open menu" aria-expanded="false">☰</button>' +
+      '<a class="brand" href="#/home">' + M.mark(36) +
+        '<span class="brand-txt"><b><i>7</i>Marks</b><small>Practice Smart</small></span></a>' +
+      '<div class="search" id="search">' +
+        '<span class="search-ic">🔍</span>' +
+        '<input class="search-in" id="q" type="search" autocomplete="off" role="combobox" ' +
+          'aria-expanded="false" aria-controls="results" ' +
+          'placeholder="Search for subjects, topics, exams...">' +
+        '<button class="search-clr" id="qclr" aria-label="Clear search">✕</button>' +
+        '<div class="results" id="results" role="listbox"></div>' +
+      '</div>' +
+      '<div class="nav-r">' +
+        '<a class="btn-prem" href="#/premium">👑 <span>Premium</span></a>' +
+        '<div style="position:relative">' +
+          '<button class="ico-btn" id="bell" aria-label="Notifications">🔔<i class="dot" id="dot"></i></button>' +
+          '<div class="pop" id="notifPop"></div></div>' +
+        '<div style="position:relative">' +
+          '<button class="who" id="who"><span class="av" id="av">S</span>' +
+            '<span><b id="uname">Hello, Student!</b><small>Keep learning!</small></span></button>' +
+          '<div class="pop" id="whoPop"></div></div>' +
+      '</div>';
+  }
+
+  function paintNotifs() {
+    var unread = M.state.notifs.filter(function (n) { return n.unread; }).length;
+    $('#dot').style.display = unread ? 'block' : 'none';
+    $('#notifPop').innerHTML =
+      '<div class="pop-h"><b>Notifications</b>' +
+      (unread ? '<button id="readAll">Mark all read</button>' : '') + '</div>' +
+      (M.state.notifs.length ? M.state.notifs.slice(0, 9).map(function (n) {
+        return '<button class="nt' + (n.unread ? ' unread' : '') + '">' +
+          '<span class="em">' + n.em + '</span><div><b>' + esc(n.t) + '</b>' +
+          '<small>' + esc(n.s) + '</small></div></button>';
+      }).join('') : '<div class="empty"><span class="em">🔔</span><b>All caught up</b></div>');
+    var r = $('#readAll');
+    if (r) r.onclick = function () {
+      M.state.notifs.forEach(function (n) { n.unread = false; });
+      M.save('notifs'); paintNotifs();
+    };
+  }
+
+  function mountChrome() {
+    renderTop(); renderRail(); paintNotifs();
+
+    var rail = $('#rail'), scrim = $('#scrim');
+    function closeRail() {
+      rail.classList.remove('open'); scrim.classList.remove('on');
+      $('#burger').setAttribute('aria-expanded', 'false');
+    }
+    $('#burger').onclick = function () {
+      var open = rail.classList.toggle('open');
+      scrim.classList.toggle('on', open);
+      this.setAttribute('aria-expanded', String(open));
+    };
+    scrim.onclick = closeRail;
+    rail.addEventListener('click', function (e) {
+      if (e.target.closest('a') && innerWidth <= 900) closeRail();
+    });
+
+    /* the two dropdowns are mutually exclusive and close on outside click */
+    function pop(btn, panel) {
+      $(btn).onclick = function (e) {
+        e.stopPropagation();
+        var open = $(panel).classList.contains('open');
+        $$('.pop').forEach(function (p) { p.classList.remove('open'); });
+        if (!open) $(panel).classList.add('open');
+      };
+    }
+    pop('#bell', '#notifPop'); pop('#who', '#whoPop');
+    $('#whoPop').innerHTML =
+      '<div class="pop-h"><b>' + esc(M.state.user.name) + '</b>' +
+      '<span style="font-size:11px;color:var(--ink-3)">Level ' + M.state.user.level + '</span></div>' +
+      [['#/profile', '👤', 'My Profile'], ['#/performance', '📈', 'My Performance'],
+       ['#/bookmarks', '🔖', 'Bookmarks'], ['#/premium', '💎', 'Premium'],
+       ['#/settings', '⚙️', 'Settings'], ['classic.html', '📄', 'Classic paper generator']]
+        .map(function (i) {
+          return '<a class="pop-i" href="' + i[0] + '"><span>' + i[1] + '</span>' + esc(i[2]) + '</a>';
+        }).join('');
+    d.addEventListener('click', function () {
+      $$('.pop').forEach(function (p) { p.classList.remove('open'); });
+      $('#results').classList.remove('open');
+    });
+    $('#notifPop').onclick = $('#whoPop').onclick = function (e) { e.stopPropagation(); };
+
+    mountSearch();
+    w.addEventListener('7m:notif', paintNotifs);
+    w.addEventListener('7m:route', function (e) {
+      var v = e.detail.name, cat = e.detail.params.cat;
+      $$('.nav-i').forEach(function (a) {
+        a.classList.toggle('on', a.dataset.view === v || (!!cat && a.dataset.cat === cat));
+      });
+    });
+  }
+
+  /* ---- search: real, over the whole catalogue, keyboard-drivable ---- */
+  function mountSearch() {
+    var box = $('#search'), inp = $('#q'), res = $('#results'), cur = -1, items = [];
+
+    function paint(q) {
+      items = M.search(q);
+      box.classList.toggle('has', !!q);
+      if (!q) { res.classList.remove('open'); inp.setAttribute('aria-expanded', 'false'); return; }
+      if (!items.length) {
+        res.innerHTML = '<div class="res-none">No match for “' + esc(q) + '”</div>';
+      } else {
+        var last = '', h = '';
+        items.forEach(function (it, i) {
+          if (it.kind !== last) { h += '<div class="res-h">' + esc(it.kind) + '</div>'; last = it.kind; }
+          h += '<button class="res" data-i="' + i + '"><span>' + it.em + '</span>' +
+               '<span>' + M.hl(it.label, q) + '</span>' +
+               '<span class="k">' + esc(it.meta) + '</span></button>';
+        });
+        res.innerHTML = h;
+      }
+      cur = -1;
+      res.classList.add('open');
+      inp.setAttribute('aria-expanded', 'true');
+    }
+
+    function pick(i) {
+      var it = items[i]; if (!it) return;
+      res.classList.remove('open');
+      inp.value = ''; box.classList.remove('has');
+      var g = it.go;
+      if (g.cat) { M.state.cat = g.cat; M.save('cat'); }
+      if (g.course) { M.state.course = g.course; M.save('course'); }
+      if (g.subject) { M.state.subject = g.subject; M.save('subject'); }
+      M.router.go(g.view, g.cat ? { cat: g.cat } : null);
+    }
+
+    inp.oninput = function () { paint(this.value); };
+    inp.onfocus = function () { if (this.value) paint(this.value); };
+    inp.onkeydown = function (e) {
+      if (e.key === 'Escape') { res.classList.remove('open'); this.blur(); return; }
+      if (!items.length) return;
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        cur = M.clamp(cur + (e.key === 'ArrowDown' ? 1 : -1), 0, items.length - 1);
+        $$('.res', res).forEach(function (b) {
+          b.classList.toggle('cur', +b.dataset.i === cur);
+          if (+b.dataset.i === cur) b.scrollIntoView({ block: 'nearest' });
+        });
+      } else if (e.key === 'Enter') { e.preventDefault(); pick(cur < 0 ? 0 : cur); }
+    };
+    res.onclick = function (e) {
+      var b = e.target.closest('.res'); if (b) pick(+b.dataset.i);
+    };
+    box.onclick = function (e) { e.stopPropagation(); };
+    $('#qclr').onclick = function () { inp.value = ''; paint(''); inp.focus(); };
+
+    /* "/" focuses search, the way every tool a student already uses does */
+    d.addEventListener('keydown', function (e) {
+      if (e.key === '/' && !/^(INPUT|TEXTAREA|SELECT)$/.test(d.activeElement.tagName)) {
+        e.preventDefault(); inp.focus();
+      }
+    });
+  }
+
+  /* ============================ shared bits ============================ */
+  function hue(k) { return 'background:var(--' + k + '-bg);color:var(--' + k + ')'; }
+
+  function subjectChips(limit) {
+    var subs = C.subsOf(M.state.cat, M.state.course);
+    if (limit) subs = subs.slice(0, limit);
+    if (!subs.length) return '<div class="empty"><span class="em">📚</span><b>Pick a course above</b></div>';
+    return '<div class="subs">' + subs.map(function (s) {
+      return '<a class="sub" style="' + hue(s.hue) + '" href="#/practice?subject=' + s.id + '">' +
+             s.em + ' ' + esc(s.name) + '</a>';
+    }).join('') + '</div>';
+  }
+
+  function courseSelect() {
+    var cat = C.byCat[M.state.cat];
+    return '<select class="sel" id="courseSel" aria-label="Course">' + cat.courses.map(function (c) {
+      return '<option value="' + c.id + '"' + (c.id === M.state.course ? ' selected' : '') + '>' +
+             esc(c.name) + '</option>';
+    }).join('') + '</select>';
+  }
+
+  /* Keep the chosen course valid whenever the category changes. */
+  function setCat(id) {
+    M.state.cat = id;
+    var cat = C.byCat[id];
+    if (!cat.courses.some(function (c) { return c.id === M.state.course; })) {
+      M.state.course = cat.courses[0].id;
+    }
+    M.save('cat'); M.save('course');
+  }
+
+  function card(icon, hueName, title, body, more) {
+    return '<section class="card"><div class="card-h">' +
+      '<span class="em" style="' + hue(hueName) + '">' + icon + '</span><h3>' + esc(title) + '</h3>' +
+      (more ? '<a class="more" href="' + more[1] + '">' + esc(more[0]) + ' →</a>' : '') +
+      '</div><div class="card-b">' + body + '</div></section>';
+  }
+
+  /* a tiny line chart, drawn from real history when there is any */
+  function lineChart(series) {
+    var W = 560, H = 150, P = 26, n = series[0].pts.length;
+    if (n < 2) return '<div class="empty"><span class="em">📈</span><b>Not enough data yet</b>' +
+      '<small>Finish two tests and your trend appears here.</small></div>';
+    var x = function (i) { return P + i * (W - P * 2) / (n - 1); };
+    var y = function (v) { return H - P - (v / 100) * (H - P * 2); };
+    var g = '';
+    for (var v = 0; v <= 100; v += 50) {
+      g += '<line class="gl" x1="' + P + '" y1="' + y(v) + '" x2="' + (W - P) + '" y2="' + y(v) + '"/>' +
+           '<text class="lb" x="4" y="' + (y(v) + 3) + '">' + v + '%</text>';
+    }
+    series.forEach(function (s) {
+      g += '<polyline class="ln" stroke="var(--' + s.hue + ')" points="' +
+        s.pts.map(function (p, i) { return x(i) + ',' + y(p); }).join(' ') + '"/>';
+      s.pts.forEach(function (p, i) {
+        g += '<circle class="pt" cx="' + x(i) + '" cy="' + y(p) + '" r="3.2" fill="var(--' + s.hue + ')"/>';
+      });
+    });
+    (series[0].labels || []).forEach(function (l, i) {
+      g += '<text class="lb" x="' + x(i) + '" y="' + (H - 6) + '" text-anchor="middle">' + esc(l) + '</text>';
+    });
+    return '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Score trend">' +
+      g + '</svg><div class="legend">' + series.map(function (s) {
+        return '<span><i style="background:var(--' + s.hue + ')"></i>' + esc(s.name) + '</span>';
+      }).join('') + '</div>';
+  }
+
+  function scoreRing(pct) {
+    var r = 32, c = 2 * Math.PI * r;
+    return '<svg class="score-ring" viewBox="0 0 78 78"><circle cx="39" cy="39" r="' + r +
+      '" fill="none" stroke="#d8ecdf" stroke-width="8"/>' +
+      '<circle cx="39" cy="39" r="' + r + '" fill="none" stroke="var(--green)" stroke-width="8" ' +
+      'stroke-linecap="round" stroke-dasharray="' + c + '" stroke-dashoffset="' +
+      (c * (1 - pct / 100)) + '" transform="rotate(-90 39 39)"/>' +
+      '<text x="39" y="44" text-anchor="middle" font-size="18" font-weight="800" ' +
+      'fill="var(--navy)">' + Math.round(pct) + '%</text></svg>';
+  }
+
+  w.V = {
+    mountChrome: mountChrome, renderRail: renderRail, paintNotifs: paintNotifs,
+    hue: hue, card: card, subjectChips: subjectChips, courseSelect: courseSelect,
+    setCat: setCat, lineChart: lineChart, scoreRing: scoreRing
+  };
+})(window, document);
