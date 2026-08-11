@@ -54,18 +54,18 @@ if ('serviceWorker' in navigator) {
      SaaS surfaces. Legacy names are remapped at the bottom so every existing
      rule keeps working and this stays a theme change.
      ===================================================================== */
-  --paper:#f4f1e8;          /* the sheet */
-  --paper-2:#efebe0;        /* a field printed on it */
-  --paper-aged:#e7e2d5;     /* edges */
-  --card:#f7f4ec;           /* a box on the sheet */
-  --ink:#141310;            /* printed black */
-  --ink-soft:#2f2c26;       /* body copy */
-  --ink-faint:#5d574c;      /* small print (5.9:1 on the sheet) */
+  --paper:#f2f1ee;          /* the sheet */
+  --paper-2:#eceae6;        /* a field printed on it */
+  --paper-aged:#e4e2dd;     /* edges */
+  --card:#f6f5f3;           /* a box on the sheet */
+  --ink:#0d0d0c;            /* printed black */
+  --ink-soft:#232322;       /* body copy */
+  --ink-faint:#55554f;      /* small print (5.9:1 on the sheet) */
   --teacher:#b6332a;        /* the red pen */
   --teacher-wash:#f7e9e6;
   --score:#1f6b3f;
   --rule:#141310;           /* printed rules are ink, not grey */
-  --hair:#8d867a;           /* the faint interior hairline */
+  --hair:#8a8a84;           /* the faint interior hairline */
   --stamp:#b6332a;
   /* legacy names, remapped */
   --blue:var(--ink); --blue-deep:var(--ink); --blue-wash:#e8e3d6;
@@ -108,10 +108,8 @@ body{
   font-family:var(--serif);color:var(--ink);min-height:100vh;line-height:1.55;font-size:17px;
   /* the sheet fills the view: paper, faint fibre, nothing else */
   background:
-    repeating-linear-gradient(97deg,rgba(120,105,80,.030) 0 2px,transparent 2px 5px),
-    repeating-linear-gradient(4deg,rgba(120,105,80,.022) 0 3px,transparent 3px 7px),
-    radial-gradient(90% 55% at 25% 8%,rgba(255,255,255,.55),transparent 60%),
-    linear-gradient(168deg,#f6f3ea,#f2eee4 55%,#ebe6d9);
+    repeating-linear-gradient(97deg,rgba(90,90,84,.020) 0 2px,transparent 2px 5px),
+    linear-gradient(180deg,#f4f3f1,#f0efec);
   background-attachment:fixed;
 }
 
@@ -682,7 +680,7 @@ header.cover{background:none;border:0;box-shadow:none;padding:6px 0 12px;positio
   box-shadow:none!important;transition:background .14s ease,transform .14s ease}
 .lang-tab:hover,.credit-badge:hover,.key-btn:hover{background:var(--paper-2)!important;transform:translateY(-1px)}
 .lang-tab:active,.credit-badge:active{transform:translateY(0)}
-.lang-tab.active{background:var(--ink)!important;color:#f7f4ec!important;border-color:var(--ink)!important;
+.lang-tab.active{background:var(--ink)!important;color:#f6f5f3!important;border-color:var(--ink)!important;
   animation:none}
 .credit-badge.paid,.credit-badge.out{background:var(--card)!important;color:var(--ink)!important;
   border:1.5px solid var(--ink)!important;font-weight:700;animation:none!important}
@@ -709,7 +707,7 @@ header.cover{background:none;border:0;box-shadow:none;padding:6px 0 12px;positio
 .level-card:hover{background:var(--paper-2);border-color:var(--ink);transform:translateY(-2px)}
 .level-card .em{filter:grayscale(1) contrast(1.25);font-size:clamp(20px,2.6vw,30px);
   display:block;margin-bottom:6px}
-.level-card.active{background:var(--ink);color:#f7f4ec;border-color:var(--ink);transform:none}
+.level-card.active{background:var(--ink);color:#f6f5f3;border-color:var(--ink);transform:none}
 .level-card.active .em{filter:grayscale(1) invert(1) contrast(1.2)}
 .level-card.active::before,.level-card.active::after{content:none}
 
@@ -729,7 +727,7 @@ select{appearance:none;-webkit-appearance:none;
 textarea::placeholder{color:var(--ink-faint);font-style:italic}
 
 /* ---- the primary action reads as a printed button ---- */
-.solve-btn,.btn-primary{border-radius:0!important;background:var(--ink)!important;color:#f7f4ec!important;
+.solve-btn,.btn-primary{border-radius:0!important;background:var(--ink)!important;color:#f6f5f3!important;
   border:1.5px solid var(--ink)!important;font-family:var(--display);font-weight:700;
   letter-spacing:1.2px;text-transform:uppercase;box-shadow:none!important}
 .solve-btn:hover,.btn-primary:hover{background:#2f2c26!important;transform:translateY(-1px)}
@@ -790,7 +788,7 @@ footer{border-top:2px solid var(--ink);margin-top:clamp(10px,1.6vw,18px);
 /* uploaded files read as small pasted slips */
 .thumb{border:1.5px solid var(--ink)!important;border-radius:0!important;
   box-shadow:2px 2px 0 rgba(20,19,16,.16)!important}
-.thumb .remove-img{border-radius:0!important;background:var(--ink)!important;color:#f7f4ec!important;
+.thumb .remove-img{border-radius:0!important;background:var(--ink)!important;color:#f6f5f3!important;
   border:0!important;font-family:var(--mono)}
 
 /* ================= THE ANSWER SHEET ================= */
@@ -839,9 +837,9 @@ footer{border-top:2px solid var(--ink);margin-top:clamp(10px,1.6vw,18px);
    dark text, which rendered black-on-black once --sel became ink. Any box
    that fills with ink is listed here so the pairing can never drift again. */
 .type-card.active,.chip.active,.opt.active,.seg.active{
-  background:var(--ink)!important;color:#f7f4ec!important;border-color:var(--ink)!important}
+  background:var(--ink)!important;color:#f6f5f3!important;border-color:var(--ink)!important}
 .type-card.active *:not(input):not(select):not(textarea),
-.chip.active *:not(input),.opt.active *:not(input),.seg.active *:not(input){color:#f7f4ec!important}
+.chip.active *:not(input),.opt.active *:not(input),.seg.active *:not(input){color:#f6f5f3!important}
 /* the count field keeps its own light paper, so its digits stay ink even
    when the card behind it is filled solid */
 .type-card.active input,.type-card input.cnt{background:var(--card)!important;
@@ -857,6 +855,30 @@ main.book{padding:0}
 .page{padding-left:0;padding-right:0}
 @media(max-width:640px){.sheet{max-width:none;margin:4px auto;padding:10px 10px 8px}}
 
+/* ================= REFERENCE MATCH =================
+   The sheet had a warm cast, a busy inner hairline and cramped boxes. This
+   pass takes it to the reference: cool stock, one clean frame, and category
+   boxes with real breathing room. */
+.sheet{border-width:2px;box-shadow:0 1px 3px rgba(0,0,0,.10),0 10px 30px rgba(0,0,0,.10)}
+.sheet::before{inset:6px;opacity:.55}          /* the inner rule, quieter */
+.page + .page{border-top:0}                    /* no stacked divider clutter */
+.page{padding:clamp(16px,2.3vw,30px) 0 clamp(14px,2vw,26px)}
+.chapter{margin:clamp(6px,1.2vw,14px) 0 clamp(14px,2vw,24px)}
+
+/* category boxes: even, generous, thin-ruled — selection is a mark, not a slab */
+.level-grid{gap:clamp(10px,1.4vw,18px)}
+.level-card{padding:clamp(16px,2.1vw,26px) clamp(8px,1.2vw,14px);min-height:clamp(92px,10vw,128px);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  border-width:1.5px;background:transparent}
+.level-card .em{font-size:clamp(24px,3vw,34px);margin:0}
+.level-card.active{background:transparent;color:var(--ink);border-width:2.5px;position:relative}
+.level-card.active .em{filter:grayscale(1) contrast(1.25)}
+.level-card.active::after{content:'✓';position:absolute;top:5px;right:8px;
+  font-family:var(--display);font-weight:900;font-size:clamp(12px,1.4vw,17px);color:var(--teacher)}
+
+/* the type boxes keep the solid fill — but lighter weight, less slab-like */
+.type-card{border-width:1.5px}
+.solve-btn{letter-spacing:1.6px}
 </style>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8250159057339426" crossorigin="anonymous"></script>
 </head>
@@ -946,16 +968,15 @@ main.book{padding:0}
   <button class="qp-skip" type="button">Skip</button>
 </div>
 <style>
-.qp{position:fixed;inset:0;z-index:99999;overflow:hidden;background:#2c2013;
+.qp{position:fixed;inset:0;z-index:99999;overflow:hidden;background:#e8e7e4;
   display:flex;align-items:center;justify-content:center;padding:clamp(6px,1.6vw,26px);
   animation:qpOut .75s ease 10.15s forwards}
 .qp-desk{position:absolute;inset:0;
-  background:repeating-linear-gradient(93deg,rgba(0,0,0,.055) 0 3px,transparent 3px 13px),
-    linear-gradient(160deg,#7d5a33,#513a1e 55%,#31220f)}
+  background:linear-gradient(180deg,#e8e7e4,#e0dfdb)}
 /* ---- the sheet ---- */
 .qp-sheet{position:relative;width:100%;max-width:1180px;height:100%;max-height:820px;
   display:flex;flex-direction:column;padding:clamp(10px,1.9vw,22px);
-  background:linear-gradient(168deg,#f6f3ea,#f2eee4 55%,#ebe6d9);
+  background:linear-gradient(180deg,#f4f3f1,#f0efec);
   box-shadow:0 26px 60px rgba(0,0,0,.55),0 2px 0 #e2ddcc,0 5px 0 #d8d3c1;
   opacity:0;transform:translateY(16px) rotate(-.25deg);
   animation:qpIn .9s cubic-bezier(.22,1,.36,1) .15s forwards, qpSettle .7s ease 9.55s forwards}
