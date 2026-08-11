@@ -92,7 +92,9 @@ if (isset($_GET['logout'])) { $_SESSION = []; session_destroy(); header('Locatio
 /* ---------------- bootstrap the first admin (token-gated) ---------------- */
 if (!$me && $count === 0 && ($_POST['do'] ?? '') === 'bootstrap') {
     $tok = trim((string)ops_setting('admin_bootstrap_token', ''));
-    if ($tok === '' || !hash_equals($tok, (string)($_POST['token'] ?? ''))) {
+    if (!adm_check_csrf()) {
+        $err = 'Session expired. Reload the page and try again.';
+    } elseif ($tok === '' || !hash_equals($tok, (string)($_POST['token'] ?? ''))) {
         $err = 'Bootstrap token does not match.';
     } elseif (strlen((string)($_POST['pass'] ?? '')) < 10) {
         $err = 'Choose a password of at least 10 characters.';
@@ -110,7 +112,11 @@ if (!$me && $count === 0 && ($_POST['do'] ?? '') === 'bootstrap') {
 
 /* ---------------- login ---------------- */
 if (!$me && ($_POST['do'] ?? '') === 'login') {
-    if (adm_throttled($ip)) {
+    if (!adm_check_csrf()) {
+        // Checked before the throttle so a forged POST cannot burn an
+        // honest admin's remaining attempts.
+        $err = 'Session expired. Reload the page and try again.';
+    } elseif (adm_throttled($ip)) {
         $err = 'Too many attempts. Try again later.';
     } else {
         $s = adm_db()->prepare('SELECT * FROM admin_users WHERE email=? AND enabled=1 LIMIT 1');
