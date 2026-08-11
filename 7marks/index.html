@@ -49,58 +49,42 @@ if ('serviceWorker' in navigator) {
 /* ============ BOOK THEME (shared with Doubt Snap) ============ */
 :root{
   /* =====================================================================
-     7MARKS — the examination notebook on a study desk.
-     Same design family as 7Solve (cream paper, blue ink, wooden desk) but
-     its own voice: this is the ANSWER SHEET, so the teacher's red pen is a
-     first-class colour here, not just an error state.
-     Every legacy name below is REMAPPED rather than deleted, so all the
-     existing rules keep working and this stays a theme change.
+     7MARKS — a printed examination paper.
+     Ink on off-white stock: no colour beyond the teacher's red, no rounded
+     SaaS surfaces. Legacy names are remapped at the bottom so every existing
+     rule keeps working and this stays a theme change.
      ===================================================================== */
-  /* ---- paper ---- */
-  --paper:#fdfaf0;          /* the page */
-  --paper-2:#f7f1e1;        /* nested sheet / index card */
-  --paper-aged:#efe6d1;     /* page edges, aged tint */
-  --card:#fffdf6;           /* raised card on the page */
-  /* ---- ink ---- */
-  --ink:#15203a;            /* black handwriting */
-  --ink-soft:#37455f;       /* printed textbook text */
-  --ink-faint:#606a82;      /* pencil / meta */
-  --blue:#2647cf;           /* blue ink */
-  --blue-deep:#1b3199;      /* pressed ink */
-  --blue-wash:#e6ecff;      /* highlighter wash */
-  --teacher:#c2352b;        /* teacher's red pen — 7Marks leans on this */
-  --teacher-wash:#fdeceb;   /* the wash behind a correction */
-  --score:#1f7a45;          /* the green tick / full marks */
-  --sticky:#fbe98c;         /* sticky note yellow */
-  --sticky-kraft:#e6d8bc;   /* kraft note */
-  --tape:rgba(126,170,214,.55);
-  --pencil:#b0873c;
-  /* ---- desk ---- */
-  --wood-1:#8a6438; --wood-2:#6a4926; --wood-3:#452f17;
-  /* ---- lines ---- */
-  --rule-blue:#c6d5ea;      /* the ruled lines */
-  --rule:#ddd3ba;           /* hairline borders on paper */
-  --margin-red:#d98a86;     /* the red margin */
-  /* ---- legacy names, remapped so every existing rule still works ---- */
-  --leather:var(--blue-deep);
-  --leather-2:var(--blue);
-  --maroon:#1d3fbf;         /* headings + brand */
-  --gold:var(--pencil);
-  --gold-soft:#9db8e0;
-  --sel:var(--blue-wash);
-  --ok:var(--score);
-  --err:var(--teacher);
-  --shadow-page:0 1px 2px rgba(60,45,20,.10), 0 18px 44px rgba(60,45,20,.16);
-  --lift:0 2px 4px rgba(60,45,20,.10), 0 10px 22px rgba(60,45,20,.14);
-  /* upright hand-print for everything you read */
-  --serif:'Patrick Hand','Noto Sans Devanagari','Noto Sans Telugu','Segoe UI',sans-serif;
-  /* the marker: masthead and section headings (Patrick Hand has no bold) */
-  --display:'Baloo 2','Patrick Hand','Noto Sans Devanagari','Noto Sans Telugu','Segoe UI',sans-serif;
-  /* the loose hand: sticky notes, margin doodles, signatures */
-  --hand:'Caveat','Patrick Hand','Segoe Script',cursive;
-  /* marks, codes and totals must stay unambiguous — a 1 is never an l */
-  --mono:'Courier New',Consolas,monospace;
-  --line-h:34px;            /* ruled-line pitch; the page breathes on it */
+  --paper:#f4f1e8;          /* the sheet */
+  --paper-2:#efebe0;        /* a field printed on it */
+  --paper-aged:#e7e2d5;     /* edges */
+  --card:#f7f4ec;           /* a box on the sheet */
+  --ink:#141310;            /* printed black */
+  --ink-soft:#2f2c26;       /* body copy */
+  --ink-faint:#5d574c;      /* small print (5.9:1 on the sheet) */
+  --teacher:#b6332a;        /* the red pen */
+  --teacher-wash:#f7e9e6;
+  --score:#1f6b3f;
+  --rule:#141310;           /* printed rules are ink, not grey */
+  --hair:#8d867a;           /* the faint interior hairline */
+  --stamp:#b6332a;
+  /* legacy names, remapped */
+  --blue:var(--ink); --blue-deep:var(--ink); --blue-wash:#e8e3d6;
+  --rule-blue:transparent;  /* the notebook ruling is gone — this is print */
+  --margin-red:transparent;
+  --leather:var(--ink); --leather-2:#2f2c26;
+  --maroon:var(--ink); --gold:var(--ink-faint); --gold-soft:var(--hair);
+  --sel:var(--ink); --ok:var(--score); --err:var(--teacher);
+  --sticky:#f0e6c4; --sticky-kraft:#e6dcc4; --tape:rgba(150,140,120,.4);
+  --pencil:#5d574c; --wood-1:#e7e2d5; --wood-2:#ded8c9; --wood-3:#d5cfbe;
+  --shadow-page:0 1px 2px rgba(20,18,14,.10), 0 16px 40px rgba(20,18,14,.14);
+  --lift:0 1px 2px rgba(20,18,14,.10), 0 6px 16px rgba(20,18,14,.12);
+  /* classic serif for everything you read */
+  --serif:'Playfair Display','Noto Serif Devanagari','Noto Serif Telugu',Georgia,'Times New Roman',serif;
+  --display:'Playfair Display',Georgia,'Times New Roman',serif;
+  /* typewriter for labels, metadata and codes */
+  --hand:'Courier Prime','Courier New',monospace;
+  --mono:'Courier Prime','Courier New',monospace;
+  --line-h:32px;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
@@ -121,24 +105,20 @@ a.home-btn{text-decoration:none;display:inline-flex;align-items:center;gap:4px}
 .menu-pop a:last-child{border-bottom:none}
 .menu-pop a:hover{background:var(--paper-2);color:var(--maroon)}
 body{
-  font-family:var(--serif);
-  color:var(--ink);
-  min-height:100vh;
-  line-height:1.6;
-  font-size:17px;
-  /* the wooden study desk the answer sheet is lying on */
+  font-family:var(--serif);color:var(--ink);min-height:100vh;line-height:1.55;font-size:17px;
+  /* the sheet fills the view: paper, faint fibre, nothing else */
   background:
-    radial-gradient(120% 80% at 50% 0,rgba(255,238,200,.20),transparent 60%),
-    repeating-linear-gradient(93deg,rgba(0,0,0,.045) 0 3px,transparent 3px 13px),
-    repeating-linear-gradient(93deg,rgba(255,255,255,.022) 0 1px,transparent 1px 29px),
-    linear-gradient(160deg,var(--wood-1) 0%,var(--wood-2) 46%,var(--wood-3) 100%);
+    repeating-linear-gradient(97deg,rgba(120,105,80,.030) 0 2px,transparent 2px 5px),
+    repeating-linear-gradient(4deg,rgba(120,105,80,.022) 0 3px,transparent 3px 7px),
+    radial-gradient(90% 55% at 25% 8%,rgba(255,255,255,.55),transparent 60%),
+    linear-gradient(168deg,#f6f3ea,#f2eee4 55%,#ebe6d9);
   background-attachment:fixed;
 }
 
 /* ============ desk dressing around the answer sheet ============
    Fixed, non-interactive and hidden on narrow screens, so it never
    competes with the content or costs a phone anything. */
-.desk{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.desk{display:none}
 .desk i{position:absolute;display:block}
 .desk-sun{left:-30%;top:-40%;width:52%;height:190%;transform:rotate(15deg);filter:blur(16px);
   background:linear-gradient(90deg,transparent,rgba(255,244,208,.26) 42%,rgba(255,235,178,.07) 70%,transparent)}
@@ -165,16 +145,15 @@ body{
 
 /* ============ the answer sheet — one continuous page ============ */
 .sheet{
-  position:relative;z-index:1;max-width:min(1040px,calc(100vw - 34px));margin:22px auto 0;
-  padding:0 clamp(14px,3vw,40px) 0 clamp(38px,5vw,66px);
-  background:
-    repeating-linear-gradient(180deg,transparent 0 calc(var(--line-h) - 1px),var(--rule-blue) calc(var(--line-h) - 1px) var(--line-h)),
-    repeating-linear-gradient(112deg,rgba(150,125,80,.03) 0 2px,transparent 2px 6px),
-    linear-gradient(var(--paper),var(--paper));
-  background-position:0 22px,0 0,0 0;
-  box-shadow:var(--shadow-page),inset 34px 0 34px -34px rgba(120,90,40,.42);
-  border-radius:4px 14px 14px 4px;
+  position:relative;z-index:1;max-width:min(1280px,calc(100vw - 22px));margin:11px auto;
+  padding:clamp(14px,2.4vw,30px) clamp(12px,3vw,44px) clamp(10px,1.8vw,22px);
+  background:transparent;border:2.5px solid var(--ink);border-radius:0;
+  box-shadow:var(--shadow-page);
 }
+/* the inner hairline of the double frame */
+.sheet::before{content:'';position:absolute;inset:5px;border:1px solid var(--ink);
+  pointer-events:none;z-index:0;opacity:.85;background:none;width:auto;top:5px;bottom:5px;left:5px}
+.sheet::after{content:none}
 /* Wide monitors: capped at 1040px the page filled barely half a 1920 screen and
    read as a narrow column. Let it grow in two steps — line length stays
    comfortable while the desk keeps a generous margin around the paper. */
@@ -190,7 +169,7 @@ body{
   background:repeating-linear-gradient(180deg,var(--paper-aged) 0 3px,#e2d8c1 3px 6px);
   box-shadow:2px 0 6px rgba(60,45,20,.25)}
 /* paper clips holding the sheet */
-.clip{position:absolute;top:-15px;width:26px;height:62px;z-index:4;pointer-events:none;
+.clip{display:none;position:absolute;top:-15px;width:26px;height:62px;z-index:4;pointer-events:none;
   border:3px solid #b9c2cc;border-radius:13px;border-bottom-color:transparent;
   box-shadow:0 2px 4px rgba(0,0,0,.3)}
 .clip::after{content:'';position:absolute;left:5px;top:9px;right:5px;bottom:12px;
@@ -198,7 +177,7 @@ body{
 .clip-l{left:11%}.clip-r{right:13%}
 @media(max-width:700px){.clip-r{display:none}.clip-l{left:8%;transform:scale(.82)}}
 /* the marks stamp — 7Marks' own signature detail */
-.sheet-stamp{position:absolute;right:clamp(10px,3vw,34px);top:14px;z-index:3;pointer-events:none;
+.sheet-stamp{display:none;position:absolute;right:clamp(10px,3vw,34px);top:14px;z-index:3;pointer-events:none;
   font-family:var(--display);font-size:13px;font-weight:700;letter-spacing:1.4px;
   color:var(--teacher);border:2.5px solid var(--teacher);border-radius:7px;
   padding:5px 11px;transform:rotate(-7deg);opacity:.62}
@@ -676,6 +655,121 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   .plan-grid{grid-template-columns:1fr}
   .modal h3{font-size:18px}
 }
+/* ================= EXAMINATION PAPER THEME =================
+   Appended last so it overrides the older notebook rules without any of them
+   having to be deleted — every selector and handler stays exactly as it was. */
+header.cover{background:none;border:0;box-shadow:none;padding:6px 0 12px;position:relative}
+.paper-meta{display:flex;justify-content:space-between;gap:12px;
+  font-family:var(--mono);font-size:clamp(9px,1.18vw,14px);color:var(--ink);letter-spacing:.4px}
+.brand{display:flex;align-items:center;justify-content:center;gap:clamp(8px,1.4vw,16px);
+  font-family:var(--display);font-weight:900;color:var(--ink);text-shadow:none;
+  font-size:clamp(32px,6vw,62px);line-height:1.05;letter-spacing:0;margin:clamp(2px,1vw,10px) 0 0}
+.brand .bank{color:var(--ink)}
+.brand-mark{width:clamp(38px,5.2vw,68px);height:auto;display:block;
+  filter:contrast(1.05) drop-shadow(0 1px 0 rgba(20,19,16,.14))}
+.tagline{font-family:var(--serif);font-size:clamp(13px,1.85vw,21px);color:var(--ink);
+  font-style:normal;text-align:center;margin-top:6px;line-height:1.5}
+.tagline-sub{font-family:var(--serif);font-size:clamp(10px,1.28vw,15px);color:var(--ink-soft);
+  text-align:center;letter-spacing:0;text-transform:none;margin-top:10px;
+  border-top:1.5px solid var(--ink);padding-top:clamp(8px,1.3vw,14px)}
+
+/* ---- navigation: printed boxes, active is solid ink ---- */
+.toolbar{border:0;padding:clamp(9px,1.5vw,15px) 0 clamp(8px,1.4vw,14px);gap:8px}
+.lang-tab,.credit-badge,.key-btn{
+  border-radius:0!important;border:1.5px solid var(--ink)!important;background:var(--card)!important;
+  color:var(--ink)!important;font-family:var(--serif);font-weight:600;
+  font-size:clamp(11px,1.28vw,15px);padding:clamp(7px,.95vw,11px) clamp(9px,1.35vw,17px);
+  box-shadow:none!important;transition:background .14s ease,transform .14s ease}
+.lang-tab:hover,.credit-badge:hover,.key-btn:hover{background:var(--paper-2)!important;transform:translateY(-1px)}
+.lang-tab:active,.credit-badge:active{transform:translateY(0)}
+.lang-tab.active{background:var(--ink)!important;color:#f7f4ec!important;border-color:var(--ink)!important;
+  animation:none}
+.credit-badge.paid,.credit-badge.out{background:var(--card)!important;color:var(--ink)!important;
+  border:1.5px solid var(--ink)!important;font-weight:700;animation:none!important}
+.credit-badge.out{color:var(--teacher)!important;border-color:var(--teacher)!important}
+.engine-badge{color:var(--ink-soft)!important;font-weight:400;font-style:normal}
+.lang-tab:focus-visible,.credit-badge:focus-visible,.key-btn:focus-visible,
+.level-card:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{
+  outline:2.5px solid var(--teacher);outline-offset:2px}
+
+/* ---- section heading: rules running out both sides ---- */
+.chapter{gap:clamp(9px,1.6vw,18px);margin:clamp(12px,2vw,22px) 0 clamp(10px,1.6vw,18px)}
+.chapter .orn{display:none}
+.chapter h2{font-family:var(--display);font-weight:900;color:var(--ink);
+  font-size:clamp(16px,2.9vw,32px);letter-spacing:clamp(.5px,.28vw,3px);text-transform:uppercase;
+  text-align:center;white-space:nowrap}
+.chapter .line{flex:1;height:0;border-top:1.5px solid var(--ink);background:none}
+.chapter::before{content:'';flex:1;height:0;border-top:1.5px solid var(--ink)}
+
+/* ---- category boxes: printed, selected fills with ink ---- */
+.level-card{background:var(--card);border:1.5px solid var(--ink);border-radius:0;
+  font-family:var(--serif);color:var(--ink);font-size:clamp(12px,1.35vw,16px);line-height:1.35;
+  padding:clamp(11px,1.5vw,18px) clamp(6px,1vw,12px);box-shadow:none;
+  transition:background .14s ease,transform .14s ease,border-color .14s ease}
+.level-card:hover{background:var(--paper-2);border-color:var(--ink);transform:translateY(-2px)}
+.level-card .em{filter:grayscale(1) contrast(1.25);font-size:clamp(20px,2.6vw,30px);
+  display:block;margin-bottom:6px}
+.level-card.active{background:var(--ink);color:#f7f4ec;border-color:var(--ink);transform:none}
+.level-card.active .em{filter:grayscale(1) invert(1) contrast(1.2)}
+.level-card.active::before,.level-card.active::after{content:none}
+
+/* ---- printed answer-sheet fields ---- */
+.field label,.f-label,label{font-family:var(--mono);font-size:clamp(9px,1.1vw,12.5px);
+  letter-spacing:1.4px;text-transform:uppercase;color:var(--ink)}
+select,textarea,input[type=text],input[type=number]{
+  border-radius:0!important;border:1.5px solid var(--ink)!important;background:var(--card)!important;
+  color:var(--ink)!important;font-family:var(--serif);font-size:clamp(13px,1.45vw,17px);
+  padding:clamp(9px,1.15vw,14px) clamp(10px,1.3vw,16px);box-shadow:none!important}
+select{appearance:none;-webkit-appearance:none;
+  background-image:linear-gradient(45deg,transparent 50%,var(--ink) 50%),
+    linear-gradient(135deg,var(--ink) 50%,transparent 50%)!important;
+  background-position:calc(100% - 19px) 52%,calc(100% - 13px) 52%!important;
+  background-size:6px 6px,6px 6px!important;background-repeat:no-repeat!important;
+  padding-right:38px!important}
+textarea::placeholder{color:var(--ink-faint);font-style:italic}
+
+/* ---- the primary action reads as a printed button ---- */
+.solve-btn,.btn-primary{border-radius:0!important;background:var(--ink)!important;color:#f7f4ec!important;
+  border:1.5px solid var(--ink)!important;font-family:var(--display);font-weight:700;
+  letter-spacing:1.2px;text-transform:uppercase;box-shadow:none!important}
+.solve-btn:hover,.btn-primary:hover{background:#2f2c26!important;transform:translateY(-1px)}
+.mini-btn{border-radius:0!important;border:1.5px solid var(--ink)!important;background:var(--card)!important;
+  color:var(--ink)!important;font-family:var(--serif);box-shadow:none!important}
+
+/* ---- the MAX 100 rubber stamp, beside the categories ---- */
+.exam-stamp{position:absolute;right:clamp(4px,1.4vw,20px);bottom:clamp(-6px,.4vw,6px);
+  width:clamp(62px,8.6vw,116px);height:clamp(62px,8.6vw,116px);pointer-events:none;
+  border:3px double var(--stamp);border-radius:50%;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;color:var(--stamp);font-family:var(--display);
+  font-weight:800;line-height:1;transform:rotate(-11deg);opacity:.82}
+.exam-stamp b{font-size:clamp(9px,1.2vw,15px);letter-spacing:2px}
+.exam-stamp span{font-size:clamp(17px,2.5vw,32px)}
+.exam-stamp i{font-size:clamp(8px,1vw,12px);font-style:normal}
+@media(max-width:900px){.exam-stamp{position:static;margin:10px auto 0;transform:rotate(-6deg)}}
+
+/* ---- section dividers + footer ---- */
+.page{padding:clamp(14px,2vw,26px) 0 clamp(12px,1.8vw,22px);position:relative}
+.page + .page{border-top:1.5px solid var(--ink)}
+footer{border-top:2px solid var(--ink);margin-top:clamp(10px,1.6vw,18px);
+  font-family:var(--serif);color:var(--ink-soft);background:none}
+.fleuron{display:none}
+.exam-foot{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  font-family:var(--mono);font-size:clamp(9px,1.08vw,12.5px);color:var(--ink-soft);
+  padding-top:clamp(7px,1.1vw,12px)}
+.exam-foot .best{font-family:var(--display);font-weight:700;letter-spacing:1.4px;color:var(--ink)}
+.exam-foot .tnote em{font-style:italic;color:var(--teacher)}
+
+/* ---- mobile: a vertically scrolling exam sheet, still framed ---- */
+@media(max-width:640px){
+  .sheet{margin:6px auto;padding:12px 12px 10px;border-width:2px}
+  .sheet::before{inset:4px}
+  .paper-meta{font-size:9.5px}
+  .chapter{gap:8px}
+  .chapter h2{font-size:15px;letter-spacing:.5px;white-space:normal}
+  .tagline-sub{overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;
+    scrollbar-width:none;text-align:left}
+  .tagline-sub::-webkit-scrollbar{display:none}
+}
 </style>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8250159057339426" crossorigin="anonymous"></script>
 </head>
@@ -1002,7 +1096,10 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   <span class="sheet-stamp" aria-hidden="true">MAX 100</span>
 
 <header class="cover">
-  <div class="brand">7<span class="bank">Marks</span> <span style="font-size:.7em">💯</span></div>
+  <div class="paper-meta" aria-hidden="true">
+    <span>Time : Unlimited</span><span>Max. Marks : 100</span>
+  </div>
+  <div class="brand"><img class="brand-mark" src="brand-mark.png?v=7m1" alt="" width="512" height="512" decoding="async">7<span class="bank">Marks</span></div>
   <div class="tagline" data-i18n="tagline">Pick a subject & topic — or snap your textbook — and get a full question bank with answers.</div>
   <div class="tagline-sub" data-i18n="taglineSub">Class 1–10 · Intermediate (MPC · BiPC · CEC · MEC) · Degree · CA · CMA · US CMA · Jobs & Current Affairs</div>
 </header>
@@ -1047,6 +1144,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
       <span class="line"></span>
     </div>
     <div class="level-grid" id="levelGrid"></div>
+    <div class="exam-stamp" aria-hidden="true"><b>MAX</b><span>100</span><i>&#9733;</i></div>
     <div class="sub-row">
       <div class="field">
         <label data-i18n="lblCourse">Class / Course</label>
@@ -1197,6 +1295,7 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   <span class="fleuron">❦</span>
   <span data-i18n="footer">7Marks — practice makes rank. Free forever, from 7By.in. · AI-generated — please verify answers before your exam.</span>
   <span class="footer-credit">Designed by <a href="https://7by.in" target="_blank" rel="noopener">7By.in</a></span>
+  <div class="exam-foot"><span>Note : Read the question carefully before snapping.</span><span class="best">ALL THE BEST!</span><span class="tnote">Teacher&#39;s Note : <em>You can do it!</em> &#9786;</span></div>
   <nav class="footer-links">
     <a href="https://7by.in/about.html">About</a> ·
     <a href="/blog/">Blog</a> ·
