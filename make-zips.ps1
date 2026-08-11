@@ -132,8 +132,15 @@ New-AppZip -AppDir (Join-Path $base '7solve') -Zip (Join-Path $base '7solve-site
 #     ship it: the user drops these files in, then hand-edits only config.php.
 $hubDir = Join-Path $base 'account-hub'
 if (Test-Path -LiteralPath $hubDir) {
+  # These five self-declare "TEMPORARY / DELETE AFTER USE". They form a closed
+  # cluster (they only reference each other) and nothing in ops.php, the
+  # scheduler or either app calls them — verified. ops-patch-api.php in
+  # particular rewrites api.php and issues writes, so it must never ship.
+  $hubTemp = @('ops-forensics.php','ops-readlog.php','ops-deploycheck.php',
+               'ops-patch-api.php','ops-slice3-forensics.php')
   $hubRoots = Get-ChildItem -LiteralPath $hubDir -Force |
-    Where-Object { $_.Name -ne 'config.php' -and $_.Name -notlike '*.db' -and $_.Name -ne '.git' } |
+    Where-Object { $_.Name -ne 'config.php' -and $_.Name -notlike '*.db' -and $_.Name -ne '.git' `
+                   -and $hubTemp -notcontains $_.Name } |
     Select-Object -ExpandProperty FullName
   New-Zip -Zip (Join-Path $base 'account-hub-update.zip') -Roots $hubRoots -ExcludeExt @('.js')
 }
