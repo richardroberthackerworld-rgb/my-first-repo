@@ -879,6 +879,26 @@ main.book{padding:0}
 /* the type boxes keep the solid fill — but lighter weight, less slab-like */
 .type-card{border-width:1.5px}
 .solve-btn{letter-spacing:1.6px}
+/* ================= FULL-PAGE QUESTION PAPER =================
+   The sheet was capped at 1440px, so a 1900px screen showed 222px of dead
+   white either side and the paper read as a card floating on a page. The
+   paper IS the page now: it fills the viewport edge to edge, the body
+   behind it is the same stock so no seam shows, and the printed frame runs
+   the full width. */
+body{background:linear-gradient(180deg,#f4f3f1,#f0efec)!important;margin:0}
+.sheet{max-width:none!important;width:auto!important;margin:0!important;
+  border-width:2px;border-radius:0;box-shadow:none;
+  padding:clamp(14px,1.9vw,30px) clamp(14px,2.6vw,46px) clamp(12px,1.6vw,24px)!important;
+  min-height:100vh}
+@media(min-width:1500px){.sheet{max-width:none!important}}
+.sheet::before{inset:6px}
+/* the footer belongs inside the paper, not loose underneath it */
+footer{max-width:none;margin:0;padding-left:clamp(14px,2.6vw,46px);
+  padding-right:clamp(14px,2.6vw,46px)}
+.exam-stamp{display:none!important}
+@media(max-width:640px){.sheet{padding:11px 11px 9px!important;border-width:1.5px}
+  .sheet::before{inset:4px}footer{padding-left:11px;padding-right:11px}}
+
 </style>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8250159057339426" crossorigin="anonymous"></script>
 </head>
@@ -1130,7 +1150,6 @@ main.book{padding:0}
       <span class="line"></span>
     </div>
     <div class="level-grid" id="levelGrid"></div>
-    <div class="exam-stamp" aria-hidden="true"><b>MAX</b><span>100</span><i>&#9733;</i></div>
     <div class="sub-row">
       <div class="field">
         <label data-i18n="lblCourse">Class / Course</label>
