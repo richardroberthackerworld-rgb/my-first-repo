@@ -175,6 +175,12 @@ body{
   box-shadow:var(--shadow-page),inset 34px 0 34px -34px rgba(120,90,40,.42);
   border-radius:4px 14px 14px 4px;
 }
+/* Wide monitors: capped at 1040px the page filled barely half a 1920 screen and
+   read as a narrow column. Let it grow in two steps — line length stays
+   comfortable while the desk keeps a generous margin around the paper. */
+@media(min-width:1500px){.sheet{max-width:min(1180px,calc(100vw - 34px))}}
+@media(min-width:1800px){.sheet{max-width:min(1280px,calc(100vw - 34px))}}
+
 /* the red margin, running the whole page */
 .sheet::before{content:'';position:absolute;top:0;bottom:0;left:clamp(26px,3.6vw,50px);
   width:1.6px;background:var(--margin-red);opacity:.62;pointer-events:none;z-index:2}
@@ -821,6 +827,11 @@ footer .fleuron{color:var(--gold-soft);font-size:18px;display:block;margin-botto
   opacity:0;transform:translateY(24px) rotate(-1.2deg) scale(.95);
   animation:qpIn 1s cubic-bezier(.22,1,.36,1) .1s forwards, qpExit .8s ease-in 9.5s forwards}
 @media(min-width:900px){.qp-stage{width:min(62vh,600px)}}
+/* Big monitors get the cinematic version: at 1920 the sheet was filling only
+   30% of the width, which read as a small card rather than a paper on a desk.
+   Height-based so it can never outgrow a short laptop screen. */
+@media(min-width:1200px){.qp-stage{width:min(74vh,760px)}}
+@media(min-width:1600px){.qp-stage{width:min(78vh,860px)}}
 /* paper stack under the sheet */
 .qp-stack{position:absolute;inset:0}
 .qp-stack i{position:absolute;inset:0;background:#efe7d4;border-radius:3px;
