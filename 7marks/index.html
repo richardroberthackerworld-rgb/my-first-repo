@@ -73,7 +73,7 @@ if ('serviceWorker' in navigator) {
   --margin-red:transparent;
   --leather:var(--ink); --leather-2:#2f2c26;
   --maroon:var(--ink); --gold:var(--ink-faint); --gold-soft:var(--hair);
-  --sel:var(--ink); --ok:var(--score); --err:var(--teacher);
+  --sel:#e4dfd2; --ok:var(--score); --err:var(--teacher);
   --sticky:#f0e6c4; --sticky-kraft:#e6dcc4; --tape:rgba(150,140,120,.4);
   --pencil:#5d574c; --wood-1:#e7e2d5; --wood-2:#ded8c9; --wood-3:#d5cfbe;
   --shadow-page:0 1px 2px rgba(20,18,14,.10), 0 16px 40px rgba(20,18,14,.14);
@@ -834,6 +834,29 @@ footer{border-top:2px solid var(--ink);margin-top:clamp(10px,1.6vw,18px);
   .paper-sheet{padding:12px 12px}
   .paper-sheet::before{left:18px}
 }
+/* ---- selected states: ink fill ALWAYS pairs with cream text ----
+   .type-card.active previously took its background from --sel while keeping
+   dark text, which rendered black-on-black once --sel became ink. Any box
+   that fills with ink is listed here so the pairing can never drift again. */
+.type-card.active,.chip.active,.opt.active,.seg.active{
+  background:var(--ink)!important;color:#f7f4ec!important;border-color:var(--ink)!important}
+.type-card.active *:not(input):not(select):not(textarea),
+.chip.active *:not(input),.opt.active *:not(input),.seg.active *:not(input){color:#f7f4ec!important}
+/* the count field keeps its own light paper, so its digits stay ink even
+   when the card behind it is filled solid */
+.type-card.active input,.type-card input.cnt{background:var(--card)!important;
+  color:var(--ink)!important;border:1.5px solid var(--ink)!important;border-radius:0!important;
+  opacity:1!important;font-family:var(--mono);font-weight:700;text-align:center}
+.type-card.active .em,.level-card.active .em{filter:grayscale(1) invert(1) contrast(1.2)}
+.type-card,.chip,.opt,.seg{border-radius:0!important}
+
+/* ---- the paper should use the page, not float in it ---- */
+.sheet{max-width:min(1360px,calc(100vw - 16px));margin:8px auto}
+@media(min-width:1500px){.sheet{max-width:1440px}}
+main.book{padding:0}
+.page{padding-left:0;padding-right:0}
+@media(max-width:640px){.sheet{max-width:none;margin:4px auto;padding:10px 10px 8px}}
+
 </style>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8250159057339426" crossorigin="anonymous"></script>
 </head>
@@ -932,7 +955,7 @@ footer{border-top:2px solid var(--ink);margin-top:clamp(10px,1.6vw,18px);
 /* ---- the sheet ---- */
 .qp-sheet{position:relative;width:100%;max-width:1180px;height:100%;max-height:820px;
   display:flex;flex-direction:column;padding:clamp(10px,1.9vw,22px);
-  background:linear-gradient(158deg,#f6f2e7 0%,#f3efe2 45%,#ece7d7 100%);
+  background:linear-gradient(168deg,#f6f3ea,#f2eee4 55%,#ebe6d9);
   box-shadow:0 26px 60px rgba(0,0,0,.55),0 2px 0 #e2ddcc,0 5px 0 #d8d3c1;
   opacity:0;transform:translateY(16px) rotate(-.25deg);
   animation:qpIn .9s cubic-bezier(.22,1,.36,1) .15s forwards, qpSettle .7s ease 9.55s forwards}
@@ -1163,7 +1186,7 @@ footer{border-top:2px solid var(--ink);margin-top:clamp(10px,1.6vw,18px);
   <div class="exam-meta" aria-hidden="true">
     <span>Time : Unlimited</span><span>Max. Marks : 100</span>
   </div>
-  <div class="brand"><img class="brand-mark" src="brand-mark.png?v=7m1" alt="" width="512" height="512" decoding="async">7<span class="bank">Marks</span></div>
+  <div class="brand"><img class="brand-mark" src="brand-mark.png?v=7m1" alt="7 Marks" width="512" height="512" decoding="async"><span class="bank">Marks</span></div>
   <div class="tagline" data-i18n="tagline">Pick a subject & topic — or snap your textbook — and get a full question bank with answers.</div>
   <div class="tagline-sub" data-i18n="taglineSub">Class 1–10 · Intermediate (MPC · BiPC · CEC · MEC) · Degree · CA · CMA · US CMA · Jobs & Current Affairs</div>
 </header>
