@@ -122,7 +122,39 @@ function New-AppZip {
     $p = Join-Path $AppDir $sub
     if (Test-Path -LiteralPath $p) { $roots += $p }
   }
-  New-Zip -Zip $Zip -Roots $roots
+
+  # cPanel's ClamAV false-positives ANY zip containing a .js member, and the
+  # root-level exclusion above does not reach into assets/. So an app whose
+  # index.html loads modules from assets/ gets those modules inlined into a
+  # staged copy of index.html, and .js is excluded everywhere. The source
+  # tree stays modular; only the shipped bundle is flattened.
+  # UTF-8 is read and written explicitly: PowerShell 5.1's default encoding
+  # mangles the emoji and Indic text these files are full of.
+  $utf8 = New-Object System.Text.UTF8Encoding($false)
+  $idx  = Join-Path $AppDir 'index.html'
+  if (Test-Path -LiteralPath $idx) {
+    $html = [System.IO.File]::ReadAllText($idx, [System.Text.Encoding]::UTF8)
+    $hits = [regex]::Matches($html, '<script src="assets/([A-Za-z0-9_.-]+\.js)(?:\?[^"]*)?"></script>')
+    if ($hits.Count -gt 0) {
+      foreach ($h in $hits) {
+        $jsPath = Join-Path $AppDir ('assets\' + $h.Groups[1].Value)
+        if (Test-Path -LiteralPath $jsPath) {
+          $js = [System.IO.File]::ReadAllText($jsPath, [System.Text.Encoding]::UTF8)
+          # </script> inside a string literal would close the tag early
+          $js = $js.Replace('</script>', '<\/script>')
+          $html = $html.Replace($h.Value, "<script>`n$js`n</script>")
+        }
+      }
+      $stagedIdx = Join-Path $stage 'index.html'
+      [System.IO.File]::WriteAllText($stagedIdx, $html, $utf8)
+      $roots = @($roots | Where-Object { $_ -ne $idx })
+      $roots += $stagedIdx
+      Write-Host ("  inlined " + $hits.Count + " js module(s) into index.html for " +
+                  (Split-Path $Zip -Leaf))
+    }
+  }
+
+  New-Zip -Zip $Zip -Roots $roots -ExcludeExt @('.js')
 }
 New-AppZip -AppDir (Join-Path $base '7marks') -Zip (Join-Path $base '7marks-site.zip')
 New-AppZip -AppDir (Join-Path $base '7solve') -Zip (Join-Path $base '7solve-site.zip')
