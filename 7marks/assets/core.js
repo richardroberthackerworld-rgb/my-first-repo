@@ -285,9 +285,17 @@
          half-widths eat 9.1 of it, leaving about 5 units of clear white
          between them. The previous pair ended at y=76 and y=74 and the
          strokes merged into one blob. */
-      '<path' + d2 + ' d="M33 29 H62 L48 64" fill="none" stroke="#16295c" stroke-width="9.2" ' +
+      '<path' + d2 + ' d="M33 29 H62 L48 62" fill="none" stroke="#16295c" stroke-width="9.2" ' +
         'stroke-linecap="round" stroke-linejoin="round"/>' +
-      /* the red check, passing clear beneath the seven */
+      /* A knockout in the page colour, drawn between the seven and the tick
+         and wider than the tick, cuts a clean channel where they pass. The
+         geometry alone was not enough: measured, the seven's tail sat 9.17
+         units from the tick's arm while the two stroke half-widths eat 9.1,
+         so they met with 0.07 units to spare and read as one merged shape.
+         The knockout guarantees the gap instead of relying on that margin. */
+      '<path' + d3 + ' d="M33 60 L48 78 L80 41" fill="none" stroke="#ffffff" ' +
+        'stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>' +
+      /* the red tick, on top of its own knockout */
       '<path' + d3 + ' d="M33 60 L48 78 L80 41" fill="none" stroke="#e6202a" stroke-width="9" ' +
         'stroke-linecap="round" stroke-linejoin="round"/>' +
       '</svg>';

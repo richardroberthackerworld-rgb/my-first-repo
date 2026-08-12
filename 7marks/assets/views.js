@@ -225,7 +225,11 @@
          gap under the sidebar. --bar-h is only ever read by the things that
          must clear the bar, so nothing can loop. */
       var apply = function () {
-        var h = Math.ceil(bar.getBoundingClientRect().height);
+        /* the BOTTOM edge, not the height: with a border or any offset the
+           two differ (measured 64 tall but ending at 72), and what every
+           pane below has to clear is where the bar actually ends */
+        var b = bar.getBoundingClientRect();
+        var h = Math.ceil(b.bottom - Math.min(0, b.top));
         if (h > 0) d.documentElement.style.setProperty('--bar-h', h + 'px');
       };
       apply();
