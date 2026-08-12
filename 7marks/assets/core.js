@@ -523,6 +523,12 @@
         id: 'e' + now,
         title: cfg.title || 'Practice Test',
         subject: cfg.subject || '',
+        /* carried on the attempt so the result can report what was actually
+           practised — without these the topic came out as "General" and every
+           weak-topic figure downstream was meaningless */
+        topic: cfg.topic || '',
+        difficulty: cfg.difficulty || 'Medium',
+        source: cfg.source || 'generated',
         questions: cfg.questions || [],
         answers: {},
         marked: {},
@@ -559,6 +565,30 @@
       if (!this.s || this.s.locked) return;
       this.s.marked[qid] = !this.s.marked[qid];
       this._save();
+    },
+
+    /**
+     * Reveal a question's answer.
+     *
+     * Deliberately not hidden from the result: a revealed question is
+     * recorded as revealed, is excluded from the correct count whatever the
+     * student then selects, and is reported in its own column. Letting a
+     * revealed answer score would quietly inflate every figure the rest of
+     * the app is built on.
+     * @returns {*} the correct answer, or null if it cannot be revealed
+     */
+    reveal: function (qid) {
+      var s = this.s;
+      if (!s || s.locked || s.submitted) return null;
+      var q = s.questions.filter(function (x) { return x.id === qid; })[0];
+      if (!q || q.answer == null) return null;      /* free text has no key to show */
+      s.revealed = s.revealed || {};
+      s.revealed[qid] = true;
+      this._save();
+      return q.answer;
+    },
+    isRevealed: function (qid) {
+      return !!(this.s && this.s.revealed && this.s.revealed[qid]);
     },
 
     /**
@@ -608,19 +638,35 @@
       s.submittedAt = Date.now();
       this._stop();
 
-      /* grade the objective types; anything free-text is queued for the AI marker */
-      var got = 0, max = 0, right = 0, wrong = 0, skipped = 0, needsAI = 0;
+      /* Grade the objective types; anything free-text is queued for the AI
+         marker. Every question also produces a review row, so the result
+         screen can show what was asked, what was chosen and what was right
+         without re-deriving any of it. */
+      var got = 0, max = 0, right = 0, wrong = 0, skipped = 0, needsAI = 0, revealed = 0;
+      var review = [];
+      s.revealed = s.revealed || {};
       s.questions.forEach(function (q) {
         max += q.marks || 1;
         var a = s.answers[q.id];
         var empty = a === '' || a == null || (Array.isArray(a) && !a.length);
-        if (empty) { skipped++; return; }
-        if (q.answer == null) { needsAI++; return; }
+        var wasRevealed = !!s.revealed[q.id];
+        var row = { id: q.id, n: q.n, text: q.text, type: q.type, marks: q.marks || 1,
+                    topic: q.topic || '', given: empty ? null : a, answer: q.answer,
+                    revealed: wasRevealed };
+
+        if (wasRevealed) {
+          /* counted separately — never as a correct attempt */
+          revealed++; row.state = 'revealed'; review.push(row); return;
+        }
+        if (empty) { skipped++; row.state = 'skipped'; review.push(row); return; }
+        if (q.answer == null) { needsAI++; row.state = 'pending'; review.push(row); return; }
         var ok = Array.isArray(q.answer)
           ? (Array.isArray(a) && a.length === q.answer.length &&
              q.answer.every(function (x) { return a.indexOf(x) > -1; }))
           : String(a).trim().toLowerCase() === String(q.answer).trim().toLowerCase();
-        if (ok) { right++; got += q.marks || 1; } else { wrong++; }
+        if (ok) { right++; got += q.marks || 1; row.state = 'correct'; }
+        else { wrong++; row.state = 'wrong'; }
+        review.push(row);
       });
 
       var attempted = right + wrong;
@@ -635,10 +681,38 @@
       };
       res.perQ = res.right + res.wrong ? Math.round(res.seconds / (res.right + res.wrong)) : 0;
 
+      res.review = review;
+      res.revealed = revealed;
+      /* an explicit `correct` alongside `right`: everything downstream reads
+         this name, and reading the wrong one silently produced NaN accuracy */
+      res.correct = right;
+      res.source = s.source || 'generated';
+      res.total = right + wrong + skipped + revealed + needsAI;
+      res.subject = (s.subject || '').split(' · ')[0] || 'General';
+      res.topic = s.topic || (s.subject || '').split(' · ')[1] || 'General';
+      res.difficulty = s.difficulty || 'Medium';
+
       state.history.unshift(res);
       state.history = state.history.slice(0, 60);
       save('history');
       store.del('exam');            /* the attempt is finished; only the result is kept */
+
+      /* Everything downstream — performance, weak topics, readiness, the
+         Mistake Bank, achievements — is fed from here, so there is exactly
+         one place a result enters the system. */
+      if (w.M7 && w.M7.db) {
+        var db = w.M7.db;
+        db.results.add(res);
+        review.forEach(function (r) {
+          if (r.state !== 'wrong') return;
+          db.noteMistake({ subject: res.subject, topic: r.topic || res.topic,
+                           question: r.text, given: r.given, answer: r.answer,
+                           difficulty: res.difficulty, qtype: r.type });
+        });
+        var fresh = db.checkAchievements();
+        fresh.forEach(function (a) { notify('🏆', 'Achievement unlocked', a); });
+      }
+
       addXP(10 + right * 2, 'test completed');
       notify('✅', 'Test submitted', res.title + ' — ' + res.got + '/' + res.max);
       w.dispatchEvent(new CustomEvent('7m:result', { detail: res }));
