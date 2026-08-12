@@ -65,6 +65,9 @@
   /* --- layout ------------------------------------------------------ */
   --sidebar-w:248px;
   --nav-h:64px;
+  /* the REAL rendered height of the top bar, measured at runtime; falls back
+     to the design height before the script runs */
+  --bar-h:64px;
 }
 
 *,*::before,*::after{box-sizing:border-box}

@@ -210,6 +210,33 @@
     });
     $('#notifPop').onclick = $('#whoPop').onclick = function (e) { e.stopPropagation(); };
 
+    /* The top bar wraps on narrow screens — brand, then the chips, then the
+       search on its own row — so its height is not a constant. It was being
+       cleared with a hard-coded padding-top, which was right at 640px and
+       far too small in an in-app browser where everything is a little
+       larger: the hero heading ended up sliced in half under the header.
+       Measure it instead and let --nav-h drive the layout, so it is correct
+       at any width, any font size, and in any wrapper's WebView. */
+    (function trackHeader() {
+      var bar = $('#top');
+      /* Writes --bar-h, NOT --nav-h. --nav-h is the bar's own height above
+         640px, so measuring the bar and writing it back to --nav-h feeds
+         into itself: the bar grew to 197px against a real 152px and left a
+         gap under the sidebar. --bar-h is only ever read by the things that
+         must clear the bar, so nothing can loop. */
+      var apply = function () {
+        var h = Math.ceil(bar.getBoundingClientRect().height);
+        if (h > 0) d.documentElement.style.setProperty('--bar-h', h + 'px');
+      };
+      apply();
+      if (w.ResizeObserver) new ResizeObserver(apply).observe(bar);
+      else w.addEventListener('resize', apply);
+      /* fonts landing late change the wrap point, so re-measure once they do */
+      if (d.fonts && d.fonts.ready) d.fonts.ready.then(apply).catch(function () {});
+      setTimeout(apply, 400);
+      w.addEventListener('orientationchange', function () { setTimeout(apply, 250); });
+    })();
+
     mountSearch();
     $('#credChip').onclick = function () { M.router.go('credits'); };
     M.credits.status().then(paintCredits);

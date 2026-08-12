@@ -97,7 +97,7 @@
 .pop-i:hover{background:var(--surface-3)}
 
 /* ============================ SIDEBAR ============================ */
-.rail{position:fixed;top:var(--nav-h);bottom:0;left:0;width:var(--sidebar-w);z-index:70;
+.rail{position:fixed;top:var(--bar-h);bottom:0;left:0;width:var(--sidebar-w);z-index:70;
   background:#fff;border-right:1px solid var(--line);overflow-y:auto;
   padding:14px 10px 22px;transition:transform .22s ease}
 .rail-h{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
@@ -142,7 +142,7 @@
 .scrim.on{opacity:1;visibility:visible}
 
 /* ============================ CONTENT ============================ */
-.main{margin-left:var(--sidebar-w);padding-top:var(--nav-h);min-height:100vh}
+.main{margin-left:var(--sidebar-w);padding-top:var(--bar-h);min-height:100vh}
 .wrap{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;
   padding:16px clamp(12px,1.6vw,22px) 40px;align-items:start}
 .col{display:flex;flex-direction:column;gap:16px;min-width:0}
@@ -858,7 +858,9 @@
   .who{padding:3px}
   .btn-prem span{display:none}
   .btn-prem{padding:0 12px}
-  .main{padding-top:106px}
+  /* no hard-coded offset here: --nav-h is measured from the real top bar in
+     mountChrome, so a header that wraps to three rows (or renders larger in
+     an in-app browser) still clears the content instead of slicing it */
   .wrap{padding:12px 12px 32px;gap:13px}
   .side{grid-template-columns:1fr}
   .card-b{padding:14px}
