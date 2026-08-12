@@ -135,7 +135,25 @@ function New-AppZip {
   if (Test-Path -LiteralPath $idx) {
     $html = [System.IO.File]::ReadAllText($idx, [System.Text.Encoding]::UTF8)
     $hits = [regex]::Matches($html, '<script src="assets/([A-Za-z0-9_.-]+\.js)(?:\?[^"]*)?"></script>')
-    if ($hits.Count -gt 0) {
+
+    # Stylesheets are inlined for the SAME reason as the scripts, and it is not
+    # cosmetic. They shipped as assets/ui.css?v=2 on every single deploy — the
+    # URL never changed, so browsers and the host served the first version they
+    # ever cached and every later CSS fix was invisible on the live site while
+    # looking correct locally. Folding the CSS into index.html removes the
+    # sub-resource cache entirely: there is one file, and it is the one the
+    # server just sent.
+    $css = [regex]::Matches($html, '<link rel="stylesheet" href="assets/([A-Za-z0-9_.-]+\.css)(?:\?[^"]*)?">')
+    foreach ($c in $css) {
+      $cssPath = Join-Path $AppDir ('assets\' + $c.Groups[1].Value)
+      if (Test-Path -LiteralPath $cssPath) {
+        $txt = [System.IO.File]::ReadAllText($cssPath, [System.Text.Encoding]::UTF8)
+        $txt = $txt.Replace('</style>', '<\/style>')
+        $html = $html.Replace($c.Value, "<style>`n$txt`n</style>")
+      }
+    }
+
+    if ($hits.Count -gt 0 -or $css.Count -gt 0) {
       foreach ($h in $hits) {
         $jsPath = Join-Path $AppDir ('assets\' + $h.Groups[1].Value)
         if (Test-Path -LiteralPath $jsPath) {
@@ -149,8 +167,8 @@ function New-AppZip {
       [System.IO.File]::WriteAllText($stagedIdx, $html, $utf8)
       $roots = @($roots | Where-Object { $_ -ne $idx })
       $roots += $stagedIdx
-      Write-Host ("  inlined " + $hits.Count + " js module(s) into index.html for " +
-                  (Split-Path $Zip -Leaf))
+      Write-Host ("  inlined " + $hits.Count + " js + " + $css.Count +
+                  " css into index.html for " + (Split-Path $Zip -Leaf))
     }
   }
 

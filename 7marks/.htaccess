@@ -1,5 +1,18 @@
 # 7Marks — security + clean URLs
 
+# ---- never let the app shell go stale ----
+# The whole app (markup, CSS and JS) is inlined into index.html at build time,
+# so this one file IS the deploy. If it is cached, a student keeps running an
+# old build no matter how many times the site is updated — which is exactly
+# what happened while assets/ui.css shipped under a fixed ?v=2 and every CSS
+# fix stayed invisible on the live site. must-revalidate means the browser may
+# keep a copy but has to ask before using it.
+<FilesMatch "\.(html|json)$">
+    <IfModule mod_headers.c>
+        Header set Cache-Control "no-cache, must-revalidate, max-age=0"
+    </IfModule>
+</FilesMatch>
+
 # ---- protect the server-side key file ----
 # api.php is the only thing the browser may call; keys*.php must never be fetched.
 <FilesMatch "^keys.*\.php$">
