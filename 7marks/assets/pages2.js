@@ -1023,10 +1023,18 @@
         '\n\nAnswer the last question clearly, at that level, with a short example. ' +
         'Use plain formatting and keep it under 250 words.';
 
-      M.ai.ask(prompt, { temp: 0.6 }).then(function (r) {
+      M.ai.generate(prompt, { temp: 0.6, label: 'AI assistant' }).then(function (r) {
         $('#aiSend').disabled = false;
+        if (r.blocked) {
+          /* the question is put back so it is not lost behind the modal */
+          M.state.chat.pop(); M.save('chat');
+          $('#aiIn').value = q;
+          $('#aiLog').innerHTML = chatHTML();
+          V.gateModal(r.blocked, r.status);
+          return;
+        }
         var text = r.demo || !r.text ? demoReply(q, sub) : r.text;
-        M.state.chat.push({ r: 'a', t: text, demo: r.demo });
+        M.state.chat.push({ r: 'a', t: text, demo: r.demo, charged: r.charged });
         M.save('chat');
         $('#aiLog').innerHTML = chatHTML();
         scrollChat();
@@ -1257,6 +1265,176 @@
         .catch(function () {});
       else { $('#ivCopy').click(); }
     };
+  });
+
+  /* =====================================================================
+     PRICING + CREDIT HISTORY
+     The plan cards are rendered from the SERVER's catalogue, not from a copy
+     in the browser, so prices and entitlements cannot drift apart from what
+     the entitlement check actually enforces.
+     ===================================================================== */
+  var billCycle = 'monthly';
+
+  M.router.on('pricing', function () {
+    set('<div class="wrap" style="grid-template-columns:minmax(0,1fr)"><div class="col">' +
+      '<section class="card"><div class="card-b" id="prBody">' +
+      '<div class="think">Loading plans<i></i><i></i><i></i></div></div></section>' +
+      '</div></div>' + foot());
+
+    Promise.all([M.credits.catalogue(), M.credits.status()]).then(function (res) {
+      var cat = res[0], st = res[1];
+      if (!cat) {
+        $('#prBody').innerHTML = '<div class="empty"><span class="em">⚠️</span>' +
+          '<b>Plans are unavailable right now</b><small>The account service could not be ' +
+          'reached, so prices are not shown rather than showing prices that might be wrong.' +
+          '</small></div>';
+        return;
+      }
+      paintPricing(cat, st);
+    });
+  });
+
+  function paintPricing(cat, st) {
+    var order = ['spark', 'pro', 'infinity'];
+    var cur = st && st.plan ? st.plan.key : 'free';
+    var yearly = billCycle === 'yearly';
+
+    $('#prBody').innerHTML =
+      '<div class="pr-head"><h1>Choose Your 7Marks Plan</h1>' +
+      '<p>Study smarter. Practice deeper. Prepare better.</p>' +
+      '<div class="cycle" id="prCycle" role="tablist">' +
+      '<button class="cy' + (!yearly ? ' on' : '') + '" data-c="monthly">Monthly</button>' +
+      '<button class="cy' + (yearly ? ' on' : '') + '" data-c="yearly">Yearly' +
+      '<span class="cy-save">save up to 17%</span></button></div></div>' +
+
+      '<div class="pr-grid">' + order.map(function (k) {
+        var p = cat.plans[k];
+        var price = p.price[billCycle];
+        var per = yearly ? '/year' : '/month';
+        var monthly = yearly ? Math.round(price / 12) : price;
+        var isCur = k === cur;
+        return '<div class="pr-card' + (p.popular ? ' pop' : '') + (p.flagship ? ' flag' : '') +
+          (isCur ? ' current' : '') + '">' +
+          (p.popular ? '<span class="pr-badge">⭐ MOST POPULAR</span>' : '') +
+          (p.flagship && yearly ? '<span class="pr-badge best">BEST VALUE</span>' : '') +
+          '<span class="pr-tier">' + esc(p.badge) + '</span>' +
+          '<h3>' + esc(p.name) + '</h3>' +
+          '<p class="pr-tag">' + esc(p.tag) + '</p>' +
+          '<div class="pr-price"><b>₹' + price.toLocaleString() + '</b><i>' + per + '</i></div>' +
+          (yearly ? '<small class="pr-eq">≈ ₹' + monthly.toLocaleString() +
+            ' a month, billed yearly</small>' : '<small class="pr-eq">&nbsp;</small>') +
+          '<div class="pr-cr"><b>' + p.credits.toLocaleString() + '</b> credits every month' +
+          (p.daily ? '<span class="pr-daily">+' + p.daily + ' free every day</span>' : '') +
+          '</div>' +
+          '<div class="pr-ai ' + (p.ai ? 'yes' : 'no') + '">' +
+          (p.ai ? '✓ AI tools included' : '✕ AI tools not included') + '</div>' +
+          '<ul class="pr-feats">' + p.includes.slice(0, 7).map(function (f) {
+            return '<li>✓ ' + esc(f) + '</li>'; }).join('') +
+          p.excludes.map(function (f) {
+            return '<li class="no">✕ ' + esc(f) + '</li>'; }).join('') + '</ul>' +
+          '<div class="pr-sup">' + esc(p.support) + '</div>' +
+          (isCur ? '<span class="pr-cur">Your current plan</span>'
+                 : '<a class="btn btn-v pr-cta" href="billing.php?plan=' + k + '&cycle=' +
+                   billCycle + '">' + (p.flagship ? 'Get Infinity' : 'Get ' + p.name.split(' ')[1]) +
+                   '</a>') +
+          '</div>';
+      }).join('') + '</div>' +
+
+      /* the calculator — transparent about what a credit buys */
+      '<div class="calc"><h3>How far can your credits take you?</h3>' +
+      '<p><b>1 AI generation = ' + cat.ai_cost + ' credits.</b> Nothing else costs credits — ' +
+      'reading, practising, planning and revising are all free.</p>' +
+      '<div class="calc-rows">' + [100, 500, 1000, 10000].map(function (c) {
+        return '<div class="calc-r"><b>' + c.toLocaleString() + '</b><span>credits</span>' +
+          '<i>=</i><b>' + (c / cat.ai_cost).toLocaleString() + '</b>' +
+          '<span>AI generations</span></div>';
+      }).join('') + '</div></div>' +
+
+      /* comparison, collapsible so it stays usable on a phone */
+      '<div class="cmp">' + [
+        ['Study tools', [['Practice & mock tests', 1, 1, 1], ['Question papers', 1, 1, 1],
+                         ['Notes & flashcards', 1, 1, 1], ['Study planner', 1, 1, 1]]],
+        ['AI tools', [['AI Study Assistant', 0, 1, 1], ['AI question generation', 0, 1, 1],
+                      ['AI correction & scoring', 0, 1, 1]]],
+        ['Credits', [['Monthly credits', '500', '1,000', '10,000'],
+                     ['Daily free credits', '—', '—', '+20']]],
+        ['Analytics', [['Performance tracking', 1, 1, 1], ['Advanced analytics', 0, 1, 1]]],
+        ['Support', [['Support level', 'Standard', 'Priority', 'Full priority']]]
+      ].map(function (grp, gi) {
+        return '<details class="cmp-g"' + (gi < 2 ? ' open' : '') + '>' +
+          '<summary>' + esc(grp[0]) + '</summary>' +
+          '<div class="cmp-head"><span></span><b>Spark</b><b>Pro</b><b>Infinity</b></div>' +
+          grp[1].map(function (row) {
+            return '<div class="cmp-r"><span>' + esc(row[0]) + '</span>' +
+              [1, 2, 3].map(function (i) {
+                var v = row[i];
+                return '<b>' + (v === 1 ? '<em class="y">✓</em>' : v === 0 ? '<em class="n">✕</em>'
+                  : esc(String(v))) + '</b>';
+              }).join('') + '</div>';
+          }).join('') + '</details>';
+      }).join('') + '</div>';
+
+    $('#prCycle').onclick = function (e) {
+      var b = e.target.closest('.cy'); if (!b) return;
+      billCycle = b.dataset.c;
+      paintPricing(cat, st);
+    };
+  }
+
+  M.router.on('credits', function () {
+    set('<div class="wrap"><div class="col">' +
+      V.card('⚡', 'violet', 'Credits & history',
+        '<div id="crTop"><div class="think">Loading<i></i><i></i><i></i></div></div>') +
+      '</div>' + rail() + '</div>' + foot());
+
+    Promise.all([M.credits.status(true), M.credits.ledger()]).then(function (res) {
+      var st = res[0], tx = res[1];
+      if (!st) {
+        $('#crTop').innerHTML = '<div class="empty"><span class="em">⚡</span>' +
+          '<b>Credit service unavailable</b><small>Your balance is held on the server and ' +
+          'could not be read, so no figure is shown rather than a guessed one.</small></div>';
+        return;
+      }
+      var b = st.daily_bonus || {};
+      $('#crTop').innerHTML =
+        '<div class="cr-hero"><div><small>Balance</small>' +
+        '<b>⚡ ' + st.credits.toLocaleString() + '</b>' +
+        '<span>' + esc(st.plan.name) + ' · 1 generation = ' + st.ai_cost + ' credits</span></div>' +
+        '<span class="pr-tier">' + esc(st.plan.badge) + '</span></div>' +
+        (b.eligible ? '<div class="cr-bonus"><div><b>Daily bonus</b>' +
+          '<small>+' + b.amount + ' credits every day on Infinity</small></div>' +
+          (b.claimed_today
+            ? '<span class="cr-done">Claimed today</span>'
+            : '<button class="btn btn-v" id="crClaim">Claim +' + b.amount + '</button>') +
+          '</div>' : '') +
+        (st.plan.ai ? '' : '<div class="fb" style="margin-top:14px">' +
+          '<h4>ℹ️ AI is not included in ' + esc(st.plan.name) + '</h4>' +
+          'Credits are only spent by AI generations, so on this plan nothing spends them. ' +
+          '<a href="#/pricing">See plans with AI</a>.</div>') +
+        '<h4 style="margin:18px 0 8px;font-size:13px">Transaction history</h4>' +
+        (tx.length ? '<div class="cr-tx">' +
+          '<div class="cr-h"><span>Action</span><b>Credits</b><b>Balance</b></div>' +
+          tx.map(function (t) {
+            var grant = t.amt < 0;
+            return '<div class="cr-r"><span>' + esc(t.label) +
+              '<small>' + new Date(t.at * 1000).toLocaleString() + '</small></span>' +
+              '<b class="' + (grant ? 'up' : 'dn') + '">' + (grant ? '+' + (-t.amt) : '-' + t.amt) +
+              '</b><b>' + (t.bal != null ? t.bal.toLocaleString() : '—') + '</b></div>';
+          }).join('') + '</div>'
+          : '<div class="empty" style="padding:24px"><span class="em">🧾</span>' +
+            '<b>Nothing spent yet</b><small>Every AI generation will be listed here with the ' +
+            'balance it left behind.</small></div>');
+
+      if ($('#crClaim')) $('#crClaim').onclick = function () {
+        var btn = this; btn.disabled = true;
+        M.credits.bonus().then(function (j) {
+          btn.disabled = false;
+          if (j && j.ok) { M.toast('+' + j.granted + ' credits added', 'ok'); M.router.go('credits'); }
+          else if (j && j.already_claimed) M.toast('Already claimed today', 'warn');
+          else M.toast('Bonus unavailable — nothing was changed', 'err', 4500);
+        });
+      };
+    });
   });
 
   function chatHTML() {

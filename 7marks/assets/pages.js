@@ -263,10 +263,16 @@
         '"good":string,"missing":string,"improve":string,"model":string,"better":string}\n' +
         'Be encouraging and specific. Never just say "wrong" — say what was right first.';
 
-      M.ai.ask(prompt, { temp: 0.4 }).then(function (r) {
+      /* one ref per click, so a double-click cannot be charged twice */
+      M.ai.generate(prompt, { temp: 0.4, label: 'AI correction' }).then(function (r) {
         btn.disabled = false;
+        if (r.blocked) {
+          $('#cOut').innerHTML = '';
+          V.gateModal(r.blocked, r.status);
+          return;
+        }
         var data = parseJSON(r.text) || demoMark(ans, max, subject);
-        renderMark(data, max, ans, r.demo);
+        renderMark(data, max, ans, r.demo, r.charged);
         M.addXP(5, 'answer corrected');
       });
     };
@@ -313,10 +319,10 @@
     };
   }
 
-  function renderMark(data, max, original, demo) {
+  function renderMark(data, max, original, demo, charged) {
     var score = M.clamp(+data.score || 0, 0, max);
     var pct = max ? score / max * 100 : 0;
-    var h =
+    var h = (charged ? '<p class="charged">⚡ ' + charged + ' credits used</p>' : '') +
       (demo ? '<div class="toast warn" style="animation:none;margin:16px 0 0;max-width:none">' +
         '⚠️ Demo marking — the AI backend is not reachable from this preview. ' +
         'The structure below is exactly what live marking returns.</div>' : '') +
@@ -1302,12 +1308,14 @@
               'briefly for objective questions and as key points for long ones.'
                      : '\nDo NOT include the answers.');
 
-          return M.ai.ask(prompt, { temp: 0.75, images: imgs, maxTokens: 8192 });
+          return M.ai.generate(prompt, { temp: 0.75, images: imgs, maxTokens: 8192,
+                                         label: 'AI question paper' });
         })
         .then(function (r) {
           btn.disabled = false;
-          if (r.demo || !r.text) { renderPaper(demoPaper(cfg, pasted), cfg, true); }
-          else { renderPaper(r.text, cfg, false); }
+          if (r.blocked) { $('#pOut').innerHTML = ''; V.gateModal(r.blocked, r.status); return; }
+          if (r.demo || !r.text) { renderPaper(demoPaper(cfg, pasted), cfg, true, 0); }
+          else { renderPaper(r.text, cfg, false, r.charged); }
           M.addXP(8, 'question paper generated');
         })
         .catch(function (e) {
@@ -1360,8 +1368,9 @@
     }).join('');
   }
 
-  function renderPaper(text, cfg, demo) {
+  function renderPaper(text, cfg, demo, charged) {
     $('#pOut').innerHTML =
+      (charged ? '<p class="charged">⚡ ' + charged + ' credits used</p>' : '') +
       (demo ? '<div class="toast warn" style="animation:none;margin:16px 0 0;max-width:none">' +
         '⚠️ Demo paper — the AI backend is not reachable from here. The layout below is ' +
         'exactly what a live paper returns.</div>' : '') +

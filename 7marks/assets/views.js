@@ -76,7 +76,10 @@
         '<div class="results" id="results" role="listbox"></div>' +
       '</div>' +
       '<div class="nav-r">' +
-        '<a class="btn-prem" href="#/premium">👑 <span>Premium</span></a>' +
+        '<button class="cred-chip" id="credChip" hidden title="Credit history">' +
+          '<span class="cc-bolt">⚡</span><span class="cc-n">0</span>' +
+          '<span class="cc-plan">FREE</span></button>' +
+        '<a class="btn-prem" href="#/pricing">👑 <span>Premium</span></a>' +
         '<div style="position:relative">' +
           '<button class="ico-btn" id="bell" aria-label="Notifications">🔔<i class="dot" id="dot"></i></button>' +
           '<div class="pop" id="notifPop"></div></div>' +
@@ -85,6 +88,65 @@
             '<span><b id="uname">Hello, Student!</b><small>Keep learning!</small></span></button>' +
           '<div class="pop" id="whoPop"></div></div>' +
       '</div>';
+  }
+
+  /* =====================================================================
+     THE TWO REFUSALS
+     A student who cannot run AI is told which of the two reasons applies and
+     what it would cost to fix, rather than being shown a generic error.
+     ===================================================================== */
+  function gateModal(kind, st) {
+    var m = d.getElementById('modal');
+    var cost = (st && st.ai_cost) || 10;
+    if (kind === 'plan') {
+      m.innerHTML = '<div class="modal-c gate"><span class="gate-em">✨</span>' +
+        '<h3>Unlock AI with 7Marks Pro</h3>' +
+        '<p>Your current plan' +
+        (st && st.plan ? ' (<b>' + esc(st.plan.name) + '</b>)' : '') +
+        ' does not include AI tools.</p>' +
+        '<div class="gate-plan"><div><b>7Marks Pro</b><small>1,000 credits a month · ' +
+        'AI assistant, correction, question generation</small></div>' +
+        '<span class="gate-price">₹99<i>/mo</i></span></div>' +
+        '<div class="m-btns"><button class="btn btn-o" id="gtClose">Not now</button>' +
+        '<a class="btn btn-v" href="#/pricing" id="gtGo">Upgrade to Pro</a></div>' +
+        '<a class="gate-all" href="#/pricing" id="gtAll">View all plans</a></div>';
+    } else {
+      var have = (st && st.credits) || 0;
+      m.innerHTML = '<div class="modal-c gate"><span class="gate-em">⚡</span>' +
+        '<h3>You\'re out of AI credits</h3>' +
+        '<p>You need <b>' + cost + ' credits</b> to generate this.</p>' +
+        '<div class="gate-bal"><small>Current balance</small><b>' + have + ' credits</b></div>' +
+        '<div class="m-btns"><button class="btn btn-o" id="gtClose">Close</button>' +
+        '<a class="btn btn-v" href="#/pricing">Upgrade plan</a></div></div>';
+    }
+    m.classList.add('open');
+    var close = function () { m.classList.remove('open'); };
+    $('#gtClose').onclick = close;
+    $$('.gate a[href="#/pricing"]').forEach(function (a) { a.onclick = close; });
+  }
+
+  /* The credit chip in the top bar. Counts up or down to a new balance
+     rather than snapping, so a deduction is visible rather than silent. */
+  function paintCredits() {
+    var chip = $('#credChip');
+    if (!chip) return;
+    var s = M.credits.chip();
+    if (!s) { chip.hidden = true; return; }
+    chip.hidden = false;
+    chip.querySelector('.cc-plan').textContent = s.plan.badge;
+    chip.className = 'cred-chip plan-' + s.plan.key;
+    var el = chip.querySelector('.cc-n');
+    var from = parseInt(el.textContent.replace(/[^\d]/g, ''), 10);
+    var to = s.credits;
+    if (isNaN(from) || from === to) { el.textContent = to.toLocaleString(); return; }
+    var t0 = null, dur = 520;
+    (function tick(now) {
+      if (t0 === null) t0 = now;
+      var p = Math.min(1, (now - t0) / dur);
+      var e = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(from + (to - from) * e).toLocaleString();
+      if (p < 1) requestAnimationFrame(tick);
+    })();
   }
 
   function paintNotifs() {
@@ -149,6 +211,9 @@
     $('#notifPop').onclick = $('#whoPop').onclick = function (e) { e.stopPropagation(); };
 
     mountSearch();
+    $('#credChip').onclick = function () { M.router.go('credits'); };
+    M.credits.status().then(paintCredits);
+    w.addEventListener('7m:credits', paintCredits);
     w.addEventListener('7m:notif', paintNotifs);
     w.addEventListener('7m:route', function (e) {
       var v = e.detail.name, cat = e.detail.params.cat;
@@ -357,6 +422,7 @@
 
   w.V = {
     mountChrome: mountChrome, renderRail: renderRail, paintNotifs: paintNotifs,
+    gateModal: gateModal, paintCredits: paintCredits,
     hue: hue, card: card, subjectChips: subjectChips, courseSelect: courseSelect,
     yearSelect: yearSelect, refreshCourseRow: refreshCourseRow, bindCourseRow: bindCourseRow,
     setCat: setCat, lineChart: lineChart, scoreRing: scoreRing

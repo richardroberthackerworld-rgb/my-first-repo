@@ -298,6 +298,85 @@
      labelled demo response so the UI can still be exercised end to end.
      Replacing the demo path with production output is a server change only.
      ===================================================================== */
+  /* =====================================================================
+     CREDITS — a thin client over plans.php.
+     It holds no balance of its own. Every number here came from the server
+     on the last call and is re-fetched rather than adjusted locally, so the
+     browser can never talk itself into having more credits than it has.
+     ===================================================================== */
+  var credits = {
+    endpoint: 'plans.php',
+    _st: null, _at: 0, _catalogue: null,
+
+    _get: function (q, body) {
+      var opt = { credentials: 'include' };
+      if (body) {
+        opt.method = 'POST';
+        opt.headers = { 'Content-Type': 'application/json' };
+        opt.body = JSON.stringify(body);
+      }
+      return fetch(this.endpoint + '?action=' + q, opt).then(function (r) {
+        return r.json().then(function (j) { j._code = r.status; return j; });
+      });
+    },
+
+    /** Current plan, balance and entitlements. Cached briefly to avoid a
+        round trip per keystroke, but never longer than 15 seconds. */
+    status: function (force) {
+      var self = this;
+      if (!force && self._st && Date.now() - self._at < 15000) {
+        return Promise.resolve(self._st);
+      }
+      return self._get('status').then(function (j) {
+        if (!j || j.error) return self._st;
+        self._st = j; self._at = Date.now();
+        w.dispatchEvent(new CustomEvent('7m:credits', { detail: j }));
+        return j;
+      }).catch(function () {
+        /* The endpoint is unreachable — a static preview, or PHP is down.
+           Return null rather than inventing a plan: callers treat null as
+           "unknown" and let the work through unpriced instead of either
+           blocking the student or pretending they were charged. */
+        return null;
+      });
+    },
+
+    spend: function (ref, label) {
+      var self = this;
+      return self._get('spend', { ref: ref, label: label }).then(function (j) {
+        if (j && typeof j.credits === 'number' && self._st) {
+          self._st.credits = j.credits;
+          self._at = Date.now();
+          w.dispatchEvent(new CustomEvent('7m:credits', { detail: self._st }));
+        }
+        return j || { charged: 0 };
+      }).catch(function () { return { charged: 0, offline: true }; });
+    },
+
+    ledger: function () {
+      return this._get('ledger').then(function (j) { return (j && j.tx) || []; })
+        .catch(function () { return []; });
+    },
+
+    bonus: function () { return this._get('bonus', {}); },
+
+    catalogue: function () {
+      var self = this;
+      if (self._catalogue) return Promise.resolve(self._catalogue);
+      return self._get('plans').then(function (j) {
+        if (j && j.plans) self._catalogue = j;
+        return self._catalogue;
+      }).catch(function () { return null; });
+    },
+
+    /** What the UI should show in the top bar. */
+    chip: function () {
+      var s = this._st;
+      if (!s) return null;
+      return { credits: s.credits, plan: s.plan, cost: s.ai_cost };
+    }
+  };
+
   var ai = {
     endpoint: 'api.php',
     live: null,           /* null = not yet probed, true/false after the first call */
@@ -358,6 +437,42 @@
         fr.onerror = rej;
         fr.readAsDataURL(file);
       });
+    },
+
+    /**
+     * Run a generation that COSTS credits.
+     *
+     * Order matters and is the whole point:
+     *   1. ask the server what this account may do and what it has
+     *   2. refuse early if the plan has no AI, or the balance is short
+     *   3. call the model
+     *   4. charge only once a real answer came back
+     *
+     * A failed or empty generation never reaches step 4, so a failure costs
+     * nothing without needing a refund path. `ref` identifies the delivered
+     * result: pass the same one for a retry of the same action and the
+     * server will not charge twice; pass a new one to regenerate.
+     */
+    generate: function (prompt, opts) {
+        opts = opts || {};
+        var ref = opts.ref || ('g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8));
+        return credits.status().then(function (st) {
+            if (st && st.plan && !st.plan.ai) {
+                return { blocked: 'plan', status: st, ref: ref };
+            }
+            if (st && st.signed_in && st.credits < st.ai_cost) {
+                return { blocked: 'credits', status: st, ref: ref };
+            }
+            return ai.ask(prompt, opts).then(function (r) {
+                if (!r.text) return { text: '', demo: r.demo, charged: 0, ref: ref };
+                /* a demo answer is not a generation — it costs nothing */
+                if (r.demo) return { text: r.text, demo: true, charged: 0, ref: ref };
+                return credits.spend(ref, opts.label || 'AI generation').then(function (sp) {
+                    return { text: r.text, demo: false, charged: sp.charged || 0,
+                             credits: sp.credits, ref: ref };
+                });
+            });
+        });
     },
 
     /** Credits / signed-in state, straight from the shared account hub. */
@@ -659,6 +774,6 @@
     $: $, $$: $$, qs: $, qsa: $$, el: el, esc: esc, pad: pad, clamp: clamp, fmt: fmt,
     store: store, state: state, save: save, addXP: addXP,
     toast: toast, notify: notify, mark: mark, writeQuote: writeQuote,
-    ai: ai, exam: exam, router: router, search: search, hl: hl, beep: beep
+    ai: ai, credits: credits, exam: exam, router: router, search: search, hl: hl, beep: beep
   };
 })(window, document);
