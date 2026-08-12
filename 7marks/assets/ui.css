@@ -420,6 +420,130 @@
 .paper strong{color:var(--navy)}
 .paper hr{border:0;border-top:1px solid var(--line);margin:20px 0}
 
+/* ============================ STUDY TABS ============================ */
+.plan-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.plan-top b{display:block;font-size:14px}
+.plan-top small{display:block;font-size:11.5px;color:var(--ink-3)}
+
+/* --- a study session --- */
+.sess{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:12px;
+  border:1px solid var(--line);background:#fff;margin-bottom:9px;transition:border-color .14s}
+.sess:hover{border-color:var(--line-2)}
+.sess.done{background:var(--surface-2);opacity:.72}
+.sess.done .sess-n b{text-decoration:line-through}
+.sess .tick{width:24px;height:24px;border-radius:7px;border:1.5px solid var(--line-2);flex:none;
+  display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;
+  color:#fff;transition:background .14s,border-color .14s}
+.sess.done .tick{background:var(--green);border-color:var(--green)}
+.sess .tick:hover{border-color:var(--green)}
+.sess .em{display:flex;align-items:center;justify-content:center;width:34px;height:34px;
+  border-radius:10px;font-size:16px;flex:none}
+.sess-n{flex:1;min-width:0}
+.sess-n b{display:block;font-size:13.5px}
+.sess-n small{display:block;font-size:11.5px;color:var(--ink-2)}
+.sess-meta{display:block;font-size:10.5px;color:var(--ink-3);margin-top:3px}
+.sess-meta i{font-style:normal;font-weight:700}
+.sess-do{display:flex;align-items:center;gap:6px;flex:none}
+.sess-ok{font-size:11.5px;font-weight:800;color:var(--green)}
+
+/* --- the week strip --- */
+.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px}
+.wday{position:relative;border:1px solid var(--line);border-radius:11px;background:#fff;
+  padding:9px 6px 26px;min-height:118px}
+.wday.now{border-color:var(--violet);background:var(--violet-bg)}
+.wday-h{text-align:center;margin-bottom:8px}
+.wday-h b{display:block;font-size:11px;color:var(--ink-2)}
+.wday-h small{display:block;font-size:15px;font-weight:800}
+.wday-b{display:flex;flex-direction:column;gap:4px}
+.wchip{font-size:9.5px;font-weight:700;padding:4px 5px;border-radius:6px;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.wchip.done{opacity:.5;text-decoration:line-through}
+.wnone{text-align:center;color:var(--line-2);font-size:12px}
+.wday-f{position:absolute;left:0;right:0;bottom:6px;text-align:center;font-size:9.5px;
+  font-weight:700;color:var(--ink-3)}
+.wadd{position:absolute;top:5px;right:5px;width:19px;height:19px;border-radius:6px;
+  font-size:12px;font-weight:800;color:var(--ink-3);opacity:0;transition:opacity .14s}
+.wday:hover .wadd,.wadd:focus-visible{opacity:1;background:var(--violet);color:#fff}
+
+/* --- notes --- */
+.notes{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:11px;
+  margin-top:14px}
+.note{border:1px solid var(--line);border-radius:12px;background:#fff;padding:13px;cursor:pointer;
+  transition:transform .14s,box-shadow .14s;
+  background-image:repeating-linear-gradient(180deg,transparent 0 25px,rgba(47,111,237,.06) 25px 26px);
+  background-position:0 34px}
+.note:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.note h4{font-size:13.5px;margin-bottom:6px}
+.note p{font-size:11.5px;color:var(--ink-2);line-height:1.6;min-height:52px}
+.note-f{display:flex;align-items:center;justify-content:space-between;margin-top:10px;
+  padding-top:8px;border-top:1px solid var(--line)}
+.note-f small{font-size:10.5px;color:var(--ink-3)}
+.note-f span{display:flex;gap:4px}
+.note-f .mv{width:26px;height:26px;font-size:12px}
+
+/* --- flashcards --- */
+.flash{perspective:1000px;cursor:pointer;margin-top:14px}
+.flash-in{position:relative;transform-style:preserve-3d;transition:transform .5s cubic-bezier(.4,0,.2,1);
+  min-height:190px}
+.flash.flip .flash-in{transform:rotateY(180deg)}
+.flash-f,.flash-b{position:absolute;inset:0;backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;border-radius:14px;padding:22px;display:flex;
+  flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:9px;
+  border:1px solid var(--line-2)}
+.flash-f{background:linear-gradient(150deg,#fff,var(--surface-2))}
+.flash-b{background:linear-gradient(150deg,var(--violet-bg),#f6f4ff);transform:rotateY(180deg)}
+.flash small{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-3)}
+.flash p{font-size:clamp(14px,2vw,17px);font-weight:600;line-height:1.55}
+.flash i{font-size:11px;color:var(--ink-3);font-style:normal;margin-top:4px}
+
+/* --- leaderboard --- */
+.lb{display:flex;flex-direction:column;gap:6px}
+.lb-r{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:11px;
+  border:1px solid var(--line);background:#fff}
+.lb-r.me{border-color:var(--violet);background:var(--violet-bg)}
+.lb-p{width:28px;text-align:center;font-weight:800;font-size:13px;color:var(--ink-3);flex:none}
+.lb-p.top{font-size:17px}
+.lb-a{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#7c6cf0,#5b4be0);
+  color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;
+  flex:none}
+.lb-n{flex:1;min-width:0;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap}
+.lb-n i{font-style:normal;font-size:10px;font-weight:800;color:var(--violet)}
+.lb-k{font-size:11.5px;color:var(--ink-3);flex:none}
+.lb-s{font-size:13.5px;font-weight:800;min-width:52px;text-align:right;flex:none}
+
+/* --- challenges --- */
+.chal{display:flex;gap:11px;padding:13px;border-radius:12px;border:1px solid var(--line);
+  background:#fff;align-items:flex-start}
+.chal.won{border-color:#bfe8d6;background:linear-gradient(150deg,var(--green-bg),#fff)}
+.chal .em{display:flex;align-items:center;justify-content:center;width:36px;height:36px;
+  border-radius:11px;font-size:17px;flex:none}
+.chal-n{flex:1;min-width:0}
+.chal-n b{display:block;font-size:13px}
+.chal-n small{display:block;font-size:11px;color:var(--ink-3);margin-top:1px}
+.chal-f{display:flex;justify-content:space-between;font-size:10.5px;color:var(--ink-3);
+  margin-top:6px}
+.chal-f em{font-style:normal;font-weight:800;color:var(--violet)}
+.chal-tick{width:28px;height:28px;border-radius:50%;background:var(--green);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-weight:800;flex:none}
+.chal .btn{flex:none;height:30px;padding:0 12px;font-size:11.5px}
+
+/* --- assistant chat --- */
+.chat{max-height:min(48vh,420px);overflow-y:auto;padding:12px;border-radius:12px;
+  background:var(--surface-2);border:1px solid var(--line);display:flex;flex-direction:column;
+  gap:9px}
+.msg{max-width:86%;padding:11px 14px;border-radius:14px;font-size:13.5px;line-height:1.62;
+  animation:msgIn .2s ease both}
+@keyframes msgIn{from{opacity:0;transform:translateY(6px)}}
+.msg.u{align-self:flex-end;background:linear-gradient(135deg,#7c6cf0,#5b4be0);color:#fff;
+  border-bottom-right-radius:5px}
+.msg.a{align-self:flex-start;background:#fff;border:1px solid var(--line);
+  border-bottom-left-radius:5px}
+.demo-tag{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.08em;
+  text-transform:uppercase;background:var(--orange-bg);color:var(--orange);padding:2px 6px;
+  border-radius:5px;margin-right:7px;vertical-align:1px}
+
 /* --- toasts --- */
 .toasts{position:fixed;right:16px;bottom:16px;z-index:200;display:flex;flex-direction:column;
   gap:9px;pointer-events:none}
@@ -513,10 +637,20 @@
   .toast{max-width:none}
   /* the timer must stay legible and thumb-reachable during an exam */
   .timer u{min-width:52px}
+  /* the week strip scrolls sideways rather than squeezing seven columns
+     into a phone, where each day would be ~40px and unreadable */
+  .week{grid-template-columns:repeat(7,116px);overflow-x:auto;scroll-snap-type:x proximity;
+    padding-bottom:6px}
+  .wday{scroll-snap-align:start}
+  .wadd{opacity:1}
+  .notes{grid-template-columns:1fr 1fr}
+  .msg{max-width:92%}
+  .lb-k{display:none}
 }
 @media(max-width:380px){
   /* still two per row at 320-380 — they shrink, they do not stack */
   .cats,.qas,.stats{gap:7px}
+  .notes{grid-template-columns:1fr}
   .cat{padding:12px 5px}
   .cat .em{width:32px;height:32px;font-size:16px}
   .cat b{font-size:11px}

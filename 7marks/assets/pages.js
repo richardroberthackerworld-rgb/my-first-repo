@@ -449,17 +449,156 @@
   var mk = { step: 1, cat: null, course: null, year: 0, sub: null, topic: '', own: '' };
 
   M.router.on('mock', function (p) {
-    mk = { step: 1, cat: M.state.cat, course: M.state.course, year: M.state.year,
-           sub: null, topic: 'all', own: '', quick: !!p.quick };
+    mk = { mode: 'course', step: 1, cat: M.state.cat, course: M.state.course,
+           year: M.state.year, sub: null, topic: 'all', own: '', quick: !!p.quick,
+           photos: [] };
     paintMock();
   });
+
+  /* Two ways in. Walking the course tree is right when a student knows their
+     syllabus; it is the wrong amount of work when they are holding a
+     textbook page or already know the topic they want. */
+  function modeTabs() {
+    return '<div class="tabs" id="mkMode2" style="margin-bottom:16px">' +
+      '<button class="tab' + (mk.mode === 'course' ? ' on' : '') + '" data-m="course">' +
+      '📚 Choose by course</button>' +
+      '<button class="tab' + (mk.mode === 'direct' ? ' on' : '') + '" data-m="direct">' +
+      '📷 Upload a photo or type a topic</button></div>';
+  }
 
   function paintMock() {
     set('<div class="wrap"><div class="col">' +
       V.card('📝', 'violet', 'Create a test',
-        stepBar() + '<div id="mkBody">' + stepBody() + '</div>') +
+        modeTabs() +
+        (mk.mode === 'course'
+          ? stepBar() + '<div id="mkBody">' + stepBody() + '</div>'
+          : '<div id="mkBody">' + directBody() + '</div>')) +
       '</div>' + rightRail() + '</div>' + footer());
-    wireMock();
+    $('#mkMode2').onclick = function (e) {
+      var b = e.target.closest('.tab'); if (!b) return;
+      mk.mode = b.dataset.m;
+      if (mk.mode === 'direct') mk.step = 1;
+      paintMock();
+    };
+    if (mk.mode === 'course') wireMock(); else wireDirect();
+  }
+
+  /* --- the direct route: a photo of the page, or just the topic --- */
+  function directBody() {
+    return '<div class="drop" id="dPhoto"><span class="em">📷</span>' +
+      '<b>Upload a photo of your textbook or notes</b>' +
+      '<small>The questions are set from what is on the page · up to 5 photos</small>' +
+      '<input type="file" id="dFile" accept="image/*" multiple hidden></div>' +
+      '<div id="dList" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"></div>' +
+
+      '<div style="display:flex;align-items:center;gap:10px;margin:16px 0 10px">' +
+      '<span style="flex:1;height:1px;background:var(--line)"></span>' +
+      '<span style="font-size:11px;font-weight:700;color:var(--ink-3)">OR JUST TYPE IT</span>' +
+      '<span style="flex:1;height:1px;background:var(--line)"></span></div>' +
+
+      '<input class="sel" id="dTopic" style="width:100%;height:46px;font-size:14px" value="' +
+      esc(mk.own) + '" placeholder="e.g. Photosynthesis in plants · Fundamental Rights · ' +
+      'Integration by parts">' +
+      '<div class="pills" style="margin-top:10px" id="dEg">' +
+      ['Photosynthesis in plants', 'Fundamental Rights', 'Integration by parts',
+       'Thermodynamics numericals', 'The Revolt of 1857'].map(function (t) {
+        return '<button class="pill" data-eg="' + esc(t) + '" style="font-weight:600">' +
+          esc(t) + '</button>';
+      }).join('') + '</div>' +
+
+      '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));' +
+      'gap:12px;margin-top:16px">' +
+      field('Subject (optional)', '<select class="sel" id="dSub" style="width:100%">' +
+        '<option value="">Work it out from the topic</option>' +
+        Object.keys(C.subjects).map(function (k) {
+          return '<option value="' + k + '">' + esc(C.subjects[k].name) + '</option>';
+        }).join('') + '</select>') +
+      field('Class / level (optional)', '<input class="sel" id="dLevel" style="width:100%" ' +
+        'placeholder="e.g. Class 10, B.Tech 2nd year">') +
+      '</div>' +
+      '<button class="btn btn-v" id="dNext" style="margin-top:18px;height:46px;width:100%;' +
+      'justify-content:center">Continue →</button>';
+  }
+
+  function wireDirect() {
+    var drop = $('#dPhoto'), file = $('#dFile');
+    drop.onclick = function () { file.click(); };
+    ['dragover', 'dragleave', 'drop'].forEach(function (ev) {
+      drop.addEventListener(ev, function (e) {
+        e.preventDefault();
+        drop.classList.toggle('over', ev === 'dragover');
+        if (ev === 'drop' && e.dataTransfer.files.length) addPhotos(e.dataTransfer.files);
+      });
+    });
+    file.onchange = function () { addPhotos(this.files); };
+    function addPhotos(list) {
+      Array.prototype.slice.call(list).forEach(function (f) {
+        if (mk.photos.length >= 5) { M.toast('Five photos is the limit', 'warn'); return; }
+        if (f.size > 6 * 1024 * 1024) {
+          M.toast(f.name + ' is over 6 MB — use a smaller photo', 'warn', 4200); return;
+        }
+        mk.photos.push(f);
+      });
+      paintPhotos();
+    }
+    function paintPhotos() {
+      $('#dList').innerHTML = mk.photos.map(function (f, i) {
+        return '<span class="pill" style="cursor:default">🖼️ ' +
+          esc(f.name.length > 20 ? f.name.slice(0, 18) + '…' : f.name) +
+          ' <button data-i="' + i + '" class="rmP" aria-label="Remove" style="font-weight:800;' +
+          'color:var(--red-ink);margin-left:4px">✕</button></span>';
+      }).join('');
+      $$('.rmP').forEach(function (b) {
+        b.onclick = function () { mk.photos.splice(+this.dataset.i, 1); paintPhotos(); };
+      });
+    }
+    paintPhotos();
+
+    $('#dEg').onclick = function (e) {
+      var b = e.target.closest('[data-eg]'); if (!b) return;
+      $('#dTopic').value = b.dataset.eg; mk.own = b.dataset.eg;
+    };
+    $('#dTopic').oninput = function () { mk.own = this.value; };
+    $('#dTopic').onkeydown = function (e) { if (e.key === 'Enter') $('#dNext').click(); };
+
+    $('#dNext').onclick = function () {
+      var topic = $('#dTopic').value.trim();
+      if (!topic && !mk.photos.length) {
+        M.toast('Upload a photo or type a topic first', 'warn');
+        $('#dTopic').focus(); return;
+      }
+      mk.own = topic || 'From the uploaded photo';
+      mk.topic = 'own';
+      mk.sub = $('#dSub').value || guessSubject(topic);
+      mk.level = $('#dLevel').value.trim();
+      mk.mode = 'course';       /* reuse the configure step — same paper, same engine */
+      mk.step = 5;
+      paintMock();
+    };
+  }
+
+  /* A light guess so the configure step can show sensible question types
+     even when the student never picked a subject. */
+  function guessSubject(topic) {
+    var t = (topic || '').toLowerCase();
+    var hints = [
+      ['maths', ['integra', 'algebra', 'trigono', 'calculus', 'matri', 'equation', 'geometry']],
+      ['phy', ['thermodyn', 'motion', 'optic', 'electrostat', 'physic', 'friction', 'gravit']],
+      ['chem', ['chemi', 'mole', 'bonding', 'organic', 'acid', 'periodic', 'electrochem']],
+      ['bio', ['photosynth', 'biolog', 'cell', 'genetic', 'plant', 'digest', 'respirat']],
+      ['pol', ['constitut', 'fundamental right', 'parliament', 'polity', 'civics']],
+      ['hist', ['revolt', 'histor', 'mughal', 'freedom struggle', 'empire', 'dynasty']],
+      ['geo', ['geograph', 'climate', 'monsoon', 'river', 'plateau']],
+      ['acc', ['account', 'balance sheet', 'depreciat', 'journal', 'ledger']],
+      ['cs', ['algorithm', 'programm', 'java', 'python', 'data structure', 'database', 'sql']],
+      ['eng', ['grammar', 'tense', 'essay', 'comprehens', 'letter writing']]
+    ];
+    for (var i = 0; i < hints.length; i++) {
+      for (var j = 0; j < hints[i][1].length; j++) {
+        if (t.indexOf(hints[i][1][j]) > -1) return hints[i][0];
+      }
+    }
+    return 'gk';
   }
 
   var STEPS = ['Study group', 'Course / level', 'Subject', 'Topic', 'Set the paper'];
@@ -1266,29 +1405,8 @@
      one says plainly what it will do and offers the working route that gets
      closest today. They are not pretending to be finished. */
   var LATER = {
-    assistant:  ['🤖', 'violet', 'AI Study Assistant',
-      'A full tutor chat — explain a topic, summarise a chapter, generate MCQs, build ' +
-      'flashcards, make a study plan.', '#/correct', 'Use AI Correct & Score'],
-    practice:   ['📘', 'blue', 'My Practice',
-      'Topic-by-topic practice with instant explanations and a running accuracy score.',
-      '#/mock', 'Take a mock test'],
-    bookmarks:  ['🔖', 'orange', 'Bookmarks', 'Everything you saved — questions, answers, topics and papers.',
-      '#/notes', 'Open notes'],
-    planner:    ['📅', 'teal', 'Study Planner',
-      'Enter your exam date and available hours; the AI lays out a day-by-day plan.',
-      '#/mock', 'Start practising'],
-    notes:      ['📒', 'green', 'Notes & Flashcards',
-      'Write notes, auto-generate flashcards from weak topics, revise with spaced repetition.',
-      '#/correct', 'Save a corrected answer'],
-    analytics:  ['📊', 'pink', 'Analytics',
-      'Mistake-pattern analysis: conceptual vs calculation vs careless, and what to fix first.',
-      '#/performance', 'See performance'],
-    leaderboard:['🏅', 'gold', 'Leaderboard', 'Weekly, monthly and subject ranks — opt-in and privacy-safe.',
-      '#/performance', 'See your own stats'],
-    challenges: ['🧩', 'red', 'Daily Challenges', 'A daily set worth XP: speed rounds, revision cards, one AI correction.',
-      '#/mock', 'Take a quick quiz'],
     doubt:      ['💡', 'orange', 'Doubt Solver', 'Type or photograph a doubt and get a step-by-step solution.',
-      '#/correct', 'Use AI correction'],
+      '#/assistant', 'Ask the study assistant'],
     invite:     ['🎁', 'pink', 'Invite & Earn', 'Share 7Marks, earn credits when a friend joins.',
       '#/home', 'Back to dashboard'],
     achievements:['🏆', 'gold', 'Achievements', 'Every badge, what it takes, and how close you are.',
@@ -1336,4 +1454,7 @@
       return '<a href="' + l[1] + '">' + esc(l[0]) + '</a>';
     }).join('') + '</div>';
   }
+
+  /* the shared chrome the second page module builds its screens inside */
+  w.PAGES = { rightRail: rightRail, footer: footer, stat: stat, md: md };
 })(window, document);

@@ -145,6 +145,7 @@
 <script src="assets/core.js?v=2"></script>
 <script src="assets/views.js?v=2"></script>
 <script src="assets/pages.js?v=2"></script>
+<script src="assets/pages2.js?v=2"></script>
 <script>
 /* =====================================================================
    BOOT — run the preloader, then hand over to the app.
@@ -176,16 +177,18 @@
 
   var reduce = false;
   try { reduce = matchMedia('(prefers-reduced-motion:reduce)').matches; } catch (e) {}
-  /* a student who already saw it this session should not sit through it again */
+  /* A repeat visit in the same session gets the SAME animation at 2.4x, not
+     a skipped one. Skipping made a refresh look like the preloader was
+     broken — it appeared for a frame and was gone. */
   var seen = false;
   try { seen = !!sessionStorage.getItem('7m.seen'); sessionStorage.setItem('7m.seen', '1'); } catch (e) {}
 
   /* draw the logo and write the quote on one clock; both fail to
      "already finished", never to blank */
-  var quote = M.writeQuote(pre, { instant: reduce || seen });
+  var quote = M.writeQuote(pre, { instant: reduce, speed: seen ? 2.4 : 1 });
 
   /* the preloader must outlast the writing, or the student never sees it */
-  var DUR = (reduce || seen) ? 350 : 5800;
+  var DUR = reduce ? 350 : (quote ? (quote.runtime + 0.7) * 1000 : 5800);
   var fill = d.getElementById('preFill'), pct = d.getElementById('prePct'),
       rocket = d.getElementById('preRocket');
   var t0 = performance.now(), finished = false, booted = false;

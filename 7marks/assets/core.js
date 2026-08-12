@@ -226,11 +226,18 @@
     try { reduce = matchMedia('(prefers-reduced-motion:reduce)').matches; } catch (e) {}
     if (reduce || opts.instant) { api.finish(); return api; }
 
+    /* A repeat visit runs the same animation FASTER rather than skipping it.
+       Skipping meant a student who refreshed saw the preloader flash and
+       vanish, which reads as broken rather than as considerate. */
+    var speed = opts.speed > 0 ? opts.speed : 1;
+    api.speed = speed;
+    api.runtime = total / speed;
+
     step(0);
     var t0 = null;
     function frame(now) {
       if (t0 === null) t0 = now;
-      if (step((now - t0) / 1000)) return;
+      if (step((now - t0) / 1000 * speed)) return;
       requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);
