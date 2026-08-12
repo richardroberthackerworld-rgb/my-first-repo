@@ -593,7 +593,7 @@
   padding:22px 18px 18px;display:flex;flex-direction:column;
   transition:transform .16s,box-shadow .16s,border-color .16s}
 .pr-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
-.pr-card.pop{border-color:var(--violet);box-shadow:0 4px 22px rgba(91,75,224,.15)}
+.pr-card.pr-pop{border-color:var(--violet);box-shadow:0 4px 22px rgba(91,75,224,.15)}
 .pr-card.flag{border-color:#2b3a76;
   background:linear-gradient(165deg,#f6f7fd,#fff 46%);}
 .pr-card.flag::after{content:'';position:absolute;inset:0;border-radius:18px;pointer-events:none;

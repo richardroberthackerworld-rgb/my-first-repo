@@ -1313,7 +1313,12 @@
         var per = yearly ? '/year' : '/month';
         var monthly = yearly ? Math.round(price / 12) : price;
         var isCur = k === cur;
-        return '<div class="pr-card' + (p.popular ? ' pop' : '') + (p.flagship ? ' flag' : '') +
+        /* class is pr-pop, NOT pop: `.pop` is the dropdown panel in ui.css and
+           carries top:calc(100% + 10px), right:0 and width:330px. .pr-card
+           overrode position and display but not those three, so the popular
+           card was pushed down by its own height and narrowed, landing on top
+           of the calculator and the comparison table. */
+        return '<div class="pr-card' + (p.popular ? ' pr-pop' : '') + (p.flagship ? ' flag' : '') +
           (isCur ? ' current' : '') + '">' +
           (p.popular ? '<span class="pr-badge">⭐ MOST POPULAR</span>' : '') +
           (p.flagship && yearly ? '<span class="pr-badge best">BEST VALUE</span>' : '') +
