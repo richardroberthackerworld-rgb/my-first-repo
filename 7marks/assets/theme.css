@@ -160,22 +160,11 @@ ul,ol{margin:0;padding:0;list-style:none}
    the SMIL begin times above: four lines down the left page, then the two
    words and the underline on the right. */
 /* the nib travels with the line being written */
-.pre-pen{animation:penMove 4.6s cubic-bezier(.4,0,.5,1) .65s both}
-@keyframes penMove{
-   0%{transform:translate(-118px,-72px)}
-  13%{transform:translate(-34px,-72px)}
-  14%{transform:translate(-118px,-52px)}
-  27%{transform:translate(-24px,-52px)}
-  28%{transform:translate(-118px,-32px)}
-  41%{transform:translate(-30px,-32px)}
-  42%{transform:translate(-118px,-12px)}
-  55%{transform:translate(-14px,-12px)}
-  60%{transform:translate(4px,-56px)}
-  72%{transform:translate(62px,-56px)}
-  76%{transform:translate(4px,-28px)}
-  90%{transform:translate(78px,-28px)}
- 100%{transform:translate(86px,-14px)}
-}
+/* The pen carries NO CSS animation. Its position is written by the same
+   function that grows the ink, so the nib is on the last written character
+   by construction. The old keyframe table translated it to y=-38, above the
+   viewBox — the pen visibly left the paper. */
+.pre-pen{transition:none}
 
 .pre-load{font-family:var(--hand);font-size:clamp(15px,2.2vw,20px);color:var(--ink-2);
   animation:preUp .6s ease .46s both}

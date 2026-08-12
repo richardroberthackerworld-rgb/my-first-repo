@@ -79,13 +79,13 @@
            finished value, so if the script never runs the quote simply
            appears — the degraded state is "no animation", never "no text". -->
       <defs>
-        <clipPath id="c1"><rect class="wr" data-w="96"  data-b="0.65" data-d="0.60" x="44"  y="40"  width="96"  height="16"/></clipPath>
-        <clipPath id="c2"><rect class="wr" data-w="106" data-b="1.25" data-d="0.60" x="44"  y="60"  width="106" height="16"/></clipPath>
-        <clipPath id="c3"><rect class="wr" data-w="100" data-b="1.85" data-d="0.55" x="44"  y="80"  width="100" height="16"/></clipPath>
-        <clipPath id="c4"><rect class="wr" data-w="126" data-b="2.40" data-d="0.70" x="44"  y="100" width="126" height="16"/></clipPath>
-        <clipPath id="c5"><rect class="wr" data-w="76"  data-b="3.20" data-d="0.45" x="174" y="50"  width="76"  height="28"/></clipPath>
-        <clipPath id="c6"><rect class="wr" data-w="90"  data-b="3.70" data-d="0.50" x="174" y="78"  width="90"  height="28"/></clipPath>
-        <clipPath id="c7"><rect class="wr" data-w="68"  data-b="4.25" data-d="0.35" x="172" y="102" width="68"  height="16"/></clipPath>
+        <clipPath id="c1"><rect class="wr" data-w="96"  data-b="0.65" data-d="0.60" data-y="52"  x="44"  y="40"  width="96"  height="16"/></clipPath>
+        <clipPath id="c2"><rect class="wr" data-w="106" data-b="1.35" data-d="0.60" data-y="72"  x="44"  y="60"  width="106" height="16"/></clipPath>
+        <clipPath id="c3"><rect class="wr" data-w="100" data-b="2.05" data-d="0.55" data-y="92"  x="44"  y="80"  width="100" height="16"/></clipPath>
+        <clipPath id="c4"><rect class="wr" data-w="126" data-b="2.70" data-d="0.70" data-y="112" x="44"  y="100" width="126" height="16"/></clipPath>
+        <clipPath id="c5"><rect class="wr" data-w="76"  data-b="3.55" data-d="0.45" data-y="72"  x="174" y="50"  width="76"  height="28"/></clipPath>
+        <clipPath id="c6"><rect class="wr" data-w="90"  data-b="4.10" data-d="0.50" data-y="100" x="174" y="78"  width="90"  height="28"/></clipPath>
+        <clipPath id="c7"><rect class="wr" data-w="68"  data-b="4.70" data-d="0.35" data-y="110" x="172" y="102" width="68"  height="16"/></clipPath>
       </defs>
       <text class="quote" clip-path="url(#c1)" x="44" y="52">The best</text>
       <text class="quote" clip-path="url(#c2)" x="44" y="72">preparation for</text>
@@ -95,12 +95,21 @@
       <text class="begin" clip-path="url(#c6)" x="176" y="100">Begin!</text>
       <path clip-path="url(#c7)" d="M176 110 q28 8 56 -2" stroke="#e6202a" stroke-width="2"
             fill="none" stroke-linecap="round"/>
-      <g class="pre-pen">
-        <g transform="rotate(28 250 90)">
-          <rect x="244" y="34" width="11" height="62" rx="5" fill="#22376f"/>
-          <path d="M244 96 h11 l-5.5 16 Z" fill="#16295c"/>
-          <rect x="244" y="46" width="11" height="5" fill="#cbd5ea"/>
-        </g>
+      <!-- The nib tip is at this group's ORIGIN, so the writer places the pen
+           by translating the tip to wherever the ink currently ends.
+
+           The body length is load-bearing. Rotated 30 degrees, a pen of
+           length L reaches L*cos(30) above its tip. The topmost line is
+           written at baseline y=52, so anything longer than about 57 units
+           puts the pen's cap above y=0 and it visibly leaves the paper —
+           which is exactly what the previous version did. At 54.4 units the
+           cap sits at y=2.4 on the top line, and at the far right of
+           "Begin!" the top corner reaches x=295 of 300. -->
+      <g class="pre-pen" opacity="0" transform="translate(44,52) rotate(30)">
+        <path d="M0 0 L-3.2 -10 L3.2 -10 Z" fill="#16295c"/>
+        <rect x="-5" y="-50" width="10" height="40" rx="5" fill="#22376f"/>
+        <rect x="-5" y="-41" width="10" height="4" fill="#cbd5ea"/>
+        <circle cx="0" cy="-52" r="2.4" fill="#16295c"/>
       </g>
       <text x="12" y="18" font-size="13" fill="#a9bbdb">&#10023;</text>
       <text x="284" y="142" font-size="13" fill="#a9bbdb">&#10023;</text>
@@ -147,7 +156,9 @@
   var M = w.M7;
   var pre = d.getElementById('pre'), app = d.getElementById('app');
 
-  d.getElementById('preLogo').innerHTML = M.mark(96);
+  /* the drawable variant: strokes carry pathLength + timings so the ring,
+     star, seven and tick ink themselves in, in that order */
+  d.getElementById('preLogo').innerHTML = M.mark(96, true);
 
   var FEATS = [
     ['🤖', 'violet', 'AI Correction', 'Instant feedback like a teacher'],
@@ -169,11 +180,12 @@
   var seen = false;
   try { seen = !!sessionStorage.getItem('7m.seen'); sessionStorage.setItem('7m.seen', '1'); } catch (e) {}
 
-  /* write the quote out by hand; it fails to "already written", never blank */
+  /* draw the logo and write the quote on one clock; both fail to
+     "already finished", never to blank */
   var quote = M.writeQuote(pre, { instant: reduce || seen });
 
   /* the preloader must outlast the writing, or the student never sees it */
-  var DUR = (reduce || seen) ? 350 : 5200;
+  var DUR = (reduce || seen) ? 350 : 5800;
   var fill = d.getElementById('preFill'), pct = d.getElementById('prePct'),
       rocket = d.getElementById('preRocket');
   var t0 = performance.now(), finished = false, booted = false;

@@ -405,59 +405,314 @@
     });
   }
 
-  /* ============================ MOCK TEST SETUP ============================ */
+  /* ============================ MOCK TEST SETUP ============================
+     A stepped selection rather than a wall of dropdowns: study group, then
+     course/level, then subject, then topic — each step only ever showing
+     what belongs under the previous one. The final step sets a per-type
+     question count, because "20 questions" means nothing until you say how
+     many of them are MCQs. */
+
+  /* Which question types make sense for a subject. Asking a Biology student
+     for a coding question, or a History student for a numerical, is how a
+     generator reveals it does not understand the subject. */
+  var TYPE_RULES = {
+    code:    ['cs', 'prog', 'ds', 'algo', 'oop', 'python', 'dbms', 'os', 'net', 'se', 'aiml',
+              'web', 'toc', 'cloud', 'cyber'],
+    num:     ['maths', 'phy', 'chem', 'em1', 'engphy', 'engchem', 'stat', 'acc', 'cost', 'fm',
+              'tax', 'eco', 'apt', 'thermo', 'som', 'fluid', 'ckt', 'ee', 'ec', 'struct',
+              'survey', 'signals', 'mech', 'civil', 'biochem', 'science', 'reason'],
+    diagram: ['bio', 'botany', 'zoology', 'science', 'geo', 'anat', 'physio', 'civil', 'mech',
+              'ec', 'ee', 'egd', 'draw', 'arch', 'agri', 'chem', 'phy', 'engphy', 'engchem',
+              'ds', 'net', 'dbms', 'vlsi', 'control'],
+    passage: ['eng', 'hindi', 'telugu', 'sanskrit', 'urdu', 'hist', 'pol', 'socio', 'phil',
+              'gk', 'ca', 'law', 'psych'],
+    case:    ['acc', 'bstud', 'mgmt', 'mkt', 'law', 'eco', 'fm', 'tax', 'audit', 'cost', 'hr',
+              'ob', 'medicine', 'nursing', 'patho', 'pol', 'socio', 'ent'],
+    image:   ['bio', 'botany', 'zoology', 'geo', 'science', 'anat', 'hist', 'arch', 'draw',
+              'egd', 'agri', 'gk'],
+    match:   null,        /* every subject can match pairs */
+    assert:  ['phy', 'chem', 'bio', 'botany', 'zoology', 'science', 'maths', 'pol', 'hist',
+              'geo', 'eco', 'law', 'gk', 'ca', 'engphy', 'engchem', 'anat', 'physio'],
+    oneword: null,
+    desc:    ['eng', 'hindi', 'telugu', 'sanskrit', 'urdu', 'hist', 'pol', 'socio', 'phil',
+              'law', 'mgmt', 'edu', 'pedagogy', 'psych', 'eco', 'gk']
+  };
+  /** The types that make sense for a subject. A rule of null means "any". */
+  function typesFor(subId) {
+    return C.qtypes.filter(function (t) {
+      if (!(t.id in TYPE_RULES)) return true;          /* unrestricted type */
+      var only = TYPE_RULES[t.id];
+      return only === null || only.indexOf(subId) > -1;
+    });
+  }
+
+  var mk = { step: 1, cat: null, course: null, year: 0, sub: null, topic: '', own: '' };
+
   M.router.on('mock', function (p) {
-    var subs = C.subsOf(M.state.cat, M.state.course, M.state.year);
-    set('<div class="wrap"><div class="col">' +
-      V.card('📝', 'violet', 'Create a Mock Test',
-        '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:13px">' +
-        field('Subject', '<select class="sel" id="mSub" style="width:100%">' +
-          subs.map(function (s) { return '<option value="' + s.id + '">' + esc(s.name) + '</option>'; })
-          .join('') + '</select>') +
-        field('Difficulty', sel('mDiff', ['Easy', 'Medium', 'Hard', 'Mixed'], 'Medium')) +
-        field('Questions', sel('mQ', ['5', '10', '20', '30', '50'], p.quick ? '5' : '10')) +
-        field('Duration (minutes)', sel('mMin', ['5', '10', '20', '30', '45', '60', '90', '120'],
-          p.quick ? '5' : '20')) +
-        '</div>' +
-        '<div style="margin-top:16px"><label style="font-size:12px;font-weight:700;' +
-        'color:var(--ink-3)">Question types</label><div class="pills" style="margin-top:8px" id="mTypes">' +
-        C.qtypes.map(function (t, i) {
-          return '<button class="pill' + (i < 3 ? ' on' : '') + '" data-t="' + t.id + '" ' +
-            'style="' + (i < 3 ? 'border-color:var(--violet);background:var(--violet-bg);color:var(--violet)' : '') +
-            '">' + t.em + ' ' + esc(t.name) + '</button>';
-        }).join('') + '</div></div>' +
-        '<div style="display:flex;gap:16px;margin-top:16px;flex-wrap:wrap;font-size:12.5px">' +
-        '<label style="display:flex;gap:7px;align-items:center"><input type="checkbox" id="mAuto" checked> ' +
-        'Auto-submit when time is up</label>' +
-        '<label style="display:flex;gap:7px;align-items:center"><input type="checkbox" id="mSound" checked> ' +
-        'Sound warnings</label></div>' +
-        '<button class="btn btn-v" id="mGo" style="margin-top:18px;height:44px;width:100%;' +
-        'justify-content:center">🚀 Start Test</button>') +
-      '</div>' + rightRail() + '</div>' + footer());
-
-    $('#mTypes').onclick = function (e) {
-      var b = e.target.closest('.pill'); if (!b) return;
-      var on = b.classList.toggle('on');
-      b.style.cssText = on
-        ? 'border-color:var(--violet);background:var(--violet-bg);color:var(--violet)' : '';
-    };
-
-    $('#mGo').onclick = function () {
-      var n = +$('#mQ').value, mins = +$('#mMin').value;
-      var subId = $('#mSub').value, sub = C.subjects[subId];
-      var types = $$('#mTypes .pill.on').map(function (b) { return b.dataset.t; });
-      if (!types.length) { M.toast('Pick at least one question type', 'warn'); return; }
-      M.exam.start({
-        title: (sub ? sub.name : 'Practice') + ' — ' + $('#mDiff').value + ' Test',
-        subject: sub ? sub.name : '',
-        minutes: mins,
-        autoSubmit: $('#mAuto').checked,
-        sound: $('#mSound').checked,
-        questions: buildQuestions(n, types, sub)
-      });
-      M.router.go('exam');
-    };
+    mk = { step: 1, cat: M.state.cat, course: M.state.course, year: M.state.year,
+           sub: null, topic: 'all', own: '', quick: !!p.quick };
+    paintMock();
   });
+
+  function paintMock() {
+    set('<div class="wrap"><div class="col">' +
+      V.card('📝', 'violet', 'Create a test',
+        stepBar() + '<div id="mkBody">' + stepBody() + '</div>') +
+      '</div>' + rightRail() + '</div>' + footer());
+    wireMock();
+  }
+
+  var STEPS = ['Study group', 'Course / level', 'Subject', 'Topic', 'Set the paper'];
+  function stepBar() {
+    return '<div class="steps">' + STEPS.map(function (s, i) {
+      var n = i + 1;
+      return '<button class="step' + (n === mk.step ? ' on' : n < mk.step ? ' done' : '') +
+        '" data-s="' + n + '"' + (n > mk.step ? ' disabled' : '') + '>' +
+        '<i>' + (n < mk.step ? '✓' : n) + '</i><span>' + esc(s) + '</span></button>';
+    }).join('') + '</div>';
+  }
+
+  function stepBody() {
+    /* --- 1. study group --- */
+    if (mk.step === 1) {
+      return '<div class="grid cats">' + C.cats.map(function (c) {
+        return '<button class="cat' + (c.id === mk.cat ? ' on' : '') + '" data-cat="' + c.id + '">' +
+          '<span class="em" style="' + V.hue(c.hue) + '">' + c.em + '</span>' +
+          '<b>' + esc(c.name) + '</b><small>' + esc(c.sub) + '</small></button>';
+      }).join('') + '</div>';
+    }
+    /* --- 2. course / level --- */
+    if (mk.step === 2) {
+      var cat = C.byCat[mk.cat];
+      var years = C.yearLabels(mk.cat, mk.course);
+      return '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));' +
+        'gap:10px">' + cat.courses.map(function (co) {
+          return '<button class="cat' + (co.id === mk.course ? ' on' : '') + '" data-co="' + co.id +
+            '" style="align-items:flex-start;text-align:left;padding:13px">' +
+            '<b>' + esc(co.name) + '</b><small>' +
+            (co.years > 1 ? co.years + ' years · ' : '') + co.subs.length + ' subjects</small>' +
+            '</button>';
+        }).join('') + '</div>' +
+        (years.length > 1
+          ? '<div style="display:flex;gap:9px;align-items:center;margin-top:14px;flex-wrap:wrap">' +
+            '<label style="font-size:12px;font-weight:700;color:var(--ink-3)">Year</label>' +
+            '<select class="sel" id="mkYear"><option value="0">All years</option>' +
+            years.map(function (l, i) {
+              return '<option value="' + (i + 1) + '"' + (mk.year === i + 1 ? ' selected' : '') +
+                '>' + esc(l) + '</option>';
+            }).join('') + '</select></div>'
+          : '');
+    }
+    /* --- 3. subject --- */
+    if (mk.step === 3) {
+      var subs = C.subsOf(mk.cat, mk.course, mk.year);
+      return '<div class="grid cats">' + subs.map(function (s) {
+        return '<button class="cat' + (s.id === mk.sub ? ' on' : '') + '" data-sub="' + s.id + '">' +
+          '<span class="em" style="' + V.hue(s.hue) + '">' + s.em + '</span>' +
+          '<b>' + esc(s.name) + '</b></button>';
+      }).join('') + '</div>';
+    }
+    /* --- 4. topic, including your own --- */
+    if (mk.step === 4) {
+      var sub = C.subjects[mk.sub];
+      return '<div class="pills" id="mkTopics">' +
+        ['all', 'own'].map(function (t) {
+          return '<button class="pill' + (mk.topic === t ? ' on' : '') + '" data-t="' + t + '"' +
+            (mk.topic === t ? ' style="border-color:var(--violet);background:var(--violet-bg);' +
+              'color:var(--violet)"' : '') + '>' +
+            (t === 'all' ? '📚 All topics' : '✨ Write your own topic') + '</button>';
+        }).join('') + '</div>' +
+        '<div id="mkOwnWrap" style="margin-top:14px' + (mk.topic === 'own' ? '' : ';display:none') +
+        '"><label style="font-size:12px;font-weight:700;color:var(--ink-3);display:block;' +
+        'margin-bottom:6px">Your topic</label>' +
+        '<input class="sel" id="mkOwn" style="width:100%;height:44px" value="' + esc(mk.own) +
+        '" placeholder="e.g. Photosynthesis in plants, or Integration by parts">' +
+        '<div class="pills" style="margin-top:10px" id="mkEg">' +
+        (sub ? egTopics(sub).map(function (t) {
+          return '<button class="pill" data-eg="' + esc(t) + '" style="font-weight:600">' +
+            esc(t) + '</button>';
+        }).join('') : '') + '</div></div>';
+    }
+    /* --- 5. configure --- */
+    return configBody();
+  }
+
+  /* A few plausible topics per subject, so the field is never a blank stare. */
+  function egTopics(sub) {
+    var by = {
+      maths: ['Integration by parts', 'Quadratic equations', 'Probability', 'Trigonometry'],
+      phy: ['Thermodynamics numericals', 'Laws of motion', 'Optics', 'Electrostatics'],
+      chem: ['Chemical bonding', 'Mole concept', 'Organic reactions', 'Electrochemistry'],
+      bio: ['Photosynthesis in plants', 'Human digestive system', 'Genetics', 'Cell division'],
+      botany: ['Photosynthesis in plants', 'Plant tissues', 'Reproduction in plants'],
+      zoology: ['Human circulatory system', 'Animal tissues', 'Evolution'],
+      pol: ['Fundamental Rights', 'Directive Principles', 'Parliament of India'],
+      hist: ['The Revolt of 1857', 'Mughal administration', 'Freedom struggle'],
+      acc: ['Depreciation', 'Partnership accounts', 'Bank reconciliation'],
+      cs: ['Sorting algorithms', 'Linked lists', 'Normalisation'],
+      eng: ['Tenses', 'Comprehension passage', 'Letter writing']
+    };
+    return by[sub.id] || ['Chapter 1 basics', 'Important definitions', 'Numerical practice'];
+  }
+
+  function configBody() {
+    var sub = C.subjects[mk.sub];
+    var types = typesFor(mk.sub);
+    var defaults = { mcq: mk.quick ? 5 : 10, short: mk.quick ? 0 : 4, long: 0 };
+    return '<div class="cfg-head"><span class="em" style="' + V.hue(sub ? sub.hue : 'violet') +
+      '">' + (sub ? sub.em : '📝') + '</span><div><b>' + esc(sub ? sub.name : 'Practice') +
+      '</b><small>' + esc(C.course(mk.cat, mk.course).name) +
+      (mk.topic === 'own' && mk.own ? ' · ' + esc(mk.own) : ' · all topics') +
+      '</small></div></div>' +
+
+      '<label class="cfg-l">Question types &amp; how many of each</label>' +
+      '<p style="font-size:11.5px;color:var(--ink-3);margin:0 0 10px">Only the types that ' +
+      'suit ' + esc(sub ? sub.name : 'this subject') + ' are shown.</p>' +
+      '<div class="qcounts" id="mkCounts">' + types.map(function (t) {
+        var v = defaults[t.id] || 0;
+        return '<div class="qc" data-t="' + t.id + '"><span class="em">' + t.em + '</span>' +
+          '<div class="qc-n"><b>' + esc(t.name) + '</b><small>' + t.marks + ' mark' +
+          (t.marks > 1 ? 's' : '') + ' each</small></div>' +
+          '<div class="spin"><button class="dn" aria-label="Fewer">−</button>' +
+          '<input class="num" type="number" min="0" max="100" value="' + v + '" ' +
+          'aria-label="' + esc(t.name) + ' count">' +
+          '<button class="up" aria-label="More">+</button></div></div>';
+      }).join('') + '</div>' +
+      '<div class="cfg-total" id="mkTotal"></div>' +
+
+      '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));' +
+      'gap:12px;margin-top:16px">' +
+      field('Difficulty', sel('mkDiff', ['Easy', 'Medium', 'Hard', 'Mixed'], 'Medium')) +
+      field('Mode', sel('mkMode', ['Mock Test', 'Practice', 'Quick Test', 'Revision', 'Exam Mode'],
+        mk.quick ? 'Quick Test' : 'Mock Test')) +
+      field('Time', sel('mkTime', ['No time limit', '10 min', '20 min', '30 min', '60 min',
+        '90 min', '120 min'], mk.quick ? '10 min' : '30 min')) +
+      field('Language', sel('mkLang', ['English', 'Hindi', 'Telugu'], 'English')) +
+      '</div>' +
+      '<div style="display:flex;gap:16px;margin-top:14px;flex-wrap:wrap;font-size:12.5px">' +
+      '<label style="display:flex;gap:7px;align-items:center"><input type="checkbox" id="mkAuto" ' +
+      'checked> Auto-submit when time is up</label>' +
+      '<label style="display:flex;gap:7px;align-items:center"><input type="checkbox" id="mkSound" ' +
+      'checked> Sound warnings</label></div>' +
+      '<button class="btn btn-v" id="mkGo" style="margin-top:18px;height:46px;width:100%;' +
+      'justify-content:center">🚀 Start test</button>';
+  }
+
+  function countsNow() {
+    var out = [];
+    $$('#mkCounts .qc').forEach(function (row) {
+      var n = Math.max(0, Math.min(100, +$('.num', row).value || 0));
+      if (n) out.push({ id: row.dataset.t, n: n });
+    });
+    return out;
+  }
+  function paintTotal() {
+    var c = countsNow(), q = 0, marks = 0;
+    c.forEach(function (x) {
+      var t = C.qtypes.filter(function (y) { return y.id === x.id; })[0];
+      q += x.n; marks += x.n * (t ? t.marks : 1);
+    });
+    var el = $('#mkTotal');
+    if (el) el.innerHTML = q
+      ? '<b>' + q + '</b> question' + (q > 1 ? 's' : '') + ' &nbsp;·&nbsp; <b>' + marks +
+        '</b> mark' + (marks > 1 ? 's' : '')
+      : '<span style="color:var(--warn)">Add at least one question</span>';
+    return { q: q, marks: marks };
+  }
+
+  function wireMock() {
+    var body = $('#mkBody');
+
+    $$('.step').forEach(function (b) {
+      b.onclick = function () { mk.step = +this.dataset.s; paintMock(); };
+    });
+
+    if (mk.step === 1) {
+      body.onclick = function (e) {
+        var b = e.target.closest('.cat'); if (!b) return;
+        mk.cat = b.dataset.cat;
+        var cat = C.byCat[mk.cat];
+        if (!cat.courses.some(function (c) { return c.id === mk.course; })) {
+          mk.course = cat.courses[0].id; mk.year = 0;
+        }
+        mk.sub = null; mk.step = 2; paintMock();
+      };
+    } else if (mk.step === 2) {
+      body.onclick = function (e) {
+        var b = e.target.closest('.cat'); if (!b) return;
+        mk.course = b.dataset.co; mk.year = 0; mk.sub = null; mk.step = 3; paintMock();
+      };
+      var y = $('#mkYear');
+      if (y) y.onchange = function () { mk.year = +this.value; };
+    } else if (mk.step === 3) {
+      body.onclick = function (e) {
+        var b = e.target.closest('.cat'); if (!b) return;
+        mk.sub = b.dataset.sub; mk.step = 4; paintMock();
+      };
+    } else if (mk.step === 4) {
+      $('#mkTopics').onclick = function (e) {
+        var b = e.target.closest('.pill'); if (!b) return;
+        mk.topic = b.dataset.t;
+        paintMock();
+        if (mk.topic === 'own') { var i = $('#mkOwn'); if (i) i.focus(); }
+      };
+      var own = $('#mkOwn');
+      if (own) {
+        own.oninput = function () { mk.own = this.value; };
+        own.onkeydown = function (e) {
+          if (e.key === 'Enter' && this.value.trim()) { mk.own = this.value; mk.step = 5; paintMock(); }
+        };
+      }
+      var eg = $('#mkEg');
+      if (eg) eg.onclick = function (e) {
+        var b = e.target.closest('[data-eg]'); if (!b) return;
+        mk.own = b.dataset.eg; $('#mkOwn').value = mk.own;
+      };
+      /* a Next button, because "all topics" has nothing to type */
+      body.insertAdjacentHTML('beforeend',
+        '<button class="btn btn-v" id="mkNext" style="margin-top:18px;height:44px;width:100%;' +
+        'justify-content:center">Continue →</button>');
+      $('#mkNext').onclick = function () {
+        if (mk.topic === 'own' && !$('#mkOwn').value.trim()) {
+          M.toast('Type your topic, or pick All topics', 'warn'); $('#mkOwn').focus(); return;
+        }
+        mk.own = mk.topic === 'own' ? $('#mkOwn').value.trim() : '';
+        mk.step = 5; paintMock();
+      };
+    } else {
+      paintTotal();
+      $('#mkCounts').onclick = function (e) {
+        var b = e.target.closest('.up,.dn'); if (!b) return;
+        var inp = $('.num', b.closest('.qc'));
+        inp.value = Math.max(0, Math.min(100, (+inp.value || 0) + (b.classList.contains('up') ? 1 : -1)));
+        paintTotal();
+      };
+      $('#mkCounts').oninput = paintTotal;
+
+      $('#mkGo').onclick = function () {
+        var counts = countsNow();
+        if (!counts.length) { M.toast('Add at least one question', 'warn'); return; }
+        var t = paintTotal();
+        var mins = parseInt($('#mkTime').value, 10);
+        var sub = C.subjects[mk.sub];
+        var topic = mk.topic === 'own' && mk.own ? mk.own : 'All topics';
+        M.exam.start({
+          title: (sub ? sub.name : 'Practice') + ' — ' + $('#mkMode').value,
+          subject: (sub ? sub.name : '') + ' · ' + topic,
+          minutes: isNaN(mins) ? 600 : mins,          /* "no time limit" = 10 hours */
+          autoSubmit: $('#mkAuto').checked,
+          sound: $('#mkSound').checked,
+          questions: buildQuestions(counts, sub, topic, $('#mkDiff').value)
+        });
+        M.router.go('exam');
+      };
+    }
+  }
+
+  function qTypeName(id) {
+    var t = C.qtypes.filter(function (x) { return x.id === id; })[0];
+    return t ? t.name : id;
+  }
 
   function field(label, ctrl) {
     return '<div><label style="font-size:12px;font-weight:700;color:var(--ink-3);display:block;' +
@@ -469,23 +724,30 @@
     }).join('') + '</select>';
   }
 
-  /* Placeholder question construction. The shape is exactly what the AI
-     generator will return, so swapping the source is a one-line change. */
-  function buildQuestions(n, types, sub) {
-    var out = [];
-    for (var i = 0; i < n; i++) {
-      var t = types[i % types.length], def = C.qtypes.filter(function (x) { return x.id === t; })[0];
-      var q = { id: 'q' + (i + 1), type: t, marks: def ? def.marks : 1, n: i + 1,
-                text: 'Question ' + (i + 1) + ' — ' + (sub ? sub.name : 'General') +
-                      ' (' + (def ? def.name : t) + ').' };
-      if (t === 'mcq') { q.options = ['Option A', 'Option B', 'Option C', 'Option D']; q.answer = 'Option A'; }
-      else if (t === 'multi') { q.options = ['Option A', 'Option B', 'Option C', 'Option D'];
-                                q.answer = ['Option A', 'Option C']; }
-      else if (t === 'tf') { q.options = ['True', 'False']; q.answer = 'True'; }
-      else if (t === 'fill') { q.answer = 'answer'; }
-      else { q.answer = null; }   /* free text — marked by the AI, not locally */
-      out.push(q);
-    }
+  /* Build the paper from the per-type counts. The shape is exactly what the
+     AI generator returns, so swapping the source is a one-line change. */
+  function buildQuestions(counts, sub, topic, diff) {
+    var out = [], i = 0;
+    counts.forEach(function (c) {
+      var def = C.qtypes.filter(function (x) { return x.id === c.id; })[0];
+      for (var k = 0; k < c.n; k++) {
+        i++;
+        var q = {
+          id: 'q' + i, type: c.id, marks: def ? def.marks : 1, n: i,
+          topic: topic || 'All topics', difficulty: diff || 'Medium',
+          text: (def ? def.name : c.id) + ' on ' + (sub ? sub.name : 'General') +
+                (topic && topic !== 'All topics' ? ' — ' + topic : '') + '.'
+        };
+        if (c.id === 'mcq') { q.options = ['Option A', 'Option B', 'Option C', 'Option D'];
+                              q.answer = 'Option A'; }
+        else if (c.id === 'multi') { q.options = ['Option A', 'Option B', 'Option C', 'Option D'];
+                                     q.answer = ['Option A', 'Option C']; }
+        else if (c.id === 'tf') { q.options = ['True', 'False']; q.answer = 'True'; }
+        else if (c.id === 'fill') { q.answer = 'answer'; }
+        else { q.answer = null; }   /* free text — marked by the AI, not locally */
+        out.push(q);
+      }
+    });
     return out;
   }
 
@@ -508,10 +770,19 @@
         '<div class="col">' +
         V.card('📝', 'violet', s.title,
           s.locked ? lockedPanel() :
-          '<div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline">' +
+          '<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;' +
+          'flex-wrap:wrap">' +
           '<b>Question ' + q.n + ' of ' + s.questions.length + '</b>' +
-          '<span style="font-size:12px;color:var(--ink-3)">' + q.marks + ' mark' +
-          (q.marks > 1 ? 's' : '') + '</span></div>' +
+          '<span style="display:flex;align-items:center;gap:8px">' +
+          '<span style="font-size:11px;color:var(--ink-3)">' +
+          esc(qTypeName(q.type)) + ' · ' + q.marks + ' mark' + (q.marks > 1 ? 's' : '') + '</span>' +
+          /* reorder controls, on every question type */
+          '<span class="movers"><button class="mv" id="eUp" title="Move this question up" ' +
+          'aria-label="Move question up"' + (cur === 0 ? ' disabled' : '') + '>↑</button>' +
+          '<button class="mv" id="eDown" title="Move this question down" ' +
+          'aria-label="Move question down"' +
+          (cur === s.questions.length - 1 ? ' disabled' : '') + '>↓</button></span>' +
+          '</span></div>' +
           '<p style="font-size:15.5px;margin:12px 0 16px;line-height:1.6">' + esc(q.text) + '</p>' +
           answerControl(q) +
           '<div class="pills" style="margin-top:18px">' +
@@ -542,6 +813,24 @@
         }).join('') + '</div></div></div></section></aside></div>');
 
       if (s.locked) { $('#tSubmit').onclick = function () { M.exam.submit(false); M.router.go('result'); }; return; }
+
+      /* Reordering follows the question: the card slides, the palette
+         renumbers, and `cur` tracks the moved question rather than the
+         slot, so the student stays looking at what they just moved. */
+      function reorder(dir) {
+        var to = M.exam.move(cur, dir);
+        if (to < 0) return;
+        cur = to;
+        paint();
+        var card = $('#page .card');
+        if (card) {
+          card.classList.add(dir < 0 ? 'slid-up' : 'slid-down');
+          setTimeout(function () { card.classList.remove('slid-up', 'slid-down'); }, 260);
+        }
+        M.toast('Moved to position ' + (to + 1), '', 1400);
+      }
+      $('#eUp').onclick = function () { reorder(-1); };
+      $('#eDown').onclick = function () { reorder(1); };
 
       $('#ePrev').onclick = function () { if (cur > 0) { cur--; paint(); } };
       $('#eNext').onclick = function () {

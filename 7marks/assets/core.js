@@ -120,72 +120,152 @@
   function writeQuote(root, opts) {
     opts = opts || {};
     var rects = Array.prototype.slice.call((root || d).querySelectorAll('.wr'));
-    if (!rects.length) return null;
 
     var lines = rects.map(function (r) {
       return {
         el: r,
+        x: parseFloat(r.getAttribute('x')) || 0,
+        y: parseFloat(r.getAttribute('data-y')) || 0,   /* the writing baseline */
         full: parseFloat(r.getAttribute('data-w')) || parseFloat(r.getAttribute('width')) || 0,
         begin: parseFloat(r.getAttribute('data-b')) || 0,
         dur: parseFloat(r.getAttribute('data-d')) || 0.5
       };
     });
     var total = lines.reduce(function (m, l) { return Math.max(m, l.begin + l.dur); }, 0);
+    var pen = (root || d).querySelector('.pre-pen');
 
-    /** Put the quote at `t` seconds. Pure: the same t always gives the same widths. */
+    /* A hand does not move at a constant rate: it accelerates into a word and
+       eases off at the end of it. This is what keeps the stroke from reading
+       as a machine sweeping a bar across the page. */
+    function ease(p) { return p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2; }
+
+    /** Put the quote at `t` seconds. Pure: the same t always gives the same result. */
     function seek(t) {
-      var done = 0;
+      var done = 0, active = null;
       lines.forEach(function (l) {
-        var p = (t - l.begin) / l.dur;
-        p = p < 0 ? 0 : p > 1 ? 1 : p;
-        /* ease out a little, the way a hand slows at the end of a word */
-        var e = 1 - Math.pow(1 - p, 1.6);
+        var raw = (t - l.begin) / l.dur;
+        raw = raw < 0 ? 0 : raw > 1 ? 1 : raw;
+        var e = ease(raw);
         l.el.setAttribute('width', (l.full * e).toFixed(2));
-        if (p >= 1) done++;
+        if (raw >= 1) done++;
+        /* the line being written right now owns the pen */
+        if (t >= l.begin && raw < 1 && active === null) active = { l: l, e: e };
       });
+
+      if (pen) {
+        /* The nib is drawn with its tip at the origin, so placing the pen is
+           just "put the tip where the ink currently ends". Derived from the
+           writing state rather than a separate keyframe table, which is why
+           it stays glued to the text and cannot drift off the paper — the
+           previous version translated the pen to y=-38, above the viewBox. */
+        var cur = active || (t < lines[0].begin
+          ? { l: lines[0], e: 0 }
+          : { l: lines[lines.length - 1], e: 1 });
+        var tipX = cur.l.x + cur.l.full * cur.e;
+        var tipY = cur.l.y;
+        /* a touch of lift and wobble so the hand does not look mechanical */
+        var wobble = Math.sin(t * 22) * 0.35;
+        var tilt = 30 + Math.sin(t * 7) * 2.5;
+        var vis = (t >= lines[0].begin - 0.15 && t <= total + 0.35) ? 1 : 0;
+        pen.setAttribute('transform',
+          'translate(' + tipX.toFixed(2) + ',' + (tipY + wobble).toFixed(2) + ') rotate(' +
+          tilt.toFixed(2) + ')');
+        pen.setAttribute('opacity', vis);
+      }
       return done === lines.length;
     }
 
+    /* The logo is drawn on the same clock: strokes inked in, then the star
+       popped in. Same seek-able shape, so it is just as assertable. */
+    var strokes = Array.prototype.slice.call((root || d).querySelectorAll('.dr'))
+      .map(function (p) {
+        p.style.strokeDasharray = '1';
+        return { el: p, begin: parseFloat(p.getAttribute('data-b')) || 0,
+                 dur: parseFloat(p.getAttribute('data-d')) || 0.6 };
+      });
+    var pops = Array.prototype.slice.call((root || d).querySelectorAll('.pop'))
+      .map(function (p) {
+        return { el: p, begin: parseFloat(p.getAttribute('data-b')) || 0,
+                 dur: parseFloat(p.getAttribute('data-d')) || 0.3 };
+      });
+    strokes.concat(pops).forEach(function (s) {
+      total = Math.max(total, s.begin + s.dur);
+    });
+
+    function seekMark(t) {
+      strokes.forEach(function (s) {
+        var p = (t - s.begin) / s.dur;
+        p = p < 0 ? 0 : p > 1 ? 1 : p;
+        s.el.style.strokeDashoffset = String(1 - ease(p));
+      });
+      pops.forEach(function (s) {
+        var p = (t - s.begin) / s.dur;
+        p = p < 0 ? 0 : p > 1 ? 1 : p;
+        /* a small overshoot so the star lands rather than fades */
+        var e = p >= 1 ? 1 : 1 - Math.pow(1 - p, 3);
+        var sc = e * (1 + 0.18 * Math.sin(Math.PI * e));
+        s.el.style.opacity = String(e);
+        s.el.style.transform = 'scale(' + sc.toFixed(3) + ') rotate(' +
+          ((1 - e) * -35).toFixed(1) + 'deg)';
+      });
+    }
+
     var api = { seek: seek, total: total, lines: lines.length,
-                finish: function () { seek(total); } };
-    if (opts.manual) { seek(0); return api; }        /* tests drive it themselves */
+                strokes: strokes.length, pops: pops.length,
+                seekMark: seekMark,
+                finish: function () { seek(total); seekMark(total); } };
+    if (!lines.length && !strokes.length && !pops.length) return null;
+
+    /** Advance everything on one clock. Returns true once all of it is done. */
+    function step(t) { var doneInk = seek(t); seekMark(t); return doneInk && t >= total; }
+    api.step = step;
+
+    if (opts.manual) { step(0); return api; }        /* tests drive it themselves */
 
     var reduce = false;
     try { reduce = matchMedia('(prefers-reduced-motion:reduce)').matches; } catch (e) {}
-    if (reduce || opts.instant) { seek(total); return api; }
+    if (reduce || opts.instant) { api.finish(); return api; }
 
-    seek(0);
+    step(0);
     var t0 = null;
     function frame(now) {
       if (t0 === null) t0 = now;
-      if (seek((now - t0) / 1000)) return;
+      if (step((now - t0) / 1000)) return;
       requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);
-    /* rAF is suspended in a background tab, so guarantee the quote is never
-       left half-written if the student switches away and comes back */
-    setTimeout(function () { seek(total); }, (total + 1.5) * 1000);
+    /* rAF is suspended in a background tab, so guarantee nothing is left
+       half-drawn if the student switches away and comes back */
+    setTimeout(api.finish, (total + 1.5) * 1000);
     return api;
   }
 
   /* ============================ the mark ============================
      One inline SVG so the logo stays crisp at every size and needs no
      network request. Used by the preloader, the top bar and the footer. */
-  function mark(px) {
+  function mark(px, draw) {
+    /* pathLength="1" normalises every stroke, so the draw-on can use a
+       dash offset of 1 -> 0 without measuring anything at runtime */
+    var d1 = draw ? ' class="dr" pathLength="1" data-b="0"    data-d="0.75"' : '';
+    var d2 = draw ? ' class="dr" pathLength="1" data-b="0.95" data-d="0.65"' : '';
+    var d3 = draw ? ' class="dr" pathLength="1" data-b="1.55" data-d="0.55"' : '';
+    var d4 = draw ? ' class="pop" data-b="0.72" data-d="0.35"' : '';
     return '<svg viewBox="0 0 100 100" width="' + px + '" height="' + px + '" role="img" ' +
       'aria-label="7Marks"><title>7Marks</title>' +
       /* the ring, broken where the star sits */
-      '<path d="M66.7 15.9 A38 38 0 1 0 83.6 32.2" fill="none" stroke="#16295c" ' +
+      '<path' + d1 + ' d="M66.7 15.9 A38 38 0 1 0 83.6 32.2" fill="none" stroke="#16295c" ' +
         'stroke-width="6.4" stroke-linecap="round"/>' +
+      /* the achievement star — pops in after the ring closes */
+      '<path' + d4 + ' d="M78 9 L80.9 17 L89.4 17.3 L82.8 22.6 L85.1 30.7 L78 26 L71 30.7 ' +
+        'L73.2 22.6 L66.6 17.3 L75.1 17 Z" fill="#16295c"' +
+        (draw ? ' style="transform-origin:78px 20px;transform-box:view-box"' : '') + '/>' +
       /* the seven */
-      '<path d="M32 31 H63 L47 76" fill="none" stroke="#16295c" stroke-width="9.2" ' +
+      '<path' + d2 + ' d="M32 31 H63 L47 76" fill="none" stroke="#16295c" stroke-width="9.2" ' +
         'stroke-linecap="round" stroke-linejoin="round"/>' +
       /* the red check, crossing the seven exactly as the logo does */
-      '<path d="M33 55 L47 74 L79 41" fill="none" stroke="#e6202a" stroke-width="9" ' +
+      '<path' + d3 + ' d="M33 55 L47 74 L79 41" fill="none" stroke="#e6202a" stroke-width="9" ' +
         'stroke-linecap="round" stroke-linejoin="round"/>' +
-      /* the achievement star */
-      '<path d="M78 9 L80.9 17 L89.4 17.3 L82.8 22.6 L85.1 30.7 L78 26 L71 30.7 ' +
-        'L73.2 22.6 L66.6 17.3 L75.1 17 Z" fill="#16295c"/></svg>';
+      '</svg>';
   }
 
   /* =====================================================================
@@ -331,6 +411,26 @@
       if (!this.s || this.s.locked) return;
       this.s.marked[qid] = !this.s.marked[qid];
       this._save();
+    },
+
+    /**
+     * Move a question one place up (-1) or down (+1).
+     * The whole question object is moved, so its text, options, answer,
+     * marks, type, topic and difficulty travel with it. The student's
+     * answers and review flags are keyed by question id, not position, so
+     * reordering cannot detach an answer from its question.
+     * @returns {number} the question's new index, or -1 if it could not move
+     */
+    move: function (index, dir) {
+      var s = this.s;
+      if (!s || s.locked || s.submitted) return -1;
+      var to = index + dir;
+      if (index < 0 || index >= s.questions.length || to < 0 || to >= s.questions.length) return -1;
+      var q = s.questions.splice(index, 1)[0];
+      s.questions.splice(to, 0, q);
+      s.questions.forEach(function (x, i) { x.n = i + 1; });   /* renumber the paper */
+      this._save();
+      return to;
     },
 
     counts: function () {

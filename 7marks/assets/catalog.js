@@ -395,16 +395,28 @@
     }
   ];
 
+  /* Question types the exam engine can render and the AI can be asked for.
+     `objective` marks the ones that can be graded without a human or the AI
+     marker. Which of these are OFFERED depends on the subject — see
+     TYPE_RULES in pages.js; a Biology paper should not offer coding, and a
+     History paper should not offer numericals. */
   var QTYPES = [
-    { id: 'mcq',   name: 'MCQ',               em: '🔘', marks: 1 },
-    { id: 'multi', name: 'Multiple Select',   em: '☑️', marks: 2 },
-    { id: 'tf',    name: 'True / False',      em: '⚖️', marks: 1 },
-    { id: 'fill',  name: 'Fill in the Blank', em: '✏️', marks: 1 },
-    { id: 'short', name: 'Short Answer',      em: '📝', marks: 2 },
-    { id: 'long',  name: 'Long Answer',       em: '📄', marks: 5 },
-    { id: 'num',   name: 'Numerical',         em: '🔢', marks: 3 },
-    { id: 'code',  name: 'Coding',            em: '💻', marks: 5 },
-    { id: 'desc',  name: 'Descriptive',       em: '🗒️', marks: 8 }
+    { id: 'mcq',     name: 'MCQ',                em: '🔘', marks: 1, objective: true },
+    { id: 'multi',   name: 'Multiple Select',    em: '☑️', marks: 2, objective: true },
+    { id: 'tf',      name: 'True / False',       em: '⚖️', marks: 1, objective: true },
+    { id: 'fill',    name: 'Fill in the Blank',  em: '✏️', marks: 1, objective: true },
+    { id: 'oneword', name: 'One Word Answer',    em: '💬', marks: 1, objective: true },
+    { id: 'match',   name: 'Match the Following',em: '🔗', marks: 4, objective: true },
+    { id: 'assert',  name: 'Assertion & Reason', em: '🧠', marks: 1, objective: true },
+    { id: 'short',   name: 'Short Answer',       em: '📝', marks: 2 },
+    { id: 'long',    name: 'Long Answer',        em: '📄', marks: 5 },
+    { id: 'num',     name: 'Numerical',          em: '🔢', marks: 3 },
+    { id: 'diagram', name: 'Diagram Based',      em: '📐', marks: 4 },
+    { id: 'case',    name: 'Case Study',         em: '📋', marks: 6 },
+    { id: 'passage', name: 'Passage Based',      em: '📖', marks: 5 },
+    { id: 'image',   name: 'Image Based',        em: '🖼️', marks: 3 },
+    { id: 'code',    name: 'Coding',             em: '💻', marks: 5 },
+    { id: 'desc',    name: 'Descriptive',        em: '🗒️', marks: 8 }
   ];
 
   /* ---- derived lookups, built once ---- */
