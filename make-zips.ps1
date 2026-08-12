@@ -163,6 +163,12 @@ function New-AppZip {
           $html = $html.Replace($h.Value, "<script>`n$js`n</script>")
         }
       }
+      # Stamp the build so the live page can say which one it is. Without
+      # this, "did my upload take effect?" can only be answered by squinting
+      # at the design, which is how a cached shell went unnoticed for days.
+      $build = (Get-Date).ToString('yyyy-MM-dd HH:mm')
+      $html = $html.Replace('__BUILD__', $build)
+
       $stagedIdx = Join-Path $stage 'index.html'
       [System.IO.File]::WriteAllText($stagedIdx, $html, $utf8)
       $roots = @($roots | Where-Object { $_ -ne $idx })

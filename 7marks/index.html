@@ -157,6 +157,32 @@
   var M = w.M7;
   var pre = d.getElementById('pre'), app = d.getElementById('app');
 
+  /* ---------------------------------------------------------------------
+     BUILD IDENTITY
+     Stamped by make-zips.ps1. Printed to the console and shown in Settings
+     so "is the new version actually live?" is a fact either of us can read
+     in five seconds, instead of an argument. If this number is older than
+     the build you just uploaded, the page came from a cache, not the server.
+     --------------------------------------------------------------------- */
+  w.M7_BUILD = '__BUILD__';
+  try { console.log('%c7Marks build ' + w.M7_BUILD, 'font-weight:700;color:#5b4be0'); } catch (e) {}
+
+  /* A service worker registered by an older build can outlive the page that
+     registered it and keep serving its own cached shell. This app does not
+     use one, so any that is still installed is removed along with its
+     caches — otherwise a student stays on an old build no matter what is
+     deployed, which is exactly what happened here. */
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(function (regs) {
+      if (!regs.length) return;
+      regs.forEach(function (r) { r.unregister(); });
+      if (w.caches && caches.keys) {
+        caches.keys().then(function (ks) { ks.forEach(function (k) { caches.delete(k); }); });
+      }
+      console.log('7Marks: removed ' + regs.length + ' stale service worker(s)');
+    }).catch(function () {});
+  }
+
   /* the drawable variant: strokes carry pathLength + timings so the ring,
      star, seven and tick ink themselves in, in that order */
   d.getElementById('preLogo').innerHTML = M.mark(96, true);

@@ -1164,7 +1164,11 @@
         '<div class="pills" style="margin-top:12px">' +
         '<button class="pill" id="stExport">⬇️ Export as a file</button>' +
         '<button class="pill" id="stClear" style="color:var(--red-ink);' +
-        'border-color:#f7cdcf">🗑 Erase everything</button></div></div>') +
+        'border-color:#f7cdcf">🗑 Erase everything</button></div></div>' +
+        /* the build this page came from — compare it against the zip you
+           uploaded to tell a fresh deploy from a cached one at a glance */
+        '<div class="build"><span>Build</span><b>' + esc(w.M7_BUILD || 'dev') + '</b>' +
+        '<button class="pill" id="stHard">↻ Force refresh</button></div>') +
       '</div>' + rail() + '</div>' + foot());
 
     $$('.sw input').forEach(function (i) {
@@ -1173,6 +1177,26 @@
         M.toast(this.checked ? 'Turned on' : 'Turned off', 'ok');
       };
     });
+    /* Clears every cache and service worker this origin holds, then reloads
+       from the network. This is the button to press when a deploy looks like
+       it did not take. */
+    $('#stHard').onclick = function () {
+      var done = function () { location.replace(location.pathname + '?fresh=' + Date.now()); };
+      var jobs = [];
+      if ('serviceWorker' in navigator) {
+        jobs.push(navigator.serviceWorker.getRegistrations()
+          .then(function (rs) { return Promise.all(rs.map(function (r) { return r.unregister(); })); })
+          .catch(function () {}));
+      }
+      if (w.caches && caches.keys) {
+        jobs.push(caches.keys().then(function (ks) {
+          return Promise.all(ks.map(function (k) { return caches.delete(k); }));
+        }).catch(function () {}));
+      }
+      M.toast('Clearing caches…');
+      Promise.all(jobs).then(done, done);
+    };
+
     $('#stExport').onclick = function () {
       var dump = {};
       ['notes', 'cards', 'plan', 'marks', 'history', 'user', 'chat'].forEach(function (k) {
