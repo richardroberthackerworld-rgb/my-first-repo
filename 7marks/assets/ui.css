@@ -190,7 +190,12 @@
   padding:11px 14px;border-radius:4px;background:#fdf0bb;transform:rotate(3.5deg);
   box-shadow:0 4px 12px rgba(22,41,92,.14);font-family:var(--hand);font-size:16px;
   color:#7a5c04;text-align:center;line-height:1.2}
-@media(max-width:900px){.hero-note{display:none}}
+@media(max-width:900px){
+  /* was display:none. It is shown at every size now and simply stops being
+     absolutely positioned, so it sits under the hero copy instead of over it. */
+  .hero-note{position:static;transform:none;display:inline-block;margin-top:14px;
+    font-size:14px;padding:9px 13px}
+}
 
 /* --- category tiles --- */
 .grid{display:grid;gap:11px}
@@ -700,7 +705,7 @@
   .cmp-head,.cmp-r{grid-template-columns:minmax(0,1.3fr) repeat(3,minmax(0,1fr));
     padding:9px 11px;font-size:11px}
   .cred-chip{padding:0 5px 0 9px;height:34px;font-size:12px}
-  .cc-plan{display:none}
+  .cc-plan{font-size:8.5px;padding:2px 5px;letter-spacing:.04em}
   .cr-h,.cr-r{grid-template-columns:minmax(0,1fr) 60px 66px}
   .calc-rows{grid-template-columns:1fr 1fr}
 }
@@ -860,10 +865,18 @@
   .topbar{flex-wrap:wrap;height:auto;padding:9px 12px;gap:9px}
   .search{order:3;flex-basis:100%;max-width:none}
   .search-in{height:38px}
-  .brand-txt small{display:none}
-  .who span{display:none}
+  /* the labels are back, so the row is allowed to wrap rather than run
+     off the edge — nothing is hidden to make it fit */
+  /* flex:none on the base rule stops it shrinking, so wrapping never
+     engaged and the row ran 384px wide inside a 320px screen. It is
+     allowed to shrink and wrap here — nothing is hidden to make it fit. */
+  .nav-r{flex:1 1 auto;min-width:0;max-width:100%;flex-wrap:wrap;
+    justify-content:flex-end;gap:5px}
+  .brand-txt small{font-size:10px}
+  .who span b{font-size:11px}
+  .who span small{display:none}   /* the name stays; only the second line goes */
   .who{padding:3px}
-  .btn-prem span{display:none}
+  .btn-prem span{font-size:11px}
   .btn-prem{padding:0 12px}
   /* no hard-coded offset here: --nav-h is measured from the real top bar in
      mountChrome, so a header that wraps to three rows (or renders larger in
@@ -890,7 +903,7 @@
   .wadd{opacity:1}
   .notes{grid-template-columns:1fr 1fr}
   .msg{max-width:92%}
-  .lb-k{display:none}
+  .lb-k{font-size:10.5px}
 }
 @media(max-width:380px){
   /* still two per row at 320-380 — they shrink, they do not stack */

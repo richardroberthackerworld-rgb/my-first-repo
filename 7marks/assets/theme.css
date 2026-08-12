@@ -126,7 +126,11 @@ ul,ol{margin:0;padding:0;list-style:none}
 #pre::after{content:'';position:absolute;top:0;bottom:0;left:clamp(9px,2.2vw,26px);width:15px;
   background-image:radial-gradient(circle,rgba(22,41,92,.13) 42%,transparent 45%);
   background-size:15px 62px;background-repeat:repeat-y}
-@media(max-width:640px){#pre::before,#pre::after{display:none}}
+@media(max-width:640px){
+  /* the margin rule and punch holes stay; they just move in tighter */
+  #pre::before{left:18px}
+  #pre::after{left:6px;width:11px;background-size:11px 48px}
+}
 
 #pre.done{animation:preOut .5s ease forwards}
 @keyframes preOut{to{opacity:0;visibility:hidden}}
@@ -223,7 +227,7 @@ ul,ol{margin:0;padding:0;list-style:none}
   .pre-book{width:92%;max-height:30vh}
   .pre-feats{gap:7px 12px}
   .pre-feat{width:31%;max-width:96px}
-  .pre-feat i{display:none}               /* captions go before the icons do */
+  .pre-feat i{font-size:8px;line-height:1.25}   /* captions shrink, they do not vanish */
   .pre-owner{font-size:9px;text-align:center}
 }
 @media(max-width:360px){
@@ -233,7 +237,11 @@ ul,ol{margin:0;padding:0;list-style:none}
 }
 /* only a genuinely short window loses the illustration — a phone held
    sideways, where there is no vertical room for it at all */
-@media(max-height:560px){.pre-book,.pre-foot{display:none}}
+@media(max-height:560px){
+  /* kept, just smaller — the writing IS the preloader */
+  .pre-book{max-height:22vh}
+  .pre-foot{font-size:11px}
+}
 
 /* =====================================================================
    SCROLLBARS — hidden, never disabled.
