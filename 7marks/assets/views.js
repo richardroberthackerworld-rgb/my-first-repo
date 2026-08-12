@@ -12,7 +12,7 @@
   var NAV = [
     ['MAIN', null],
     ['home',        '🏠', 'Home'],
-    ['assistant',   '🤖', 'AI Study Assistant', 'new'],
+    ['assistant',   '✨', 'AI Question Assistant', 'new'],
     ['correct',     '🧑‍🏫', 'AI Correct & Score', 'ai'],
     ['practice',    '📘', 'My Practice'],
     ['papers',      '📚', 'Question Papers'],
@@ -27,7 +27,6 @@
        than duplicating a snap-a-doubt tool here. The two products stay
        separate everywhere else — this is the one deliberate link out. */
     ['doubt',       '💡', 'Doubt Solver', null, 'https://7solve.7by.in/'],
-    ['invite',      '🎁', 'Invite & Earn'],
     ['EXPLORE', null]
   ];
 

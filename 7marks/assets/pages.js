@@ -129,14 +129,15 @@
     var u = M.state.user, h = M.state.history;
     var avg = h.length ? Math.round(h.reduce(function (a, r) { return a + r.pct; }, 0) / h.length) : 0;
     return '<aside class="side">' +
-      V.card('🤖', 'violet', 'AI Study Assistant',
+      V.card('✨', 'violet', 'AI Question Assistant',
         '<div class="bot"><div class="face">🤖</div>' +
         '<p>Ask anything, get instant help.</p></div>' +
         '<div style="margin:12px 0">' +
-        ['Explain any topic', 'Create a study plan', 'Summarize this chapter', 'Help me solve this doubt']
+        ['Generate questions on any topic', 'Generate a full mock test',
+         'Generate questions from a PDF or photo', 'Generate a revision set']
           .map(function (x) { return '<div class="kv"><span>💬 ' + esc(x) + '</span></div>'; }).join('') +
         '</div><a class="btn btn-v" style="width:100%;justify-content:center" href="#/assistant">' +
-        'Chat with AI →</a>') +
+        'Generate questions →</a>') +
 
       V.card('📈', 'green', 'Your Progress',
         '<div class="kv"><span>📝 Tests attempted</span><b>' + h.length + '</b></div>' +

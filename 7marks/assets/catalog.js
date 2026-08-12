@@ -439,7 +439,7 @@
     searchIndex.push({ t: S[k].name, label: S[k].name, meta: 'Subject', em: S[k].em,
                        kind: 'Subject', go: { view: 'practice', subject: k } });
   });
-  [['AI Study Assistant','assistant','🤖'],['AI Correct & Score','correct','🧑‍🏫'],
+  [['AI Question Assistant','assistant','✨'],['AI Correct & Score','correct','🧑‍🏫'],
    ['Mock Test','mock','📝'],['Question Papers','papers','📚'],['Bookmarks','bookmarks','🔖'],
    ['Study Planner','planner','📅'],['Notes & Flashcards','notes','📒'],
    ['Performance','performance','📈'],['Analytics','analytics','📊'],

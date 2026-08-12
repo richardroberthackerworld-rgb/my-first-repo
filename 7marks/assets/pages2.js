@@ -950,7 +950,7 @@
     var subs = C.subsOf(M.state.cat, M.state.course, M.state.year);
     var cur = M.state.aiSub || (subs[0] && subs[0].id) || 'gk';
     set('<div class="wrap"><div class="col">' +
-      V.card('🤖', 'violet', 'AI Study Assistant',
+      V.card('✨', 'violet', 'AI Question Assistant',
         '<div style="display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:12px">' +
         '<label class="cfg-l" style="margin:0">Subject</label>' +
         '<select class="sel" id="aiSub">' + (subs.length ? subs.map(function (s) {
@@ -965,9 +965,13 @@
         '<div class="chat scroll" id="aiLog">' + chatHTML() + '</div>' +
 
         '<div class="pills" style="margin-top:12px" id="aiQuick">' +
-        ['Explain this topic', 'Explain like I am a beginner', 'Give me examples',
-         'Summarise this chapter', 'Make revision notes', 'Generate 5 MCQs',
-         'Make flashcards', 'Create a study plan'].map(function (q) {
+        /* Every shortcut GENERATES QUESTIONS. Explaining, solving and concept
+           teaching belong to 7Solve; mixing them in here is what made this
+           read as a generic assistant instead of a question platform. */
+        ['Generate 5 MCQs', 'Generate 10 questions', 'Generate a full test',
+         'Generate previous-year-style questions', 'Generate difficult questions',
+         'Generate revision questions', 'Generate a mock exam',
+         'Generate questions from my notes'].map(function (q) {
           return '<button class="pill" data-q="' + esc(q) + '" style="font-weight:600">' +
             esc(q) + '</button>';
         }).join('') + '</div>' +
@@ -1251,7 +1255,10 @@
       '</div>' + rail() + '</div>' + foot());
   });
 
-  M.router.on('invite', function () {
+  /* Invite & Earn was removed from the product. The route redirects so an
+     old bookmarked link lands somewhere real instead of nowhere. */
+  M.router.on('invite', function () { M.router.go('home'); });
+  M.router.on('invite_removed', function () {
     var code = M.store.get('refCode', null);
     if (!code) {
       code = '7M' + Math.random().toString(36).slice(2, 7).toUpperCase();
@@ -1383,7 +1390,7 @@
       '<div class="cmp">' + [
         ['Study tools', [['Practice & mock tests', 1, 1, 1], ['Question papers', 1, 1, 1],
                          ['Notes & flashcards', 1, 1, 1], ['Study planner', 1, 1, 1]]],
-        ['AI tools', [['AI Study Assistant', 0, 1, 1], ['AI question generation', 0, 1, 1],
+        ['AI tools', [['AI Question Assistant', 0, 1, 1], ['AI question generation', 0, 1, 1],
                       ['AI correction & scoring', 0, 1, 1]]],
         ['Credits', [['Monthly credits', '500', '1,000', '10,000'],
                      ['Daily free credits', '—', '—', '+20']]],
