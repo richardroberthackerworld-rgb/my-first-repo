@@ -49,6 +49,7 @@
     view: 'home',
     cat: store.get('cat', 'school'),
     course: store.get('course', 'c10'),
+    year: store.get('year', 0),     /* 0 = whole course; 1-based otherwise */
     subject: store.get('subject', null),
     user: store.get('user', { name: 'Student', xp: 0, level: 1, streak: 0, lastDay: null }),
     bookmarks: store.get('bookmarks', []),

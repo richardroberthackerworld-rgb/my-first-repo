@@ -219,10 +219,17 @@
   function hue(k) { return 'background:var(--' + k + '-bg);color:var(--' + k + ')'; }
 
   function subjectChips(limit) {
-    var subs = C.subsOf(M.state.cat, M.state.course);
+    var subs = C.subsOf(M.state.cat, M.state.course, M.state.year);
     if (limit) subs = subs.slice(0, limit);
     if (!subs.length) return '<div class="empty"><span class="em">📚</span><b>Pick a course above</b></div>';
-    return '<div class="subs">' + subs.map(function (s) {
+    var co = C.course(M.state.cat, M.state.course);
+    var note = (co && co.years > 1)
+      ? '<p style="font-size:11.5px;color:var(--ink-3);margin-bottom:10px">' +
+        (M.state.year ? esc(C.yearLabels(M.state.cat, M.state.course)[M.state.year - 1]) +
+          ' syllabus · ' + subs.length + ' subjects'
+                      : 'All ' + co.years + ' years · ' + subs.length + ' subjects') + '</p>'
+      : '';
+    return note + '<div class="subs">' + subs.map(function (s) {
       return '<a class="sub" style="' + hue(s.hue) + '" href="#/practice?subject=' + s.id + '">' +
              s.em + ' ' + esc(s.name) + '</a>';
     }).join('') + '</div>';
@@ -232,18 +239,67 @@
     var cat = C.byCat[M.state.cat];
     return '<select class="sel" id="courseSel" aria-label="Course">' + cat.courses.map(function (c) {
       return '<option value="' + c.id + '"' + (c.id === M.state.course ? ' selected' : '') + '>' +
-             esc(c.name) + '</option>';
+             esc(c.name) + (c.years > 1 ? '  (' + c.years + ' yrs)' : '') + '</option>';
     }).join('') + '</select>';
   }
 
-  /* Keep the chosen course valid whenever the category changes. */
+  /* The year picker only exists for courses that actually run more than one
+     year, so a Class 8 student is never asked which year of Class 8 they
+     are in, while a B.Tech student is asked, because their syllabus
+     genuinely differs year to year. */
+  function yearSelect() {
+    var labels = C.yearLabels(M.state.cat, M.state.course);
+    if (labels.length < 2) return '';
+    return '<label style="font-size:12px;font-weight:700;color:var(--ink-3)">Year</label>' +
+      '<select class="sel" id="yearSel" aria-label="Year of study">' +
+      '<option value="0"' + (!M.state.year ? ' selected' : '') + '>All years</option>' +
+      labels.map(function (l, i) {
+        return '<option value="' + (i + 1) + '"' +
+               (M.state.year === i + 1 ? ' selected' : '') + '>' + esc(l) + '</option>';
+      }).join('') + '</select>';
+  }
+
+  /** Re-render the course row and the subject chips together — they always
+      change as a set, and drifting apart is how stale lists appear. */
+  function refreshCourseRow(rowId, subsId) {
+    var row = $('#' + (rowId || 'courseRow'));
+    if (row) {
+      row.innerHTML = '<label style="font-size:12px;font-weight:700;color:var(--ink-3)">Course</label>' +
+        courseSelect() + yearSelect();
+      bindCourseRow(rowId, subsId);
+    }
+    var subs = $('#' + (subsId || 'subs'));
+    if (subs) subs.innerHTML = subjectChips();
+  }
+
+  function bindCourseRow(rowId, subsId) {
+    var cs = $('#courseSel');
+    if (cs) cs.onchange = function () {
+      M.state.course = this.value;
+      M.state.year = 0;               /* a new course invalidates the old year */
+      M.save('course'); M.save('year');
+      refreshCourseRow(rowId, subsId);
+      M.toast('Showing ' + C.course(M.state.cat, this.value).name);
+    };
+    var ys = $('#yearSel');
+    if (ys) ys.onchange = function () {
+      M.state.year = +this.value;
+      M.save('year');
+      var subs = $('#' + (subsId || 'subs'));
+      if (subs) subs.innerHTML = subjectChips();
+    };
+  }
+
+  /* Keep the chosen course and year valid whenever the category changes. */
   function setCat(id) {
     M.state.cat = id;
     var cat = C.byCat[id];
     if (!cat.courses.some(function (c) { return c.id === M.state.course; })) {
       M.state.course = cat.courses[0].id;
+      M.state.year = 0;
     }
-    M.save('cat'); M.save('course');
+    if (M.state.year > C.yearsOf(id, M.state.course)) M.state.year = 0;
+    M.save('cat'); M.save('course'); M.save('year');
   }
 
   function card(icon, hueName, title, body, more) {
@@ -295,6 +351,7 @@
   w.V = {
     mountChrome: mountChrome, renderRail: renderRail, paintNotifs: paintNotifs,
     hue: hue, card: card, subjectChips: subjectChips, courseSelect: courseSelect,
+    yearSelect: yearSelect, refreshCourseRow: refreshCourseRow, bindCourseRow: bindCourseRow,
     setCat: setCat, lineChart: lineChart, scoreRing: scoreRing
   };
 })(window, document);

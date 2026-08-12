@@ -63,18 +63,57 @@
         <path d="M150 30v104"/>
         <path d="M144 40h12M144 58h12M144 76h12M144 94h12M144 112h12"/>
       </g>
-      <text class="quote" x="44" y="52">The best</text>
-      <text class="quote" x="44" y="72">preparation for</text>
-      <text class="quote" x="44" y="92">tomorrow is</text>
-      <text class="quote" x="44" y="112">doing your best today.</text>
-      <text class="begin" x="176" y="72">Let's</text>
-      <text class="begin" x="176" y="100">Begin!</text>
-      <path d="M176 110 q28 8 56 -2" stroke="#e6202a" stroke-width="2" fill="none"
-            stroke-linecap="round"/>
-      <g transform="rotate(28 250 90)">
-        <rect x="244" y="34" width="11" height="62" rx="5" fill="#22376f"/>
-        <path d="M244 96 h11 l-5.5 16 Z" fill="#16295c"/>
-        <rect x="244" y="46" width="11" height="5" fill="#cbd5ea"/>
+      <!-- Each line is revealed left-to-right by its own clip rect, so the
+           quote appears to be written by hand as the pen travels over it. -->
+      <!-- The reveal grows each clip rect's width from 0, so the quote is
+           written left to right.
+
+           Driven by SMIL rather than CSS on purpose. Animating a clipPath
+           child is the shaky case for CSS, and the CSS version needed
+           transform:scaleX(0) as its resting state — meaning any engine that
+           skipped the animation would hide the quote permanently. That exact
+           failure (text clipped to nothing, forever invisible) has bitten
+           this preloader before. Here every rect's width attribute is
+           already the FULL width and SMIL only animates up to it, so if the
+           animation never runs the text simply appears immediately. The
+           degraded state is "no animation", never "no text". -->
+      <defs>
+        <clipPath id="c1"><rect class="wr" x="44" y="40" width="96" height="16">
+          <animate attributeName="width" from="0" to="96" begin="0.7s" dur="0.6s" fill="freeze"/>
+        </rect></clipPath>
+        <clipPath id="c2"><rect class="wr" x="44" y="60" width="106" height="16">
+          <animate attributeName="width" from="0" to="106" begin="1.3s" dur="0.6s" fill="freeze"/>
+        </rect></clipPath>
+        <clipPath id="c3"><rect class="wr" x="44" y="80" width="100" height="16">
+          <animate attributeName="width" from="0" to="100" begin="1.9s" dur="0.55s" fill="freeze"/>
+        </rect></clipPath>
+        <clipPath id="c4"><rect class="wr" x="44" y="100" width="126" height="16">
+          <animate attributeName="width" from="0" to="126" begin="2.45s" dur="0.7s" fill="freeze"/>
+        </rect></clipPath>
+        <clipPath id="c5"><rect class="wr" x="174" y="50" width="76" height="28">
+          <animate attributeName="width" from="0" to="76" begin="3.25s" dur="0.45s" fill="freeze"/>
+        </rect></clipPath>
+        <clipPath id="c6"><rect class="wr" x="174" y="78" width="90" height="28">
+          <animate attributeName="width" from="0" to="90" begin="3.75s" dur="0.5s" fill="freeze"/>
+        </rect></clipPath>
+        <clipPath id="c7"><rect class="wr" x="172" y="102" width="68" height="16">
+          <animate attributeName="width" from="0" to="68" begin="4.3s" dur="0.35s" fill="freeze"/>
+        </rect></clipPath>
+      </defs>
+      <text class="quote" clip-path="url(#c1)" x="44" y="52">The best</text>
+      <text class="quote" clip-path="url(#c2)" x="44" y="72">preparation for</text>
+      <text class="quote" clip-path="url(#c3)" x="44" y="92">tomorrow is</text>
+      <text class="quote" clip-path="url(#c4)" x="44" y="112">doing your best today.</text>
+      <text class="begin" clip-path="url(#c5)" x="176" y="72">Let's</text>
+      <text class="begin" clip-path="url(#c6)" x="176" y="100">Begin!</text>
+      <path clip-path="url(#c7)" d="M176 110 q28 8 56 -2" stroke="#e6202a" stroke-width="2"
+            fill="none" stroke-linecap="round"/>
+      <g class="pre-pen">
+        <g transform="rotate(28 250 90)">
+          <rect x="244" y="34" width="11" height="62" rx="5" fill="#22376f"/>
+          <path d="M244 96 h11 l-5.5 16 Z" fill="#16295c"/>
+          <rect x="244" y="46" width="11" height="5" fill="#cbd5ea"/>
+        </g>
       </g>
       <text x="12" y="18" font-size="13" fill="#a9bbdb">&#10023;</text>
       <text x="284" y="142" font-size="13" fill="#a9bbdb">&#10023;</text>
@@ -92,6 +131,7 @@
 
     <div class="pre-feats" id="preFeats"></div>
     <p class="pre-foot">Stay focused, stay consistent and success will follow.</p>
+    <p class="pre-owner"><i></i>A <b>7by.in</b> site &nbsp;·&nbsp; Free AI tools for Indian students<i></i></p>
   </div>
   <button class="pre-skip" id="preSkip" type="button">Skip</button>
 </div>

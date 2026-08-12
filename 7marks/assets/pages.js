@@ -40,9 +40,10 @@
             '<span class="em" style="' + V.hue(c.hue) + '">' + c.em + '</span>' +
             '<b>' + esc(c.name) + '</b><small>' + esc(c.sub) + '</small></button>';
         }).join('') + '</div>' +
-        '<div style="display:flex;gap:9px;align-items:center;margin-top:14px;flex-wrap:wrap">' +
+        '<div id="courseRow" style="display:flex;gap:9px;align-items:center;margin-top:14px;' +
+        'flex-wrap:wrap">' +
         '<label style="font-size:12px;font-weight:700;color:var(--ink-3)">Course</label>' +
-        V.courseSelect() + '</div>',
+        V.courseSelect() + V.yearSelect() + '</div>',
         ['View all', '#/explore']) +
 
       /* --- create / start --- */
@@ -96,20 +97,11 @@
       var b = e.target.closest('.cat'); if (!b) return;
       V.setCat(b.dataset.cat);
       $$('.cat').forEach(function (x) { x.classList.toggle('on', x === b); });
-      /* the course list and the subject chips both depend on the category */
-      var sel = $('#courseSel');
-      sel.outerHTML = V.courseSelect();
-      bindCourse();
-      $('#subs').innerHTML = V.subjectChips();
+      /* course, year and subjects all depend on the category, so they are
+         rebuilt together rather than one at a time */
+      V.refreshCourseRow('courseRow', 'subs');
     };
-    bindCourse();
-    function bindCourse() {
-      $('#courseSel').onchange = function () {
-        M.state.course = this.value; M.save('course');
-        $('#subs').innerHTML = V.subjectChips();
-        M.toast('Showing ' + C.course(M.state.cat, this.value).name);
-      };
-    }
+    V.bindCourseRow('courseRow', 'subs');
     mountCorrection();
     mountTimerCard();
   });
@@ -227,7 +219,7 @@
   function mountCorrection() {
     var subSel = $('#cSub');
     if (!subSel) return;
-    subSel.innerHTML = C.subsOf(M.state.cat, M.state.course).map(function (s) {
+    subSel.innerHTML = C.subsOf(M.state.cat, M.state.course, M.state.year).map(function (s) {
       return '<option value="' + s.id + '">' + esc(s.name) + '</option>';
     }).join('') || '<option>General</option>';
 
@@ -415,7 +407,7 @@
 
   /* ============================ MOCK TEST SETUP ============================ */
   M.router.on('mock', function (p) {
-    var subs = C.subsOf(M.state.cat, M.state.course);
+    var subs = C.subsOf(M.state.cat, M.state.course, M.state.year);
     set('<div class="wrap"><div class="col">' +
       V.card('📝', 'violet', 'Create a Mock Test',
         '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:13px">' +
@@ -717,19 +709,30 @@
     var cat = C.byCat[M.state.cat];
     set('<div class="wrap"><div class="col">' +
       V.card(cat.em, 'blue', cat.name + ' — ' + cat.sub,
-        '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr))">' +
+        '<div class="grid" id="coGrid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">' +
         cat.courses.map(function (co) {
           return '<button class="cat' + (co.id === M.state.course ? ' on' : '') +
             '" data-c="' + co.id + '" style="align-items:flex-start;text-align:left;padding:14px">' +
-            '<b>' + esc(co.name) + '</b><small>' + co.subs.length + ' subjects</small></button>';
+            '<b>' + esc(co.name) + '</b><small>' +
+            (co.years > 1 ? co.years + ' years · ' : '') + co.subs.length + ' subjects</small>' +
+            '</button>';
         }).join('') + '</div>') +
-      V.card('📚', 'green', 'Subjects in this course', '<div id="subs">' + V.subjectChips() + '</div>') +
+      V.card('📚', 'green', 'Subjects in this course',
+        '<div id="courseRow" style="display:flex;gap:9px;align-items:center;margin-bottom:14px;' +
+        'flex-wrap:wrap">' +
+        '<label style="font-size:12px;font-weight:700;color:var(--ink-3)">Course</label>' +
+        V.courseSelect() + V.yearSelect() + '</div>' +
+        '<div id="subs">' + V.subjectChips() + '</div>') +
       '</div>' + rightRail() + '</div>' + footer());
-    page().querySelector('.grid').onclick = function (e) {
+
+    V.bindCourseRow('courseRow', 'subs');
+    $('#coGrid').onclick = function (e) {
       var b = e.target.closest('.cat'); if (!b) return;
-      M.state.course = b.dataset.c; M.save('course');
-      $$('.cat').forEach(function (x) { x.classList.toggle('on', x === b); });
-      $('#subs').innerHTML = V.subjectChips();
+      M.state.course = b.dataset.c;
+      M.state.year = 0;                 /* a different course means a different year list */
+      M.save('course'); M.save('year');
+      $$('#coGrid .cat').forEach(function (x) { x.classList.toggle('on', x === b); });
+      V.refreshCourseRow('courseRow', 'subs');
     };
   });
 
