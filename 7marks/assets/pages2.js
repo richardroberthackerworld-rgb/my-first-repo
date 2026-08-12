@@ -470,23 +470,56 @@
     }
     cardIdx = Math.max(0, Math.min(cardIdx, cards.length - 1));
     var c = cards[cardIdx];
-    return '<div class="plan-top"><b>Card ' + (cardIdx + 1) + ' of ' + cards.length + '</b>' +
+    var sub = C.subjects[c.sub] || { name: 'General', em: '📘', hue: 'violet' };
+    var known = cards.filter(function (x) { return x.known; }).length;
+
+    /* A real revision card, not a rectangle: a ring-bound index card with a
+       coloured spine for its subject, a ghosted glyph behind the text, and
+       a deck of the remaining cards stacked behind it so the pile visibly
+       shrinks as you work through it. */
+    return '<div class="plan-top"><div><b>' + sub.em + ' ' + esc(sub.name) + '</b>' +
+      '<small>Card ' + (cardIdx + 1) + ' of ' + cards.length + '</small></div>' +
       '<button class="btn btn-o" id="cNew">＋ New card</button></div>' +
-      '<div class="flash' + (flipped ? ' flip' : '') + '" id="cFlip" tabindex="0" ' +
-      'role="button" aria-label="Flip the card">' +
+
+      '<div class="deck">' +
+      '<span class="deck-back b2" aria-hidden="true"></span>' +
+      '<span class="deck-back b1" aria-hidden="true"></span>' +
+      '<div class="flash' + (flipped ? ' flip' : '') + ' hue-' + sub.hue + '" id="cFlip" ' +
+      'tabindex="0" role="button" aria-label="Flip the card. Question: ' + esc(c.q) + '">' +
       '<div class="flash-in">' +
-      '<div class="flash-f"><small>Question</small><p>' + esc(c.q) + '</p>' +
-      '<i>Tap to flip</i></div>' +
-      '<div class="flash-b"><small>Answer</small><p>' + esc(c.a) + '</p></div>' +
-      '</div></div>' +
+
+      '<div class="flash-face flash-f">' +
+      '<span class="rings" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>' +
+      '<span class="ghost" aria-hidden="true">?</span>' +
+      '<span class="face-tag">Question</span>' +
+      '<p>' + esc(c.q) + '</p>' +
+      '<span class="hint">tap to reveal</span>' +
+      (c.known ? '<span class="ribbon known">known</span>' : '') +
+      '</div>' +
+
+      '<div class="flash-face flash-b">' +
+      '<span class="rings" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>' +
+      '<span class="ghost" aria-hidden="true">✓</span>' +
+      '<span class="face-tag">Answer</span>' +
+      '<p>' + esc(c.a || 'No answer written yet.') + '</p>' +
+      '<span class="hint">tap to flip back</span>' +
+      '</div>' +
+
+      '</div></div></div>' +
+
+      '<div class="deck-dots" aria-hidden="true">' + cards.map(function (x, i) {
+        return '<span class="dot' + (i === cardIdx ? ' now' : '') +
+          (x.known ? ' ok' : '') + '"></span>';
+      }).join('') + '</div>' +
+
       '<div class="pills" style="margin-top:14px;justify-content:center">' +
       '<button class="pill" id="cPrev">← Previous</button>' +
-      '<button class="pill" id="cKnown">✅ I know this</button>' +
       '<button class="pill" id="cRevise">🔁 Needs revision</button>' +
+      '<button class="pill" id="cKnown">✅ I know this</button>' +
       '<button class="pill" id="cNext">Next →</button></div>' +
-      '<p style="text-align:center;font-size:11.5px;color:var(--ink-3);margin-top:10px">' +
-      'Known: ' + cards.filter(function (x) { return x.known; }).length + ' · ' +
-      'To revise: ' + cards.filter(function (x) { return !x.known; }).length + '</p>';
+      '<div class="deck-bar"><span class="prog-t"><i style="width:' +
+      (known / cards.length * 100) + '%"></i></span>' +
+      '<b>' + known + ' known · ' + (cards.length - known) + ' to revise</b></div>';
   }
 
   function wireNotes() {
@@ -508,7 +541,8 @@
           M.state.notes.splice(i, 1); M.save('notes');
           $('#nBody').innerHTML = noteBody(); wireNotes(); M.toast('Note deleted');
         } else if (b.dataset.a === 'card') {
-          M.state.cards.push({ id: uid(), q: n.t || 'Question', a: n.body || '', known: false });
+          M.state.cards.push({ id: uid(), q: n.t || 'Question', a: n.body || '',
+                               sub: n.sub || M.state.aiSub || null, known: false });
           M.save('cards'); M.toast('Flashcard made', 'ok'); M.addXP(3, 'flashcard');
         } else if (b.dataset.a === 'mark') {
           addMark('note', n.t || 'Note', (n.body || '').slice(0, 90));
@@ -573,7 +607,9 @@
       '<div><label class="cfg-l">Back — the answer</label>' +
       '<textarea class="ed-area" id="fcA" style="border:1px solid var(--line-2);' +
       'border-radius:11px;min-height:110px" placeholder="The process by which green plants..."' +
-      '></textarea></div></div>' +
+      '></textarea></div>' +
+      '<div><label class="cfg-l">Subject</label><select class="sel" id="fcS2" ' +
+      'style="width:100%">' + subOpts(M.state.aiSub) + '</select></div></div>' +
       '<div class="m-btns"><button class="btn btn-o" id="fcC">Cancel</button>' +
       '<button class="btn btn-v" id="fcS">Add card</button></div></div>';
     m.classList.add('open');
@@ -581,7 +617,8 @@
     $('#fcS').onclick = function () {
       var q = $('#fcQ').value.trim();
       if (!q) { M.toast('The front needs a question', 'warn'); return; }
-      M.state.cards.push({ id: uid(), q: q, a: $('#fcA').value.trim(), known: false });
+      M.state.cards.push({ id: uid(), q: q, a: $('#fcA').value.trim(),
+                           sub: $('#fcS2').value, known: false });
       M.save('cards'); m.classList.remove('open');
       cardIdx = M.state.cards.length - 1; flipped = false;
       $('#nBody').innerHTML = noteBody(); wireNotes();
@@ -996,6 +1033,230 @@
         M.addXP(2, 'asked the assistant');
       });
     }
+  });
+
+  /* =====================================================================
+     ACHIEVEMENTS · PROFILE · SETTINGS · PREMIUM · INVITE
+     ===================================================================== */
+  M.router.on('achievements', function () {
+    var h = M.state.history, u = M.state.user;
+    var best = h.reduce(function (a, x) { return Math.max(a, x.accuracy); }, 0);
+    var cards = M.state.cards.filter(function (c) { return c.known; }).length;
+    var sess = M.state.plan.filter(function (s) { return s.done; }).length;
+    var list = [
+      { em: '🌟', hue: 'gold', t: 'First Test', s: 'Complete your first test',
+        now: Math.min(h.length, 1), of: 1 },
+      { em: '📚', hue: 'blue', t: 'Getting Serious', s: 'Complete 10 tests',
+        now: Math.min(h.length, 10), of: 10 },
+      { em: '🎯', hue: 'green', t: 'Accuracy Pro', s: 'Reach 80% accuracy',
+        now: Math.min(best, 80), of: 80, unit: '%' },
+      { em: '🏆', hue: 'violet', t: 'Near Perfect', s: 'Reach 95% accuracy',
+        now: Math.min(best, 95), of: 95, unit: '%' },
+      { em: '🔥', hue: 'red', t: 'Streak Master', s: 'Study 7 days in a row',
+        now: Math.min(u.streak || 0, 7), of: 7 },
+      { em: '📅', hue: 'teal', t: 'Plan Follower', s: 'Finish 20 planned sessions',
+        now: Math.min(sess, 20), of: 20 },
+      { em: '🎴', hue: 'pink', t: 'Card Sharp', s: 'Learn 25 flashcards',
+        now: Math.min(cards, 25), of: 25 },
+      { em: '⭐', hue: 'orange', t: 'Level 5', s: 'Reach level 5',
+        now: Math.min(u.level || 1, 5), of: 5 }
+    ];
+    var won = list.filter(function (a) { return a.now >= a.of; }).length;
+    set('<div class="wrap"><div class="col">' +
+      V.card('🏆', 'gold', 'Achievements',
+        '<p style="font-size:12.5px;color:var(--ink-2);margin-bottom:14px"><b>' + won +
+        ' of ' + list.length + '</b> earned · Level ' + (u.level || 1) + ' · ' +
+        (u.xp || 0) + ' XP</p>' +
+        '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(230px,1fr));' +
+        'gap:11px">' + list.map(function (a) {
+          var pct = Math.round(a.now / a.of * 100);
+          var done = a.now >= a.of;
+          return '<div class="chal' + (done ? ' won' : '') + '">' +
+            '<span class="em" style="' + hue(a.hue) + (done ? '' : ';filter:grayscale(1);' +
+            'opacity:.45') + '">' + a.em + '</span>' +
+            '<div class="chal-n"><b>' + esc(a.t) + '</b><small>' + esc(a.s) + '</small>' +
+            '<span class="prog-t" style="margin-top:8px"><i style="width:' + pct +
+            '%"></i></span>' +
+            '<span class="chal-f">' + a.now + ' / ' + a.of + (a.unit || '') +
+            '<em>' + pct + '%</em></span></div>' +
+            (done ? '<span class="chal-tick">✓</span>' : '') + '</div>';
+        }).join('') + '</div>') +
+      '</div>' + rail() + '</div>' + foot());
+  });
+
+  M.router.on('profile', function () {
+    var u = M.state.user;
+    set('<div class="wrap"><div class="col">' +
+      V.card('👤', 'blue', 'My Profile',
+        '<div class="cfg-head"><span class="em" style="' + hue('violet') +
+        '">' + esc((u.name || 'S')[0].toUpperCase()) + '</span>' +
+        '<div><b>' + esc(u.name || 'Student') + '</b><small>Level ' + (u.level || 1) +
+        ' · ' + (u.xp || 0) + ' XP · 🔥 ' + (u.streak || 0) + ' day streak</small></div></div>' +
+        '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));' +
+        'gap:12px">' +
+        '<div><label class="cfg-l">Your name</label><input class="sel" id="pfName" ' +
+        'style="width:100%" value="' + esc(u.name || '') + '" placeholder="Your name"></div>' +
+        '<div><label class="cfg-l">Study group</label><select class="sel" id="pfCat" ' +
+        'style="width:100%">' + C.cats.map(function (c) {
+          return '<option value="' + c.id + '"' + (c.id === M.state.cat ? ' selected' : '') +
+            '>' + esc(c.name) + '</option>';
+        }).join('') + '</select></div>' +
+        '<div><label class="cfg-l">Course</label><div id="pfCourse">' +
+        V.courseSelect() + '</div></div>' +
+        '<div><label class="cfg-l">Target score</label><select class="sel" id="pfTarget" ' +
+        'style="width:100%">' + [60, 70, 80, 90, 95].map(function (t) {
+          return '<option' + (t === M.store.get('target', 80) ? ' selected' : '') + '>' + t +
+            '%</option>';
+        }).join('') + '</select></div></div>' +
+        '<button class="btn btn-v" id="pfSave" style="margin-top:16px;height:44px;width:100%;' +
+        'justify-content:center">Save profile</button>') +
+      '</div>' + rail() + '</div>' + foot());
+
+    $('#pfCat').onchange = function () {
+      V.setCat(this.value);
+      $('#pfCourse').innerHTML = V.courseSelect();
+    };
+    $('#pfSave').onclick = function () {
+      M.state.user.name = $('#pfName').value.trim() || 'Student';
+      M.save('user');
+      M.state.course = $('#pfCourse').querySelector('select').value; M.save('course');
+      M.store.set('target', parseInt($('#pfTarget').value, 10));
+      M.toast('Profile saved', 'ok');
+      /* Update the greeting and avatar in place. Re-rendering the whole top
+         bar would throw away the search and dropdown handlers that
+         mountChrome attached, so only the text that actually changed is
+         touched. */
+      var nm = d.getElementById('uname'), av = d.getElementById('av');
+      if (nm) nm.textContent = 'Hello, ' + M.state.user.name + '!';
+      if (av) av.textContent = M.state.user.name[0].toUpperCase();
+      V.renderRail();
+      M.router.go('profile');
+    };
+  });
+
+  M.router.on('settings', function () {
+    var rows = [
+      ['sound', '🔊', 'Sound warnings in tests', 'A tone at 10, 5 and 1 minute remaining', true],
+      ['remind', '🔔', 'Study plan reminders', 'Only for sessions you actually scheduled', true],
+      ['motion', '🎬', 'Reduce animation', 'Skip the preloader writing and card flips', false]
+    ];
+    set('<div class="wrap"><div class="col">' +
+      V.card('⚙️', 'teal', 'Settings',
+        rows.map(function (rw) {
+          var on = M.store.get(rw[0], rw[4]);
+          return '<div class="sess"><span class="em" style="' + hue('teal') + '">' + rw[1] +
+            '</span><div class="sess-n"><b>' + esc(rw[2]) + '</b><small>' + esc(rw[3]) +
+            '</small></div><div class="sess-do">' +
+            '<label class="sw"><input type="checkbox" data-k="' + rw[0] + '"' +
+            (on ? ' checked' : '') + '><span></span></label></div></div>';
+        }).join('') +
+        '<div class="fb" style="margin-top:16px"><h4>💾 Your data</h4>' +
+        'Everything — notes, flashcards, your plan, bookmarks and results — is stored on this ' +
+        'device only. Nothing is uploaded.' +
+        '<div class="pills" style="margin-top:12px">' +
+        '<button class="pill" id="stExport">⬇️ Export as a file</button>' +
+        '<button class="pill" id="stClear" style="color:var(--red-ink);' +
+        'border-color:#f7cdcf">🗑 Erase everything</button></div></div>') +
+      '</div>' + rail() + '</div>' + foot());
+
+    $$('.sw input').forEach(function (i) {
+      i.onchange = function () {
+        M.store.set(this.dataset.k, this.checked);
+        M.toast(this.checked ? 'Turned on' : 'Turned off', 'ok');
+      };
+    });
+    $('#stExport').onclick = function () {
+      var dump = {};
+      ['notes', 'cards', 'plan', 'marks', 'history', 'user', 'chat'].forEach(function (k) {
+        dump[k] = M.store.get(k, null);
+      });
+      var blob = new Blob([JSON.stringify(dump, null, 2)], { type: 'application/json' });
+      var a = d.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = '7marks-data-' + today() + '.json';
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+      M.toast('Downloaded', 'ok');
+    };
+    $('#stClear').onclick = function () {
+      var m = d.getElementById('modal');
+      m.innerHTML = '<div class="modal-c"><h3>Erase everything?</h3>' +
+        '<p>Your notes, flashcards, study plan, bookmarks and results are deleted from this ' +
+        'device. This cannot be undone.</p>' +
+        '<div class="m-btns"><button class="btn btn-o" id="ecNo">Keep my data</button>' +
+        '<button class="btn btn-v" id="ecYes" style="background:var(--red)">Erase</button>' +
+        '</div></div>';
+      m.classList.add('open');
+      $('#ecNo').onclick = function () { m.classList.remove('open'); };
+      $('#ecYes').onclick = function () {
+        try { localStorage.clear(); } catch (e) {}
+        location.reload();
+      };
+    };
+  });
+
+  M.router.on('premium', function () {
+    var free = ['5 practice tests a day', 'AI correction — 3 answers a day', 'Question papers',
+                'Study planner & notes', 'Basic performance'];
+    var pro = ['Unlimited practice tests', 'Unlimited AI correction & scoring',
+               'Advanced analytics & mistake patterns', 'AI study plans & flashcards',
+               'Download papers as PDF', 'Ad-free', 'Priority support'];
+    set('<div class="wrap"><div class="col">' +
+      V.card('💎', 'violet', 'Premium',
+        '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(230px,1fr));' +
+        'gap:13px">' +
+        '<div class="plan-c"><b>Free</b><span class="plan-p">₹0</span>' +
+        '<small>What you have now</small><ul>' + free.map(function (x) {
+          return '<li>✓ ' + esc(x) + '</li>'; }).join('') + '</ul>' +
+        '<span class="plan-cur">Your current plan</span></div>' +
+        '<div class="plan-c pro"><b>Premium</b><span class="plan-p">₹99<i>/month</i></span>' +
+        '<small>Everything, without limits</small><ul>' + pro.map(function (x) {
+          return '<li>✓ ' + esc(x) + '</li>'; }).join('') + '</ul>' +
+        '<a class="btn btn-v" href="billing.php" style="width:100%;justify-content:center;' +
+        'height:42px">Upgrade now ⚡</a></div></div>' +
+        '<p style="font-size:11.5px;color:var(--ink-3);margin-top:14px;text-align:center">' +
+        'Payment is handled by the shared 7by.in account, the same one you already use.</p>') +
+      '</div>' + rail() + '</div>' + foot());
+  });
+
+  M.router.on('invite', function () {
+    var code = M.store.get('refCode', null);
+    if (!code) {
+      code = '7M' + Math.random().toString(36).slice(2, 7).toUpperCase();
+      M.store.set('refCode', code);
+    }
+    var link = 'https://7marks.7by.in/?ref=' + code;
+    var msg = 'I use 7Marks to practise for exams — free AI question papers, ' +
+      'answer correction and mock tests. Try it: ' + link;
+    set('<div class="wrap"><div class="col">' +
+      V.card('🎁', 'pink', 'Invite & Earn',
+        '<div class="handoff"><div class="handoff-em" style="background:var(--pink-bg)">🎁</div>' +
+        '<b>Share 7Marks with a friend</b>' +
+        '<p>They get the tools free. You get bonus AI credits when they take their first test.' +
+        '</p></div>' +
+        '<label class="cfg-l">Your invite link</label>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+        '<input class="sel" id="ivLink" style="flex:1;min-width:180px" readonly value="' +
+        esc(link) + '">' +
+        '<button class="btn btn-v" id="ivCopy">Copy</button></div>' +
+        '<div class="pills" style="margin-top:14px">' +
+        '<a class="pill" target="_blank" rel="noopener" href="https://wa.me/?text=' +
+        encodeURIComponent(msg) + '">💬 WhatsApp</a>' +
+        '<a class="pill" target="_blank" rel="noopener" href="https://t.me/share/url?url=' +
+        encodeURIComponent(link) + '&text=' + encodeURIComponent('Try 7Marks') + '">✈️ Telegram</a>' +
+        '<button class="pill" id="ivShare">📤 Share…</button></div>') +
+      '</div>' + rail() + '</div>' + foot());
+
+    $('#ivCopy').onclick = function () {
+      $('#ivLink').select();
+      navigator.clipboard.writeText(link).then(function () { M.toast('Link copied', 'ok'); },
+        function () { M.toast('Select and copy the link', 'warn'); });
+    };
+    $('#ivShare').onclick = function () {
+      if (navigator.share) navigator.share({ title: '7Marks', text: msg, url: link })
+        .catch(function () {});
+      else { $('#ivCopy').click(); }
+    };
   });
 
   function chatHTML() {

@@ -183,10 +183,12 @@
         return { el: p, begin: parseFloat(p.getAttribute('data-b')) || 0,
                  dur: parseFloat(p.getAttribute('data-d')) || 0.6 };
       });
-    var pops = Array.prototype.slice.call((root || d).querySelectorAll('.pop'))
+    var pops = Array.prototype.slice.call((root || d).querySelectorAll('.ink-pop'))
       .map(function (p) {
         return { el: p, begin: parseFloat(p.getAttribute('data-b')) || 0,
-                 dur: parseFloat(p.getAttribute('data-d')) || 0.3 };
+                 dur: parseFloat(p.getAttribute('data-d')) || 0.3,
+                 cx: parseFloat(p.getAttribute('data-cx')) || 0,
+                 cy: parseFloat(p.getAttribute('data-cy')) || 0 };
       });
     strokes.concat(pops).forEach(function (s) {
       total = Math.max(total, s.begin + s.dur);
@@ -204,9 +206,12 @@
         /* a small overshoot so the star lands rather than fades */
         var e = p >= 1 ? 1 : 1 - Math.pow(1 - p, 3);
         var sc = e * (1 + 0.18 * Math.sin(Math.PI * e));
-        s.el.style.opacity = String(e);
-        s.el.style.transform = 'scale(' + sc.toFixed(3) + ') rotate(' +
-          ((1 - e) * -35).toFixed(1) + 'deg)';
+        s.el.setAttribute('opacity', e.toFixed(3));
+        /* scale and spin about the star's own centre, in SVG's own
+           coordinate system — no CSS transform-box involved */
+        s.el.setAttribute('transform',
+          'translate(' + s.cx + ',' + s.cy + ') rotate(' + ((1 - e) * -35).toFixed(1) +
+          ') scale(' + sc.toFixed(3) + ') translate(' + (-s.cx) + ',' + (-s.cy) + ')');
       });
     }
 
@@ -242,8 +247,11 @@
     }
     requestAnimationFrame(frame);
     /* rAF is suspended in a background tab, so guarantee nothing is left
-       half-drawn if the student switches away and comes back */
-    setTimeout(api.finish, (total + 1.5) * 1000);
+       half-drawn. This has to fire BEFORE the preloader is dismissed —
+       the old net was set at total+1.5s while the preloader was removed at
+       runtime+0.7s, so on a repeat visit it fired a full two seconds after
+       there was anything left to fix. */
+    setTimeout(api.finish, (api.runtime + 0.25) * 1000);
     return api;
   }
 
@@ -256,7 +264,14 @@
     var d1 = draw ? ' class="dr" pathLength="1" data-b="0"    data-d="0.75"' : '';
     var d2 = draw ? ' class="dr" pathLength="1" data-b="0.95" data-d="0.65"' : '';
     var d3 = draw ? ' class="dr" pathLength="1" data-b="1.55" data-d="0.55"' : '';
-    var d4 = draw ? ' class="pop" data-b="0.72" data-d="0.35"' : '';
+    /* The class is `ink-pop`, NOT `pop`: `.pop` is already the dropdown
+       panel in ui.css and carries display:none until it is opened, so the
+       star inherited it and was never painted — its bounding box measured
+       0x0 while the identical path rendered 22.8x21.7 on its own. That is
+       why the logo showed a ring, a seven and a tick but no star.
+       data-cx/cy is the star's centre, which the pop scales about using an
+       SVG transform attribute rather than CSS transform-origin. */
+    var d4 = draw ? ' class="ink-pop" data-b="0.72" data-d="0.35" data-cx="78" data-cy="20"' : '';
     return '<svg viewBox="0 0 100 100" width="' + px + '" height="' + px + '" role="img" ' +
       'aria-label="7Marks"><title>7Marks</title>' +
       /* the ring, broken where the star sits */
@@ -264,8 +279,7 @@
         'stroke-width="6.4" stroke-linecap="round"/>' +
       /* the achievement star — pops in after the ring closes */
       '<path' + d4 + ' d="M78 9 L80.9 17 L89.4 17.3 L82.8 22.6 L85.1 30.7 L78 26 L71 30.7 ' +
-        'L73.2 22.6 L66.6 17.3 L75.1 17 Z" fill="#16295c"' +
-        (draw ? ' style="transform-origin:78px 20px;transform-box:view-box"' : '') + '/>' +
+        'L73.2 22.6 L66.6 17.3 L75.1 17 Z" fill="#16295c"/>' +
       /* the seven */
       '<path' + d2 + ' d="M32 31 H63 L47 76" fill="none" stroke="#16295c" stroke-width="9.2" ' +
         'stroke-linecap="round" stroke-linejoin="round"/>' +

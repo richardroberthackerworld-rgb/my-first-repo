@@ -23,7 +23,10 @@
     ['analytics',   '📊', 'Analytics'],
     ['leaderboard', '🏅', 'Leaderboard'],
     ['challenges',  '🧩', 'Challenges', 'hot'],
-    ['doubt',       '💡', 'Doubt Solver'],
+    /* Doubt Solver is 7Solve's job, so it hands straight over to it rather
+       than duplicating a snap-a-doubt tool here. The two products stay
+       separate everywhere else — this is the one deliberate link out. */
+    ['doubt',       '💡', 'Doubt Solver', null, 'https://7solve.7by.in/'],
     ['invite',      '🎁', 'Invite & Earn'],
     ['EXPLORE', null]
   ];
@@ -32,9 +35,13 @@
     var h = '';
     NAV.forEach(function (n) {
       if (n[1] === null) { h += '<div class="rail-h">' + esc(n[0]) + '</div>'; return; }
-      h += '<li><a class="nav-i" data-view="' + n[0] + '" href="#/' + n[0] + '">' +
+      var ext = n[4];
+      h += '<li><a class="nav-i" data-view="' + n[0] + '" href="' +
+           (ext || ('#/' + n[0])) + '"' +
+           (ext ? ' target="_blank" rel="noopener"' : '') + '>' +
            '<span class="em">' + n[1] + '</span>' + esc(n[2]) +
-           (n[3] ? '<span class="tag ' + n[3] + '">' + n[3] + '</span>' : '') + '</a></li>';
+           (n[3] ? '<span class="tag ' + n[3] + '">' + n[3] + '</span>' : '') +
+           (ext ? '<span class="ext" aria-label="opens 7Solve">↗</span>' : '') + '</a></li>';
     });
     C.cats.forEach(function (c) {
       h += '<li><a class="nav-i" data-cat="' + c.id + '" href="#/explore?cat=' + c.id + '">' +

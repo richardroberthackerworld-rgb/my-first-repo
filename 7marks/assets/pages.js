@@ -1404,34 +1404,25 @@
      These are registered so the navigation is never a dead link, and each
      one says plainly what it will do and offers the working route that gets
      closest today. They are not pretending to be finished. */
-  var LATER = {
-    doubt:      ['💡', 'orange', 'Doubt Solver', 'Type or photograph a doubt and get a step-by-step solution.',
-      '#/assistant', 'Ask the study assistant'],
-    invite:     ['🎁', 'pink', 'Invite & Earn', 'Share 7Marks, earn credits when a friend joins.',
-      '#/home', 'Back to dashboard'],
-    achievements:['🏆', 'gold', 'Achievements', 'Every badge, what it takes, and how close you are.',
-      '#/performance', 'See progress'],
-    premium:    ['💎', 'violet', 'Premium', 'Unlimited practice and AI correction, advanced analytics, PDF reports, ad-free.',
-      'billing.php', 'Open billing'],
-    profile:    ['👤', 'blue', 'My Profile', 'Your class, subjects, targets and preferences.',
-      '#/home', 'Back to dashboard'],
-    settings:   ['⚙️', 'teal', 'Settings', 'Sounds, reduced motion, notifications and data controls.',
-      '#/home', 'Back to dashboard']
-  };
-  Object.keys(LATER).forEach(function (k) {
-    var L = LATER[k];
-    M.router.on(k, function () {
-      set('<div class="wrap"><div class="col">' +
-        V.card(L[0], L[1], L[2],
-          '<div class="empty"><span class="em">' + L[0] + '</span>' +
-          '<b>' + esc(L[2]) + ' — in build</b>' +
-          '<small>' + esc(L[3]) + '</small>' +
-          '<a class="btn btn-v" style="margin-top:8px" href="' + L[4] + '">' + esc(L[5]) + '</a>' +
-          '</div>') +
-        '</div>' + rightRail() + '</div>' + footer());
-    });
+  /* Doubt Solver belongs to 7Solve. Reaching this route (by typing the hash,
+     or from an old link) explains the handover rather than dead-ending. */
+  M.router.on('doubt', function () {
+    set('<div class="wrap"><div class="col">' +
+      V.card('💡', 'orange', 'Doubt Solver',
+        '<div class="handoff"><div class="handoff-em">💡</div>' +
+        '<b>Doubts are solved on 7Solve</b>' +
+        '<p>7Solve is our doubt app: snap a photo of any question and get the exact answer, ' +
+        'explained the way a good teacher would. It opens in a new tab — your test and ' +
+        'study plan here stay exactly as you left them.</p>' +
+        '<a class="btn btn-v" href="https://7solve.7by.in/" target="_blank" rel="noopener" ' +
+        'style="height:46px;padding:0 22px">Open 7Solve ↗</a>' +
+        '<a class="pill" href="#/assistant" style="margin-top:4px">Or ask the study assistant ' +
+        'here</a></div>') +
+      '</div>' + rightRail() + '</div>' + footer());
   });
 
+  /* Every tab in the sidebar now has a real screen; achievements, profile,
+     settings, premium and invite are registered in pages2.js. */
   M.router.on('404', function () { M.router.go('home'); });
 
   /* ============================ footer ============================ */

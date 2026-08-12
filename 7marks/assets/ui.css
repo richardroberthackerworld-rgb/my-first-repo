@@ -481,21 +481,106 @@
 .note-f span{display:flex;gap:4px}
 .note-f .mv{width:26px;height:26px;font-size:12px}
 
-/* --- flashcards --- */
-.flash{perspective:1000px;cursor:pointer;margin-top:14px}
-.flash-in{position:relative;transform-style:preserve-3d;transition:transform .5s cubic-bezier(.4,0,.2,1);
-  min-height:190px}
+/* --- flashcards ---------------------------------------------------------
+   A ring-bound revision card rather than a rectangle: a coloured spine for
+   the subject, punched holes along the top, a ghosted glyph behind the
+   text, and the rest of the deck stacked behind so the pile visibly shrinks
+   as the student works through it. */
+.deck{position:relative;margin-top:18px;padding-top:6px}
+.deck-back{position:absolute;left:0;right:0;top:0;height:100%;border-radius:16px;
+  background:#fff;border:1px solid var(--line-2)}
+.deck-back.b1{transform:translateY(7px) scale(.972);opacity:.75}
+.deck-back.b2{transform:translateY(14px) scale(.944);opacity:.45}
+
+.flash{position:relative;perspective:1400px;cursor:pointer;z-index:2}
+.flash-in{position:relative;transform-style:preserve-3d;
+  transition:transform .58s cubic-bezier(.3,1.2,.4,1);min-height:214px}
 .flash.flip .flash-in{transform:rotateY(180deg)}
-.flash-f,.flash-b{position:absolute;inset:0;backface-visibility:hidden;
-  -webkit-backface-visibility:hidden;border-radius:14px;padding:22px;display:flex;
-  flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:9px;
-  border:1px solid var(--line-2)}
-.flash-f{background:linear-gradient(150deg,#fff,var(--surface-2))}
-.flash-b{background:linear-gradient(150deg,var(--violet-bg),#f6f4ff);transform:rotateY(180deg)}
-.flash small{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+.flash:hover .flash-in{transform:translateY(-2px)}
+.flash.flip:hover .flash-in{transform:rotateY(180deg) translateY(-2px)}
+
+.flash-face{position:absolute;inset:0;backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;border-radius:16px;padding:34px 24px 26px;display:flex;
+  flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;
+  border:1px solid var(--line-2);overflow:hidden;
+  box-shadow:0 2px 4px rgba(22,41,92,.06),0 14px 30px rgba(22,41,92,.10)}
+/* the ruled stock every revision card is printed on */
+.flash-f{background:
+  repeating-linear-gradient(180deg,transparent 0 27px,rgba(47,111,237,.07) 27px 28px),
+  linear-gradient(155deg,#fff,var(--surface-2));background-position:0 40px}
+.flash-b{transform:rotateY(180deg);background:
+  repeating-linear-gradient(180deg,transparent 0 27px,rgba(22,41,92,.05) 27px 28px),
+  linear-gradient(155deg,var(--surface-3),#fff);background-position:0 40px}
+/* the subject spine down the left edge */
+.flash-face::before{content:'';position:absolute;left:0;top:0;bottom:0;width:7px;
+  background:var(--violet)}
+.hue-blue .flash-face::before{background:var(--blue)}
+.hue-green .flash-face::before{background:var(--green)}
+.hue-orange .flash-face::before{background:var(--orange)}
+.hue-pink .flash-face::before{background:var(--pink)}
+.hue-teal .flash-face::before{background:var(--teal)}
+.hue-gold .flash-face::before{background:var(--gold)}
+.hue-navy .flash-face::before{background:var(--navy)}
+.hue-red .flash-face::before{background:var(--red)}
+
+.rings{position:absolute;top:9px;left:0;right:0;display:flex;justify-content:center;gap:26px;
+  pointer-events:none}
+.rings i{width:11px;height:11px;border-radius:50%;background:var(--bg);
+  box-shadow:inset 0 1px 2px rgba(22,41,92,.28)}
+.ghost{position:absolute;right:14px;bottom:-16px;font-size:120px;font-weight:800;
+  color:var(--navy);opacity:.045;line-height:1;pointer-events:none;user-select:none}
+.face-tag{font-family:var(--hand);font-size:17px;color:var(--ink-3);line-height:1}
+.flash-face p{font-size:clamp(15px,2.1vw,19px);font-weight:600;line-height:1.55;
+  max-width:34ch;z-index:1}
+.hint{font-size:10.5px;color:var(--ink-3);letter-spacing:.04em;text-transform:uppercase;
+  font-weight:700;opacity:.8}
+.ribbon{position:absolute;top:15px;right:-34px;transform:rotate(38deg);width:120px;
+  text-align:center;font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+  padding:4px 0;color:#fff;background:var(--green)}
+
+.deck-dots{display:flex;justify-content:center;gap:5px;flex-wrap:wrap;margin-top:16px}
+.deck-dots .dot{width:7px;height:7px;border-radius:50%;background:var(--line-2);
+  transition:transform .15s,background .15s}
+.deck-dots .dot.ok{background:var(--green)}
+.deck-dots .dot.now{transform:scale(1.55);background:var(--violet)}
+.deck-bar{display:flex;align-items:center;gap:11px;margin-top:14px;font-size:11.5px;
   color:var(--ink-3)}
-.flash p{font-size:clamp(14px,2vw,17px);font-weight:600;line-height:1.55}
-.flash i{font-size:11px;color:var(--ink-3);font-style:normal;margin-top:4px}
+.deck-bar b{flex:none;font-weight:700}
+
+/* --- settings toggle --- */
+.sw{position:relative;display:inline-block;width:42px;height:24px;flex:none}
+.sw input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer;z-index:2}
+.sw span{position:absolute;inset:0;border-radius:99px;background:var(--line-2);
+  transition:background .18s}
+.sw span::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;
+  border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(22,41,92,.28);
+  transition:transform .18s}
+.sw input:checked + span{background:var(--green)}
+.sw input:checked + span::after{transform:translateX(18px)}
+.sw input:focus-visible + span{outline:2.5px solid var(--violet);outline-offset:2px}
+
+/* --- premium plans --- */
+.plan-c{border:1px solid var(--line-2);border-radius:14px;padding:18px;background:#fff;
+  display:flex;flex-direction:column;gap:5px}
+.plan-c.pro{border-color:var(--violet);background:linear-gradient(160deg,var(--violet-bg),#fff);
+  box-shadow:0 4px 18px rgba(91,75,224,.13)}
+.plan-c > b{font-size:15px}
+.plan-p{font-size:26px;font-weight:800;color:var(--navy);letter-spacing:-.02em}
+.plan-p i{font-size:12px;font-weight:600;color:var(--ink-3);font-style:normal}
+.plan-c small{font-size:11.5px;color:var(--ink-3)}
+.plan-c ul{display:flex;flex-direction:column;gap:7px;margin:12px 0 14px}
+.plan-c li{font-size:12px;color:var(--ink-2);display:flex;gap:7px}
+.plan-cur{font-size:11.5px;font-weight:700;color:var(--ink-3);text-align:center;
+  padding:11px;border-radius:9px;background:var(--surface-2);margin-top:auto}
+
+/* the handover to 7Solve */
+.handoff{display:flex;flex-direction:column;align-items:center;text-align:center;gap:11px;
+  padding:26px 18px}
+.handoff-em{width:64px;height:64px;border-radius:20px;display:flex;align-items:center;
+  justify-content:center;font-size:30px;background:var(--orange-bg)}
+.handoff b{font-size:17px}
+.handoff p{font-size:13px;color:var(--ink-2);max-width:44ch;line-height:1.65}
+.nav-i .ext{margin-left:auto;font-size:11px;color:var(--ink-3);font-weight:800}
 
 /* --- leaderboard --- */
 .lb{display:flex;flex-direction:column;gap:6px}
