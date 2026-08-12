@@ -280,11 +280,15 @@
       /* the achievement star — pops in after the ring closes */
       '<path' + d4 + ' d="M78 9 L80.9 17 L89.4 17.3 L82.8 22.6 L85.1 30.7 L78 26 L71 30.7 ' +
         'L73.2 22.6 L66.6 17.3 L75.1 17 Z" fill="#16295c"/>' +
-      /* the seven */
-      '<path' + d2 + ' d="M32 31 H63 L47 76" fill="none" stroke="#16295c" stroke-width="9.2" ' +
+      /* The seven's tail stops at y=64 and the check's vertex sits at y=78.
+         That 14-unit drop is deliberate: with a 9.2 and a 9 stroke the two
+         half-widths eat 9.1 of it, leaving about 5 units of clear white
+         between them. The previous pair ended at y=76 and y=74 and the
+         strokes merged into one blob. */
+      '<path' + d2 + ' d="M33 29 H62 L48 64" fill="none" stroke="#16295c" stroke-width="9.2" ' +
         'stroke-linecap="round" stroke-linejoin="round"/>' +
-      /* the red check, crossing the seven exactly as the logo does */
-      '<path' + d3 + ' d="M33 55 L47 74 L79 41" fill="none" stroke="#e6202a" stroke-width="9" ' +
+      /* the red check, passing clear beneath the seven */
+      '<path' + d3 + ' d="M33 60 L48 78 L80 41" fill="none" stroke="#e6202a" stroke-width="9" ' +
         'stroke-linecap="round" stroke-linejoin="round"/>' +
       '</svg>';
   }

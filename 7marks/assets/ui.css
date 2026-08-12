@@ -912,3 +912,50 @@
   font-size:12px;color:var(--ink-3);flex-wrap:wrap}
 .build b{font-family:var(--mono,monospace);font-size:12.5px;color:var(--navy);font-weight:800}
 .build .pill{margin-left:auto}
+
+/* =====================================================================
+   INDEPENDENT SCROLL PANES, WITHOUT VISIBLE SCROLLBARS
+   The sidebar, the content and the right rail each scroll on their own, so
+   reading the progress panel no longer drags the whole dashboard, and the
+   header stays put because nothing under it moves the page itself.
+
+   Every bar is hidden rather than styled. Hiding it does NOT remove the
+   scrolling — the panes keep their overflow, wheel, touch and keyboard
+   behaviour; only the grey track disappears.
+   ===================================================================== */
+.rail, .main, .side, .chat, .week, .steps, .tabs, .qcounts, .cr-tx, .results{
+  scrollbar-width:none;            /* Firefox */
+  -ms-overflow-style:none;         /* old Edge */
+}
+.rail::-webkit-scrollbar, .main::-webkit-scrollbar, .side::-webkit-scrollbar,
+.chat::-webkit-scrollbar, .week::-webkit-scrollbar, .steps::-webkit-scrollbar,
+.tabs::-webkit-scrollbar, .qcounts::-webkit-scrollbar, .cr-tx::-webkit-scrollbar,
+.results::-webkit-scrollbar{ width:0; height:0; display:none; }
+
+/* The sidebar ends where its menu ends. It used to be pinned to the bottom
+   of the window, so a short menu left a tall empty white column below it
+   that read as a rendering fault. */
+.rail{ bottom:auto; height:auto; max-height:calc(100vh - var(--bar-h));
+  border-bottom:1px solid var(--line); border-bottom-right-radius:16px;
+  box-shadow:0 10px 26px rgba(22,41,92,.05); }
+.rail-quip{ margin-bottom:14px; }
+
+@media(min-width:901px){
+  /* The content is its own scroll pane instead of scrolling the document,
+     which is what lets the right rail hold still beside it. */
+  html, body{ overflow:hidden; height:100%; }
+  .main{ position:fixed; top:var(--bar-h); left:var(--sidebar-w); right:0; bottom:0;
+    margin-left:0; padding-top:0; overflow-y:auto; overflow-x:hidden;
+    min-height:0; -webkit-overflow-scrolling:touch; }
+  /* and the right rail scrolls separately from it */
+  .side{ position:sticky; top:0; align-self:start;
+    max-height:calc(100vh - var(--bar-h) - 32px); overflow-y:auto; }
+}
+
+/* Below 901px the rail is a drawer and the document scrolls normally: a
+   phone's own momentum scrolling is better than anything imposed here, and
+   nested scroll panes on touch are a well-known way to trap a finger. */
+@media(max-width:900px){
+  html, body{ overflow-x:hidden; }
+  .rail{ max-height:calc(100vh - var(--bar-h)); }
+}
