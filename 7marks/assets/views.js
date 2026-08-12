@@ -131,7 +131,7 @@
       '<span style="font-size:11px;color:var(--ink-3)">Level ' + M.state.user.level + '</span></div>' +
       [['#/profile', '👤', 'My Profile'], ['#/performance', '📈', 'My Performance'],
        ['#/bookmarks', '🔖', 'Bookmarks'], ['#/premium', '💎', 'Premium'],
-       ['#/settings', '⚙️', 'Settings'], ['classic.html', '📄', 'Classic paper generator']]
+       ['#/settings', '⚙️', 'Settings'], ['#/papers', '📄', 'Question Papers']]
         .map(function (i) {
           return '<a class="pop-i" href="' + i[0] + '"><span>' + i[1] + '</span>' + esc(i[2]) + '</a>';
         }).join('');

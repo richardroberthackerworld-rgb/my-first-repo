@@ -744,6 +744,234 @@
     mountCorrection();
   });
 
+  /* ============================ QUESTION PAPERS ============================
+     Upload last year's paper, get a fresh one set to the same pattern. The
+     point is not to reprint the old paper — it is to read its structure
+     (sections, mark split, question types, difficulty) and set new
+     questions to match, which is what a teacher actually does. */
+  var pFiles = [];
+
+  M.router.on('papers', function () {
+    var subs = C.subsOf(M.state.cat, M.state.course, M.state.year);
+    pFiles = [];
+    set('<div class="wrap"><div class="col">' +
+      V.card('📚', 'gold', 'Question Papers — set a new paper from last year’s',
+        '<p style="font-size:12.5px;color:var(--ink-2);margin-bottom:14px">' +
+        'Upload last year’s question paper (photo or PDF) or paste it as text. ' +
+        'The AI reads its pattern — sections, marks split, question types, difficulty — ' +
+        'and sets a <b>brand new paper</b> on the same pattern, with an answer key.</p>' +
+
+        '<div class="drop" id="pDrop"><span class="em">📄</span>' +
+        '<b>Upload last year’s question paper</b>' +
+        '<small>JPG, PNG or PDF · you can add more than one page</small>' +
+        '<input type="file" id="pFile" accept="image/*,application/pdf" multiple hidden></div>' +
+        '<div id="pList" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"></div>' +
+
+        '<div style="display:flex;align-items:center;gap:10px;margin:16px 0 10px">' +
+        '<span style="flex:1;height:1px;background:var(--line)"></span>' +
+        '<span style="font-size:11px;font-weight:700;color:var(--ink-3)">OR PASTE IT</span>' +
+        '<span style="flex:1;height:1px;background:var(--line)"></span></div>' +
+        '<textarea class="ed-area" id="pText" style="border:1px solid var(--line-2);' +
+        'border-radius:11px;min-height:110px" placeholder="Paste last year’s question ' +
+        'paper here — or just describe the pattern, e.g. Section A: 10 MCQs 1 mark, ' +
+        'Section B: 5 short answers 3 marks, Section C: 3 essays 10 marks"></textarea>' +
+
+        '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));' +
+        'gap:12px;margin-top:16px">' +
+        field('Subject', '<select class="sel" id="pSub" style="width:100%">' +
+          (subs.length ? subs.map(function (s) {
+            return '<option value="' + esc(s.name) + '">' + esc(s.name) + '</option>';
+          }).join('') : '<option>General</option>') + '</select>') +
+        field('Class / Course',
+          '<input class="sel" id="pCourse" style="width:100%" value="' +
+          esc(C.course(M.state.cat, M.state.course).name) + '">') +
+        field('Total marks', sel('pMarks', ['20','25','35','50','70','80','100'], '70')) +
+        field('Duration', sel('pDur', ['1 hour','1.5 hours','2 hours','2.5 hours','3 hours'],
+          '3 hours')) +
+        field('Difficulty', sel('pDiff', ['Easy','Medium','Hard','Same as uploaded'],
+          'Same as uploaded')) +
+        field('Language', sel('pLang', ['English','Hindi','Telugu'], 'English')) +
+        '</div>' +
+
+        '<label style="display:flex;gap:8px;align-items:center;margin-top:14px;font-size:12.5px">' +
+        '<input type="checkbox" id="pKey" checked> Include the answer key</label>' +
+
+        '<button class="btn btn-v" id="pGo" style="margin-top:16px;height:44px;width:100%;' +
+        'justify-content:center">✨ Generate a new question paper</button>' +
+        '<div id="pOut"></div>') +
+      '</div>' + rightRail() + '</div>' + footer());
+
+    var drop = $('#pDrop'), file = $('#pFile');
+    drop.onclick = function () { file.click(); };
+    ['dragover', 'dragleave', 'drop'].forEach(function (ev) {
+      drop.addEventListener(ev, function (e) {
+        e.preventDefault();
+        drop.classList.toggle('over', ev === 'dragover');
+        if (ev === 'drop' && e.dataTransfer.files.length) addFiles(e.dataTransfer.files);
+      });
+    });
+    file.onchange = function () { addFiles(this.files); };
+
+    function addFiles(list) {
+      Array.prototype.slice.call(list).forEach(function (f) {
+        if (pFiles.length >= 6) { M.toast('Six pages is the limit', 'warn'); return; }
+        /* a very large photo costs the student upload time for no extra
+           accuracy, so refuse it kindly rather than hanging */
+        if (f.size > 6 * 1024 * 1024) {
+          M.toast(f.name + ' is over 6 MB — please use a smaller photo', 'warn', 4200);
+          return;
+        }
+        pFiles.push(f);
+      });
+      paintFiles();
+    }
+    function paintFiles() {
+      $('#pList').innerHTML = pFiles.map(function (f, i) {
+        return '<span class="pill" style="cursor:default">📄 ' +
+          esc(f.name.length > 22 ? f.name.slice(0, 20) + '…' : f.name) +
+          ' <button data-i="' + i + '" class="rmF" aria-label="Remove" ' +
+          'style="font-weight:800;color:var(--red-ink);margin-left:4px">✕</button></span>';
+      }).join('');
+      $$('.rmF').forEach(function (b) {
+        b.onclick = function () { pFiles.splice(+this.dataset.i, 1); paintFiles(); };
+      });
+    }
+
+    $('#pGo').onclick = function () {
+      var pasted = $('#pText').value.trim();
+      if (!pFiles.length && !pasted) {
+        M.toast('Upload last year’s paper or paste it first', 'warn');
+        $('#pText').focus();
+        return;
+      }
+      var btn = this;
+      btn.disabled = true;
+      $('#pOut').innerHTML = '<div class="think">Reading last year’s pattern and setting a ' +
+        'new paper<i></i><i></i><i></i></div>';
+
+      var cfg = {
+        sub: $('#pSub').value, course: $('#pCourse').value,
+        marks: $('#pMarks').value, dur: $('#pDur').value,
+        diff: $('#pDiff').value, lang: $('#pLang').value, key: $('#pKey').checked
+      };
+
+      Promise.all(pFiles.map(function (f) { return M.ai.toInline(f); }))
+        .then(function (imgs) {
+          var prompt =
+            'You are an experienced ' + cfg.sub + ' examiner for ' + cfg.course + '.\n' +
+            (imgs.length ? 'The attached image(s) are last year\'s question paper.\n' : '') +
+            (pasted ? 'Last year\'s paper / pattern:\n"""' + pasted + '"""\n' : '') +
+            '\nStudy its PATTERN: the sections, how many questions in each, the marks per ' +
+            'question, the question types, the topic spread and the difficulty.\n' +
+            'Now SET A COMPLETELY NEW QUESTION PAPER on the same pattern. Do not repeat the ' +
+            'old questions — same shape, new questions, same syllabus.\n\n' +
+            'Total marks: ' + cfg.marks + '\nDuration: ' + cfg.dur + '\n' +
+            'Difficulty: ' + cfg.diff + '\nLanguage: ' + cfg.lang + '\n\n' +
+            'Output GitHub-flavoured Markdown only. Start with a header block giving the ' +
+            'course, subject, time allowed and maximum marks, then the general instructions, ' +
+            'then the sections with numbered questions and the marks for each in brackets.' +
+            (cfg.key ? '\nAfter the paper, add a heading "Answer Key" and give the answers, ' +
+              'briefly for objective questions and as key points for long ones.'
+                     : '\nDo NOT include the answers.');
+
+          return M.ai.ask(prompt, { temp: 0.75, images: imgs, maxTokens: 8192 });
+        })
+        .then(function (r) {
+          btn.disabled = false;
+          if (r.demo || !r.text) { renderPaper(demoPaper(cfg, pasted), cfg, true); }
+          else { renderPaper(r.text, cfg, false); }
+          M.addXP(8, 'question paper generated');
+        })
+        .catch(function (e) {
+          btn.disabled = false;
+          $('#pOut').innerHTML = '<div class="fb" style="border-left-color:var(--red)">' +
+            '<h4>⚠️ Could not read that</h4>' + esc(String(e && e.message || e)) + '</div>';
+        });
+    };
+  });
+
+  /* A structured paper built locally, so the flow is demonstrable before the
+     backend keys are live. It follows the requested marks split rather than
+     inventing content it cannot know, and says plainly what it is. */
+  function demoPaper(cfg, pasted) {
+    var total = +cfg.marks;
+    var a = Math.round(total * 0.2), b = Math.round(total * 0.3), cc = total - a - b;
+    var line = function (n, m) {
+      var out = '';
+      for (var i = 1; i <= n; i++) {
+        out += i + '. [Question ' + i + ' on ' + cfg.sub + ' — set to last year’s pattern] **(' +
+          m + ' marks)**\n';
+      }
+      return out;
+    };
+    return '# ' + cfg.course + '\n## ' + cfg.sub + '\n\n' +
+      '**Time: ' + cfg.dur + '**  |  **Maximum Marks: ' + total + '**\n\n' +
+      '### General Instructions\n' +
+      '1. All questions are compulsory.\n2. Marks are indicated against each question.\n' +
+      '3. Write answers neatly and legibly.\n\n' +
+      '### Section A — Objective (' + a + ' marks)\n' + line(a, 1) + '\n' +
+      '### Section B — Short Answer (' + b + ' marks)\n' + line(Math.ceil(b / 3), 3) + '\n' +
+      '### Section C — Long Answer (' + cc + ' marks)\n' + line(Math.ceil(cc / 8), 8) +
+      (cfg.key ? '\n## Answer Key\n\nThe answer key appears here once the AI backend is ' +
+        'connected.\n' : '');
+  }
+
+  /* Minimal, safe Markdown rendering. Everything is escaped first, so nothing
+     the model returns can inject markup into the page. */
+  function md(src) {
+    var h = esc(src);
+    h = h.replace(/^### (.*)$/gm, '<h3>$1</h3>')
+         .replace(/^## (.*)$/gm, '<h2>$1</h2>')
+         .replace(/^# (.*)$/gm, '<h1>$1</h1>')
+         .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+         .replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>')
+         .replace(/^---+$/gm, '<hr>');
+    return h.split(/\n{2,}/).map(function (block) {
+      if (/^\s*<(h1|h2|h3|hr)/.test(block)) return block;
+      return '<p>' + block.replace(/\n/g, '<br>') + '</p>';
+    }).join('');
+  }
+
+  function renderPaper(text, cfg, demo) {
+    $('#pOut').innerHTML =
+      (demo ? '<div class="toast warn" style="animation:none;margin:16px 0 0;max-width:none">' +
+        '⚠️ Demo paper — the AI backend is not reachable from here. The layout below is ' +
+        'exactly what a live paper returns.</div>' : '') +
+      '<div class="pills" style="margin:16px 0 12px">' +
+      '<button class="pill" id="pPrint">🖨️ Print / Save as PDF</button>' +
+      '<button class="pill" id="pCopy">📋 Copy</button>' +
+      '<button class="pill" id="pSave">🔖 Save to notes</button>' +
+      '<button class="pill" id="pAgain">↺ Set another</button></div>' +
+      '<div class="paper" id="pPaper">' + md(text) + '</div>';
+
+    $('#pPrint').onclick = function () {
+      var w2 = window.open('', '_blank');
+      if (!w2) { M.toast('Allow pop-ups to print', 'warn'); return; }
+      w2.document.write('<!doctype html><meta charset="utf-8"><title>' +
+        esc(cfg.sub) + ' — Question Paper</title><style>' +
+        'body{font-family:Georgia,serif;max-width:760px;margin:32px auto;padding:0 20px;' +
+        'line-height:1.65;color:#111}h1,h2{text-align:center;margin:.3em 0}' +
+        'h3{border-bottom:1px solid #999;padding-bottom:4px;margin-top:1.6em}' +
+        '@media print{body{margin:0}}</style>' + $('#pPaper').innerHTML);
+      w2.document.close();
+      w2.focus();
+      w2.print();
+    };
+    $('#pCopy').onclick = function () {
+      navigator.clipboard.writeText(text).then(function () { M.toast('Copied', 'ok'); },
+        function () { M.toast('Could not copy', 'err'); });
+    };
+    $('#pSave').onclick = function () {
+      M.state.notes.unshift({ t: cfg.sub + ' — question paper', body: text, at: Date.now() });
+      M.save('notes');
+      M.toast('Saved to your notes', 'ok');
+    };
+    $('#pAgain').onclick = function () {
+      $('#pOut').innerHTML = '';
+      w.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+  }
+
   /* ============================ IN-BUILD ROUTES ============================
      These are registered so the navigation is never a dead link, and each
      one says plainly what it will do and offers the working route that gets
@@ -755,9 +983,6 @@
     practice:   ['📘', 'blue', 'My Practice',
       'Topic-by-topic practice with instant explanations and a running accuracy score.',
       '#/mock', 'Take a mock test'],
-    papers:     ['📚', 'gold', 'Question Papers',
-      'A filterable library of previous, model and practice papers by class, subject, ' +
-      'exam and year.', 'classic.html', 'Open the paper generator'],
     bookmarks:  ['🔖', 'orange', 'Bookmarks', 'Everything you saved — questions, answers, topics and papers.',
       '#/notes', 'Open notes'],
     planner:    ['📅', 'teal', 'Study Planner',
@@ -813,7 +1038,7 @@
       col('Legal', [['Privacy Policy', '#/home'], ['Terms of Service', '#/home'],
                     ['Refund Policy', '#/home']]) +
       col('Support', [['Help Center', '#/home'], ['How to Use', '#/home'],
-                      ['Classic generator', 'classic.html']]) +
+                      ['Question Papers', '#/papers']]) +
       '</div><div class="foot-b"><span>© ' + new Date().getFullYear() +
       ' 7Marks. All rights reserved.</span><span>Made with ❤️ for students</span></div></footer>';
   }

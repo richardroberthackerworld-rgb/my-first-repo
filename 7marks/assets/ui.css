@@ -347,6 +347,19 @@
 .legend span{display:flex;align-items:center;gap:5px}
 .legend i{width:11px;height:3px;border-radius:99px}
 
+/* --- a generated question paper: readable, and printable as-is --- */
+.paper{border:1px solid var(--line-2);border-radius:var(--r);background:#fff;
+  padding:clamp(16px,3vw,34px);font-family:Georgia,'Times New Roman',serif;
+  font-size:15px;line-height:1.7;color:#16233f;overflow-x:auto}
+.paper h1{font-size:clamp(19px,2.4vw,25px);text-align:center;margin:0 0 4px;font-family:var(--sans)}
+.paper h2{font-size:clamp(16px,2vw,20px);text-align:center;margin:0 0 14px;color:var(--ink-2);
+  font-family:var(--sans)}
+.paper h3{font-size:clamp(14px,1.7vw,17px);margin:26px 0 10px;padding-bottom:5px;
+  border-bottom:1.5px solid var(--line-2);font-family:var(--sans);color:var(--navy)}
+.paper p{margin:0 0 12px}
+.paper strong{color:var(--navy)}
+.paper hr{border:0;border-top:1px solid var(--line);margin:20px 0}
+
 /* --- toasts --- */
 .toasts{position:fixed;right:16px;bottom:16px;z-index:200;display:flex;flex-direction:column;
   gap:9px;pointer-events:none}

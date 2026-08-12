@@ -68,37 +68,24 @@
       <!-- The reveal grows each clip rect's width from 0, so the quote is
            written left to right.
 
-           Driven by SMIL rather than CSS on purpose. Animating a clipPath
-           child is the shaky case for CSS, and the CSS version needed
-           transform:scaleX(0) as its resting state — meaning any engine that
-           skipped the animation would hide the quote permanently. That exact
-           failure (text clipped to nothing, forever invisible) has bitten
-           this preloader before. Here every rect's width attribute is
-           already the FULL width and SMIL only animates up to it, so if the
-           animation never runs the text simply appears immediately. The
-           degraded state is "no animation", never "no text". -->
+           Driven by JavaScript (M7.writeQuote), not CSS and not SMIL. Both
+           of those were tried and neither could be verified from here, and
+           SMIL did not animate in the real browser either. The JS version is
+           a pure function of elapsed time, so it can be stepped and asserted
+           against without needing a compositor.
+
+           data-w is the finished width, data-b when the line starts and
+           data-d how long it takes. The width attribute already holds the
+           finished value, so if the script never runs the quote simply
+           appears — the degraded state is "no animation", never "no text". -->
       <defs>
-        <clipPath id="c1"><rect class="wr" x="44" y="40" width="96" height="16">
-          <animate attributeName="width" from="0" to="96" begin="0.7s" dur="0.6s" fill="freeze"/>
-        </rect></clipPath>
-        <clipPath id="c2"><rect class="wr" x="44" y="60" width="106" height="16">
-          <animate attributeName="width" from="0" to="106" begin="1.3s" dur="0.6s" fill="freeze"/>
-        </rect></clipPath>
-        <clipPath id="c3"><rect class="wr" x="44" y="80" width="100" height="16">
-          <animate attributeName="width" from="0" to="100" begin="1.9s" dur="0.55s" fill="freeze"/>
-        </rect></clipPath>
-        <clipPath id="c4"><rect class="wr" x="44" y="100" width="126" height="16">
-          <animate attributeName="width" from="0" to="126" begin="2.45s" dur="0.7s" fill="freeze"/>
-        </rect></clipPath>
-        <clipPath id="c5"><rect class="wr" x="174" y="50" width="76" height="28">
-          <animate attributeName="width" from="0" to="76" begin="3.25s" dur="0.45s" fill="freeze"/>
-        </rect></clipPath>
-        <clipPath id="c6"><rect class="wr" x="174" y="78" width="90" height="28">
-          <animate attributeName="width" from="0" to="90" begin="3.75s" dur="0.5s" fill="freeze"/>
-        </rect></clipPath>
-        <clipPath id="c7"><rect class="wr" x="172" y="102" width="68" height="16">
-          <animate attributeName="width" from="0" to="68" begin="4.3s" dur="0.35s" fill="freeze"/>
-        </rect></clipPath>
+        <clipPath id="c1"><rect class="wr" data-w="96"  data-b="0.65" data-d="0.60" x="44"  y="40"  width="96"  height="16"/></clipPath>
+        <clipPath id="c2"><rect class="wr" data-w="106" data-b="1.25" data-d="0.60" x="44"  y="60"  width="106" height="16"/></clipPath>
+        <clipPath id="c3"><rect class="wr" data-w="100" data-b="1.85" data-d="0.55" x="44"  y="80"  width="100" height="16"/></clipPath>
+        <clipPath id="c4"><rect class="wr" data-w="126" data-b="2.40" data-d="0.70" x="44"  y="100" width="126" height="16"/></clipPath>
+        <clipPath id="c5"><rect class="wr" data-w="76"  data-b="3.20" data-d="0.45" x="174" y="50"  width="76"  height="28"/></clipPath>
+        <clipPath id="c6"><rect class="wr" data-w="90"  data-b="3.70" data-d="0.50" x="174" y="78"  width="90"  height="28"/></clipPath>
+        <clipPath id="c7"><rect class="wr" data-w="68"  data-b="4.25" data-d="0.35" x="172" y="102" width="68"  height="16"/></clipPath>
       </defs>
       <text class="quote" clip-path="url(#c1)" x="44" y="52">The best</text>
       <text class="quote" clip-path="url(#c2)" x="44" y="72">preparation for</text>
@@ -182,7 +169,11 @@
   var seen = false;
   try { seen = !!sessionStorage.getItem('7m.seen'); sessionStorage.setItem('7m.seen', '1'); } catch (e) {}
 
-  var DUR = (reduce || seen) ? 350 : 3400;
+  /* write the quote out by hand; it fails to "already written", never blank */
+  var quote = M.writeQuote(pre, { instant: reduce || seen });
+
+  /* the preloader must outlast the writing, or the student never sees it */
+  var DUR = (reduce || seen) ? 350 : 5200;
   var fill = d.getElementById('preFill'), pct = d.getElementById('prePct'),
       rocket = d.getElementById('preRocket');
   var t0 = performance.now(), finished = false, booted = false;
@@ -199,6 +190,7 @@
   function finish() {
     if (finished) return;
     finished = true;
+    if (quote) quote.finish();      /* never fade out mid-word */
     boot();
     pre.classList.add('done');
     setTimeout(function () { if (pre.parentNode) pre.parentNode.removeChild(pre); }, 520);
@@ -240,13 +232,13 @@
         }
       });
     } catch (err) {
-      /* never leave a blank page: say what broke and offer the working tool */
+      /* never leave a blank page: say what broke and offer a way forward */
       d.getElementById('page').innerHTML =
         '<div class="wrap"><div class="col"><section class="card"><div class="card-b">' +
         '<div class="empty"><span class="em">⚠️</span><b>Something failed to start</b>' +
         '<small>' + String((err && err.message) || err).replace(/[<>&]/g, '') + '</small>' +
-        '<a class="btn btn-v" href="classic.html">Open the classic generator</a></div>' +
-        '</div></section></div></div>';
+        '<button class="btn btn-v" onclick="location.reload()">Reload the page</button>' +
+        '</div></div></section></div></div>';
       app.classList.add('ready');
       throw err;
     }

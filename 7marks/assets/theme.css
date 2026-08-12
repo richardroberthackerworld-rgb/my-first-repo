@@ -223,9 +223,21 @@ ul,ol{margin:0;padding:0;list-style:none}
   #pre *,#pre{animation:none!important;transition:none!important}
   .pre-feat{opacity:1}
 }
+/* Phones keep the notebook — the writing IS the preloader, so dropping it
+   there left the small screen with nothing to watch. It shrinks instead,
+   and the feature captions go first when room runs short. */
 @media(max-width:520px){
-  .pre-book{display:none}                 /* the illustration is the first thing to go */
-  .pre-feats{gap:8px 14px}
-  .pre-feat{width:78px}
+  .pre-book{width:92%;max-height:30vh}
+  .pre-feats{gap:7px 12px}
+  .pre-feat{width:31%;max-width:96px}
+  .pre-feat i{display:none}               /* captions go before the icons do */
+  .pre-owner{font-size:9px;text-align:center}
 }
-@media(max-height:680px){.pre-book{display:none}}
+@media(max-width:360px){
+  .pre-feat{width:30%}
+  .pre-feat b{font-size:9px}
+  .pre-sub{font-size:9.5px}
+}
+/* only a genuinely short window loses the illustration — a phone held
+   sideways, where there is no vertical room for it at all */
+@media(max-height:560px){.pre-book,.pre-foot{display:none}}

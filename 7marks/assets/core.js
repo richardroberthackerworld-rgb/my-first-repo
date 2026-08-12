@@ -101,6 +101,73 @@
     w.dispatchEvent(new CustomEvent('7m:notif'));
   }
 
+  /* =====================================================================
+     HANDWRITING
+     Reveals each line of the preloader quote by growing its clip rect, so
+     the words appear to be written rather than simply being there.
+
+     Deliberately JavaScript. CSS keyframes on a clipPath child are the
+     shaky case, SMIL did not animate in the real browser, and neither could
+     be checked from a headless pane that never composites. `seek` is a pure
+     function of elapsed seconds, so the whole animation can be stepped and
+     asserted without a single frame being painted.
+
+     The rects carry their finished width in the width attribute, so a
+     browser that never runs this shows the quote immediately. Failing
+     towards "visible" matters: an earlier version of this preloader clipped
+     its text to nothing and hid it permanently.
+     ===================================================================== */
+  function writeQuote(root, opts) {
+    opts = opts || {};
+    var rects = Array.prototype.slice.call((root || d).querySelectorAll('.wr'));
+    if (!rects.length) return null;
+
+    var lines = rects.map(function (r) {
+      return {
+        el: r,
+        full: parseFloat(r.getAttribute('data-w')) || parseFloat(r.getAttribute('width')) || 0,
+        begin: parseFloat(r.getAttribute('data-b')) || 0,
+        dur: parseFloat(r.getAttribute('data-d')) || 0.5
+      };
+    });
+    var total = lines.reduce(function (m, l) { return Math.max(m, l.begin + l.dur); }, 0);
+
+    /** Put the quote at `t` seconds. Pure: the same t always gives the same widths. */
+    function seek(t) {
+      var done = 0;
+      lines.forEach(function (l) {
+        var p = (t - l.begin) / l.dur;
+        p = p < 0 ? 0 : p > 1 ? 1 : p;
+        /* ease out a little, the way a hand slows at the end of a word */
+        var e = 1 - Math.pow(1 - p, 1.6);
+        l.el.setAttribute('width', (l.full * e).toFixed(2));
+        if (p >= 1) done++;
+      });
+      return done === lines.length;
+    }
+
+    var api = { seek: seek, total: total, lines: lines.length,
+                finish: function () { seek(total); } };
+    if (opts.manual) { seek(0); return api; }        /* tests drive it themselves */
+
+    var reduce = false;
+    try { reduce = matchMedia('(prefers-reduced-motion:reduce)').matches; } catch (e) {}
+    if (reduce || opts.instant) { seek(total); return api; }
+
+    seek(0);
+    var t0 = null;
+    function frame(now) {
+      if (t0 === null) t0 = now;
+      if (seek((now - t0) / 1000)) return;
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+    /* rAF is suspended in a background tab, so guarantee the quote is never
+       left half-written if the student switches away and comes back */
+    setTimeout(function () { seek(total); }, (total + 1.5) * 1000);
+    return api;
+  }
+
   /* ============================ the mark ============================
      One inline SVG so the logo stays crisp at every size and needs no
      network request. Used by the preloader, the top bar and the footer. */
@@ -141,9 +208,18 @@
      */
     ask: function (prompt, opts) {
       opts = opts || {};
+      var parts = [{ text: prompt }];
+      /* photographs of a question paper or a handwritten answer ride along
+         as inline data, so the model reads them rather than guessing */
+      (opts.images || []).forEach(function (im) {
+        parts.push({ inlineData: { mimeType: im.mime, data: im.b64 } });
+      });
       var body = {
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        generationConfig: { temperature: opts.temp == null ? 0.6 : opts.temp }
+        contents: [{ role: 'user', parts: parts }],
+        generationConfig: {
+          temperature: opts.temp == null ? 0.6 : opts.temp,
+          maxOutputTokens: opts.maxTokens || 8192
+        }
       };
       if (opts.system) body.systemInstruction = { parts: [{ text: opts.system }] };
 
@@ -167,6 +243,19 @@
       }).catch(function () {
         ai.live = false;
         return { text: '', demo: true };
+      });
+    },
+
+    /** Read a File into the {mime, b64} shape `ask` expects. */
+    toInline: function (file) {
+      return new Promise(function (res, rej) {
+        var fr = new FileReader();
+        fr.onload = function () {
+          var s = String(fr.result);
+          res({ mime: file.type || 'image/jpeg', b64: s.slice(s.indexOf(',') + 1), name: file.name });
+        };
+        fr.onerror = rej;
+        fr.readAsDataURL(file);
       });
     },
 
@@ -448,7 +537,7 @@
   w.M7 = {
     $: $, $$: $$, qs: $, qsa: $$, el: el, esc: esc, pad: pad, clamp: clamp, fmt: fmt,
     store: store, state: state, save: save, addXP: addXP,
-    toast: toast, notify: notify, mark: mark,
+    toast: toast, notify: notify, mark: mark, writeQuote: writeQuote,
     ai: ai, exam: exam, router: router, search: search, hl: hl, beep: beep
   };
 })(window, document);
