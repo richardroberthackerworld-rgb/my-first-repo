@@ -7,7 +7,7 @@
 <meta name="description" content="7Solve — take a photo of any question from Class 1 to 10, Inter (MPC/BiPC/CEC/MEC), Degree, CA/CMA/US CMA, Jobs & Current Affairs, and get the exact answer with a step-by-step explanation in English, Hindi or Telugu.">
 <link rel="icon" href="favicon.ico?v=7by3" sizes="any">
 <link rel="icon" href="favicon.png?v=7by3" type="image/png" sizes="96x96">
-<meta name="theme-color" content="#fdfaf0">
+<meta name="theme-color" content="#fafbff">
 <!-- PWA / Play Store (TWA) -->
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="apple-touch-icon.png?v=7by3">
@@ -44,1497 +44,1408 @@ if ('serviceWorker' in navigator) {
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Patrick+Hand&family=Caveat:wght@500;600;700&family=Noto+Sans+Devanagari:wght@400;500;700&family=Noto+Sans+Telugu:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+Devanagari:wght@400;500;700&family=Noto+Sans+Telugu:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
-   7SOLVE — THE NOTEBOOK
-   The preloader hands over to this: the same spiral notebook,
-   same cream paper, same blue rules and red margin, now holding
-   the actual app. Every control is a paper object — a tab, a
-   bookmark, an index card, a taped photograph, a teacher's stamp.
-   Nothing here is a "widget".
+   7SOLVE — THE LIGHT PREMIUM THEME
+   Rebuilt from the reference boards: white paper-light surfaces,
+   a blue→violet brand gradient, soft lavender tints, navy type,
+   hairline borders and very low, very wide shadows.
 
-   Every selector the app already used is kept, so all existing
-   behaviour (levels, ask, answer, tutor, paywall, auth, history)
-   keeps working untouched — only the skin changed.
+   The application shell is a three-column product layout —
+   sidebar, working column, right rail — collapsing to a single
+   column with a bottom bar on phones.
+
+   Every selector and every id the application already used is
+   kept, so levels, ask, answer, tutor, notebook, paywall and auth
+   keep working untouched. Only the skin changed.
    ============================================================ */
 :root{
-  /* ---- paper ---- */
-  --paper:#fdfaf0;          /* the page */
-  --paper-2:#f7f1e1;        /* nested sheet / index card */
-  --paper-aged:#efe6d1;     /* page edges, aged tint */
-  --card:#fffdf6;           /* raised card on the page */
+  /* ---- ground ---- */
+  --bg:#f4f6fd;             /* the app background */
+  --bg-2:#eef1fb;           /* deeper wash behind panels */
+  --surface:#ffffff;        /* cards, panels, sheets */
+  --surface-2:#fafbff;      /* nested surface */
+  --surface-3:#f3f5fe;      /* input wells, hover fill */
+  --tint:#eef2ff;           /* brand tint */
+  --lav:#f5f2ff;            /* lavender tint */
+  --cyan-tint:#e8f8fe;
+
   /* ---- ink ---- */
-  --ink:#15203a;            /* black handwriting */
-  --ink-soft:#37455f;       /* printed textbook text */
-  --ink-faint:#606a82;      /* pencil / meta — 5.2:1 on the page, 4.8:1 on nested paper */
-  --blue:#2647cf;           /* blue ink — the primary voice */
-  --blue-deep:#1b3199;      /* pressed ink */
-  --blue-wash:#e6ecff;      /* highlighter wash */
-  --teacher:#c2352b;        /* teacher's red pen */
-  --sticky:#fbe98c;         /* sticky note yellow */
-  --sticky-kraft:#e6d8bc;   /* kraft note */
-  --tape:rgba(126,170,214,.55);
-  --pencil:#b0873c;         /* soft pencil / brass */
-  /* ---- desk ---- */
-  --wood-1:#8a6438; --wood-2:#6a4926; --wood-3:#452f17;
+  --ink:#0d1533;            /* headings */
+  --ink-2:#3c456e;          /* body */
+  --ink-3:#6b7397;          /* meta — 4.9:1 on white */
+  --ink-4:#9aa1c0;          /* placeholder */
+
+  /* ---- brand ---- */
+  --brand:#4459f5;          /* primary blue */
+  --brand-ink:#2f3fd0;      /* pressed / links on light */
+  --violet:#8b46f0;
+  --cyan:#22b8ee;
+  --grad:linear-gradient(135deg,#3b7bfb 0%,#5b4df0 48%,#9540ee 100%);
+  --grad-soft:linear-gradient(135deg,#eef3ff 0%,#f3efff 100%);
+  --grad-text:linear-gradient(100deg,#2f7ffb,#7b3ff0);
+
   /* ---- lines ---- */
-  --rule-blue:#c6d5ea;      /* the ruled lines */
-  --rule:#ddd3ba;           /* hairline borders on paper */
-  --margin-red:#d98a86;     /* the red margin */
-  /* ---- legacy names, remapped so every old rule still works ---- */
-  --leather:var(--blue-deep);
-  --leather-2:var(--blue);
-  --maroon:#1d3fbf;         /* headings + brand */
-  --gold:var(--pencil);
-  --gold-soft:#9db8e0;
-  --sel:var(--blue-wash);
-  --ok:#2f7d5a;
-  --err:var(--teacher);
-  --shadow-page:0 1px 2px rgba(60,45,20,.10), 0 18px 44px rgba(60,45,20,.16);
-  --lift:0 2px 4px rgba(60,45,20,.10), 0 10px 22px rgba(60,45,20,.14);
-  /* everything you read: upright hand-print, the way a neat student writes */
-  --serif:'Patrick Hand','Noto Sans Devanagari','Noto Sans Telugu','Segoe UI',sans-serif;
-  /* the marker: masthead, section headings, anything that needs weight.
-     Patrick Hand has no bold, so real weight comes from Baloo 2. */
-  --display:'Baloo 2','Patrick Hand','Noto Sans Devanagari','Noto Sans Telugu','Segoe UI',sans-serif;
-  /* the loose hand: sticky notes, margin doodles, placeholders, signature */
-  --hand:'Caveat','Patrick Hand','Segoe Script',cursive;
-  /* equations and codes stay unambiguous — a 1 must never read as an l */
-  --mono:'Courier New',Consolas,monospace;
-  --line-h:34px;            /* the ruled-line pitch, everything breathes on it */
+  --line:#e6e9f7;           /* hairline */
+  --line-2:#d8ddf2;         /* stronger hairline */
+  --focus:rgba(68,89,245,.16);
+
+  /* ---- semantic ---- */
+  --ok:#0f9d63; --ok-tint:#e6f8f0;
+  --warn:#c47a08; --warn-tint:#fdf4e3;
+  --err:#e0396b; --err-tint:#fdedf2;
+
+  /* ---- elevation: low, wide, blue-shifted ---- */
+  --sh-1:0 1px 2px rgba(17,26,74,.04), 0 2px 8px rgba(17,26,74,.04);
+  --sh-2:0 1px 2px rgba(17,26,74,.04), 0 10px 26px rgba(17,26,74,.07);
+  --sh-3:0 2px 4px rgba(17,26,74,.05), 0 22px 50px rgba(17,26,74,.10);
+  --sh-brand:0 8px 22px rgba(68,89,245,.28);
+
+  /* ---- radii ---- */
+  --r-xs:8px; --r-sm:10px; --r:14px; --r-lg:18px; --r-xl:24px; --r-pill:999px;
+
+  /* ---- type ---- */
+  --display:'Outfit','Plus Jakarta Sans','Noto Sans Devanagari','Noto Sans Telugu','Segoe UI',sans-serif;
+  --serif:'Plus Jakarta Sans','Outfit','Noto Sans Devanagari','Noto Sans Telugu','Segoe UI',sans-serif;
+  --hand:'Outfit','Segoe UI',sans-serif;
+  --mono:'JetBrains Mono','SFMono-Regular',Consolas,monospace;
+
+  /* ---- shell metrics ---- */
+  --side-w:252px;
+  --rail-w:312px;
+  --top-h:64px;
+
+  /* legacy names kept so any rule that still asks for them resolves */
+  --paper:var(--surface); --paper-2:var(--surface-2); --paper-aged:var(--surface-3);
+  --card:var(--surface); --ink-soft:var(--ink-2); --ink-faint:var(--ink-3);
+  --blue:var(--brand); --blue-deep:var(--brand-ink); --blue-wash:var(--tint);
+  --teacher:var(--err); --maroon:var(--ink); --gold:var(--violet);
+  --rule:var(--line); --rule-blue:var(--line); --margin-red:var(--line-2);
+  --sel:var(--tint); --line-h:28px;
 }
+
 *{margin:0;padding:0;box-sizing:border-box}
-html{scroll-behavior:smooth}
-html,body{overflow-x:hidden;max-width:100%}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+html,body{overflow-x:clip;max-width:100%}
 body{
-  font-family:var(--serif);color:var(--ink);min-height:100vh;line-height:1.6;font-size:17px;
+  font-family:var(--serif);color:var(--ink-2);min-height:100vh;
+  line-height:1.62;font-size:15.5px;letter-spacing:-.005em;
   background:
-    radial-gradient(120% 80% at 50% 0,rgba(255,238,200,.20),transparent 60%),
-    repeating-linear-gradient(93deg,rgba(0,0,0,.045) 0 3px,transparent 3px 13px),
-    repeating-linear-gradient(93deg,rgba(255,255,255,.022) 0 1px,transparent 1px 29px),
-    linear-gradient(160deg,var(--wood-1) 0%,var(--wood-2) 46%,var(--wood-3) 100%);
+    radial-gradient(58% 40% at 14% -4%,rgba(93,127,255,.13),transparent 62%),
+    radial-gradient(46% 36% at 92% 2%,rgba(150,84,244,.11),transparent 60%),
+    radial-gradient(60% 40% at 50% 104%,rgba(34,184,238,.08),transparent 62%),
+    var(--bg);
   background-attachment:fixed;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:#dfe4ff;color:var(--ink)}
+h1,h2,h3,h4{font-family:var(--display);color:var(--ink);line-height:1.18;letter-spacing:-.02em}
+a{color:var(--brand-ink)}
+input,select,textarea,button{font-family:inherit;font-size:inherit;color:inherit}
+
+/* focus that reads as brand, never as a browser default */
+:where(a,button,input,select,textarea,[tabindex]):focus-visible{
+  outline:none;box-shadow:0 0 0 3px var(--focus),0 0 0 1px var(--brand);border-radius:var(--r-xs)
 }
 
-/* ============ the desk around the notebook ============ */
-.desk{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
-.desk i{position:absolute;display:block}
-.desk-sun{left:-30%;top:-40%;width:52%;height:190%;transform:rotate(15deg);filter:blur(16px);
-  background:linear-gradient(90deg,transparent,rgba(255,244,208,.26) 42%,rgba(255,235,178,.07) 70%,transparent)}
-.desk-books{left:1.5%;bottom:8%;width:150px;height:56px;filter:blur(1.6px);
-  background:
-    linear-gradient(90deg,#8d4a3f,#b06657) 0 0/150px 17px no-repeat,
-    linear-gradient(90deg,#3f6a8d,#537fa4) 0 20px/162px 17px no-repeat,
-    linear-gradient(90deg,#5c7a4a,#71945b) 0 40px/140px 17px no-repeat;
-  box-shadow:0 12px 26px rgba(0,0,0,.4)}
-.desk-lamp{left:-2%;top:1%;width:270px;height:270px;filter:blur(2px);border-radius:50%;
-  background:radial-gradient(circle,rgba(255,238,190,.30),transparent 66%)}
-.desk-mug{right:2.5%;bottom:12%;width:72px;height:64px;filter:blur(1.6px);
-  border-radius:6px 6px 30px 30px;background:linear-gradient(#f6f3ea,#ddd6c4);
-  box-shadow:0 18px 30px rgba(0,0,0,.45)}
-.desk-mug::after{content:'';position:absolute;right:-19px;top:15px;width:24px;height:27px;
-  border:6px solid #e8e2d2;border-left-color:transparent;border-radius:0 16px 16px 0}
-.desk-pencil{right:4%;top:16%;width:16px;height:190px;transform:rotate(13deg);filter:blur(1.2px);
-  background:linear-gradient(180deg,#33302d 0 3%,#e9cd97 3% 11%,#2b2724 11% 14.5%,#1f1c1a 14.5% 100%);
-  clip-path:polygon(50% 0,100% 11%,100% 100%,0 100%,0 11%);
-  box-shadow:-7px 11px 16px rgba(0,0,0,.4)}
-@media(max-width:1180px){.desk-books,.desk-mug,.desk-pencil{display:none}}
+/* the decorative desk of the old theme is gone; the element stays so
+   nothing that queries it throws, but it paints nothing. */
+.desk,.desk i,.clip,.note-tape,.spiral,.page-curl{display:none !important}
 
-/* ============ the sheet — one continuous notebook page ============ */
-.sheet{
-  position:relative;z-index:1;max-width:min(1040px,calc(100vw - 34px));margin:22px auto 0;
-  padding:0 clamp(14px,3vw,40px) 0 clamp(38px,5vw,66px);
-  background:
-    repeating-linear-gradient(180deg,transparent 0 calc(var(--line-h) - 1px),var(--rule-blue) calc(var(--line-h) - 1px) var(--line-h)),
-    repeating-linear-gradient(112deg,rgba(150,125,80,.03) 0 2px,transparent 2px 6px),
-    linear-gradient(var(--paper),var(--paper));
-  background-position:0 22px,0 0,0 0;
-  box-shadow:var(--shadow-page),inset 34px 0 34px -34px rgba(120,90,40,.42);
-  border-radius:4px 14px 14px 4px;
-}
-/* the red margin, running the whole page */
-.sheet::before{content:'';position:absolute;top:0;bottom:0;left:clamp(26px,3.6vw,50px);
-  width:1.6px;background:var(--margin-red);opacity:.62;pointer-events:none;z-index:2}
-/* stacked page edges down the outer side */
-.sheet::after{content:'';position:absolute;top:6px;bottom:6px;right:-9px;width:9px;
-  border-radius:0 5px 5px 0;pointer-events:none;
-  background:repeating-linear-gradient(180deg,var(--paper-aged) 0 3px,#e2d8c1 3px 6px);
-  box-shadow:2px 0 6px rgba(60,45,20,.25)}
-
-/* spiral binding down the left edge */
-.spiral{display:none}
-
-/* the outer corner lifts off the desk */
-.page-curl{display:none}
-
-/* ---------- full-bleed notebook on phones ---------- */
-@media(max-width:640px){
-  .sheet{
-    max-width:100vw;width:100vw;margin:18px 0 0;border-radius:0;
-    padding-left:36px;padding-right:14px;
-  }
-  /* the stacked page edges hang off the right; at full bleed there is no
-     desk left for them to sit on, so they go rather than get clipped */
-  .sheet::after{display:none}
-  .spiral{left:4px;width:24px}          /* binding sits on the page, not beside it */
-  .sheet::before{left:26px}
-  .clip-l{left:17%}
+/* ============================================================
+   THE SHELL
+   ============================================================ */
+.app{
+  display:grid;
+  grid-template-columns:var(--side-w) minmax(0,1fr) var(--rail-w);
+  gap:20px;
+  max-width:1560px;margin:0 auto;padding:18px 20px 26px;
+  align-items:start;
 }
 
-/* paper clips over the top edge */
-.clip{position:absolute;top:-16px;width:26px;height:62px;z-index:7;pointer-events:none;
-  border:3.5px solid #b9c0c8;border-radius:13px;
-  background:linear-gradient(100deg,rgba(255,255,255,.5),transparent);
-  box-shadow:1px 3px 5px rgba(0,0,0,.3)}
-.clip::after{content:'';position:absolute;left:4px;top:9px;right:4px;bottom:11px;
-  border:3px solid #9aa2ab;border-radius:9px;border-bottom-color:transparent}
-.clip-l{left:15%;transform:rotate(-7deg)}
-.clip-r{right:16%;transform:rotate(6deg)}
-@media(max-width:760px){.clip-r{display:none}.clip-l{left:9%}}
-
-/* motivational sticky notes taped to the page */
-.note-tape{
-  position:absolute;z-index:5;pointer-events:none;width:118px;padding:.7em .6em .8em;border-radius:2px;
-  font:700 17px/1.32 var(--hand);color:#3d3210;text-align:center;
-  box-shadow:2px 6px 15px rgba(50,32,8,.3);
-  background-image:repeating-linear-gradient(118deg,rgba(120,96,50,.06) 0 2px,transparent 2px 5px);
+/* ---------------- sidebar ---------------- */
+.side{
+  position:sticky;top:18px;align-self:start;
+  max-height:calc(100vh - 36px);overflow:auto;overscroll-behavior:contain;
+  display:flex;flex-direction:column;gap:14px;
+  padding:16px 14px;border-radius:var(--r-xl);
+  background:var(--surface);border:1px solid var(--line);box-shadow:var(--sh-2);
+  scrollbar-width:thin;
 }
-.note-tape::before{content:'';position:absolute;left:50%;top:-9px;width:48%;height:17px;
-  transform:translateX(-50%) rotate(-2deg);background:var(--tape);box-shadow:0 1px 3px rgba(0,0,0,.18)}
-.note-tape b{display:block;font-size:20px;color:var(--blue);margin-top:2px}
-.note-l{left:-14px;top:26px;background-color:var(--sticky);transform:rotate(-4deg)}
-.note-r{right:-10px;top:22px;background-color:var(--sticky-kraft);transform:rotate(3deg)}
-@media(max-width:900px){.note-l,.note-r{display:none}}
+.side::-webkit-scrollbar{width:8px}
+.side::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:99px;border:2px solid var(--surface)}
 
-/* hand-drawn doodles scattered in the margins */
-/* Scribbles live in the page's own margins, never over the content column.
-   Those margins only exist on wide screens, so below that the doodles go away
-   rather than crowding the text. */
-.dood{position:absolute;z-index:0;pointer-events:none;overflow:visible;opacity:.55;
-  max-width:108px;height:auto;display:none}
-.dood.tr{right:2px;top:6px}
-.dood.mr{right:2px;top:40%}
-.dood.br{right:2px;bottom:18px}
-.dood.bl{left:2px;bottom:18px}
-.dood .dl{fill:none;stroke:var(--ink);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.dood .dl.b{stroke:var(--blue)}
-.dood .dl.r{stroke:var(--teacher)}
-.dood .dl.p{stroke:#d94f7d}
-.dood .dl.v{stroke:#8b5cf6}
-.dood .dl.y{stroke:#d9a521}
-.dood .dl.g{stroke:var(--ok)}
-.dood text{font-family:var(--hand);font-size:21px;fill:var(--ink)}
-.dood text.b{fill:var(--blue)}
-/* the page's real content always sits above the scribbles */
-.page > *:not(.dood){position:relative;z-index:1}
-/* doodles need spare margin to live in — only wide pages have it */
-
-/* ---------- the notebook's cover block (title area) ---------- */
-/* The masthead sits on clean paper — in the reference the rules start
-   below the tab row, not behind the title. */
-header.cover{
-  background:var(--paper);border:none;padding:34px 10px 8px;text-align:center;position:relative;z-index:3;
-}
-header.cover::before,header.cover::after{content:none}
 .brand{
-  font-family:var(--display);font-weight:800;font-size:clamp(38px,7.4vw,66px);
-  color:var(--ink);letter-spacing:-.5px;line-height:1.08;
-  text-shadow:0 1px 0 rgba(255,255,255,.6);
+  display:flex;align-items:center;gap:10px;text-decoration:none;
+  font-family:var(--display);font-weight:800;font-size:24px;letter-spacing:-.045em;
+  color:var(--ink);padding:4px 6px 2px;
 }
-.brand .snap{color:var(--ink)}
-.brand::first-letter{color:var(--blue)}
-/* the hand-inked double underline under the masthead */
-.brand-rule{display:block;width:min(320px,62%);height:9px;margin:2px auto 0;
-  background:
-    linear-gradient(var(--blue),var(--blue)) 0 0/100% 2.4px no-repeat,
-    linear-gradient(var(--blue),var(--blue)) 8% 6px/84% 2px no-repeat;
-  opacity:.85;border-radius:2px}
-.tagline{color:var(--ink-soft);font-size:18.5px;margin-top:12px;font-style:normal;font-family:var(--serif);line-height:1.45}
-.tagline .hl-b{font-style:normal;color:var(--blue);font-weight:400}
-.tagline .hl-r{font-style:normal;color:var(--teacher);font-weight:400}
-.tagline-sub{color:var(--ink-faint);font-size:14.5px;margin-top:7px;letter-spacing:.3px;line-height:1.5}
+.brand .logo{width:34px;height:34px;flex:none;filter:drop-shadow(0 4px 10px rgba(76,74,240,.30))}
+.brand .snap{
+  background:var(--grad-text);-webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.brand .spark{
+  font-style:normal;font-size:13px;margin-left:-2px;color:var(--violet);
+  animation:twinkle 3.4s ease-in-out infinite;
+}
+@keyframes twinkle{0%,100%{opacity:.35;transform:scale(.85)}50%{opacity:1;transform:scale(1.12)}}
 
-/* ---------- notebook tabs (language + account + menu) ---------- */
-.toolbar{
-  max-width:none;margin:0 0 6px;display:flex;justify-content:center;
-  align-items:center;gap:10px;padding:16px 0 18px;flex-wrap:wrap;position:relative;z-index:3;
-  background:var(--paper);
+.cta-ask{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  width:100%;padding:13px 16px;border:0;border-radius:var(--r-pill);cursor:pointer;
+  font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:-.01em;color:#fff;
+  background:var(--grad);box-shadow:var(--sh-brand);
+  transition:transform .18s ease,box-shadow .18s ease,filter .18s ease;
 }
-.toolbar-right{display:flex;gap:9px;align-items:center;flex-wrap:wrap;justify-content:center;min-width:0}
-.lang-tabs{display:flex;gap:7px}
-/* every control on this page is a paper tab */
-.lang-tab,.key-btn,.credit-badge,.mini-btn,.chip{
-  font-family:var(--serif);cursor:pointer;position:relative;
-  background:linear-gradient(178deg,var(--card),var(--paper-2));
-  color:var(--ink-soft);border:1.4px solid var(--rule);
-  border-radius:4px 4px 3px 3px;
-  box-shadow:0 1px 0 rgba(255,255,255,.8) inset,0 2px 4px rgba(60,45,20,.13);
-  transition:transform .18s cubic-bezier(.34,1.4,.64,1),box-shadow .18s ease,border-color .18s ease,color .18s ease;
+.cta-ask:hover{transform:translateY(-1px);box-shadow:0 12px 28px rgba(68,89,245,.36)}
+.cta-ask:active{transform:translateY(0)}
+.cta-ask b{font-size:18px;line-height:1;font-weight:600}
+
+.snav{display:flex;flex-direction:column;gap:1px}
+.snav-i{
+  display:flex;align-items:center;gap:11px;
+  padding:9px 11px;border-radius:var(--r-sm);cursor:pointer;
+  color:var(--ink-2);text-decoration:none;font-size:14.2px;font-weight:500;
+  border:0;background:transparent;width:100%;text-align:left;
+  transition:background .16s ease,color .16s ease;
 }
-.lang-tab{font-size:15.5px;padding:7px 17px}
-.key-btn{font-size:15px;padding:7px 14px}
-.credit-badge{font-size:15px;padding:6px 15px;white-space:nowrap}
-.mini-btn{font-size:14.5px;padding:6px 14px}
-.chip{font-size:15px;padding:6px 16px;white-space:nowrap}
-/* paper lift on hover, plus a pen underline that draws itself */
-.lang-tab:hover,.key-btn:hover,.credit-badge:hover,.mini-btn:hover,.chip:hover{
-  transform:translateY(-2px) rotate(-.4deg);color:var(--ink);
-  border-color:var(--gold-soft);box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 7px 14px rgba(60,45,20,.2);
+.snav-i .ic{width:19px;flex:none;color:var(--ink-3);transition:color .16s ease}
+.snav-i:hover{background:var(--surface-3);color:var(--ink)}
+.snav-i:hover .ic{color:var(--brand)}
+.snav-i.active{background:var(--tint);color:var(--brand-ink);font-weight:650}
+.snav-i.active .ic{color:var(--brand)}
+.snav-i .tag{
+  margin-left:auto;font-size:9.5px;font-weight:800;letter-spacing:.6px;
+  padding:2px 6px;border-radius:var(--r-pill);text-transform:uppercase;
 }
-.lang-tab::after,.mini-btn::after,.chip::after{
-  content:'';position:absolute;left:10px;right:10px;bottom:4px;height:1.6px;border-radius:2px;
-  background:var(--blue);transform:scaleX(0);transform-origin:left;opacity:.75;
-  transition:transform .26s cubic-bezier(.4,0,.2,1);
+.snav-i .tag.new{background:var(--tint);color:var(--brand-ink)}
+.snav-i .tag.hot{background:var(--err-tint);color:var(--err)}
+
+.side-sep{height:1px;background:var(--line);margin:4px 2px}
+
+.pro-card{
+  padding:15px 14px;border-radius:var(--r-lg);
+  background:var(--grad-soft);border:1px solid #e4e2fb;
 }
-.lang-tab:hover::after,.mini-btn:hover::after,.chip:hover::after{transform:scaleX(1)}
-.lang-tab.active{
-  background:linear-gradient(178deg,#eaf0ff,var(--blue-wash));color:var(--blue-deep);
-  border-color:var(--blue);font-weight:700;transform:translateY(-1px);
-  box-shadow:inset 0 0 0 1px rgba(38,71,207,.28),0 5px 12px rgba(38,71,207,.18);
+.pro-card h4{font-size:14.5px;font-weight:750;margin-bottom:3px}
+.pro-card p{font-size:12.2px;color:var(--ink-3);margin-bottom:10px}
+.pro-card ul{list-style:none;display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.pro-card li{font-size:12.4px;color:var(--ink-2);display:flex;gap:7px;align-items:flex-start}
+.pro-card li::before{content:'✓';color:var(--brand);font-weight:800;font-size:11px;line-height:1.55}
+.pro-card .go{
+  display:block;width:100%;padding:10px;border:0;border-radius:var(--r-pill);cursor:pointer;
+  background:var(--grad);color:#fff;font-family:var(--display);font-weight:700;font-size:13.4px;
+  box-shadow:0 6px 16px rgba(105,72,240,.30);
 }
-.lang-tab.active::after{transform:scaleX(1)}
-.menu-btn{font-size:16px;line-height:1;padding:6px 12px}
-a.home-btn{text-decoration:none;display:inline-flex;align-items:center;gap:5px}
-.key-btn.ok{color:var(--ok);border-color:#9dc9b4}
-.engine-badge{
-  cursor:default;max-width:min(60vw,290px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  color:var(--blue-deep);font-weight:600;border-color:var(--gold-soft);
-  background:linear-gradient(178deg,#fffdf3,#fdf6dc);
+
+.stats-card{padding:14px;border-radius:var(--r-lg);background:var(--surface-2);border:1px solid var(--line)}
+.stats-card h4{font-size:12.5px;font-weight:750;color:var(--ink-3);letter-spacing:.02em;margin-bottom:10px}
+.stat-row{display:flex;align-items:center;gap:10px;padding:7px 0}
+.stat-row + .stat-row{border-top:1px dashed var(--line)}
+.stat-row .ic{
+  width:30px;height:30px;flex:none;border-radius:9px;display:grid;place-items:center;
+  background:var(--tint);color:var(--brand);font-size:14px
 }
-.engine-badge:hover{transform:none;box-shadow:0 1px 0 rgba(255,255,255,.8) inset,0 2px 4px rgba(60,45,20,.13)}
-.engine-badge.ok{color:var(--blue-deep);border-color:var(--gold-soft)}
-.engine-badge.warn{color:#8a6a10;border-color:var(--pencil);border-style:dashed}
-.answer-meta .via{color:var(--ok);font-weight:600}
-/* the menu is a stack of index cards */
+.stat-row .v{font-family:var(--display);font-weight:750;color:var(--ink);font-size:15px;line-height:1.1}
+.stat-row .k{font-size:11.4px;color:var(--ink-3)}
+.stat-row .d{margin-left:auto;font-size:11px;font-weight:700;color:var(--ok)}
+
+/* ---------------- working column ---------------- */
+.col{min-width:0;display:flex;flex-direction:column;gap:18px}
+
+.topbar{
+  position:sticky;top:18px;z-index:60;
+  display:flex;align-items:center;gap:12px;
+  height:var(--top-h);padding:0 14px;border-radius:var(--r-xl);
+  background:rgba(255,255,255,.82);backdrop-filter:blur(16px) saturate(1.5);
+  -webkit-backdrop-filter:blur(16px) saturate(1.5);
+  border:1px solid var(--line);box-shadow:var(--sh-2);
+}
+.burger{display:none}
+.searchbox{
+  flex:1;min-width:0;display:flex;align-items:center;gap:9px;
+  height:40px;padding:0 14px;border-radius:var(--r-pill);
+  background:var(--surface-3);border:1px solid transparent;
+  transition:border-color .18s ease,background .18s ease;
+}
+.searchbox:focus-within{background:#fff;border-color:#cfd7fb;box-shadow:0 0 0 3px var(--focus)}
+.searchbox svg{width:16px;flex:none;color:var(--ink-4)}
+.searchbox input{flex:1;min-width:0;border:0;background:transparent;outline:none;font-size:14px}
+.searchbox input::placeholder{color:var(--ink-4)}
+
+.toolbar{display:flex;align-items:center;gap:9px;margin-left:auto;flex:none}
+.toolbar-right{display:flex;align-items:center;gap:8px}
+
+.lang-tabs{
+  display:flex;gap:2px;padding:3px;border-radius:var(--r-pill);
+  background:var(--surface-3);border:1px solid var(--line);flex:none;
+}
+.lang-tab{
+  border:0;background:transparent;cursor:pointer;border-radius:var(--r-pill);
+  padding:5px 11px;font-size:12.6px;font-weight:600;color:var(--ink-3);
+  transition:all .16s ease;white-space:nowrap;
+}
+.lang-tab:hover{color:var(--ink)}
+.lang-tab.active{background:#fff;color:var(--brand-ink);box-shadow:var(--sh-1)}
+
+.credit-badge{
+  display:inline-flex;align-items:center;gap:6px;flex:none;
+  padding:8px 13px;border-radius:var(--r-pill);cursor:pointer;
+  border:1px solid var(--line);background:var(--surface);color:var(--ink-2);
+  font-size:13px;font-weight:600;white-space:nowrap;text-decoration:none;
+  transition:all .16s ease;
+}
+.credit-badge:hover{border-color:var(--line-2);background:var(--surface-3);color:var(--ink)}
+.credit-badge.paid{background:#fff8e6;border-color:#f3e2b6;color:#8a6413}
+.credit-badge.paid:hover{background:#fdf2d8}
+.credit-badge.out{background:var(--err-tint);border-color:#f6cdd9;color:var(--err)}
+.credit-badge.out:hover{background:#fce0e8}
+.free-badge{background:var(--ok-tint);border-color:#bfe8d6;color:var(--ok)}
+
+.key-btn,.engine-badge{
+  display:inline-flex;align-items:center;gap:6px;flex:none;
+  padding:7px 11px;border-radius:var(--r-pill);cursor:default;
+  border:1px solid var(--line);background:var(--surface-2);
+  font-size:11.6px;font-weight:650;color:var(--ink-3);white-space:nowrap;
+}
+.key-btn:hover,.engine-badge:hover{border-color:var(--line-2)}
+.key-btn.ok,.engine-badge.ok{background:var(--ok-tint);border-color:#bfe8d6;color:var(--ok)}
+.engine-badge.warn{background:var(--warn-tint);border-color:#f0dcb0;color:var(--warn)}
+
+.menu-btn{padding:8px 12px;font-size:15px;line-height:1}
+.home-btn{display:inline-flex}
+
 .menu-pop{
-  display:none;position:fixed;top:64px;right:14px;z-index:70;min-width:238px;
-  background:var(--card);border:1.4px solid var(--rule);border-radius:5px;
-  box-shadow:0 3px 0 var(--paper-aged),0 6px 0 #e6dcc6,0 22px 46px rgba(40,26,8,.4);
-  padding:7px;flex-direction:column;
+  position:absolute;top:calc(var(--top-h) + 6px);right:14px;z-index:120;
+  display:none;flex-direction:column;min-width:224px;padding:7px;
+  border-radius:var(--r-lg);background:var(--surface);
+  border:1px solid var(--line);box-shadow:var(--sh-3);
 }
-.menu-pop.on{display:flex}
+.menu-pop.on{display:flex;animation:popIn .18s cubic-bezier(.2,.9,.3,1)}
+@keyframes popIn{from{opacity:0;transform:translateY(-6px) scale(.98)}to{opacity:1;transform:none}}
 .menu-pop a{
-  color:var(--ink);text-decoration:none;font-size:16px;padding:10px 14px;
-  border-radius:4px;border-bottom:1px dashed var(--rule);transition:all .16s ease;
+  padding:9px 11px;border-radius:var(--r-sm);text-decoration:none;
+  color:var(--ink-2);font-size:13.6px;font-weight:500;transition:background .14s ease
 }
-.menu-pop a:last-child{border-bottom:none}
-.menu-pop a:hover{background:var(--blue-wash);color:var(--blue-deep);transform:translateX(3px)}
+.menu-pop a:hover{background:var(--surface-3);color:var(--ink)}
+.menu-pop a:last-child{margin-bottom:0}
 
-/* ---------- the pages of the book ---------- */
-main.book{
-  max-width:none;margin:0;background:none;box-shadow:none;border-radius:0;
-  position:relative;overflow:visible;z-index:3;
+/* ---------------- right rail ---------------- */
+.rail{
+  position:sticky;top:18px;align-self:start;
+  max-height:calc(100vh - 36px);overflow:auto;overscroll-behavior:contain;
+  display:flex;flex-direction:column;gap:14px;padding-right:2px;
+  scrollbar-width:thin;
 }
-main.book::before{content:none}
-.page{padding:26px 0 34px;position:relative}
-.page + .page{border-top:1px dashed rgba(150,125,80,.35)}
-/* section headings: an icon, handwriting, and a blue pen underline */
-/* ── paper bands: a rule stops at writing, it does not cross it ── */
-.chapter,.hint,.field label,.cg-label,.empty-note,footer{background:var(--paper)}
-.chapter{display:flex;align-items:baseline;gap:12px;margin-bottom:8px;padding:6px 0 2px}
-.hint{padding:2px 0}
-.cg-label{padding-left:2px;padding-right:8px}
-.chapter .orn{font-size:23px;letter-spacing:0;white-space:nowrap;line-height:1;
-  filter:drop-shadow(0 1px 1px rgba(60,45,20,.25))}
-.chapter h2{
-  font-family:var(--display);font-size:clamp(23px,3.5vw,32px);font-weight:700;
-  color:var(--ink);min-width:0;position:relative;padding-bottom:4px;letter-spacing:-.2px;
-}
-.chapter h2::after{
-  content:'';position:absolute;left:0;right:-4px;bottom:0;height:2.4px;border-radius:2px;
-  background:var(--blue);opacity:.8;
-}
-.chapter .line{flex:1;height:1px;background:linear-gradient(90deg,rgba(150,125,80,.4),transparent)}
-.hint{font-family:var(--serif);color:var(--ink-faint);font-size:15.5px;margin:6px 0 18px;font-style:normal}
+.rail::-webkit-scrollbar{width:8px}
+.rail::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:99px;border:2px solid var(--bg)}
 
-/* ---------- Chapter I : page dividers for each study level ---------- */
-.level-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:12px;margin-bottom:22px}
+.rcard{
+  padding:16px;border-radius:var(--r-lg);
+  background:var(--surface);border:1px solid var(--line);box-shadow:var(--sh-1);
+}
+.rcard-h{
+  display:flex;align-items:center;gap:8px;margin-bottom:12px;
+  font-family:var(--display);font-weight:750;font-size:14.5px;color:var(--ink);
+}
+.rcard-h .more{
+  margin-left:auto;font-size:12px;font-weight:600;color:var(--brand-ink);
+  cursor:pointer;text-decoration:none;
+}
+.rcard-h .more:hover{text-decoration:underline}
+
+.tutor-card{background:var(--grad-soft);border-color:#e4e2fb;text-align:center}
+.tutor-card .face{
+  width:52px;height:52px;margin:2px auto 10px;border-radius:50%;
+  background:var(--grad);display:grid;place-items:center;
+  box-shadow:0 8px 20px rgba(105,72,240,.30);
+}
+.tutor-card .face svg{width:28px;color:#fff}
+.tutor-card p{font-size:12.6px;color:var(--ink-3);margin-bottom:11px}
+.tutor-card .go{
+  display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border:0;cursor:pointer;
+  border-radius:var(--r-pill);background:#fff;color:var(--brand-ink);
+  font-family:var(--display);font-weight:700;font-size:13.2px;box-shadow:var(--sh-1);
+  transition:transform .16s ease,box-shadow .16s ease;
+}
+.tutor-card .go:hover{transform:translateY(-1px);box-shadow:var(--sh-2)}
+
+.qt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.qt{
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  padding:11px 5px;border-radius:var(--r);cursor:pointer;
+  background:var(--surface-2);border:1px solid var(--line);
+  font-size:10.6px;font-weight:600;color:var(--ink-2);text-align:center;line-height:1.25;
+  transition:all .16s ease;
+}
+.qt svg{width:18px;color:var(--brand)}
+.qt:hover{background:#fff;border-color:#cfd7fb;transform:translateY(-2px);box-shadow:var(--sh-2);color:var(--ink)}
+
+.recent-i{
+  display:flex;gap:10px;padding:9px 0;cursor:pointer;border-radius:var(--r-sm);
+  transition:background .14s ease;
+}
+.recent-i + .recent-i{border-top:1px solid var(--line)}
+.recent-i:hover{background:var(--surface-3);padding-left:8px;padding-right:8px;margin:0 -8px}
+.recent-i .dot{width:6px;height:6px;border-radius:50%;background:var(--brand);margin-top:7px;flex:none}
+.recent-i .tx{min-width:0;flex:1}
+.recent-i .q{
+  font-size:12.9px;font-weight:600;color:var(--ink);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+}
+.recent-i .m{font-size:11.2px;color:var(--ink-3)}
+.rail-empty{font-size:12.4px;color:var(--ink-3);text-align:center;padding:14px 6px}
+
+.xp-bar{height:7px;border-radius:99px;background:var(--surface-3);overflow:hidden;margin:9px 0 6px}
+.xp-bar i{display:block;height:100%;border-radius:99px;background:var(--grad)}
+.badges{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.badge-i{text-align:center;padding:9px 4px;border-radius:var(--r);background:var(--surface-2);border:1px solid var(--line)}
+.badge-i .n{font-family:var(--display);font-weight:800;font-size:16px;color:var(--ink)}
+.badge-i .l{font-size:10px;color:var(--ink-3)}
+
+/* ============================================================
+   MAIN COLUMN CONTENT
+   ============================================================ */
+.sheet{display:contents}
+main.book{display:flex;flex-direction:column;gap:18px;min-width:0}
+
+/* ---------------- hero ---------------- */
+header.cover,.hero{
+  position:relative;overflow:hidden;
+  display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:22px;align-items:center;
+  padding:34px 34px 32px;border-radius:var(--r-xl);
+  background:
+    radial-gradient(70% 120% at 100% 0,rgba(139,70,240,.10),transparent 62%),
+    radial-gradient(60% 110% at 0 100%,rgba(34,184,238,.09),transparent 60%),
+    var(--surface);
+  border:1px solid var(--line);box-shadow:var(--sh-2);
+}
+.hero h1,header.cover h1{
+  font-size:clamp(30px,3.5vw,44px);font-weight:800;letter-spacing:-.035em;margin-bottom:12px;
+}
+.hero h1 .g{background:var(--grad-text);-webkit-background-clip:text;background-clip:text;color:transparent}
+.tagline{font-size:16.5px;color:var(--ink-2);max-width:48ch;margin-bottom:18px;line-height:1.55}
+.tagline em{font-style:normal;font-weight:700;color:var(--ink)}
+.tagline .hl-b{color:var(--brand-ink)}
+.tagline .hl-r{color:var(--violet)}
+.tagline-sub{font-size:12.6px;color:var(--ink-3);margin-top:14px;line-height:1.65}
+.brand-rule{display:none}
+
+.hero-pts{list-style:none;display:flex;flex-direction:column;gap:9px}
+.hero-pts li{display:flex;align-items:center;gap:10px;font-size:14.2px;color:var(--ink-2);font-weight:500}
+.hero-pts .ic{
+  width:27px;height:27px;flex:none;border-radius:8px;display:grid;place-items:center;
+  background:var(--tint);color:var(--brand);
+}
+.hero-pts .ic svg{width:14px}
+
+.hero-art{position:relative;display:grid;place-items:center;min-height:210px}
+.hero-orb{
+  position:absolute;width:74%;aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(circle,rgba(93,127,255,.16),transparent 66%);filter:blur(6px)
+}
+.hero-mark{width:min(150px,44%);position:relative;animation:float 6s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+.hero-chip{
+  position:absolute;display:flex;align-items:center;gap:6px;
+  padding:7px 12px;border-radius:var(--r-pill);white-space:nowrap;
+  background:rgba(255,255,255,.94);border:1px solid var(--line);box-shadow:var(--sh-2);
+  font-size:11.6px;font-weight:650;color:var(--ink-2);
+  animation:float 7s ease-in-out infinite;
+}
+.hero-chip svg{width:13px;color:var(--brand)}
+.hero-chip.c1{top:4%;left:-2%;animation-delay:-.7s}
+.hero-chip.c2{top:26%;right:-4%;animation-delay:-2.1s}
+.hero-chip.c3{bottom:16%;left:-6%;animation-delay:-3.4s}
+.hero-chip.c4{bottom:0;right:2%;animation-delay:-4.6s}
+
+/* ---------------- the six feature tiles ---------------- */
+.feat-row{
+  display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;
+}
+.feat{
+  display:flex;flex-direction:column;gap:8px;padding:14px 13px;border-radius:var(--r-lg);
+  background:var(--surface);border:1px solid var(--line);box-shadow:var(--sh-1);
+  cursor:pointer;text-align:left;transition:all .2s cubic-bezier(.2,.9,.3,1);
+}
+.feat:hover{transform:translateY(-3px);box-shadow:var(--sh-2);border-color:#d6ddfb}
+.feat .ic{
+  width:32px;height:32px;border-radius:10px;display:grid;place-items:center;
+  background:var(--tint);color:var(--brand);
+}
+.feat .ic svg{width:17px}
+.feat b{font-family:var(--display);font-size:13.2px;font-weight:700;color:var(--ink);letter-spacing:-.01em}
+.feat span{font-size:11.2px;color:var(--ink-3);line-height:1.4}
+.feat:nth-child(2) .ic{background:var(--lav);color:var(--violet)}
+.feat:nth-child(3) .ic{background:var(--cyan-tint);color:#0e8fbe}
+.feat:nth-child(4) .ic{background:var(--ok-tint);color:var(--ok)}
+.feat:nth-child(5) .ic{background:var(--warn-tint);color:var(--warn)}
+.feat:nth-child(6) .ic{background:var(--err-tint);color:var(--err)}
+
+/* ---------------- the working panels ---------------- */
+.page{
+  position:relative;padding:24px 26px 26px;border-radius:var(--r-xl);
+  background:var(--surface);border:1px solid var(--line);box-shadow:var(--sh-2);
+}
+.page + .page{margin:0}
+.page > *:not(.dood){position:relative;z-index:1}
+.dood{display:none}          /* the pen doodles belong to the old skin */
+#answerPage{display:none}
+
+.chapter{display:flex;align-items:center;gap:11px;margin-bottom:6px}
+.chapter .orn{
+  width:34px;height:34px;flex:none;border-radius:10px;display:grid;place-items:center;
+  background:var(--tint);color:var(--brand);font-size:16px;
+}
+.chapter h2{font-size:20px;font-weight:750;letter-spacing:-.025em}
+.chapter h2::after{display:none}
+.chapter .line{flex:1;height:1px;background:var(--line)}
+
+.hint{font-size:13.4px;color:var(--ink-3);margin:2px 0 16px}
+
+/* ---- level cards ---- */
+.level-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:11px;margin-bottom:18px}
 .level-card{
-  background:linear-gradient(176deg,var(--card),var(--paper-2));
-  border:1.5px solid var(--rule);border-radius:7px 7px 5px 5px;
-  padding:16px 10px 14px;text-align:center;cursor:pointer;position:relative;
-  font-size:16px;font-weight:400;color:var(--ink-soft);line-height:1.35;
-  box-shadow:0 1px 0 rgba(255,255,255,.85) inset,0 3px 7px rgba(60,45,20,.12);
-  transition:transform .2s cubic-bezier(.34,1.4,.64,1),box-shadow .2s ease,border-color .2s ease;
+  position:relative;padding:15px 14px;border-radius:var(--r-lg);cursor:pointer;
+  background:var(--surface-2);border:1.5px solid var(--line);text-align:left;
+  transition:all .2s cubic-bezier(.2,.9,.3,1);
 }
-.level-card .em{display:block;font-size:26px;margin-bottom:6px;filter:saturate(.92)}
-.level-card:hover{transform:translateY(-4px) rotate(-.5deg);border-color:var(--gold-soft);
-  box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 12px 22px rgba(60,45,20,.2)}
+/* renderLevels() writes the emoji in a span and the course name as a bare
+   text node, so the card itself carries the label typography. */
+.level-card{font-family:var(--display);font-size:14.4px;font-weight:700;
+  color:var(--ink);letter-spacing:-.015em;line-height:1.35}
+.level-card .em{font-size:21px;line-height:1;display:block;margin-bottom:9px}
+.level-card b{display:block;font-family:var(--display);font-size:14.4px;font-weight:700;color:var(--ink);letter-spacing:-.015em}
+.level-card .sub{display:block;font-family:var(--serif);font-size:11.8px;font-weight:500;
+  color:var(--ink-3);margin-top:2px;line-height:1.4}
+.level-card:hover{background:#fff;border-color:#cfd7fb;transform:translateY(-2px);box-shadow:var(--sh-2)}
 .level-card.active{
-  border-color:var(--blue);background:linear-gradient(176deg,#f2f6ff,var(--blue-wash));
-  color:var(--blue-deep);font-weight:700;transform:translateY(-2px);
-  box-shadow:inset 0 0 0 1.5px rgba(38,71,207,.35),0 10px 20px rgba(38,71,207,.2);
+  background:linear-gradient(150deg,#f3f6ff,#f7f2ff);border-color:var(--brand);
+  box-shadow:0 0 0 3px var(--focus),var(--sh-2);
 }
-/* a coloured bookmark drops out of the chosen divider */
-.level-card.active::before{
-  content:'';position:absolute;top:-1px;left:16px;width:15px;height:26px;
-  background:var(--teacher);clip-path:polygon(0 0,100% 0,100% 100%,50% 76%,0 100%);
-  box-shadow:1px 2px 3px rgba(0,0,0,.25);
-}
-/* teacher's tick */
+.level-card.active::before{display:none}
 .level-card.active::after{
-  content:'✓';position:absolute;top:6px;right:10px;color:var(--ok);
-  font:700 19px/1 var(--hand);transform:rotate(-9deg);
+  content:'';position:absolute;top:11px;right:11px;width:19px;height:19px;border-radius:50%;
+  background:var(--grad) center/cover;
+  box-shadow:0 3px 8px rgba(68,89,245,.34);
 }
-.sub-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-@media(max-width:640px){.sub-row{grid-template-columns:1fr}}
-/* library catalogue cards, not dropdowns */
-.field{position:relative}
+.level-card.active b{color:var(--brand-ink)}
+
+.sub-row{display:grid;grid-template-columns:1fr 1fr;gap:13px}
 .field label{
-  display:block;font-family:var(--display);font-size:12.5px;text-transform:uppercase;letter-spacing:1.6px;
-  color:var(--ink-faint);margin-bottom:7px;font-weight:600;
+  display:block;font-size:11.4px;font-weight:700;color:var(--ink-3);
+  letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px;
 }
 .field select{
-  width:100%;font-family:var(--serif);font-size:17px;color:var(--ink);
-  background:linear-gradient(176deg,var(--card),var(--paper-2));
-  border:1.5px solid var(--rule);border-radius:5px;
-  padding:13px 14px;cursor:pointer;appearance:none;
-  box-shadow:0 1px 0 rgba(255,255,255,.85) inset,0 3px 6px rgba(60,45,20,.1);
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='9'%3E%3Cpath d='M1.4 1.6l5.1 5.1 5.1-5.1' stroke='%232647cf' stroke-width='1.9' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;background-position:right 13px center;
-  transition:border-color .18s ease,box-shadow .18s ease;
+  width:100%;padding:11px 34px 11px 13px;border-radius:var(--r);cursor:pointer;
+  background:var(--surface-3) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7397' stroke-width='2.4' stroke-linecap='round'><path d='M6 9l6 6 6-6'/></svg>") no-repeat right 11px center/15px;
+  border:1.5px solid var(--line);font-size:14px;color:var(--ink);
+  appearance:none;-webkit-appearance:none;transition:all .16s ease;
 }
-.field select:hover{border-color:var(--gold-soft)}
-.field select:focus{outline:none;border-color:var(--blue);box-shadow:inset 0 0 0 1px rgba(38,71,207,.25),0 4px 10px rgba(38,71,207,.14)}
+.field select:hover{border-color:var(--line-2);background-color:#fff}
+.field select:focus{outline:none;border-color:var(--brand);background-color:#fff;box-shadow:0 0 0 3px var(--focus)}
 
-/* ---------- Chapter II : the doubt goes on ruled paper ---------- */
-.ask-wrap{display:grid;grid-template-columns:1fr 320px;gap:24px}
-@media(max-width:760px){.ask-wrap{grid-template-columns:1fr}}
+/* ---- the composer ---- */
+.ask-wrap{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr);gap:14px;margin-bottom:14px}
 textarea#qtext{
-  width:100%;min-height:184px;resize:none;overflow:hidden;
-  font-family:var(--serif);font-size:18px;color:var(--ink);line-height:32px;
-  caret-color:var(--blue);
-  background:
-    repeating-linear-gradient(0deg,transparent 0 31px,var(--rule-blue) 31px 32px),
-    linear-gradient(176deg,#fffdf6,var(--paper-2));
-  border:1.5px solid var(--rule);border-radius:5px;padding:6px 15px 12px;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 3px 7px rgba(60,45,20,.1);
-  transition:border-color .18s ease,box-shadow .18s ease;
+  width:100%;min-height:186px;resize:vertical;padding:15px 16px;
+  border-radius:var(--r-lg);border:1.5px solid var(--line);background:var(--surface-3);
+  font-family:var(--serif);font-size:15px;line-height:1.62;color:var(--ink);
+  transition:all .18s ease;
 }
-textarea#qtext:focus{outline:none;border-color:var(--blue);
-  box-shadow:inset 0 0 0 1px rgba(38,71,207,.2),0 5px 12px rgba(38,71,207,.14)}
-textarea#qtext::placeholder{color:var(--ink-faint);font-family:var(--hand);font-size:19px;font-style:normal}
-/* the photo goes on with masking tape and a paper clip */
+textarea#qtext::placeholder{color:var(--ink-4)}
+textarea#qtext:focus{outline:none;border-color:var(--brand);background:#fff;box-shadow:0 0 0 4px var(--focus)}
+
 .photo-box{
-  border:2px dashed var(--gold-soft);border-radius:6px;
-  background:linear-gradient(176deg,#fffdf6,var(--paper-2));
-  min-height:184px;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:9px;padding:20px 16px;text-align:center;cursor:pointer;position:relative;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 3px 7px rgba(60,45,20,.1);
-  transition:background .2s ease,border-color .2s ease,transform .2s ease;
+  position:relative;min-height:186px;border-radius:var(--r-lg);cursor:pointer;
+  border:2px dashed var(--line-2);background:var(--surface-3);
+  display:grid;place-items:center;text-align:center;padding:18px 14px;
+  transition:all .18s ease;overflow:hidden;
 }
-/* masking tape across the top-left corner */
-.photo-box::before{
-  content:'';position:absolute;left:-14px;top:16px;width:74px;height:24px;
-  transform:rotate(-38deg);background:var(--tape);
-  box-shadow:0 1px 3px rgba(0,0,0,.16);
-}
-/* a paper clip on the top-right */
-.photo-box::after{
-  content:'';position:absolute;right:16px;top:-13px;width:20px;height:48px;
-  border:3px solid #b9c0c8;border-radius:10px;
-  box-shadow:1px 2px 4px rgba(0,0,0,.28);
-  transition:transform .3s cubic-bezier(.34,1.5,.64,1);
-}
-.photo-box:hover::after,.photo-box.drag::after{transform:rotate(-14deg) translateY(-3px)}
-.photo-box:hover,.photo-box.drag{background:linear-gradient(176deg,#f6f9ff,var(--blue-wash));border-color:var(--blue)}
-.photo-box .cam{font-size:38px}
-.photo-box .pb-title{font-family:var(--display);font-weight:600;font-size:17px;color:var(--ink)}
-.photo-box .pb-sub{font-size:12px;color:var(--ink-faint);font-family:var(--hand);font-size:15px}
-.photo-btns{display:flex;gap:9px;margin-top:5px}
-.preview-wrap{position:relative;width:100%}
-.preview-wrap img{width:100%;border-radius:2px;border:7px solid #fff;display:block;max-height:270px;
-  object-fit:contain;background:#fff;box-shadow:0 4px 14px rgba(60,45,20,.3);transform:rotate(-.7deg)}
+.photo-box::before,.photo-box::after{display:none}
+.photo-box:hover{border-color:var(--brand);background:var(--tint)}
+.photo-box.drag{border-color:var(--brand);background:var(--tint);box-shadow:0 0 0 4px var(--focus)}
+.photo-box .cam{font-size:29px;margin-bottom:9px;filter:saturate(1.05)}
+.photo-box .pb-title{font-family:var(--display);font-weight:700;font-size:14px;color:var(--ink);margin-bottom:3px}
+.photo-box .pb-sub{font-size:11.6px;color:var(--ink-3)}
+.photo-btns{display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+.preview-wrap{position:relative;width:100%;height:100%;display:grid;place-items:center}
+.preview-wrap img{max-width:100%;max-height:250px;border-radius:var(--r);box-shadow:var(--sh-2)}
 .remove-img{
-  position:absolute;top:2px;right:2px;background:var(--teacher);color:#fff;border:none;
-  width:27px;height:27px;border-radius:50%;cursor:pointer;font-size:13px;line-height:1;
-  box-shadow:0 3px 8px rgba(0,0,0,.3);
+  position:absolute;top:6px;right:6px;width:28px;height:28px;border-radius:50%;cursor:pointer;
+  border:1px solid var(--line);background:rgba(255,255,255,.94);color:var(--ink-2);
+  font-size:13px;line-height:1;display:grid;place-items:center;box-shadow:var(--sh-1);
 }
-.ask-actions{display:flex;align-items:center;gap:14px;margin-top:22px;flex-wrap:wrap}
+.remove-img:hover{background:var(--err-tint);color:var(--err);border-color:#f6cdd9}
 
-/* ---------- the teacher's stamp ---------- */
+.ask-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .solve-btn{
-  font-family:var(--display);font-weight:700;font-size:19px;letter-spacing:.2px;cursor:pointer;
-  color:#fff;background:linear-gradient(178deg,var(--blue) 0%,var(--blue-deep) 100%);
-  border:1.5px solid rgba(255,255,255,.35);border-radius:5px;padding:14px 34px;position:relative;
-  overflow:hidden;transform:rotate(-1deg);
-  box-shadow:0 3px 0 #14257a,0 10px 22px rgba(27,49,153,.4),inset 0 1px 0 rgba(255,255,255,.3);
-  transition:transform .13s ease,box-shadow .13s ease;
+  display:inline-flex;align-items:center;gap:9px;padding:13px 24px;border:0;cursor:pointer;
+  border-radius:var(--r-pill);background:var(--grad);color:#fff;
+  font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:-.01em;
+  box-shadow:var(--sh-brand);transition:transform .18s ease,box-shadow .18s ease;
 }
-/* the ink spreads out from where the stamp lands */
-.solve-btn::after{
-  content:'';position:absolute;left:50%;top:50%;width:12px;height:12px;border-radius:50%;
-  background:rgba(255,255,255,.55);transform:translate(-50%,-50%) scale(0);opacity:0;
+.solve-btn::after{display:none}
+.solve-btn:hover{transform:translateY(-1px);box-shadow:0 12px 30px rgba(68,89,245,.38)}
+.solve-btn:active{transform:translateY(0)}
+.solve-btn:disabled{opacity:.55;cursor:not-allowed;transform:none;box-shadow:none}
+
+.mini-btn{
+  display:inline-flex;align-items:center;gap:7px;padding:10px 15px;cursor:pointer;
+  border-radius:var(--r-pill);border:1px solid var(--line);background:var(--surface);
+  color:var(--ink-2);font-size:13.2px;font-weight:600;white-space:nowrap;
+  transition:all .16s ease;
 }
-.solve-btn:hover{transform:rotate(-1deg) translateY(-2px);box-shadow:0 5px 0 #14257a,0 14px 28px rgba(27,49,153,.45)}
-.solve-btn:active{transform:rotate(-1deg) translateY(3px);box-shadow:0 0 0 #14257a,0 4px 10px rgba(27,49,153,.5)}
-.solve-btn:active::after{animation:inkSpread .5s ease-out}
-@keyframes inkSpread{0%{transform:translate(-50%,-50%) scale(0);opacity:.6}100%{transform:translate(-50%,-50%) scale(26);opacity:0}}
-.solve-btn:disabled{opacity:.5;cursor:not-allowed;transform:rotate(-1deg)}
-.status{color:var(--ink-soft);font-family:var(--hand);font-size:19px}
-.status.err{color:var(--err);font-family:var(--serif);font-size:14px}
+.mini-btn::after{display:none}
+.mini-btn:hover{background:var(--surface-3);border-color:var(--line-2);color:var(--ink);transform:translateY(-1px)}
+
 .deep-line{
-  display:inline-flex;align-items:center;gap:8px;user-select:none;cursor:default;
-  font-size:15px;color:var(--ink-soft);background:var(--paper-2);
-  border:1.4px dashed var(--gold-soft);border-radius:4px;padding:7px 14px;transition:all .2s ease;
+  font-size:11.4px;font-weight:650;color:var(--ink-3);
+  padding:5px 11px;border-radius:var(--r-pill);background:var(--surface-3);border:1px solid var(--line);
 }
-.deep-line.deep{background:var(--blue-wash);border-style:solid;border-color:var(--blue);
-  color:var(--blue-deep);font-weight:600}
-.quill{display:none;align-items:center;gap:10px}
+.deep-line.deep{background:var(--lav);border-color:#e4dcfb;color:var(--violet)}
+
+.quill{display:none;align-items:center;gap:9px;font-size:13.2px;color:var(--brand-ink);font-weight:600}
 .quill.on{display:inline-flex}
-.quill .nib{font-size:21px;animation:write 1s ease-in-out infinite}
-@keyframes write{0%,100%{transform:translateX(0) rotate(0)}50%{transform:translateX(10px) rotate(-8deg)}}
-/* a hint is a yellow sticky note */
-.hint-box{
-  margin-top:20px;background:linear-gradient(176deg,#fdf6cf,#fbedae);
-  border:1px solid #e6d38a;border-radius:3px;padding:16px 20px;position:relative;
-  transform:rotate(-.4deg);box-shadow:2px 6px 16px rgba(80,60,10,.2);
+.quill .nib{
+  width:17px;height:17px;border-radius:50%;border:2.4px solid var(--tint);border-top-color:var(--brand);
+  font-size:0;animation:spin .82s linear infinite
 }
-.hint-box::before{content:'';position:absolute;left:50%;top:-9px;width:88px;height:18px;
-  transform:translateX(-50%) rotate(-1.5deg);background:var(--tape)}
-.hint-box-head{font-family:var(--display);color:var(--ink);font-size:18.5px;margin-bottom:7px;font-weight:700}
-.hint-box-body{font-size:16.5px;color:#3f3410;line-height:1.58}
-.hint-box-body p{margin:6px 0}.hint-box-body ul,.hint-box-body ol{margin:6px 0 6px 22px}
-.hint-box .mini-btn{margin-top:12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.status{font-size:13px;color:var(--ink-3)}
+.status.err{color:var(--err);font-weight:600}
 
-/* ---------- toolbar chips = notebook labels ---------- */
-.learn-panel{margin-top:24px;display:flex;flex-direction:column;gap:16px}
-.chip-group{display:flex;flex-direction:column;gap:9px}
-.cg-label{font-family:var(--display);color:var(--ink);font-size:17px;font-weight:600;
-  position:relative;align-self:flex-start;padding-bottom:3px}
-.cg-label::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1.8px;background:var(--blue);opacity:.55}
-.cg-chips{display:flex;flex-wrap:wrap;gap:9px}
-.chip.cg-star{background:linear-gradient(178deg,#fffbe8,#fbedae);border-color:var(--pencil);
-  color:#6b4e08;font-weight:700}
-.chip.cg-star:hover{border-color:#a3761f;color:#4a3505}
-@media(max-width:560px){.cg-chips{gap:7px}.chip{font-size:12.5px;padding:6px 12px}}
-
-/* ---------- check my answer ---------- */
-.check-box{
-  margin-top:20px;background:linear-gradient(176deg,var(--card),var(--paper-2));
-  border:1.5px solid var(--rule);border-left:4px solid var(--blue);
-  border-radius:5px;padding:16px 20px;box-shadow:var(--lift);
+.hint-box,.check-box{
+  margin-top:16px;padding:16px 18px;border-radius:var(--r-lg);
+  background:var(--warn-tint);border:1px solid #f2e0b8;
 }
+.hint-box::before{display:none}
+.check-box{background:var(--tint);border-color:#d9e0fc}
+.hint-box-head{
+  display:flex;align-items:center;gap:8px;margin-bottom:9px;
+  font-family:var(--display);font-weight:750;font-size:14.4px;color:var(--ink);
+}
+.hint-box-body{font-size:14.4px;color:var(--ink-2);line-height:1.65}
+.hint-box-body p{margin:.5em 0}
+.hint-box .mini-btn{margin-top:12px;background:#fff}
 .check-box textarea{
-  width:100%;min-height:96px;resize:none;overflow:hidden;margin:9px 0;
-  font-family:var(--serif);font-size:15px;color:var(--ink);caret-color:var(--blue);
-  background:repeating-linear-gradient(0deg,transparent 0 27px,var(--rule-blue) 27px 28px),#fffdf6;
-  border:1.4px solid var(--rule);border-radius:4px;padding:4px 12px;line-height:28px;
+  width:100%;min-height:104px;resize:vertical;padding:12px 14px;margin-bottom:11px;
+  border-radius:var(--r);border:1.5px solid #d9e0fc;background:#fff;
+  font-family:var(--serif);font-size:14.2px;line-height:1.6;
 }
-.check-box textarea:focus{outline:none;border-color:var(--blue)}
-.check-actions{display:flex;gap:9px}
+.check-box textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--focus)}
+.check-actions{display:flex;gap:9px;flex-wrap:wrap}
 
-/* ---------- AI tutor: a worked page ---------- */
-.tutor-panel{
-  margin-top:20px;background:linear-gradient(176deg,#fffdf6,var(--paper-2));
-  border:1.5px solid var(--rule);border-radius:7px;padding:22px clamp(16px,3vw,30px);
-  box-shadow:var(--lift);position:relative;
-}
-.tutor-panel::before{content:'';position:absolute;top:0;bottom:0;left:22px;width:1.4px;
-  background:var(--margin-red);opacity:.4}
-.tutor-head{font-family:var(--display);color:var(--ink);font-size:22px;margin-bottom:4px;font-weight:700}
-.tutor-progress{font-size:11.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--ink-faint);margin-bottom:15px}
-.tutor-q{font-size:18px;color:var(--ink);margin-bottom:15px;line-height:1.55}
-.tutor-opts{display:flex;flex-direction:column;gap:10px}
-.tutor-opt{
-  text-align:left;font-family:var(--serif);font-size:16.5px;cursor:pointer;color:var(--ink);
-  background:linear-gradient(178deg,var(--card),var(--paper-2));
-  border:1.4px solid var(--rule);border-radius:5px;padding:12px 16px;
-  box-shadow:0 2px 4px rgba(60,45,20,.1);transition:all .16s ease;
-}
-.tutor-opt:hover:not(:disabled){border-color:var(--blue);background:var(--blue-wash);transform:translateX(4px)}
-.tutor-opt:disabled{cursor:default}
-.tutor-opt.correct{border-color:var(--ok);background:#e7f3ec;color:#1c5a3c;font-weight:600}
-.tutor-opt.wrong{border-color:var(--err);background:#fbe9e7;color:var(--err)}
-.tutor-fb{margin-top:15px;font-size:15px;line-height:1.62;color:var(--ink)}
-.tutor-fb.good{color:var(--ok)}
-.tutor-actions{margin-top:17px;display:flex;gap:10px;flex-wrap:wrap}
-.tutor-done{font-family:var(--display);color:var(--ok);font-size:19px;text-align:center;padding:10px}
-
-/* ---------- Chapter III : the answer is a notebook page ---------- */
-#answerPage{display:none}
+/* ---- the answer ---- */
 .answer-sheet{
-  background:
-    repeating-linear-gradient(0deg,transparent 0 calc(var(--line-h) - 1px),var(--rule-blue) calc(var(--line-h) - 1px) var(--line-h)),
-    linear-gradient(176deg,#fffdf6,#f8f2e3);
-  background-position:0 20px,0 0;
-  border:1.5px solid var(--rule);border-radius:4px 8px 8px 4px;
-  padding:26px clamp(18px,4vw,42px) 34px 58px;
-  box-shadow:var(--lift),inset 22px 0 22px -24px rgba(120,90,40,.35);
-  position:relative;overflow:hidden;
+  position:relative;padding:0;border-radius:var(--r-lg);background:transparent;
 }
-.answer-sheet::before{content:'';position:absolute;top:0;bottom:0;left:40px;width:1.5px;
-  background:var(--margin-red);opacity:.5}
-/* When the notebook engine succeeds it lays its OWN ruled page inside this
-   sheet, and two rule pitches fighting each other reads as sloppy. So the
-   mount goes plain and lets the inner page be the paper. If nbRender throws
-   and falls back to plain markdown there is no .nb-book, and the sheet keeps
-   its own rules — which is exactly when it needs to look like paper. */
-.answer-sheet:has(.nb-book){
-  background:none;border:none;box-shadow:none;padding:0;overflow:visible;
-}
-.answer-sheet:has(.nb-book)::before{opacity:0}
-.answer-sheet:has(.nb-book) .answer-meta{padding:0 6px 12px;margin-bottom:14px}
-.nb-book .nb-page{margin:0}
-/* the writing runs to the foot of the page instead of trailing off */
-.nb-page{padding-bottom:26px}
-.nb-pgnum{bottom:7px}
-.answer-sheet::after{display:none}
-@media(max-width:640px){
-  .answer-sheet{padding-left:34px}
-  .answer-sheet::before{left:22px}
-}
+.answer-sheet::before,.answer-sheet::after{display:none}
+.answer-sheet.turn{animation:sheetIn .42s cubic-bezier(.2,.9,.3,1)}
+@keyframes sheetIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 .answer-meta{
-  font-family:var(--display);font-size:12.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--ink-faint);
-  border-bottom:1px dashed var(--rule);padding-bottom:10px;margin-bottom:18px;
-  display:flex;gap:15px;flex-wrap:wrap;
+  display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;
 }
-.answer-body{font-size:17.5px}
-.answer-body h1,.answer-body h2,.answer-body h3{
-  font-family:var(--display);color:var(--ink);margin:24px 0 8px;line-height:1.3;font-weight:700;
+.answer-meta span{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:6px 12px;border-radius:var(--r-pill);
+  background:var(--surface-3);border:1px solid var(--line);
+  font-size:11.8px;font-weight:600;color:var(--ink-3);
 }
-.answer-body h1{font-size:27px}.answer-body h2{font-size:22.5px}.answer-body h3{font-size:19px}
-.answer-body h1,.answer-body h2{border-bottom:2px solid var(--blue);padding-bottom:4px;display:inline-block}
-.answer-body p{margin:10px 0;line-height:var(--line-h)}
-.answer-body strong{color:var(--blue-deep);font-weight:700}
-.answer-body em{background:linear-gradient(transparent 62%,rgba(251,233,140,.8) 62%);font-style:normal}
-.answer-body ul,.answer-body ol{margin:10px 0 10px 26px}
-.answer-body li{margin:5px 0;line-height:1.7}
+.answer-meta .via{background:var(--lav);border-color:#e4dcfb;color:var(--violet)}
+
+.answer-body{font-size:15.4px;line-height:1.72;color:var(--ink-2)}
+.answer-body h1{font-size:22px;margin:20px 0 10px}
+.answer-body h2{font-size:19px;margin:20px 0 9px}
+.answer-body h3{font-size:16px;margin:16px 0 7px}
+.answer-body p{margin:.65em 0}
+.answer-body ul,.answer-body ol{margin:.6em 0 .6em 1.3em}
+.answer-body li{margin:.32em 0}
+.answer-body strong{color:var(--ink);font-weight:700}
+.answer-body em{font-style:italic}
 .answer-body code{
-  font-family:Consolas,monospace;font-size:14px;background:var(--blue-wash);
-  border:1px solid #c4d0f0;border-radius:3px;padding:1px 6px;color:var(--blue-deep);
+  font-family:var(--mono);font-size:.9em;padding:2px 6px;border-radius:6px;
+  background:var(--surface-3);border:1px solid var(--line);color:var(--brand-ink);
 }
-.answer-body pre{background:var(--paper-2);border:1px solid var(--rule);border-radius:5px;
-  padding:14px;overflow-x:auto;margin:12px 0}
-.answer-body pre code{border:none;background:none;padding:0;color:var(--ink)}
-/* diagrams are pinned to the page like a pasted sketch */
-.answer-body .diagram{
-  background:#fffdf6;border:1px solid var(--rule);border-radius:4px;
-  padding:16px 12px;margin:16px auto;text-align:center;position:relative;max-width:100%;
-  box-shadow:0 3px 10px rgba(60,45,20,.16);transform:rotate(-.3deg);
+.answer-body pre{
+  margin:.85em 0;padding:14px 16px;border-radius:var(--r);overflow-x:auto;
+  background:#0f1430;border:1px solid #1b2350;
 }
-.answer-body .diagram::before{content:'';position:absolute;left:50%;top:-9px;width:70px;height:18px;
-  transform:translateX(-50%) rotate(-1deg);background:var(--tape)}
-.answer-body .diagram svg{max-width:100%;height:auto;max-height:340px}
-/* ---------- hand-drawn diagrams ---------- */
-.diagram svg path,.diagram svg line,.diagram svg rect,.diagram svg circle,
-.diagram svg ellipse,.diagram svg polygon,.diagram svg polyline{
-  filter:url(#nbInk);
-  stroke-linecap:round;stroke-linejoin:round;
-}
-/* labels stay crisp, but in the same hand as the rest of the notebook.
-   No font-size here — that belongs to whoever laid the diagram out. */
-.diagram svg text{
-  font-family:var(--hand);fill:#17223d;letter-spacing:.2px;
-  paint-order:stroke fill;stroke:#fffdf6;stroke-width:3.5px;stroke-linejoin:round;
-}
-@media (prefers-reduced-motion:reduce){
-  .diagram svg *{filter:none}          /* the turbulence is decorative, not information */
-}
+.answer-body pre code{background:transparent;border:0;color:#dfe4ff;padding:0}
 .answer-body blockquote{
-  border-left:3px solid var(--blue);background:var(--blue-wash);padding:11px 17px;margin:14px 0;
-  border-radius:0 5px 5px 0;color:var(--ink-soft);
+  margin:.85em 0;padding:11px 16px;border-left:3px solid var(--brand);
+  background:var(--tint);border-radius:0 var(--r-sm) var(--r-sm) 0;color:var(--ink-2);
 }
-.answer-body hr{border:none;border-top:1px dashed var(--rule);margin:20px 0}
-.answer-body table{border-collapse:collapse;margin:14px 0;width:100%}
-.answer-body th,.answer-body td{border:1px solid var(--rule);padding:8px 11px;text-align:left;font-size:14.5px}
-.answer-body th{background:var(--blue-wash);font-weight:600;color:var(--blue-deep)}
-.answer-actions{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap}
-/* the answer page turns in when it arrives */
-.answer-sheet.turn{animation:pageTurn .6s cubic-bezier(.3,.9,.4,1) both}
-@keyframes pageTurn{
-  from{opacity:0;transform:perspective(1400px) rotateY(-11deg) translateY(14px)}
-  to{opacity:1;transform:none}
+.answer-body hr{border:0;border-top:1px solid var(--line);margin:1.4em 0}
+.answer-body table{width:100%;border-collapse:collapse;margin:.9em 0;font-size:14px}
+.answer-body th,.answer-body td{padding:9px 12px;border:1px solid var(--line);text-align:left}
+.answer-body th{background:var(--surface-3);font-weight:700;color:var(--ink)}
+.answer-body .diagram{
+  margin:1.1em 0;padding:16px;border-radius:var(--r);
+  background:var(--surface-2);border:1px solid var(--line);text-align:center;
 }
+.answer-body .diagram::before{display:none}
+.answer-body .diagram svg{max-width:100%;height:auto}
 
-/* ---------- Chapter IV : the bookshelf ---------- */
-.notebook-list{display:flex;flex-direction:column;gap:10px}
+/* ---- follow-up chips ---- */
+.learn-panel{display:flex;flex-direction:column;gap:14px;margin-top:20px}
+.chip-group{padding:14px 15px;border-radius:var(--r-lg);background:var(--surface-2);border:1px solid var(--line)}
+.cg-label{
+  display:block;font-family:var(--display);font-size:11.6px;font-weight:750;
+  color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px;
+}
+.cg-label::after{display:none}
+.cg-chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{
+  padding:8px 13px;border-radius:var(--r-pill);cursor:pointer;
+  border:1px solid var(--line);background:var(--surface);color:var(--ink-2);
+  font-size:12.6px;font-weight:600;transition:all .16s ease;
+}
+.chip::after{display:none}
+.chip:hover{background:var(--tint);border-color:#c9d3fb;color:var(--brand-ink);transform:translateY(-1px)}
+.chip.cg-star{background:var(--grad);border-color:transparent;color:#fff;box-shadow:0 4px 12px rgba(68,89,245,.24)}
+.chip.cg-star:hover{color:#fff;transform:translateY(-1px);box-shadow:0 7px 18px rgba(68,89,245,.32)}
+
+.answer-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+
+/* ---- tutor ---- */
+.tutor-panel{
+  margin-top:18px;padding:20px;border-radius:var(--r-lg);position:relative;
+  background:var(--grad-soft);border:1px solid #e4e2fb;
+}
+.tutor-panel::before{display:none}
+.tutor-head{
+  display:flex;align-items:center;gap:9px;margin-bottom:6px;
+  font-family:var(--display);font-weight:750;font-size:15.5px;color:var(--ink);
+}
+.tutor-progress{font-size:11.6px;color:var(--ink-3);font-weight:650;margin-bottom:14px}
+.tutor-q{font-size:15.6px;color:var(--ink);font-weight:600;line-height:1.6;margin-bottom:14px}
+.tutor-opts{display:flex;flex-direction:column;gap:8px}
+.tutor-opt{
+  padding:12px 15px;border-radius:var(--r);cursor:pointer;text-align:left;
+  border:1.5px solid var(--line);background:#fff;color:var(--ink-2);
+  font-size:14.2px;transition:all .16s ease;
+}
+.tutor-opt:hover:not(:disabled){border-color:var(--brand);background:var(--tint);transform:translateX(3px)}
+.tutor-opt:disabled{cursor:default;opacity:.9}
+.tutor-opt.correct{border-color:var(--ok);background:var(--ok-tint);color:#0b6f47;font-weight:650}
+.tutor-opt.wrong{border-color:var(--err);background:var(--err-tint);color:#a8214a}
+.tutor-fb{
+  margin-top:13px;padding:12px 15px;border-radius:var(--r);font-size:14px;
+  background:var(--err-tint);border:1px solid #f6cdd9;color:#a8214a;
+}
+.tutor-fb.good{background:var(--ok-tint);border-color:#bfe8d6;color:#0b6f47}
+.tutor-actions{display:flex;gap:9px;margin-top:14px;flex-wrap:wrap}
+.tutor-done{font-family:var(--display);font-weight:750;font-size:16px;color:var(--ok);text-align:center;padding:14px}
+
+/* ---- notebook ---- */
+.nb-tools{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.nb-search{
+  flex:1;min-width:180px;padding:11px 15px;border-radius:var(--r-pill);
+  border:1.5px solid var(--line);background:var(--surface-3);font-size:14px;
+  transition:all .16s ease;
+}
+.nb-search::placeholder{color:var(--ink-4)}
+.nb-search:focus{outline:none;border-color:var(--brand);background:#fff;box-shadow:0 0 0 3px var(--focus)}
+.nb-filter{
+  padding:11px 32px 11px 14px;border-radius:var(--r-pill);cursor:pointer;
+  background:var(--surface-3) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7397' stroke-width='2.4' stroke-linecap='round'><path d='M6 9l6 6 6-6'/></svg>") no-repeat right 11px center/14px;
+  border:1.5px solid var(--line);font-size:13.4px;appearance:none;-webkit-appearance:none;
+}
+.nb-filter:focus{outline:none;border-color:var(--brand);background-color:#fff}
+
+.notebook-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:12px}
 .note-item{
-  background:linear-gradient(176deg,var(--card),var(--paper-2));
-  border:1.4px solid var(--rule);border-left:7px solid var(--blue);
-  border-radius:3px 6px 6px 3px;
-  padding:13px 15px 13px 17px;cursor:pointer;display:flex;justify-content:space-between;gap:12px;
-  align-items:center;position:relative;
-  box-shadow:0 2px 0 var(--paper-aged),0 4px 9px rgba(60,45,20,.13);
-  transition:transform .2s cubic-bezier(.34,1.4,.64,1),box-shadow .2s ease,border-color .2s ease;
+  position:relative;padding:15px 15px 14px;border-radius:var(--r-lg);cursor:pointer;
+  background:var(--surface-2);border:1px solid var(--line);
+  transition:all .2s cubic-bezier(.2,.9,.3,1);
 }
-.note-item:nth-child(3n+2){border-left-color:var(--ok)}
-.note-item:nth-child(3n){border-left-color:var(--pencil)}
-.note-item:hover{transform:translateX(7px) rotate(-.3deg);border-top-color:var(--gold-soft);
-  box-shadow:0 2px 0 var(--paper-aged),0 10px 20px rgba(60,45,20,.22)}
-.note-item .nq{font-size:16.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;color:var(--ink)}
-.note-item .nm{font-size:13px;color:var(--ink-faint);white-space:nowrap;letter-spacing:.2px}
-.empty-note{font-family:var(--hand);font-size:19px;color:var(--ink-faint);padding:8px 0}
-/* the index at the front of the notebook: search it, or filter by subject */
-.nb-tools{display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap}
-.nb-search,.nb-filter{
-  font-family:var(--serif);font-size:16px;color:var(--ink);
-  background:linear-gradient(176deg,var(--card),var(--paper-2));
-  border:1.4px solid var(--rule);border-radius:4px;padding:11px 13px;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 2px 5px rgba(60,45,20,.1);
-  transition:border-color .18s ease,box-shadow .18s ease;
+.note-item:nth-child(3n),.note-item:nth-child(3n+2){transform:none}
+.note-item:hover{background:#fff;border-color:#cfd7fb;transform:translateY(-3px);box-shadow:var(--sh-2)}
+.note-item .nq{
+  font-size:14px;font-weight:650;color:var(--ink);line-height:1.45;margin-bottom:8px;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
 }
-.nb-search{flex:1 1 230px;min-width:0;caret-color:var(--blue)}
-.nb-search::placeholder{color:var(--ink-faint);font-family:var(--hand);font-size:17px}
-.nb-filter{flex:0 1 200px;cursor:pointer;appearance:none;padding-right:34px;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='9'%3E%3Cpath d='M1.4 1.6l5.1 5.1 5.1-5.1' stroke='%232647cf' stroke-width='1.9' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;background-position:right 12px center}
-.nb-search:focus,.nb-filter:focus{outline:none;border-color:var(--blue);
-  box-shadow:inset 0 0 0 1px rgba(38,71,207,.2),0 4px 10px rgba(38,71,207,.13)}
-/* a pinned doubt keeps a red spine and sits at the top of the shelf */
-.note-pin{
-  background:none;border:none;cursor:pointer;font-size:17px;line-height:1;padding:4px 6px;
-  border-radius:4px;color:var(--ink-faint);flex-shrink:0;transition:all .15s ease;
+.note-item .nm{font-size:11.4px;color:var(--ink-3);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.note-item.pinned{background:linear-gradient(150deg,#fffaf0,#fff);border-color:#f0e0bd}
+.note-item.pinned:nth-child(3n),.note-item.pinned:nth-child(3n+2){transform:none}
+.note-pin,.del-btn{
+  position:absolute;top:9px;width:25px;height:25px;border-radius:50%;cursor:pointer;
+  border:1px solid var(--line);background:#fff;color:var(--ink-3);
+  font-size:11px;line-height:1;display:grid;place-items:center;opacity:0;
+  transition:all .16s ease;
 }
-.note-pin:hover{color:var(--pencil);transform:scale(1.2)}
-.note-item.pinned{background:linear-gradient(176deg,#fffdf2,#fdf6e0)}
-.note-item.pinned,.note-item.pinned:nth-child(3n),.note-item.pinned:nth-child(3n+2){border-left-color:var(--teacher)}
-.note-item.pinned .note-pin{color:var(--pencil)}
+.note-pin{right:39px}
+.del-btn{right:9px}
+.note-item:hover .note-pin,.note-item:hover .del-btn{opacity:1}
+.note-item.pinned .note-pin{opacity:1;background:var(--warn-tint);border-color:#f0dcb0;color:var(--warn)}
+.note-pin:hover{background:var(--warn-tint);color:var(--warn);border-color:#f0dcb0}
+.del-btn:hover{background:var(--err-tint);color:var(--err);border-color:#f6cdd9}
 .note-diff{
-  font-family:var(--display);font-size:11.5px;letter-spacing:.8px;text-transform:uppercase;font-weight:600;
-  border-radius:2px;padding:3px 9px;white-space:nowrap;flex-shrink:0;
+  padding:2px 8px;border-radius:var(--r-pill);font-size:10px;font-weight:750;
+  letter-spacing:.03em;text-transform:uppercase;
 }
-.d-easy{background:#e7f3ec;color:#1c5a3c;border:1px solid #9dc9b4}
-.d-med {background:#fdf3d9;color:#7a5a10;border:1px solid #dfc27c}
-.d-hard{background:#fbe9e7;color:#95261d;border:1px solid #e0a49c}
-@media(max-width:600px){
-  .nb-search,.nb-filter{flex:1 1 100%}
-  .note-item{flex-wrap:wrap;row-gap:6px}
-  .note-item .nq{flex:1 1 100%}
-  .note-diff{order:2}.note-item .nm{order:3;flex:1}
+.d-easy{background:var(--ok-tint);color:var(--ok)}
+.d-med{background:var(--warn-tint);color:var(--warn)}
+.d-hard{background:var(--err-tint);color:var(--err)}
+.empty-note{
+  grid-column:1/-1;text-align:center;padding:36px 18px;color:var(--ink-3);font-size:14px;
+  border:1.5px dashed var(--line-2);border-radius:var(--r-lg);background:var(--surface-2);
 }
+.clear-all{margin-top:14px}
 
-/* ---------- paywall, auth, modals ---------- */
-.credit-badge.paid{
-  color:#fff;font-weight:700;border:0;letter-spacing:.2px;
-  background:linear-gradient(135deg,#14257a 0%,var(--blue-deep) 45%,var(--blue) 105%);
-  box-shadow:0 3px 10px rgba(27,49,153,.34);animation:creditPulse 2.4s ease-in-out infinite;
-}
-.credit-badge.paid:hover{color:#fff;filter:brightness(1.08);transform:translateY(-2px)}
-.credit-badge.out{
-  color:#fff;font-weight:700;border:0;letter-spacing:.2px;
-  background:linear-gradient(135deg,#7f1d1d 0%,#a82a22 55%,var(--teacher) 110%);
-  box-shadow:0 3px 10px rgba(153,27,27,.36);animation:creditPulseOut 1.3s ease-in-out infinite;
-}
-.credit-badge.out:hover{color:#fff;filter:brightness(1.06);transform:translateY(-2px)}
-@keyframes creditPulse{
-  0%,100%{box-shadow:0 3px 10px rgba(27,49,153,.32),0 0 0 0 rgba(38,71,207,.5)}
-  50%{box-shadow:0 4px 15px rgba(27,49,153,.42),0 0 0 7px rgba(38,71,207,0)}
-}
-@keyframes creditPulseOut{
-  0%,100%{box-shadow:0 3px 10px rgba(153,27,27,.34),0 0 0 0 rgba(194,53,43,.55)}
-  50%{box-shadow:0 4px 15px rgba(153,27,27,.44),0 0 0 7px rgba(194,53,43,0)}
-}
-@media (prefers-reduced-motion:reduce){.credit-badge.paid,.credit-badge.out{animation:none}}
-.pay-modal{max-width:660px}
-.pay-sub{color:var(--ink-soft);margin-bottom:16px !important}
-.plan-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(164px,1fr));gap:13px;margin:18px 0}
-.plan{
-  position:relative;background:linear-gradient(176deg,var(--card),var(--paper-2));
-  border:1.4px solid var(--rule);border-radius:6px;padding:20px 14px 15px;text-align:center;
-  box-shadow:0 2px 0 var(--paper-aged),0 4px 10px rgba(60,45,20,.12);
-  transition:transform .2s cubic-bezier(.34,1.4,.64,1),box-shadow .2s ease,border-color .2s ease;
-}
-.plan:hover{border-color:var(--blue);transform:translateY(-4px) rotate(-.5deg);
-  box-shadow:0 2px 0 var(--paper-aged),0 12px 24px rgba(60,45,20,.22)}
-.plan.best{border-color:var(--blue);background:linear-gradient(176deg,#f4f7ff,var(--blue-wash));
-  box-shadow:inset 0 0 0 1px rgba(38,71,207,.3),0 8px 18px rgba(38,71,207,.16)}
-.plan-tag{
-  position:absolute;top:-11px;left:50%;transform:translateX(-50%) rotate(-2deg);
-  background:var(--teacher);color:#fff;font-size:10px;letter-spacing:1.2px;
-  padding:4px 11px;border-radius:2px;white-space:nowrap;box-shadow:0 2px 5px rgba(0,0,0,.25);
-}
-.plan-price{font-family:var(--display);font-size:31px;font-weight:700;color:var(--ink)}
-.plan-price span{font-size:13px;font-weight:400;color:var(--ink-faint)}
-.plan-credits{font-size:16.5px;color:var(--ink);margin-top:2px}
-.plan-note{font-size:11.5px;color:var(--ink-faint);margin:7px 0 13px;line-height:1.45}
-.plan-btn{
-  width:100%;font-family:var(--display);font-weight:700;font-size:14px;cursor:pointer;
-  color:#fff;background:linear-gradient(178deg,var(--blue),var(--blue-deep));
-  border:1px solid rgba(255,255,255,.3);border-radius:4px;padding:10px 0;
-  box-shadow:0 2px 0 #14257a,0 5px 12px rgba(27,49,153,.3);transition:all .14s ease;
-}
-.plan-btn:hover{transform:translateY(-2px);box-shadow:0 4px 0 #14257a,0 9px 18px rgba(27,49,153,.36)}
-.plan-btn:active{transform:translateY(2px);box-shadow:0 0 0 #14257a}
-.pay-fine{font-size:12px;color:var(--ink-faint);line-height:1.55}
-.pay-topup{font-size:12.5px;color:var(--blue-deep);text-align:center;margin:2px 0 10px;font-weight:600;line-height:1.4}
-.pay-toast{
-  position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);
-  background:linear-gradient(176deg,#fdf6cf,#fbedae);color:#3f3410;border:1px solid #e6d38a;
-  border-radius:3px;padding:13px 22px;font-size:14px;max-width:90vw;text-align:center;
-  opacity:0;pointer-events:none;transition:all .3s ease;z-index:60;
-  box-shadow:2px 8px 26px rgba(40,26,8,.42);
-}
-.pay-toast.on{opacity:1;transform:translateX(-50%) translateY(0) rotate(-.5deg)}
-.g-signin{margin:6px 0 2px;display:flex;flex-direction:column;align-items:center;gap:9px}
-.auth-or{font-size:12px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:1.4px}
-.modal.auth-modal{max-width:560px}
-.auth-modal input{
-  width:100%;font-family:var(--serif);font-size:15px;padding:12px 14px;margin:8px 0;
-  border:1.4px solid var(--rule);border-radius:4px;background:#fffdf6;color:var(--ink);
-  caret-color:var(--blue);
-}
-.auth-modal input:focus{outline:none;border-color:var(--blue)}
-.auth-err{display:none;color:var(--err);font-size:13.5px;margin:6px 0}
-.auth-go{width:100%;margin-top:10px}
-.auth-modal .m-actions{margin-top:18px}
-.auth-switch{text-align:center;font-size:13.5px;color:var(--ink-soft);margin-top:13px}
-.auth-switch a{color:var(--blue-deep);font-weight:600;cursor:pointer;text-decoration:underline}
-.auth-forgot{text-align:right;margin:-2px 0 2px}
-.auth-forgot a{color:var(--blue-deep);font-size:12.5px;cursor:pointer;text-decoration:underline}
-.pw-wrap{position:relative;margin:8px 0}
-.pw-wrap input{margin:0 !important;padding-right:46px !important}
-.pw-eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;
-  cursor:pointer;font-size:17px;line-height:1;padding:4px 6px;opacity:.6}
-.pw-eye:hover{opacity:1}
-.acct-credits{font-size:16px;color:var(--blue-deep);font-weight:600;margin:4px 0 10px}
-.auth-otp-note{font-size:14px;color:var(--ink-soft);margin:4px 0 8px}
-.del-btn{
-  background:none;border:none;cursor:pointer;color:var(--ink-faint);
-  font-size:14px;line-height:1;padding:5px 7px;border-radius:4px;flex-shrink:0;transition:all .15s ease;
-}
-.del-btn:hover{background:var(--teacher);color:#fff}
-.clear-all{align-self:flex-start;margin-top:6px}
-/* modals are index cards dropped on the desk */
-.modal-bg{
-  display:none;position:fixed;inset:0;background:rgba(40,26,10,.62);z-index:50;
-  align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(3px);
-}
-.modal-bg.on{display:flex}
-.modal{
-  background:
-    repeating-linear-gradient(0deg,transparent 0 29px,rgba(198,213,234,.5) 29px 30px),
-    linear-gradient(176deg,#fffdf6,var(--paper-2));
-  background-position:0 22px,0 0;
-  border:1.5px solid var(--rule);border-radius:4px 9px 9px 4px;
-  max-width:560px;width:100%;padding:30px clamp(20px,4vw,38px);position:relative;
-  box-shadow:0 3px 0 var(--paper-aged),0 7px 0 #e4dac3,0 34px 78px rgba(20,12,4,.55);
-  max-height:90vh;overflow-y:auto;
-}
-.modal::before{content:'';position:absolute;top:0;bottom:0;left:16px;width:1.4px;
-  background:var(--margin-red);opacity:.4;pointer-events:none}
-.modal h3{font-family:var(--display);color:var(--ink);font-size:25px;margin-bottom:6px;font-weight:700}
-.modal p{font-size:16px;color:var(--ink-soft);margin:8px 0}
-.modal ol{margin:10px 0 14px 22px;font-size:14px;color:var(--ink-soft)}
-.modal ol li{margin:6px 0}
-.modal a{color:var(--blue-deep);font-weight:600}
-.modal input{
-  width:100%;font-family:Consolas,monospace;font-size:14px;padding:12px 13px;
-  border:1.4px solid var(--rule);border-radius:4px;background:#fffdf6;color:var(--ink);margin:8px 0 14px;
-}
-.modal input:focus{outline:none;border-color:var(--blue)}
-.modal .m-actions{display:flex;gap:10px;justify-content:flex-end}
-.free-badge{
-  display:inline-block;background:#e7f3ec;color:var(--ok);border:1px solid #9dc9b4;
-  font-size:11.5px;letter-spacing:1.2px;text-transform:uppercase;border-radius:3px;
-  padding:4px 12px;margin-bottom:8px;font-weight:600;
-}
-
-/* ---------- footer: the last line of the page ---------- */
+/* ---------------- footer ---------------- */
 footer{
-  text-align:center;color:var(--ink-faint);font-size:14.5px;font-style:normal;
-  padding:14px 10px 44px;position:relative;z-index:3;
+  padding:22px 26px;border-radius:var(--r-xl);text-align:center;
+  background:var(--surface);border:1px solid var(--line);box-shadow:var(--sh-1);
+  font-size:12.8px;color:var(--ink-3);line-height:1.7;
 }
-footer .fleuron{color:var(--blue);font-size:19px;display:block;margin-bottom:7px;opacity:.7}
-.footer-credit{display:block;margin-top:12px;font-size:19px;letter-spacing:.3px;
-  color:var(--ink-soft);font-family:var(--hand)}
-.footer-credit a{color:var(--blue);font-weight:700;text-decoration:none;
-  border-bottom:1.6px solid var(--blue)}
-.footer-credit a:hover{color:var(--blue-deep)}
-.footer-links{margin-top:12px;font-size:13.5px;letter-spacing:.2px;line-height:2.1}
-.footer-links a{color:var(--ink-faint);text-decoration:none}
-.footer-links a:hover{color:var(--blue-deep);text-decoration:underline}
+footer .fleuron{display:block;font-size:15px;color:var(--brand);opacity:.5;margin-bottom:6px}
+.footer-credit{display:block;margin-top:5px;font-size:12px}
+.footer-credit a{color:var(--brand-ink);text-decoration:none;font-weight:650}
+.footer-credit a:hover{text-decoration:underline}
+.footer-links{margin-top:11px;display:flex;flex-wrap:wrap;gap:5px 3px;justify-content:center;font-size:12.2px}
+.footer-links a{color:var(--ink-3);text-decoration:none;padding:0 3px}
+.footer-links a:hover{color:var(--brand-ink);text-decoration:underline}
 
-/* ---------- print / Export PDF: only the answer sheet ---------- */
-@media print{
-  body{background:#fff}
-  .desk,.spiral,.doodles,.clip,.note-tape,.page-curl,
-  header.cover,.toolbar,footer,.answer-actions,.learn-panel,.tutor-panel,
-  .check-box,.hint-box,.page:not(#answerPage){display:none !important}
-  .sheet{box-shadow:none;background:#fff;max-width:100%;padding:0;border-radius:0}
-  .sheet::before,.sheet::after{display:none}
-  main.book{box-shadow:none;max-width:100%;background:#fff}
-  #answerPage{display:block !important;padding:0}
-  #answerPage .chapter{display:none}
-  .answer-sheet{border:none;box-shadow:none;padding:0;background:#fff}
-  .answer-sheet::before,.answer-sheet::after{display:none}
+/* ---------------- mobile bottom bar ---------------- */
+.mnav{
+  display:none;position:fixed;left:0;right:0;bottom:0;z-index:200;
+  padding:7px 6px calc(7px + env(safe-area-inset-bottom));
+  background:rgba(255,255,255,.94);backdrop-filter:blur(18px) saturate(1.5);
+  -webkit-backdrop-filter:blur(18px) saturate(1.5);
+  border-top:1px solid var(--line);box-shadow:0 -6px 22px rgba(17,26,74,.07);
+}
+.mnav-i{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:6px 2px;border:0;background:transparent;cursor:pointer;border-radius:var(--r-sm);
+  font-size:10px;font-weight:650;color:var(--ink-3);
+}
+.mnav-i svg{width:20px}
+.mnav-i.active{color:var(--brand)}
+.mnav-i.ask{
+  color:#fff;background:var(--grad);margin:-16px 4px 0;padding:10px 2px 7px;
+  border-radius:var(--r-lg);box-shadow:var(--sh-brand);flex:0 0 62px;
+}
+.side-scrim{
+  display:none;position:fixed;inset:0;z-index:190;
+  background:rgba(13,21,51,.42);backdrop-filter:blur(2px);
+}
+.side-scrim.on{display:block;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* the sweep that plays once when you first choose a course —
+   the old page-turn, restated as light moving across the app */
+.pageflip{position:fixed;inset:0;z-index:900;pointer-events:none;overflow:hidden;opacity:0}
+.pageflip.on{opacity:1}
+.pageflip i{
+  position:absolute;top:-20%;left:-45%;width:38%;height:140%;transform:rotate(14deg);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.85) 45%,rgba(223,230,255,.55) 62%,transparent);
+}
+.pageflip.on i{animation:flipSweep .78s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes flipSweep{to{left:120%}}
+
+/* ============================================================
+   MODALS — auth, plans, account
+   ============================================================ */
+.modal-bg{
+  display:none;position:fixed;inset:0;z-index:1000;
+  background:rgba(13,21,51,.46);backdrop-filter:blur(4px);
+  align-items:center;justify-content:center;padding:18px;
+}
+.modal-bg.on{display:flex;animation:fadeIn .2s ease}
+.modal{
+  position:relative;width:min(430px,100%);max-height:88vh;overflow:auto;
+  padding:26px;border-radius:var(--r-xl);
+  background:var(--surface);border:1px solid var(--line);box-shadow:var(--sh-3);
+  animation:popIn .24s cubic-bezier(.2,.9,.3,1);
+}
+.modal::before{display:none}
+.modal h3{font-size:20px;font-weight:750;margin-bottom:9px}
+.modal p{font-size:14px;color:var(--ink-2);margin:.5em 0}
+.modal a{color:var(--brand-ink)}
+.modal ol{margin:.7em 0 .7em 1.2em}
+.modal ol li{margin:.35em 0;font-size:14px}
+.modal input,.auth-modal input{
+  width:100%;padding:12px 14px;margin:7px 0;border-radius:var(--r);
+  border:1.5px solid var(--line);background:var(--surface-3);font-size:14.5px;
+  transition:all .16s ease;
+}
+.modal input:focus,.auth-modal input:focus{
+  outline:none;border-color:var(--brand);background:#fff;box-shadow:0 0 0 3px var(--focus)
+}
+.modal .m-actions,.auth-modal .m-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px}
+.modal.auth-modal{width:min(400px,100%)}
+.auth-go{
+  width:100%;padding:13px;border:0;border-radius:var(--r-pill);cursor:pointer;margin-top:9px;
+  background:var(--grad);color:#fff;font-family:var(--display);font-weight:700;font-size:15px;
+  box-shadow:var(--sh-brand);
+}
+.auth-or{
+  display:flex;align-items:center;gap:11px;margin:15px 0;
+  font-size:11.6px;color:var(--ink-4);text-transform:uppercase;letter-spacing:.06em;
+}
+.auth-or::before,.auth-or::after{content:'';flex:1;height:1px;background:var(--line)}
+.g-signin{display:flex;justify-content:center;min-height:42px}
+.auth-err{margin-top:10px;font-size:13px;color:var(--err);font-weight:600}
+.auth-switch{margin-top:15px;text-align:center;font-size:13.4px;color:var(--ink-3)}
+.auth-switch a{color:var(--brand-ink);cursor:pointer;font-weight:650;text-decoration:none}
+.auth-switch a:hover{text-decoration:underline}
+.auth-forgot{margin-top:9px;text-align:right;font-size:12.6px}
+.auth-forgot a{color:var(--ink-3);cursor:pointer;text-decoration:none}
+.auth-forgot a:hover{color:var(--brand-ink);text-decoration:underline}
+.auth-otp-note{font-size:12.6px;color:var(--ink-3);margin-top:9px}
+.pw-wrap{position:relative}
+.pw-wrap input{padding-right:44px}
+.pw-eye{
+  position:absolute;right:11px;top:50%;transform:translateY(-50%);cursor:pointer;
+  border:0;background:transparent;color:var(--ink-3);font-size:15px;padding:4px;
+}
+.pw-eye:hover{color:var(--ink)}
+.acct-credits{
+  padding:13px 15px;border-radius:var(--r);margin:11px 0;
+  background:var(--tint);border:1px solid #d9e0fc;font-size:14px;color:var(--brand-ink);font-weight:600;
 }
 
-/* ---------- phones: the notebook fills the hand ---------- */
+/* ---- plans ---- */
+.pay-modal{width:min(760px,100%)}
+.plan-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(196px,1fr));gap:13px;margin:16px 0}
+.plan{
+  position:relative;padding:19px 17px;border-radius:var(--r-lg);
+  background:var(--surface-2);border:1.5px solid var(--line);transition:all .2s ease;
+}
+.plan:hover{border-color:#cfd7fb;background:#fff;transform:translateY(-2px);box-shadow:var(--sh-2)}
+.plan.best{border-color:var(--brand);background:linear-gradient(150deg,#f3f6ff,#f8f3ff);box-shadow:var(--sh-2)}
+.plan-tag{
+  position:absolute;top:-9px;left:50%;transform:translateX(-50%);white-space:nowrap;
+  padding:3px 11px;border-radius:var(--r-pill);background:var(--grad);color:#fff;
+  font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
+  box-shadow:0 4px 10px rgba(68,89,245,.3);
+}
+.plan-price{font-family:var(--display);font-size:27px;font-weight:800;color:var(--ink);letter-spacing:-.03em}
+.plan-price span{font-size:13px;font-weight:600;color:var(--ink-3)}
+.plan-credits{font-size:13.4px;color:var(--ink-2);margin:7px 0 13px}
+.plan-btn{
+  width:100%;padding:11px;border:0;border-radius:var(--r-pill);cursor:pointer;
+  background:var(--grad);color:#fff;font-family:var(--display);font-weight:700;font-size:14px;
+  box-shadow:0 5px 14px rgba(68,89,245,.26);transition:transform .16s ease,box-shadow .16s ease;
+}
+.plan-btn:hover{transform:translateY(-1px);box-shadow:0 9px 22px rgba(68,89,245,.34)}
+.plan-btn:active{transform:translateY(0)}
+.plan-note,.pay-fine{font-size:12px;color:var(--ink-3);text-align:center;line-height:1.6}
+.pay-sub{font-size:14px;color:var(--ink-2)}
+.pay-topup{margin-top:15px}
+.pay-toast{
+  position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);z-index:1200;
+  padding:12px 20px;border-radius:var(--r-pill);opacity:0;pointer-events:none;
+  background:var(--ink);color:#fff;font-size:13.6px;font-weight:600;box-shadow:var(--sh-3);
+  transition:all .26s cubic-bezier(.2,.9,.3,1);
+}
+.pay-toast.on{opacity:1;transform:translate(-50%,0)}
+
+@keyframes creditPulseOut{0%{transform:scale(1)}40%{transform:scale(1.16)}100%{transform:scale(1)}}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width:1400px){
+  :root{--rail-w:290px}
+}
+@media (max-width:1240px){
+  .app{grid-template-columns:var(--side-w) minmax(0,1fr)}
+  .rail{display:none}
+  .feat-row{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media (max-width:980px){
+  .app{grid-template-columns:minmax(0,1fr);padding:12px 12px 84px;gap:14px}
+  .side{
+    position:fixed;top:0;left:0;bottom:0;width:280px;max-height:100vh;z-index:200;
+    border-radius:0 var(--r-xl) var(--r-xl) 0;transform:translateX(-102%);
+    transition:transform .28s cubic-bezier(.2,.9,.3,1);box-shadow:var(--sh-3);
+  }
+  .side.on{transform:none}
+  .burger{
+    display:grid;place-items:center;width:38px;height:38px;flex:none;
+    border-radius:var(--r-sm);border:1px solid var(--line);background:var(--surface);
+    cursor:pointer;color:var(--ink-2);
+  }
+  .burger svg{width:19px}
+  .topbar{top:12px;padding:0 11px}
+  .mnav{display:flex}
+  .hero,header.cover{grid-template-columns:minmax(0,1fr);padding:26px 22px}
+  .hero-art{display:none}
+  .lang-tabs{display:none}
+  .home-btn{display:none}
+}
+@media (max-width:760px){
+  .ask-wrap{grid-template-columns:minmax(0,1fr)}
+  .sub-row{grid-template-columns:minmax(0,1fr)}
+  .feat-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .page{padding:20px 17px 22px}
+  .notebook-list{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+}
 @media (max-width:600px){
-  :root{--line-h:31px}
-  .sheet{border-radius:0 8px 8px 0;padding:0 14px 0 38px}
-  .sheet::before{left:26px}
-  .sheet::after{display:none}
-  header.cover{padding:26px 4px 6px}
-  .modal-bg{padding:10px}
-  .modal{padding:22px 16px !important;border-radius:6px;max-height:94vh}
-  .modal h3{font-size:19px}
-  .modal::before{left:9px}
-  .pay-sub{font-size:13.5px;margin-bottom:12px !important}
-  .plan-grid{grid-template-columns:1fr 1fr;gap:9px;margin:12px 0}
-  .plan{padding:15px 10px}
-  .plan-price{font-size:22px}
-  .plan-credits{font-size:14px}
-  .plan-note{font-size:11px}
-  .auth-modal input,.modal input{font-size:14px;padding:11px 12px}
-  .pay-toast{font-size:13px;padding:11px 15px;bottom:14px;max-width:94vw}
-  .credit-badge{font-size:12px;padding:6px 11px}
-  .toolbar{justify-content:center;gap:8px}
-  .lang-tabs{width:100%;justify-content:center}
-  .toolbar-right{width:100%;justify-content:center}
-  .engine-badge{order:5;flex:1 1 calc(100% - 54px);max-width:none;text-align:center}
-  .menu-btn{order:6}
-  .level-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:9px}
-  .level-card{padding:13px 8px 12px;font-size:13px}
-  .level-card .em{font-size:23px}
+  body{font-size:15px}
+  .app{padding:10px 10px 82px}
+  .topbar{height:56px;top:10px}
+  .searchbox{height:36px}
+  .hero h1,header.cover h1{font-size:27px}
+  .tagline{font-size:15px}
+  .chapter h2{font-size:17.5px}
+  .page{padding:18px 14px 20px;border-radius:var(--r-lg)}
+  footer{padding:18px 14px;border-radius:var(--r-lg)}
+  .level-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  .solve-btn{width:100%;justify-content:center}
+  .engine-badge{display:none}
+  .answer-body{font-size:15px}
 }
 @media (max-width:380px){
-  .plan-grid{grid-template-columns:1fr}
-  .modal h3{font-size:18px}
-  .level-grid{grid-template-columns:1fr 1fr}
-}
-/* ---------- wide screens: the page grows margins for its scribbles ---------- */
-@media(min-width:1180px){
-  .sheet{max-width:min(1180px,calc(100vw - 34px))}
-  .page{padding-left:116px;padding-right:132px}
-  .dood{display:block}
+  .feat-row{grid-template-columns:minmax(0,1fr)}
+  .qt-grid{grid-template-columns:repeat(2,1fr)}
 }
 
-/* ---------- respect reduced motion everywhere ---------- */
+/* ---------- print: only the answer, on white ---------- */
+@media print{
+  .side,.rail,.topbar,.mnav,.learn-panel,.answer-actions,.feat-row,footer,
+  .check-box,.hint-box,.hero,header.cover,.page:not(#answerPage){display:none !important}
+  body{background:#fff}
+  .app{display:block;padding:0;max-width:100%}
+  .col{gap:0}
+  #answerPage{display:block !important;padding:0;border:0;box-shadow:none;background:#fff}
+  #answerPage .chapter{display:none}
+  .answer-body{font-size:12pt;color:#000}
+}
+
+/* ---------- reduced motion ---------- */
 @media (prefers-reduced-motion:reduce){
-  *{animation-duration:.01ms !important;animation-iteration-count:1 !important;
-    transition-duration:.01ms !important;scroll-behavior:auto !important}
+  *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;scroll-behavior:auto !important}
 }
 </style>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8250159057339426" crossorigin="anonymous"></script>
 <style>
-/* ================= NOTEBOOK ANSWER ENGINE (Phase 2) =================
-   Answers stop being a chat blob and become real notebook pages:
-   spiral binding, ruled lines, a red margin, and the AI's own section
-   headings turned into study cards. Purely presentational — if any of
-   it throws, showAnswer() falls back to plain markdown. */
-.nb-book{--nb-line:27px;position:relative}
-.nb-toc{background:var(--paper);border:1.5px solid var(--rule);border-radius:10px;
-  padding:14px 16px;margin-bottom:18px;box-shadow:0 2px 8px rgba(6,40,34,.06)}
-.nb-toc-h{font:600 11.5px/1 var(--display);letter-spacing:1.5px;text-transform:uppercase;
-  color:var(--ink-faint);margin-bottom:9px}
-.nb-toc ol{margin:0;padding-left:18px}
-.nb-toc li{margin:3px 0;font-size:13.5px}
-.nb-toc a{color:var(--maroon);text-decoration:none;font-weight:600}
+/* ================= THE ANSWER ENGINE =================
+   The AI's own section headings become study cards on a light
+   sheet: a contents rail, numbered sheets, and one tinted card
+   per kind of content. Purely presentational — if any of it
+   throws, showAnswer() falls back to plain markdown. */
+.nb-book{--nb-gap:16px;position:relative;display:flex;flex-direction:column;gap:var(--nb-gap)}
+
+/* ---- contents ---- */
+.nb-toc{
+  padding:15px 17px;border-radius:var(--r-lg);
+  background:var(--surface-2);border:1px solid var(--line);
+}
+.nb-toc-h{
+  font-family:var(--display);font-size:11.2px;font-weight:750;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--ink-3);margin-bottom:9px;
+}
+.nb-toc ol{margin:0;padding-left:19px;counter-reset:none}
+.nb-toc li{margin:4px 0;font-size:13.4px}
+.nb-toc a{color:var(--brand-ink);text-decoration:none;font-weight:600}
 .nb-toc a:hover{text-decoration:underline}
-.nb-toc .pg{float:right;color:var(--ink-faint);font-weight:400;font-size:12px}
-/* ---- the page ---- */
-.nb-page{position:relative;margin:0 0 22px;padding:26px 22px 40px 62px;border-radius:3px 8px 8px 3px;
-  background:
-    linear-gradient(90deg,transparent 45px,rgba(190,60,55,.32) 45px,rgba(190,60,55,.32) 46px,transparent 46px),
-    repeating-linear-gradient(180deg,transparent 0 calc(var(--nb-line) - 1px),rgba(70,110,150,.17) calc(var(--nb-line) - 1px) var(--nb-line)),
-    linear-gradient(#fffdf7,#fdfaf0);
-  background-position:0 0,0 26px,0 0;
-  box-shadow:0 1px 2px rgba(60,45,20,.14),0 10px 26px -14px rgba(60,45,20,.3),
-    inset 20px 0 24px -22px rgba(120,90,40,.35);
-  border:1px solid rgba(160,140,100,.28);overflow:hidden}
-.nb-page::after{content:'';position:absolute;inset:0;pointer-events:none;
-  background:radial-gradient(120% 60% at 50% 0,rgba(255,255,255,.5),transparent 60%)}
+.nb-toc .pg{float:right;color:var(--ink-4);font-weight:500;font-size:11.8px}
+
+/* ---- one sheet ---- */
+.nb-page{
+  position:relative;padding:22px 24px 26px;border-radius:var(--r-lg);
+  background:var(--surface);border:1px solid var(--line);box-shadow:var(--sh-1);
+}
+.nb-page::after{display:none}
+.nb-page.turn{animation:sheetIn .4s cubic-bezier(.2,.9,.3,1) both}
 .nb-spiral{display:none}
-.nb-pgnum{position:absolute;right:20px;bottom:12px;font:400 13px/1 var(--hand);
-  color:var(--ink-faint);letter-spacing:1px}
-.nb-page.turn{animation:nbTurn .5s cubic-bezier(.3,.9,.4,1) both}
-@keyframes nbTurn{from{opacity:0;transform:perspective(1200px) rotateY(-9deg) translateY(10px)}
-  to{opacity:1;transform:none}}
-/* ---- body text sits on the ruled lines ---- */
-.nb-page h2{font:700 21px/var(--nb-line) var(--display);color:var(--maroon);
-  margin:0 0 2px;padding-top:2px;border:0}
-.nb-page h3{font:600 18px/var(--nb-line) var(--display);color:var(--ink);margin:6px 0 0}
-.nb-page p,.nb-page li{font:400 16.5px/var(--nb-line) var(--serif);color:#16305e;margin:0}
-.nb-page ul,.nb-page ol{margin:0 0 0 20px;padding:0}
-.nb-page strong{color:#0d2350;font-weight:700}
-.nb-page code{background:rgba(70,110,150,.09);border-radius:3px;padding:1px 5px;font-size:13.5px}
-.nb-page svg{max-width:100%;height:auto;display:block;margin:8px auto;max-height:360px}
-.nb-page svg path,.nb-page svg line,.nb-page svg rect,.nb-page svg circle,
-.nb-page svg ellipse,.nb-page svg polygon,.nb-page svg polyline{
-  filter:url(#nbInk);stroke-linecap:round;stroke-linejoin:round;
+.nb-pgnum{
+  position:absolute;right:16px;bottom:10px;
+  font-family:var(--mono);font-size:10.5px;color:var(--ink-4);letter-spacing:.04em;
 }
-.nb-page svg text{
-  font-family:var(--hand);fill:#17223d;
-  paint-order:stroke fill;stroke:#fffdf7;stroke-width:3.5px;stroke-linejoin:round;
+.nb-page h2{
+  font-size:18px;font-weight:750;letter-spacing:-.022em;color:var(--ink);
+  margin:0 0 12px;padding-bottom:10px;border-bottom:1px solid var(--line);
 }
+.nb-page h3{font-size:15.4px;font-weight:700;color:var(--ink);margin:16px 0 7px}
+.nb-page p{margin:.6em 0;font-size:15.2px;line-height:1.72;color:var(--ink-2)}
+.nb-page ul,.nb-page ol{margin:.55em 0 .55em 1.3em}
+.nb-page li{margin:.32em 0;font-size:15.2px;line-height:1.68;color:var(--ink-2)}
+.nb-page strong{color:var(--ink);font-weight:700}
+.nb-page code{
+  font-family:var(--mono);font-size:.9em;padding:2px 6px;border-radius:6px;
+  background:var(--surface-3);border:1px solid var(--line);color:var(--brand-ink);
+}
+
+/* diagrams: clean vector on a tinted plate, never a wobbly sketch */
+.nb-page svg,.answer-body .diagram svg,.diagram svg{max-width:100%;height:auto}
+.nb-page svg path,.nb-page svg line,.nb-page svg polyline,
+.diagram svg path,.diagram svg line,.diagram svg polyline{
+  stroke:var(--brand);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;fill:none;
+}
+.nb-page svg circle,.nb-page svg ellipse,.nb-page svg rect,.nb-page svg polygon,
+.diagram svg circle,.diagram svg ellipse,.diagram svg rect,.diagram svg polygon{
+  stroke:var(--brand);stroke-width:1.9;fill:rgba(68,89,245,.07);
+}
+/* labels stay crisp and readable — never displaced, never wobbled.
+   No font-size here: that belongs to whoever laid the diagram out. */
+.nb-page svg text,.diagram svg text,.answer-body .diagram svg text{
+  fill:var(--ink);stroke:#fff;stroke-width:3.4px;paint-order:stroke fill;
+  font-family:var(--serif);font-weight:600;
+}
+
+.nb-pen{display:none}
+.nb-stamp{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:5px 13px;border-radius:var(--r-pill);
+  background:var(--ok-tint);border:1px solid #bfe8d6;color:var(--ok);
+  font-family:var(--display);font-size:11.6px;font-weight:750;letter-spacing:.03em;
+  animation:nbStamp .42s cubic-bezier(.2,1.5,.4,1) both;
+}
+@keyframes nbStamp{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:none}}
+
 /* ---- study cards ---- */
-.nb-card{position:relative;margin:14px 0;padding:13px 15px 13px 46px;border-radius:9px;
-  line-height:1.62;box-shadow:0 2px 8px rgba(60,45,20,.1)}
-.nb-card .ic{position:absolute;left:13px;top:12px;font-size:19px;line-height:1}
-.nb-card .hd{font:600 11.5px/1 var(--display);letter-spacing:1.3px;text-transform:uppercase;
-  margin-bottom:6px;opacity:.85}
-.nb-card p,.nb-card li{font-family:var(--serif);font-size:16px;line-height:1.55;margin:3px 0}
-.nb-card ul{margin:2px 0 0 18px}
-.nb-answer{background:linear-gradient(#fffdf0,#fdf6dc);border:1.5px solid #d4a72c;color:#3f3208}
-.nb-answer .hd{color:#8a6a10}
-.nb-tip{background:linear-gradient(#fef9dd,#fdf3c4);border:1.5px solid #e0c34a;color:#4a3a12;
-  transform:rotate(-.35deg)}
-.nb-tip .hd{color:#7a5f14}
-.nb-mistake{background:linear-gradient(#fff1f0,#ffe4e2);border:1.5px solid #e39b95;color:#5a1f1a}
-.nb-mistake .hd{color:#a03028}
-.nb-remember{background:linear-gradient(#eef4ff,#e2ecff);border:1.5px solid #9fbdea;color:#17325e}
-.nb-remember .hd{color:#2b5aa8}
-.nb-shortcut{background:linear-gradient(#eefaf3,#dcf3e7);border:1.5px solid #8fcfae;color:#124b30}
-.nb-shortcut .hd{color:#1c7a4a}
-.nb-expected{background:linear-gradient(#f6f0ff,#ece0ff);border:1.5px solid #bda3e8;color:#3b2263}
-.nb-expected .hd{color:#6b3fc0}
-.nb-define{background:linear-gradient(#f0f6ff,#e0ebff);border:1.5px solid #9fbdea;color:#16325e}
-.nb-define .hd{color:#2b5aa8}
-.nb-alt{background:linear-gradient(#f2fbf9,#e0f4f0);border:1.5px solid #86c7bb;color:#0d443c}
-.nb-alt .hd{color:#0f766e}
-.nb-note{background:linear-gradient(#fffaf0,#fdf0d9);border:1.5px solid #dfba7c;color:#4d3607}
-.nb-note .hd{color:#8a5f10}
-.nb-memory{background:linear-gradient(#fdf2fb,#f8e2f3);border:1.5px solid #dda6d0;color:#5a1f4c}
-.nb-memory .hd{color:#9c3d86}
-.nb-real{background:linear-gradient(#f0faf3,#dff3e6);border:1.5px solid #8ccba3;color:#12472a}
-.nb-real .hd{color:#1c7a4a}
-.nb-teacher{background:linear-gradient(#fff4f3,#ffe6e3);border:1.5px solid #e8a49c;color:#5c1f18;
-  transform:rotate(-.4deg)}
-.nb-teacher .hd{color:#b23a2c}
-.nb-practice{background:linear-gradient(#fffdf0,#fdf6d8);border:1.5px solid #d9c169;color:#443a08}
-.nb-practice .hd{color:#8a6a10}
-.nb-summary{background:linear-gradient(#f7f7fb,#ebebf5);border:1.5px solid #b3b3cc;color:#2a2a44}
-.nb-summary .hd{color:#4a4a78}
-.nb-revision{background:linear-gradient(#eef7ff,#dcedff);border:1.5px solid #8fbde4;color:#0f3554;
-  box-shadow:0 2px 8px rgba(60,45,20,.1),inset 0 0 0 1px rgba(143,189,228,.4)}
-.nb-revision .hd{color:#1f6699}
-/* ---- formula box ---- */
-.nb-formula{margin:11px 0;padding:11px 14px;border:1.6px solid var(--gold-soft);border-radius:8px;
-  background:linear-gradient(#ffffff,#f2fbf9);font-family:var(--mono);font-size:15px;font-weight:700;
-  color:#0b3b34;box-shadow:0 2px 7px rgba(13,148,136,.1);position:relative}
-.nb-formula::before{content:'ƒ';position:absolute;right:11px;top:6px;font:700 16px/1 var(--display);
-  color:var(--gold-soft);opacity:.6}
-/* ---- teacher marks ---- */
-/* A teacher stamps the corner of the page, not the middle of a word.
-   Sat at right:16/top:14 it landed straight on the FINAL ANSWER label, so it
-   now straddles the card's top-right corner, and the label reserves the room
-   it needs so the two can never meet on a narrow card either. */
-.nb-stamp{flex:none;transform:rotate(6deg);transform-origin:center;
-  font:600 11px/1 var(--display);letter-spacing:1.1px;text-transform:uppercase;
-  color:#c2352b;border:2px solid #c2352b;border-radius:5px;padding:4px 8px;opacity:0;
-  background:rgba(255,253,246,.8);margin:-2px 0 -2px auto;
-  animation:nbStamp .45s cubic-bezier(.34,1.56,.64,1) forwards}
-/* the stamp shares the label's row, so the two can never sit on top of
-   each other no matter how narrow the card gets */
-.nb-answer .hd{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-@media(max-width:640px){
-  /* a narrow card cannot hold the label and the stamp side by side, so the
-     stamp drops to its own line rather than hanging off the page */
-  .nb-stamp{font-size:9.5px;letter-spacing:.7px;padding:3px 6px}
+.nb-card{
+  position:relative;margin:14px 0;padding:15px 17px 15px 16px;
+  border-radius:var(--r);border:1px solid var(--line);border-left:3px solid var(--brand);
+  background:var(--surface-2);
 }
-@keyframes nbStamp{from{opacity:0;transform:rotate(8deg) scale(1.7)}to{opacity:.82;transform:rotate(8deg) scale(1)}}
-/* ---- pen writing reveal ---- */
-.nb-w{opacity:0;animation:nbWrite .42s ease forwards;animation-delay:calc(var(--i,0) * 85ms)}
-@keyframes nbWrite{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
-.nb-pen{position:absolute;width:26px;height:26px;pointer-events:none;z-index:5;
-  transition:transform .3s ease, opacity .3s;font-size:22px;line-height:1}
-@media(max-width:640px){
-  .nb-page{padding:20px 14px 34px 46px}
-  .nb-spiral{left:9px;width:15px}.nb-spiral i{width:11px;height:11px}
-  .nb-page h2{font-size:16.5px}.nb-page p,.nb-page li{font-size:14.2px}
+.nb-card .hd{
+  display:flex;align-items:center;gap:8px;margin-bottom:7px;
+  font-family:var(--display);font-size:11.6px;font-weight:750;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);
 }
-@media (prefers-reduced-motion:reduce){
-  .nb-w,.nb-page.turn,.nb-stamp{animation:none!important;opacity:1!important;transform:none!important}
+.nb-card .ic{font-size:13px;line-height:1}
+.nb-card p{margin:.42em 0;font-size:14.6px;line-height:1.66}
+.nb-card ul{margin:.42em 0 .42em 1.15em}
+.nb-card li{margin:.28em 0;font-size:14.6px;line-height:1.62}
+
+/* each kind gets its own tint — the colour is the label */
+.nb-answer{border-left-color:var(--brand);background:var(--tint)}
+.nb-answer .hd{color:var(--brand-ink)}
+.nb-define{border-left-color:var(--violet);background:var(--lav)}
+.nb-define .hd{color:var(--violet)}
+.nb-note{border-left-color:var(--cyan);background:var(--cyan-tint)}
+.nb-note .hd{color:#0e8fbe}
+.nb-tip{border-left-color:var(--ok);background:var(--ok-tint)}
+.nb-tip .hd{color:var(--ok)}
+.nb-mistake{border-left-color:var(--err);background:var(--err-tint)}
+.nb-mistake .hd{color:var(--err)}
+.nb-memory{border-left-color:var(--warn);background:var(--warn-tint)}
+.nb-memory .hd{color:var(--warn)}
+.nb-real{border-left-color:#0e8fbe;background:var(--cyan-tint)}
+.nb-real .hd{color:#0e8fbe}
+.nb-teacher{border-left-color:var(--violet);background:var(--lav)}
+.nb-teacher .hd{color:var(--violet)}
+.nb-practice{border-left-color:var(--brand);background:var(--surface-2)}
+.nb-practice .hd{color:var(--brand-ink)}
+.nb-summary{border-left-color:var(--ink-3);background:var(--surface-3)}
+.nb-summary .hd{color:var(--ink-2)}
+.nb-revision{border-left-color:var(--warn);background:var(--warn-tint)}
+.nb-revision .hd{color:var(--warn)}
+.nb-shortcut{border-left-color:var(--ok);background:var(--ok-tint)}
+.nb-shortcut .hd{color:var(--ok)}
+.nb-expected{border-left-color:var(--violet);background:var(--lav)}
+.nb-expected .hd{color:var(--violet)}
+.nb-alt{border-left-color:var(--cyan);background:var(--cyan-tint)}
+.nb-alt .hd{color:#0e8fbe}
+.nb-remember{border-left-color:var(--warn);background:var(--warn-tint)}
+.nb-remember .hd{color:var(--warn)}
+
+/* a formula gets room to breathe and a monospaced, centred line */
+.nb-formula{
+  margin:14px 0;padding:15px 18px;border-radius:var(--r);text-align:center;
+  background:linear-gradient(150deg,#f3f6ff,#f8f3ff);border:1px solid #dfe3fb;
+  font-family:var(--mono);font-size:15.4px;color:var(--ink);overflow-x:auto;
 }
-@media print{.nb-spiral,.nb-pen{display:none}.nb-page{box-shadow:none;page-break-after:always}}
+.nb-formula::before{
+  content:'ƒ';display:block;margin-bottom:5px;
+  font-family:var(--display);font-size:11px;font-weight:800;letter-spacing:.08em;
+  color:var(--brand);opacity:.65;
+}
+
+/* the wrapper the tutor drops answers into */
+.nb-w{display:block}
+
+/* index / jump-to rail used by long answers */
+.idx-btn{
+  position:fixed;right:18px;bottom:96px;z-index:150;width:46px;height:46px;border-radius:50%;
+  border:0;cursor:pointer;background:var(--grad);color:#fff;font-size:17px;
+  box-shadow:var(--sh-brand);display:grid;place-items:center;
+}
+.idx-hidden{display:none !important}
+.idx-list{
+  position:fixed;right:18px;bottom:150px;z-index:151;width:min(280px,calc(100vw - 36px));
+  max-height:52vh;overflow:auto;padding:9px;border-radius:var(--r-lg);
+  background:var(--surface);border:1px solid var(--line);box-shadow:var(--sh-3);
+}
+.idx-search{
+  width:100%;padding:9px 12px;margin-bottom:7px;border-radius:var(--r-pill);
+  border:1.5px solid var(--line);background:var(--surface-3);font-size:13.4px;
+}
+.idx-search:focus{outline:none;border-color:var(--brand);background:#fff}
+.idx-row{
+  display:block;width:100%;text-align:left;padding:8px 11px;border:0;background:transparent;
+  border-radius:var(--r-sm);cursor:pointer;font-size:13.2px;color:var(--ink-2);
+}
+.idx-row:hover{background:var(--surface-3);color:var(--ink)}
+.idx-row.cur{background:var(--tint);color:var(--brand-ink);font-weight:650}
+.idx-none{padding:12px;text-align:center;font-size:12.6px;color:var(--ink-3)}
+.idx-close{
+  position:absolute;top:9px;right:9px;width:24px;height:24px;border-radius:50%;
+  border:1px solid var(--line);background:#fff;cursor:pointer;color:var(--ink-3);font-size:11px;
+}
+@media (max-width:980px){ .idx-btn{bottom:108px} .idx-list{bottom:162px} }
 </style>
 </head>
 <body>
 
 <!-- ============================================================
-     7SOLVE PRELOADER — a topper's spiral notebook, photographed on a
-     wooden study desk. Composition follows the reference page: goal
-     header + bulb up top, formulas down both margins, the handwritten
-     7Solve masthead in the middle, the student's desk sketched below
-     it, then the ink progress bar, the signature and the Learn / Ask /
-     Understand / Achieve footer.
+     THE BRAND SPRITE — the one official 7Solve mark.
+     Defined once, used everywhere: preloader, sidebar, hero,
+     tutor card, empty states. Never redrawn, never replaced.
+     ============================================================ -->
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+  <defs>
+    <linearGradient id="g7" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2ea8f7"/>
+      <stop offset=".48" stop-color="#4f5cf1"/>
+      <stop offset="1" stop-color="#9b3fee"/>
+    </linearGradient>
+  </defs>
+  <symbol id="logo7" viewBox="0 0 64 64">
+    <rect x="4.2" y="4.2" width="55.6" height="55.6" rx="17"
+          fill="none" stroke="url(#g7)" stroke-width="3.3"/>
+    <path d="M18.5 20.5 H44 L29 47.5" fill="none" stroke="url(#g7)"
+          stroke-width="7.8" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M25 38.5 l7.6 8.8 L48.5 26" fill="none" stroke="#fff"
+          stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M25 38.5 l7.6 8.8 L48.5 26" fill="none" stroke="url(#g7)"
+          stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M50.5 12.5 l1.7 4.6 4.6 1.7 -4.6 1.7 -1.7 4.6 -1.7-4.6 -4.6-1.7 4.6-1.7 z" fill="url(#g7)"/>
+    <path d="M43.6 23.2 l1.05 2.85 2.85 1.05 -2.85 1.05 -1.05 2.85 -1.05-2.85 -2.85-1.05 2.85-1.05 z" fill="url(#g7)"/>
+  </symbol>
+</svg>
 
-     Everything lives in one 1000x1000 viewBox with preserveAspectRatio,
-     so the page is the same square on a phone and on a 4K monitor and
-     nothing can crop. Doodles are stroke-drawn (dashoffset); handwriting
-     is revealed by clip rects that travel left-to-right with the nib.
-     Per-element timing is inline (--d delay, --t duration, --l path
-     length) instead of a class per stroke.
-
-     Additive overlay: the fade-out is a CSS animation with fill:forwards
-     plus two independent JS timeouts, so a stall here can never hide a
-     working app. Plays once per session.
+<!-- ============================================================
+     PRELOADER — white ground, the mark arrives, the learning
+     verbs orbit it, the bar fills, then it hands the page over.
+     Short by design: the app is behind it, not after it.
      ============================================================ -->
 <div id="pl" class="nbp" aria-hidden="true">
-  <div class="nbp-desk"><i></i><i></i><i></i></div>
-  <div class="nbp-props">
-    <div class="nbp-books"><i></i><i></i><i></i></div>
-    <div class="nbp-geo"></div>
-    <div class="nbp-calc"><b></b><s></s><s></s><s></s><s></s><s></s><s></s></div>
-    <div class="nbp-mug"><span></span></div>
-    <div class="nbp-lamp"><i></i></div>
+  <i class="nbp-glow g1"></i><i class="nbp-glow g2"></i><i class="nbp-glow g3"></i>
+  <div class="nbp-dust">
+    <i style="--x:12%;--y:22%;--d:0s"></i><i style="--x:84%;--y:16%;--d:-1.1s"></i>
+    <i style="--x:26%;--y:74%;--d:-2.2s"></i><i style="--x:71%;--y:81%;--d:-.6s"></i>
+    <i style="--x:47%;--y:9%;--d:-1.7s"></i><i style="--x:92%;--y:56%;--d:-2.8s"></i>
+    <i style="--x:6%;--y:52%;--d:-.3s"></i><i style="--x:58%;--y:90%;--d:-1.4s"></i>
   </div>
-  <div class="nbp-sun"></div>
-  <div class="nbp-stage">
-    <div class="nbp-book">
-      <div class="nbp-next"></div>
-      <div class="nbp-page">
-        <div class="nbp-rule"></div>
-        <div class="nbp-margin"></div>
-        <svg class="nbp-svg" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid meet" role="img" aria-label="7Solve — where every doubt becomes understanding">
-          <defs>
-            <clipPath id="k1"><rect class="rv" style="--t:.95s;--d:2.05s" x="370" y="206" width="270" height="162"/></clipPath>
-            <clipPath id="k2"><rect class="rv" style="--t:.55s;--d:3.30s" x="370" y="377" width="260" height="52"/></clipPath>
-            <clipPath id="k3"><rect class="rv" style="--t:.62s;--d:3.90s" x="344" y="421" width="320" height="52"/></clipPath>
-            <clipPath id="k4"><rect class="rv" style="--t:.42s;--d:1.95s" x="428" y="66" width="150" height="48"/></clipPath>
-            <clipPath id="k5"><rect class="rv" style="--t:.48s;--d:7.70s" x="391" y="694" width="230" height="48"/></clipPath>
-            <clipPath id="k6"><rect class="rv" style="--t:.50s;--d:8.90s" x="394" y="832" width="215" height="48"/></clipPath>
-          </defs>
 
-          <!-- ================= top of the page ================= -->
-          <!-- keep going! -->
-          <text class="hw sm ink fx" style="--d:2.60s" x="222" y="102">Keep</text>
-          <text class="hw sm ink fx" style="--d:2.72s" x="232" y="140">Going!</text>
-          <path class="dr blue-s" style="--l:80;--t:.22s;--d:2.86s" d="M230 158 H305"/>
-          <path class="dr" style="--l:40;--t:.2s;--d:2.98s" d="M240 178 q16 14 32 0"/>
-          <circle class="fx" style="--d:3.06s" cx="243" cy="166" r="3" fill="#17223d"/>
-          <circle class="fx" style="--d:3.06s" cx="267" cy="166" r="3" fill="#17223d"/>
+  <div class="nbp-book">
+    <div class="nbp-orbit">
+      <span class="nbp-ring"></span>
+      <span class="nbp-node n1"><b>📷</b>Snap</span>
+      <span class="nbp-node n2"><b>ƒx</b>Solve</span>
+      <span class="nbp-node n3"><b>📖</b>Explain</span>
+      <span class="nbp-node n4"><b>📈</b>Improve</span>
+      <span class="nbp-node n5"><b>🧠</b>Understand</span>
+      <span class="nbp-node n6"><b>🎯</b>Practice</span>
+      <span class="nbp-node n7"><b>√x</b>Learn</span>
+      <span class="nbp-node n8"><b>💬</b>Ask</span>
+      <span class="nbp-mark"><svg viewBox="0 0 64 64"><use href="#logo7"/></svg><i class="nbp-sweep"></i></span>
+    </div>
 
-          <!-- today's goal -->
-          <text class="hw sm ink" x="434" y="100" clip-path="url(#k4)">Today's Goal:</text>
-          <path class="dr" style="--l:145;--t:.26s;--d:2.38s" d="M432 112 H572"/>
-          <text class="hw xs blue fx" style="--d:2.52s" x="316" y="148">Learn → Understand → Solve → Achieve</text>
-          <path class="dr blue-s" style="--l:100;--t:.24s;--d:2.86s" d="M700 126 h24 v24 h-24 Z"/>
-          <path class="dr blue-s" style="--l:36;--t:.2s;--d:3.02s" d="M705 138 l7 8 l14-16"/>
+    <div class="nbp-word">7<span>Solve</span></div>
+    <div class="nbp-tag">Every doubt deserves a <b>good answer.</b></div>
 
-          <!-- light bulb -->
-          <path class="bulbglow fx" style="--d:5.52s" d="M790 62 a34 34 0 0 1 34 34 c0 15-11 21-13 33 h-42 c-2-12-13-18-13-33 a34 34 0 0 1 34-34 Z"/>
-          <path class="dr" style="--l:265;--t:.36s;--d:5.40s" d="M790 62 a34 34 0 0 1 34 34 c0 15-11 21-13 33 h-42 c-2-12-13-18-13-33 a34 34 0 0 1 34-34 Z"/>
-          <path class="dr" style="--l:80;--t:.22s;--d:5.62s" d="M772 138 h36 M777 150 h26"/>
-          <path class="dr warm" style="--l:80;--t:.26s;--d:5.70s" d="M790 42 v-18 M834 56 l14-13 M746 56 l-14-13"/>
+    <div class="nbp-load">
+      <div class="nbp-status">Preparing your learning space…</div>
+      <div class="nbp-bar"><i></i></div>
+      <div class="pct">0%</div>
+    </div>
 
-          <!-- blue star, top right -->
-          <path class="dr blue-s" style="--l:190;--t:.3s;--d:5.82s" transform="translate(812 150)" d="M0 -22 L5.3 -7.3 L20.9 -6.8 L8.6 2.8 L12.9 17.8 L0 9 L-12.9 17.8 L-8.6 2.8 L-20.9 -6.8 L-5.3 -7.3 Z"/>
-
-          <!-- ================= left margin: maths ================= -->
-          <text class="hw sm ink fx" style="--d:4.70s" x="198" y="240">E = mc²</text>
-          <path class="dr blue-s" style="--l:98;--t:.24s;--d:4.84s" d="M196 258 H290"/>
-
-          <!-- coordinate plane + parabola -->
-          <path class="dr" style="--l:240;--t:.34s;--d:4.98s" d="M228 402 V300 M228 402 H352"/>
-          <path class="dr" style="--l:60;--t:.18s;--d:5.24s" d="M222 308 l6-9 l6 9 M344 396 l9 6 l-9 6"/>
-          <path class="dr blue-s" style="--l:195;--t:.36s;--d:5.16s" d="M240 312 C252 398 296 398 336 320"/>
-          <path class="dash fx" style="--d:5.42s" d="M268 396 V352 M296 396 V346"/>
-          <text class="hw xs ink fx" style="--d:5.26s" x="204" y="306">y</text>
-          <text class="hw xs ink fx" style="--d:5.26s" x="358" y="410">x</text>
-
-          <!-- right triangle -->
-          <path class="dr" style="--l:410;--t:.42s;--d:5.02s" d="M192 542 V452 L314 542 Z"/>
-          <path class="dr" style="--l:40;--t:.18s;--d:5.34s" d="M192 526 h16 v16"/>
-          <text class="hw xs ink fx" style="--d:5.20s" x="162" y="500">a</text>
-          <text class="hw xs ink fx" style="--d:5.24s" x="242" y="572">b</text>
-          <text class="hw xs ink fx" style="--d:5.28s" x="264" y="490">c</text>
-
-          <!-- pink star -->
-          <path class="dr pink" style="--l:150;--t:.3s;--d:6.30s" transform="translate(158 608)" d="M0 -19 L4.6 -6.3 L18 -5.9 L7.4 2.4 L11.1 15.3 L0 7.7 L-11.1 15.3 L-7.4 2.4 L-18 -5.9 L-4.6 -6.3 Z"/>
-
-          <!-- ================= right margin: science ================= -->
-          <text class="hw sm ink fx" style="--d:4.76s" x="716" y="240">a² + b² = c²</text>
-          <path class="dr pink" style="--l:140;--t:.26s;--d:4.90s" d="M714 258 H851"/>
-
-          <!-- dna helix -->
-          <path class="dr blue-s" style="--l:150;--t:.34s;--d:6.05s" d="M902 302 c26 18 26 36 0 54 c-26 18-26 36 0 54"/>
-          <path class="dr blue-s" style="--l:150;--t:.34s;--d:6.13s" d="M938 302 c-26 18-26 36 0 54 c26 18 26 36 0 54"/>
-          <path class="dr" style="--l:145;--t:.26s;--d:6.28s" d="M908 316 h24 M902 340 h36 M908 366 h24 M902 390 h36"/>
-
-          <!-- question mark -->
-          <text class="hw lg ink fx" style="--d:5.88s" x="826" y="492">?</text>
-          <path class="dr blue-s" style="--l:60;--t:.22s;--d:6.00s" d="M884 452 l16-20 M896 476 l22-9"/>
-
-          <!-- molecule -->
-          <circle class="dr" style="--l:90;--t:.26s;--d:6.02s" cx="880" cy="596" r="14" fill="none"/>
-          <path class="dr" style="--l:110;--t:.28s;--d:6.14s" d="M869 587 L854 572 M894 591 L910 583 M886 609 L893 630"/>
-          <circle class="dr" style="--l:66;--t:.22s;--d:6.24s" cx="846" cy="564" r="10" fill="none"/>
-          <circle class="dr" style="--l:66;--t:.22s;--d:6.28s" cx="918" cy="578" r="10" fill="none"/>
-          <circle class="dr" style="--l:66;--t:.22s;--d:6.32s" cx="896" cy="638" r="10" fill="none"/>
-
-          <!-- atom -->
-          <ellipse class="dr blue-s" style="--l:190;--t:.3s;--d:6.36s" cx="890" cy="780" rx="36" ry="14" fill="none"/>
-          <ellipse class="dr blue-s" style="--l:190;--t:.3s;--d:6.44s" cx="890" cy="780" rx="36" ry="14" fill="none" transform="rotate(60 890 780)"/>
-          <ellipse class="dr blue-s" style="--l:190;--t:.3s;--d:6.52s" cx="890" cy="780" rx="36" ry="14" fill="none" transform="rotate(-60 890 780)"/>
-          <circle class="fx" style="--d:6.62s" cx="890" cy="780" r="6" fill="#2647cf"/>
-
-          <!-- ================= the masthead ================= -->
-          <path class="dr blue-s" style="--l:105;--t:.2s;--d:3.05s" d="M404 236 l-10-26 M460 230 v-28 M600 236 l14-26"/>
-          <text class="hw xl blue" x="376" y="326" clip-path="url(#k1)">7</text>
-          <text class="hw big ink" x="436" y="326" clip-path="url(#k1)">Solve</text>
-          <path class="dr blue-s" style="--l:250;--t:.32s;--d:3.08s" d="M378 350 H626"/>
-          <path class="dr blue-s" style="--l:202;--t:.28s;--d:3.20s" d="M402 370 H602"/>
-
-          <text class="hw md ink" x="376" y="412" clip-path="url(#k2)">Where Every <tspan class="blue">Doubt</tspan></text>
-          <text class="hw md ink" x="350" y="456" clip-path="url(#k3)">Becomes <tspan class="blue">Understanding.</tspan></text>
-          <path class="dr blue-s" style="--l:188;--t:.28s;--d:4.55s" d="M462 474 H646"/>
-
-          <!-- teacher's mark in the margin -->
-          <path class="dr red" style="--l:95;--t:.24s;--d:6.66s" d="M700 300 l16 18 l30 -46"/>
-          <text class="hw xs red fx" style="--d:6.78s" transform="translate(112 648) rotate(-90)" x="0" y="0">Practice makes progress</text>
-
-          <!-- ================= the student's desk ================= -->
-          <path class="dr" style="--l:660;--t:.5s;--d:6.10s" d="M196 694 H840"/>
-
-          <!-- stack of books -->
-          <path class="dr" style="--l:320;--t:.28s;--d:6.24s" d="M203 586 h132 v27 h-132 Z"/>
-          <path class="dr" style="--l:320;--t:.28s;--d:6.34s" d="M203 613 h132 v27 h-132 Z"/>
-          <path class="dr" style="--l:320;--t:.28s;--d:6.44s" d="M203 640 h132 v27 h-132 Z"/>
-          <path class="dr" style="--l:320;--t:.28s;--d:6.54s" d="M203 667 h132 v27 h-132 Z"/>
-          <path class="dr" style="--l:120;--t:.24s;--d:6.62s" d="M212 586 v27 M212 613 v27 M212 640 v27 M212 667 v27"/>
-          <text class="hw tiny blue fx" style="--d:6.70s" x="222" y="606">LEARN</text>
-          <text class="hw tiny ink fx"  style="--d:6.76s" x="222" y="633">PRACTICE</text>
-          <text class="hw tiny blue fx" style="--d:6.82s" x="222" y="660">UNDERSTAND</text>
-          <text class="hw tiny ink fx"  style="--d:6.88s" x="222" y="687">ACHIEVE</text>
-
-          <!-- study lamp -->
-          <ellipse class="lampglow fx" style="--d:7.32s" cx="414" cy="604" rx="36" ry="28"/>
-          <path class="dr" style="--l:170;--t:.3s;--d:6.60s" d="M364 694 V608 M344 694 h40"/>
-          <path class="dr" style="--l:60;--t:.22s;--d:6.82s" d="M364 608 L406 578"/>
-          <path class="dr" style="--l:150;--t:.28s;--d:6.92s" d="M396 562 l34 -12 l16 32 l-36 12 Z"/>
-          <path class="dr warm" style="--l:70;--t:.24s;--d:7.16s" d="M410 606 l-6 16 M428 612 v18 M392 600 l-15 10"/>
-
-          <!-- the student, seen from behind -->
-          <path class="dr" style="--l:340;--t:.4s;--d:6.96s" d="M414 694 c0-58 32-84 88-84 s88 26 88 84"/>
-          <path class="dr" style="--l:240;--t:.36s;--d:7.14s" d="M466 566 c-10-34 8-56 36-56 s46 22 36 56 c-9 13-63 13-72 0 Z"/>
-          <path class="dr" style="--l:60;--t:.2s;--d:7.30s" d="M470 526 c6-19 18-27 30-29"/>
-          <path class="dr" style="--l:60;--t:.2s;--d:7.36s" d="M482 513 c9-13 22-19 33-18"/>
-          <path class="dr" style="--l:60;--t:.2s;--d:7.42s" d="M500 504 c11-6 23-5 31 3"/>
-          <path class="dr" style="--l:60;--t:.2s;--d:7.48s" d="M520 503 c12 3 20 11 22 22"/>
-          <path class="dr" style="--l:60;--t:.2s;--d:7.54s" d="M534 515 c8 8 11 17 10 27"/>
-          <path class="dr" style="--l:80;--t:.18s;--d:7.58s" d="M468 548 c-4-12-2-23 2-31 M540 546 c5-11 5-22 2-30"/>
-          <path class="dr" style="--l:70;--t:.24s;--d:7.44s" d="M486 580 v26 M518 580 v26"/>
-          <path class="dr" style="--l:90;--t:.24s;--d:7.50s" d="M468 646 c14-18 54-18 68 0"/>
-          <path class="dr" style="--l:130;--t:.28s;--d:7.56s" d="M448 694 c0-28 6-42 16-52 M556 694 c0-28-6-42-16-52"/>
-
-          <!-- monitor -->
-          <path class="dr" style="--l:390;--t:.34s;--d:7.06s" d="M718 682 V596 h104 v86 Z"/>
-          <path class="dr" style="--l:80;--t:.22s;--d:7.30s" d="M756 682 v10 h28 v-10"/>
-          <text class="hw xs blue fx" style="--d:7.40s" x="734" y="648">7<tspan class="ink">Solve</tspan></text>
-
-          <!-- pencil holder -->
-          <path class="dr" style="--l:200;--t:.26s;--d:7.34s" d="M592 694 v-42 h44 v42 Z"/>
-          <path class="dr" style="--l:40;--t:.18s;--d:7.48s" d="M600 652 v-32"/>
-          <path class="dr blue-s" style="--l:46;--t:.18s;--d:7.54s" d="M612 652 v-40"/>
-          <path class="dr pink" style="--l:42;--t:.18s;--d:7.60s" d="M624 652 v-34"/>
-
-          <!-- coffee mug -->
-          <path class="dr" style="--l:225;--t:.26s;--d:7.44s" d="M648 694 v-44 h54 v44 Z"/>
-          <path class="dr" style="--l:56;--t:.2s;--d:7.60s" d="M702 660 a15 15 0 0 1 0 26"/>
-          <text class="hw xs blue fx" style="--d:7.68s" x="666" y="686">7</text>
-
-          <!-- ================= progress ================= -->
-          <text class="hw sm ink" x="397" y="726" clip-path="url(#k5)">Loading Knowledge...</text>
-          <rect class="dr" style="--l:740;--t:.42s;--d:7.95s" x="339" y="742" width="331" height="35" rx="9" fill="none"/>
-          <rect class="fill" x="345" y="748" width="0" height="23" rx="6"/>
-          <text class="hw sm ink pct fx" style="--d:8.20s" x="684" y="771">0%</text>
-          <circle class="dot fx" style="--d:8.55s" cx="414" cy="809" r="7"/>
-          <circle class="dot fx" style="--d:8.60s" cx="444" cy="809" r="7"/>
-          <circle class="dot fx" style="--d:8.65s" cx="474" cy="809" r="7"/>
-          <circle class="dot on fx" style="--d:8.70s" cx="504" cy="809" r="7"/>
-          <circle class="dot fx" style="--d:8.75s" cx="534" cy="809" r="7"/>
-          <circle class="dot fx" style="--d:8.80s" cx="564" cy="809" r="7"/>
-          <circle class="dot fx" style="--d:8.85s" cx="594" cy="809" r="7"/>
-
-          <!-- ================= signature ================= -->
-          <text class="hw sm ink" x="400" y="866" clip-path="url(#k6)">Designed by <tspan class="blue">7By.in</tspan></text>
-          <path class="dr blue-s" style="--l:212;--t:.3s;--d:9.35s" d="M398 878 H606"/>
-          <path class="dr blue-s" style="--l:160;--t:.28s;--d:9.42s" transform="translate(626 856) scale(.5)" d="M0 16 C-18 2 -26 -8 -18 -18 C-11 -26 -1 -22 0 -12 C1 -22 11 -26 18 -18 C26 -8 18 2 0 16 Z"/>
-          <path class="dr pink" style="--l:165;--t:.3s;--d:9.48s" transform="translate(890 866) scale(1.25)" d="M0 16 C-18 2 -26 -8 -18 -18 C-11 -26 -1 -22 0 -12 C1 -22 11 -26 18 -18 C26 -8 18 2 0 16 Z"/>
-          <path class="dr blue-s" style="--l:150;--t:.3s;--d:9.50s" transform="translate(290 858)" d="M0 -19 L4.6 -6.3 L18 -5.9 L7.4 2.4 L11.1 15.3 L0 7.7 L-11.1 15.3 L-7.4 2.4 L-18 -5.9 L-4.6 -6.3 Z"/>
-
-          <!-- ================= footer: learn / ask / understand / achieve ================= -->
-          <path class="dr" style="--l:130;--t:.26s;--d:7.10s" d="M200 958 c10-10 20-10 22-4 v-22 c-2-6-12-6-22 4 Z"/>
-          <path class="dr" style="--l:130;--t:.26s;--d:7.16s" d="M244 958 c-10-10-20-10-22-4 v-22 c2-6 12-6 22 4 Z"/>
-          <text class="hw xs ink fx" style="--d:7.22s" x="254" y="962">Learn</text>
-          <path class="dr blue-s" style="--l:56;--t:.2s;--d:7.30s" d="M254 972 H307"/>
-          <path class="dr faint" style="--l:36;--t:.16s;--d:7.34s" d="M334 934 V966"/>
-
-          <circle class="dr" style="--l:120;--t:.26s;--d:7.24s" cx="384" cy="952" r="18" fill="none"/>
-          <text class="hw xs blue fx" style="--d:7.34s" x="377" y="962">?</text>
-          <text class="hw xs ink fx" style="--d:7.36s" x="410" y="962">Ask</text>
-          <path class="dr blue-s" style="--l:44;--t:.2s;--d:7.44s" d="M410 972 H445"/>
-          <path class="dr faint" style="--l:36;--t:.16s;--d:7.48s" d="M466 934 V966"/>
-
-          <path class="bulbglow fx" style="--d:7.50s" d="M506 934 a18 18 0 0 1 18 18 c0 8-6 12-7 18 h-22 c-1-6-7-10-7-18 a18 18 0 0 1 18-18 Z"/>
-          <path class="dr" style="--l:120;--t:.28s;--d:7.38s" d="M506 934 a18 18 0 0 1 18 18 c0 8-6 12-7 18 h-22 c-1-6-7-10-7-18 a18 18 0 0 1 18-18 Z"/>
-          <path class="dr warm" style="--l:20;--t:.16s;--d:7.52s" d="M499 976 h14"/>
-          <text class="hw xs ink fx" style="--d:7.50s" x="534" y="962">Understand</text>
-          <path class="dr blue-s" style="--l:110;--t:.24s;--d:7.58s" d="M534 972 H640"/>
-          <path class="dr faint" style="--l:36;--t:.16s;--d:7.62s" d="M670 934 V966"/>
-
-          <circle class="dr" style="--l:115;--t:.26s;--d:7.52s" cx="716" cy="952" r="17" fill="none"/>
-          <circle class="dr pink" style="--l:62;--t:.2s;--d:7.60s" cx="716" cy="952" r="9" fill="none"/>
-          <circle class="fx" style="--d:7.68s" cx="716" cy="952" r="3.5" fill="#d94f7d"/>
-          <path class="dr" style="--l:40;--t:.18s;--d:7.66s" d="M733 936 l-20 20"/>
-          <path class="dr warm" style="--l:34;--t:.16s;--d:7.72s" d="M737 930 l-5 11 l11-5 Z"/>
-          <text class="hw xs ink fx" style="--d:7.66s" x="750" y="962">Achieve</text>
-          <path class="dr blue-s" style="--l:72;--t:.22s;--d:7.74s" d="M750 972 H818"/>
-        </svg>
-        <div class="nbp-shine"></div>
-        <div class="nbp-curl"></div>
-      </div>
-      <div class="nbp-spiral"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-      <div class="nbp-cover"><b></b><span>7Solve</span></div>
-      <!-- sticky notes, taped down -->
-      <div class="nbp-note n1"><b></b>Don't just<br>Study,<br>Understand.</div>
-      <div class="nbp-note n2"><b></b>One Step<br>at a Time.</div>
-      <div class="nbp-note n3"><b></b>Mistakes are<br>Proof you<br>are Trying.</div>
-      <div class="nbp-pencil"></div>
+    <div class="nbp-subs">
+      <span>Maths</span><span>Science</span><span>Commerce</span><span>Languages</span>
+      <span>Computer</span><span>GK &amp; Current Affairs</span><span>&amp; More</span>
     </div>
   </div>
-  <button class="nbp-skip" type="button">Skip intro</button>
+
+  <button class="nbp-skip" type="button">Skip</button>
+  <div class="nbp-by">Powered by AI · Made for Students · By <b>7By.in</b></div>
 </div>
 <style>
-/* ---------------- the desk ---------------- */
-.nbp{position:fixed;inset:0;z-index:99999;overflow:hidden;display:flex;align-items:center;justify-content:center;
-  background:linear-gradient(158deg,#8a6438 0%,#6a4926 44%,#472f16 100%);
-  animation:nbpOut .5s ease 10.05s forwards}
-.nbp-desk{position:absolute;inset:0;
-  background:repeating-linear-gradient(93deg,rgba(0,0,0,.05) 0 3px,transparent 3px 12px),
-    repeating-linear-gradient(93deg,rgba(255,255,255,.026) 0 1px,transparent 1px 27px),
-    radial-gradient(120% 90% at 50% 42%,rgba(255,236,196,.14),transparent 62%)}
-.nbp-desk i{position:absolute;border-radius:50%;background:rgba(0,0,0,.14);filter:blur(18px)}
-.nbp-desk i:nth-child(1){left:5%;top:10%;width:28%;height:20%}
-.nbp-desk i:nth-child(2){right:7%;bottom:12%;width:32%;height:22%}
-.nbp-desk i:nth-child(3){right:12%;top:6%;width:20%;height:16%}
-/* morning sunlight crossing the page */
-.nbp-sun{position:absolute;left:-45%;top:-45%;width:58%;height:195%;pointer-events:none;
-  transform:rotate(15deg);filter:blur(13px);
-  background:linear-gradient(90deg,transparent,rgba(255,244,208,.36) 42%,rgba(255,235,178,.1) 70%,transparent);
-  animation:nbpSun 10s ease-in-out .25s forwards}
-@keyframes nbpSun{0%{transform:translateX(0) rotate(15deg)}100%{transform:translateX(215%) rotate(15deg)}}
-/* ---------------- desk props (wide screens only) ---------------- */
-.nbp-props{display:none}
-@media(min-width:980px){
-  .nbp-props{display:block;position:absolute;inset:0;pointer-events:none;opacity:0;
-    animation:nbpFade 1.1s ease .5s forwards;filter:blur(1.4px)}
-  .nbp-books{position:absolute;left:6%;bottom:15%;display:flex;flex-direction:column;gap:3px;transform:rotate(2deg)}
-  .nbp-books i{display:block;width:126px;height:16px;border-radius:2px;box-shadow:0 5px 12px rgba(0,0,0,.4)}
-  .nbp-books i:nth-child(1){background:linear-gradient(90deg,#8d4a3f,#b06657)}
-  .nbp-books i:nth-child(2){background:linear-gradient(90deg,#3f6a8d,#537fa4);width:136px}
-  .nbp-books i:nth-child(3){background:linear-gradient(90deg,#5c7a4a,#71945b);width:118px}
-  .nbp-geo{position:absolute;left:9%;top:24%;width:132px;height:56px;border-radius:5px;transform:rotate(-9deg);
-    background:linear-gradient(160deg,#3a5f8a,#26456a);box-shadow:0 8px 18px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.18)}
-  .nbp-geo::after{content:'';position:absolute;left:12px;right:12px;top:26px;height:2px;background:rgba(255,255,255,.22)}
-  .nbp-calc{position:absolute;right:9%;top:20%;width:74px;height:112px;border-radius:6px;transform:rotate(11deg);
-    background:linear-gradient(160deg,#2c2c30,#191919);box-shadow:0 10px 20px rgba(0,0,0,.45);
-    padding:7px;display:flex;flex-wrap:wrap;gap:4px;align-content:flex-start}
-  .nbp-calc b{width:100%;height:20px;border-radius:2px;background:#9fb59a;margin-bottom:3px}
-  .nbp-calc s{width:14px;height:11px;border-radius:2px;background:#4a4a50}
-  .nbp-mug{position:absolute;right:11%;bottom:18%;width:66px;height:60px;border-radius:6px 6px 28px 28px;
-    background:linear-gradient(#f6f3ea,#ddd6c4);box-shadow:0 16px 28px rgba(0,0,0,.46)}
-  .nbp-mug span{position:absolute;right:-18px;top:14px;width:23px;height:26px;border:6px solid #e8e2d2;
-    border-left-color:transparent;border-radius:0 15px 15px 0}
-  .nbp-lamp{position:absolute;left:2%;top:2%;width:200px;height:230px}
-  .nbp-lamp i{position:absolute;left:78px;top:56px;width:230px;height:230px;border-radius:50%;
-    background:radial-gradient(circle,rgba(255,238,190,.34),transparent 66%)}
+/* ---------------- the preloader ---------------- */
+.nbp{
+  position:fixed;inset:0;z-index:99999;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+  background:
+    radial-gradient(52% 40% at 16% 4%,rgba(93,127,255,.13),transparent 62%),
+    radial-gradient(44% 36% at 88% 6%,rgba(150,84,244,.12),transparent 60%),
+    radial-gradient(60% 44% at 50% 104%,rgba(34,184,238,.10),transparent 64%),
+    #fafbff;
+  animation:nbpOut .52s cubic-bezier(.4,0,.2,1) 2.55s forwards;
 }
-/* ---------------- the notebook ---------------- */
-.nbp-stage{position:relative;--zoom:1.06;width:min(88vw,80vh,460px);perspective:1500px;opacity:0;
-  transform:translateY(20px) scale(.9);
-  animation:nbpIn 1.1s cubic-bezier(.22,1,.36,1) .1s forwards, nbpZoom 10.1s ease-in-out .1s forwards}
-@media(min-width:980px){.nbp-stage{--zoom:1.17;width:min(52vw,86vh,540px)}
-  .nbp-note{font-size:calc(min(52vw,86vh,540px) * .034)}}
-.nbp-book{position:relative;transform-style:preserve-3d;
-  filter:drop-shadow(0 34px 54px rgba(0,0,0,.55)) drop-shadow(0 4px 0 rgba(210,202,180,.9))}
-.nbp-page,.nbp-next{position:absolute;inset:0;border-radius:4px 12px 12px 4px;overflow:hidden;
-  background:linear-gradient(101deg,#fdfaf0 0%,#fefcf5 48%,#f6efdf 100%);
-  box-shadow:inset 30px 0 30px -30px rgba(120,90,40,.5),inset 0 0 0 1px rgba(160,140,100,.22)}
-.nbp-page{position:relative;aspect-ratio:1/1;z-index:1;transform-origin:left center;backface-visibility:hidden;
-  will-change:transform;animation:nbpFlip .72s cubic-bezier(.5,0,.55,1) 9.60s forwards}
-.nbp-next{z-index:0;background-image:repeating-linear-gradient(180deg,transparent 0 40px,rgba(86,124,166,.2) 40px 41px),
-  linear-gradient(101deg,#fbf7ec,#f4ecda);background-position:0 30px,0 0}
-/* paper: blue rules, red margin, fibre grain */
-.nbp-rule{position:absolute;inset:0;pointer-events:none;
-  background:repeating-linear-gradient(180deg,transparent 0 40px,rgba(86,124,166,.24) 40px 41px),
-    repeating-linear-gradient(112deg,rgba(150,125,80,.028) 0 2px,transparent 2px 5px);
-  background-position:0 30px,0 0}
-.nbp-margin{position:absolute;left:13%;top:0;bottom:0;width:1.6px;background:rgba(198,84,78,.42);pointer-events:none}
-.nbp-shine{position:absolute;inset:0;pointer-events:none;z-index:2;
-  background:radial-gradient(78% 44% at 24% 4%,rgba(255,255,255,.62),transparent 60%),
-    radial-gradient(60% 40% at 92% 96%,rgba(120,92,48,.12),transparent 62%)}
-.nbp-svg{position:absolute;inset:0;width:100%;height:100%}
-/* the page lifts at the outer corner */
-.nbp-curl{display:none}
-/* spiral binding */
-/* plain paper here too, so the intro and the page agree */
-.nbp-spiral{display:none}
-/* the cover that opens */
-.nbp-cover{position:absolute;inset:0;z-index:6;border-radius:4px 12px 12px 4px;transform-origin:left center;
-  background:linear-gradient(128deg,#20456e 0%,#16304e 52%,#0f2337 100%);
-  box-shadow:0 0 0 1px rgba(0,0,0,.3),inset -18px 0 30px -26px rgba(0,0,0,.7);
-  backface-visibility:hidden;will-change:transform;
-  animation:nbpOpen .92s cubic-bezier(.5,0,.35,1) 1.05s forwards}
-.nbp-cover b{position:absolute;inset:9% 8%;border:1.5px solid rgba(255,255,255,.16);border-radius:4px}
-.nbp-cover span{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%) rotate(-1.5deg);
-  padding:3% 8%;border-radius:3px;background:#f4efe0;color:#17223d;
-  font:700 clamp(18px,5.4vw,34px)/1 'Caveat','Segoe Script',cursive;
-  box-shadow:0 4px 12px rgba(0,0,0,.35)}
-@keyframes nbpOpen{0%{transform:rotateY(0)}100%{transform:rotateY(-168deg)}}
-@keyframes nbpFlip{0%{transform:rotateY(0)}100%{transform:rotateY(-170deg)}}
-/* ---------------- handwriting ---------------- */
-.hw{font-family:'Caveat','Segoe Script','Bradley Hand',cursive;fill:#17223d}
-.hw.xl{font-size:118px;font-weight:700}
-.hw.big{font-size:98px;font-weight:700}
-.hw.lg{font-size:62px;font-weight:700}
-.hw.md{font-size:36px;font-weight:600}
-.hw.sm{font-size:31px;font-weight:600}
-.hw.xs{font-size:25px;font-weight:600}
-.hw.tiny{font-size:17px;font-weight:700;letter-spacing:.5px}
-.ink{fill:#17223d}.blue{fill:#2647cf}.red{fill:#c2352b}
-.dr.pink{stroke:#d94f7d}.dr.warm{stroke:#d9a521}.dr.red{stroke:#c2352b}
-.dr.faint{stroke:rgba(23,34,61,.34);stroke-width:2}
-.bulbglow{fill:#fbdf6d;opacity:0;animation:nbpGlow .7s ease var(--d,0s) forwards}
-.lampglow{fill:#ffe9a8;opacity:0;animation:nbpGlow .9s ease var(--d,0s) forwards}
-.dot{fill:none;stroke:#2647cf;stroke-width:2.4}
-.dot.on{fill:#2647cf}
-.dash{fill:none;stroke:#17223d;stroke-width:2;stroke-dasharray:5 5;opacity:0;
-  animation:nbpFade .3s ease var(--d,0s) forwards}
-/* ink strokes draw themselves */
-.dr{fill:none;stroke:#17223d;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round;
-  stroke-dasharray:var(--l,300);stroke-dashoffset:var(--l,300);
-  animation:nbpDraw var(--t,.32s) ease var(--d,0s) forwards}
-@keyframes nbpDraw{to{stroke-dashoffset:0}}
-/* handwriting revealed left-to-right, as if written */
-.rv{transform:scaleX(0);transform-box:fill-box;transform-origin:left center;
-  animation:nbpRv var(--t,.5s) linear var(--d,0s) forwards}
-@keyframes nbpRv{to{transform:scaleX(1)}}
-.fx{opacity:0;animation:nbpFade .42s ease var(--d,0s) forwards}
-@keyframes nbpFade{to{opacity:1}}
-@keyframes nbpGlow{to{opacity:.42}}
-/* the progress bar fills with blue ink */
-.fill{fill:#2647cf;opacity:.88;animation:nbpFill 1.35s cubic-bezier(.35,0,.25,1) 8.20s forwards}
-@keyframes nbpFill{to{width:319px}}
-/* ---------------- sticky notes ---------------- */
-.nbp-note{position:absolute;z-index:5;padding:.55em .5em .65em;border-radius:2px;
-  font:700 15px/1.34 'Caveat','Segoe Script',cursive;color:#3d3210;text-align:center;
-  font-size:calc(min(88vw,80vh,460px) * .034);
-  box-shadow:2px 6px 14px rgba(50,32,8,.34);opacity:0;
-  background-image:repeating-linear-gradient(118deg,rgba(120,96,50,.05) 0 2px,transparent 2px 5px)}
-.nbp-note b{position:absolute;left:50%;top:-9px;width:46%;height:17px;transform:translateX(-50%) rotate(-2deg);
-  background:linear-gradient(rgba(126,170,214,.62),rgba(96,145,196,.5));box-shadow:0 1px 3px rgba(0,0,0,.18)}
-.n1{right:-6%;top:13%;width:21%;--r:2.5deg;background-color:#e4d6ba;
-  background-image:repeating-linear-gradient(118deg,rgba(120,96,50,.06) 0 2px,transparent 2px 5px);
-  transform:rotate(2.5deg) scale(.82);animation:nbpNote .52s cubic-bezier(.34,1.56,.64,1) 5.00s forwards}
-.n2{left:57%;top:48%;width:15%;--r:-3.5deg;background-color:#fbe98c;
-  background-image:repeating-linear-gradient(118deg,rgba(140,110,20,.06) 0 2px,transparent 2px 5px);
-  transform:rotate(-3.5deg) scale(.82);animation:nbpNote .52s cubic-bezier(.34,1.56,.64,1) 5.24s forwards}
-.n3{left:-5%;bottom:12%;width:21%;--r:-2deg;background-color:#e6d8bc;
-  background-image:repeating-linear-gradient(118deg,rgba(120,96,50,.06) 0 2px,transparent 2px 5px);
-  transform:rotate(-2deg) scale(.82);animation:nbpNote .52s cubic-bezier(.34,1.56,.64,1) 5.48s forwards}
-@keyframes nbpNote{to{opacity:1;transform:rotate(var(--r,0deg)) scale(1)}}
-/* a real pencil resting on the page */
-.nbp-pencil{position:absolute;right:-3%;top:44%;width:3.4%;height:38%;z-index:5;transform:rotate(13deg);
-  background:linear-gradient(180deg,#33302d 0 3%,#e9cd97 3% 11%,#2b2724 11% 14.5%,#1f1c1a 14.5% 100%);
-  clip-path:polygon(50% 0,100% 11%,100% 100%,0 100%,0 11%);
-  filter:drop-shadow(-7px 11px 14px rgba(0,0,0,.42));opacity:0;
-  animation:nbpFade .8s ease 1.9s forwards}
-.nbp-note,.nbp-pencil{animation-fill-mode:forwards}
-/* everything on the page clears just before the flip */
-.nbp-note,.nbp-pencil{will-change:transform,opacity}
-.nbp-book.clearing .nbp-note,.nbp-book.clearing .nbp-pencil{opacity:0;transition:opacity .3s ease}
-@keyframes nbpIn{to{opacity:1;transform:translateY(0) scale(1)}}
-@keyframes nbpZoom{0%{transform:translateY(0) scale(1)}
-  100%{transform:translateY(-2%) scale(var(--zoom,1.06))}}
+.nbp-done{display:none !important}
+
+.nbp-glow{position:absolute;border-radius:50%;filter:blur(60px);pointer-events:none}
+.nbp-glow.g1{left:-8%;top:-14%;width:46%;height:56%;background:rgba(93,127,255,.20)}
+.nbp-glow.g2{right:-10%;top:-6%;width:40%;height:48%;background:rgba(155,63,238,.16)}
+.nbp-glow.g3{left:32%;bottom:-22%;width:44%;height:50%;background:rgba(34,184,238,.14)}
+
+.nbp-dust{position:absolute;inset:0;pointer-events:none}
+.nbp-dust i{
+  position:absolute;left:var(--x);top:var(--y);width:5px;height:5px;border-radius:50%;
+  background:linear-gradient(135deg,#7ea2ff,#b183f5);opacity:0;
+  animation:nbpDust 3.6s ease-in-out var(--d) infinite;
+}
+@keyframes nbpDust{
+  0%{opacity:0;transform:translateY(10px) scale(.5)}
+  35%{opacity:.75;transform:translateY(-4px) scale(1)}
+  70%{opacity:.4;transform:translateY(-14px) scale(.85)}
+  100%{opacity:0;transform:translateY(-24px) scale(.5)}
+}
+
+.nbp-book{
+  position:relative;z-index:2;width:min(560px,calc(100vw - 36px));
+  display:flex;flex-direction:column;align-items:center;text-align:center;
+  transition:opacity .5s ease,transform .5s ease;
+}
+.nbp-book.clearing{opacity:0;transform:translateY(-18px) scale(.97)}
+
+/* ---- the orbit ---- */
+.nbp-orbit{
+  position:relative;width:min(320px,72vw);aspect-ratio:1;
+  display:grid;place-items:center;margin-bottom:4px;
+}
+.nbp-ring{
+  position:absolute;inset:9%;border-radius:50%;
+  border:1.4px dashed rgba(93,110,220,.30);
+  animation:nbpSpin 22s linear infinite,nbpFade .5s ease .15s both;
+}
+@keyframes nbpSpin{to{transform:rotate(360deg)}}
+.nbp-ring::after{
+  content:'';position:absolute;inset:14%;border-radius:50%;
+  border:1px solid rgba(93,110,220,.16);
+}
+
+.nbp-mark{
+  position:relative;z-index:3;width:37%;display:grid;place-items:center;
+  animation:nbpPop .7s cubic-bezier(.2,1.3,.35,1) .1s both,nbpBob 4s ease-in-out 1s infinite;
+}
+.nbp-mark svg{width:100%;height:auto;filter:drop-shadow(0 10px 24px rgba(76,74,240,.28))}
+@keyframes nbpPop{from{opacity:0;transform:scale(.78)}to{opacity:1;transform:scale(1)}}
+@keyframes nbpBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.nbp-sweep{
+  position:absolute;inset:0;overflow:hidden;border-radius:22%;pointer-events:none;
+}
+.nbp-sweep::after{
+  content:'';position:absolute;top:-40%;left:-70%;width:44%;height:180%;
+  transform:rotate(19deg);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.92),transparent);
+  animation:nbpSweep 1.5s cubic-bezier(.4,0,.3,1) .55s 2;
+}
+@keyframes nbpSweep{to{left:135%}}
+
+.nbp-node{
+  position:absolute;display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:8px 11px;border-radius:14px;white-space:nowrap;
+  background:rgba(255,255,255,.94);border:1px solid #e6e9f7;
+  box-shadow:0 2px 5px rgba(17,26,74,.05),0 10px 24px rgba(17,26,74,.07);
+  font-family:'Outfit','Segoe UI',sans-serif;font-size:10.5px;font-weight:650;color:#3c456e;
+  opacity:0;animation:nbpNode .5s cubic-bezier(.2,1.2,.35,1) both;
+}
+.nbp-node b{font-size:14px;font-weight:600;line-height:1;color:#4459f5}
+@keyframes nbpNode{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
+.nbp-node.n1{top:-2%;left:50%;margin-left:-30px;animation-delay:.34s}
+.nbp-node.n2{top:12%;right:-6%;animation-delay:.42s}
+.nbp-node.n3{top:46%;right:-11%;animation-delay:.50s}
+.nbp-node.n4{bottom:12%;right:-7%;animation-delay:.58s}
+.nbp-node.n5{bottom:-3%;left:50%;margin-left:-38px;animation-delay:.66s}
+.nbp-node.n6{bottom:12%;left:-7%;animation-delay:.74s}
+.nbp-node.n7{top:46%;left:-10%;animation-delay:.82s}
+.nbp-node.n8{top:12%;left:-6%;animation-delay:.90s}
+
+/* ---- the word and the promise ---- */
+.nbp-word{
+  font-family:'Outfit','Segoe UI',sans-serif;font-weight:800;font-size:clamp(38px,9vw,58px);
+  letter-spacing:-.05em;color:#0d1533;line-height:1;margin-top:2px;
+  opacity:0;animation:nbpUp .55s cubic-bezier(.2,.9,.3,1) .5s both;
+}
+.nbp-word span{
+  background:linear-gradient(100deg,#2f7ffb,#7b3ff0);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.nbp-tag{
+  margin-top:9px;font-family:'Plus Jakarta Sans','Outfit',sans-serif;
+  font-size:clamp(13.5px,3.2vw,16px);color:#6b7397;
+  opacity:0;animation:nbpUp .55s cubic-bezier(.2,.9,.3,1) .66s both;
+}
+.nbp-tag b{color:#4459f5;font-weight:700}
+@keyframes nbpUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes nbpFade{from{opacity:0}to{opacity:1}}
+
+/* ---- the bar ---- */
+.nbp-load{
+  width:min(330px,84%);margin-top:22px;
+  opacity:0;animation:nbpUp .5s ease .82s both;
+}
+.nbp-status{font-size:12.6px;color:#8a90b0;margin-bottom:9px;font-weight:550}
+.nbp-bar{
+  height:8px;border-radius:99px;background:#e7eaf8;overflow:hidden;
+  box-shadow:inset 0 1px 2px rgba(17,26,74,.05);
+}
+.nbp-bar i{
+  display:block;height:100%;width:0;border-radius:99px;
+  background:linear-gradient(90deg,#3b7bfb,#5b4df0 55%,#9540ee);
+  box-shadow:0 0 12px rgba(83,90,240,.45);
+  animation:nbpFill 1.45s cubic-bezier(.35,.1,.25,1) .95s forwards;
+}
+@keyframes nbpFill{to{width:100%}}
+.pct{
+  margin-top:7px;font-family:'JetBrains Mono',Consolas,monospace;
+  font-size:11.5px;font-weight:600;color:#4459f5;letter-spacing:.04em;
+}
+
+/* ---- what it can answer ---- */
+.nbp-subs{
+  display:flex;flex-wrap:wrap;justify-content:center;gap:6px 8px;margin-top:24px;
+  opacity:0;animation:nbpUp .55s ease 1.05s both;
+}
+.nbp-subs span{
+  padding:5px 11px;border-radius:99px;
+  background:rgba(255,255,255,.8);border:1px solid #e6e9f7;
+  font-size:11px;font-weight:600;color:#6b7397;
+}
+
+.nbp-skip{
+  position:absolute;top:18px;right:18px;z-index:5;cursor:pointer;
+  padding:7px 16px;border-radius:99px;border:1px solid #e6e9f7;
+  background:rgba(255,255,255,.9);color:#6b7397;
+  font-family:'Outfit',sans-serif;font-size:12.4px;font-weight:650;
+  opacity:0;animation:nbpFade .4s ease 1.1s forwards;
+  transition:color .16s ease,border-color .16s ease;
+}
+.nbp-skip:hover{color:#4459f5;border-color:#cfd7fb}
+.nbp-by{
+  position:absolute;left:0;right:0;bottom:20px;text-align:center;
+  font-size:11px;color:#9aa1c0;
+  opacity:0;animation:nbpFade .5s ease 1.2s forwards;
+}
+.nbp-by b{color:#6b7397;font-weight:700}
+
 @keyframes nbpOut{to{opacity:0;visibility:hidden}}
-.nbp-skip{position:absolute;right:16px;bottom:16px;z-index:8;cursor:pointer;opacity:0;
-  background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.3);color:rgba(255,255,255,.88);
-  font:600 12px/1 var(--display);letter-spacing:1.6px;text-transform:uppercase;
-  padding:9px 16px;border-radius:20px;animation:nbpFade .4s ease 2s forwards}
-.nbp-skip:hover{background:rgba(255,255,255,.24);color:#fff}
-/* ---------- the notebook index: a searchable list of courses/papers ---------- */
-.idx-hidden{position:absolute!important;width:1px;height:1px;opacity:0;pointer-events:none;overflow:hidden}
-.idx-btn{
-  width:100%;text-align:left;font-family:var(--serif);font-size:17px;color:var(--ink);cursor:pointer;
-  background:linear-gradient(176deg,var(--card),var(--paper-2));
-  border:1.5px solid var(--rule);border-radius:5px;padding:13px 40px 13px 14px;position:relative;
-  box-shadow:0 1px 0 rgba(255,255,255,.85) inset,0 3px 6px rgba(60,45,20,.1);
-  transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+
+@media (max-width:520px){
+  .nbp-orbit{width:min(268px,80vw)}
+  .nbp-node{padding:6px 8px;font-size:9.4px;border-radius:11px}
+  .nbp-node b{font-size:12px}
+  .nbp-node.n1{margin-left:-25px}
+  .nbp-node.n5{margin-left:-32px}
+  .nbp-subs{gap:5px 6px;margin-top:18px}
+  .nbp-subs span{font-size:10px;padding:4px 9px}
+  .nbp-by{display:none}
 }
-.idx-btn::after{content:'';position:absolute;right:14px;top:50%;width:9px;height:9px;
-  border-right:2px solid var(--blue);border-bottom:2px solid var(--blue);
-  transform:translateY(-70%) rotate(45deg);border-radius:1px}
-.idx-btn:hover{border-color:var(--gold-soft);transform:translateY(-1px)}
-.idx-btn:focus-visible{outline:none;border-color:var(--blue);box-shadow:inset 0 0 0 1px rgba(38,71,207,.25)}
-.idx-bg{position:fixed;inset:0;z-index:90;background:rgba(40,26,10,.62);backdrop-filter:blur(3px);
-  display:flex;align-items:center;justify-content:center;padding:16px}
-.idx-card{
-  width:100%;max-width:600px;max-height:86vh;display:flex;flex-direction:column;
-  border:1.5px solid var(--rule);border-radius:4px 10px 10px 4px;overflow:hidden;position:relative;
-  background:
-    repeating-linear-gradient(0deg,transparent 0 33px,var(--rule-blue) 33px 34px),
-    linear-gradient(176deg,#fffdf6,var(--paper-2));
-  background-position:0 26px,0 0;
-  box-shadow:0 3px 0 var(--paper-aged),0 7px 0 #e4dac3,0 34px 78px rgba(20,12,4,.55);
-}
-.idx-card::before{content:'';position:absolute;top:0;bottom:0;left:34px;width:1.4px;
-  background:var(--margin-red);opacity:.42;pointer-events:none}
-.idx-head{font-family:var(--display);font-weight:700;font-size:20px;color:var(--ink);
-  padding:16px 18px 4px 52px;background:var(--paper)}
-.idx-sub{font-size:14px;color:var(--ink-faint);padding:0 18px 10px 52px;background:var(--paper)}
-.idx-search{
-  margin:0 18px 12px 52px;font-family:var(--serif);font-size:17px;color:var(--ink);caret-color:var(--blue);
-  background:#fffdf6;border:1.4px solid var(--rule);border-radius:4px;padding:11px 13px;
-}
-.idx-search::placeholder{font-family:var(--hand);font-size:19px;color:var(--ink-faint)}
-.idx-search:focus{outline:none;border-color:var(--blue)}
-.idx-list{overflow-y:auto;padding:0 14px 14px 52px;flex:1;min-height:80px}
-.idx-row{
-  display:flex;align-items:baseline;gap:8px;width:100%;text-align:left;cursor:pointer;
-  background:none;border:none;padding:6px 6px;border-radius:4px;font-family:var(--serif);
-  font-size:16.5px;color:var(--ink);line-height:1.45;
-}
-.idx-row:hover,.idx-row.on{background:var(--blue-wash)}
-.idx-row .dots{flex:1;border-bottom:1.5px dotted rgba(23,34,61,.28);transform:translateY(-4px)}
-.idx-row .tick{color:var(--blue);font-weight:700;opacity:0}
-.idx-row.cur .tick{opacity:1}
-.idx-row mark{background:rgba(251,233,140,.85);color:inherit;border-radius:2px}
-.idx-none{display:none;padding:16px 18px 22px 52px;font-family:var(--hand);font-size:19px;color:var(--ink-faint)}
-.idx-none.on{display:block}
-.idx-close{position:absolute;right:12px;top:12px;z-index:2;background:none;border:none;cursor:pointer;
-  font-size:19px;line-height:1;color:var(--ink-faint);padding:5px 8px;border-radius:4px}
-.idx-close:hover{background:var(--teacher);color:#fff}
-@media(max-width:600px){
-  .idx-card{max-height:92vh}
-  .idx-head{padding-left:40px;font-size:18px}
-  .idx-sub,.idx-search,.idx-list,.idx-none{padding-left:40px}
-  .idx-search{margin-left:40px}
-  .idx-card::before{left:24px}
-}
-/* ---------- the page turn ---------- */
-.pageflip{position:fixed;inset:0;z-index:80;pointer-events:none;perspective:2000px;
-  display:none;overflow:hidden}
-.pageflip.on{display:block}
-.pageflip i{position:absolute;inset:0;transform-origin:left center;backface-visibility:hidden;
-  background:
-    repeating-linear-gradient(180deg,transparent 0 33px,var(--rule-blue) 33px 34px),
-    repeating-linear-gradient(112deg,rgba(150,125,80,.04) 0 2px,transparent 2px 6px),
-    linear-gradient(101deg,#fdfaf0,#f6efdf);
-  background-position:0 22px,0 0,0 0;
-  box-shadow:-18px 0 50px rgba(60,45,20,.4),inset 30px 0 30px -30px rgba(120,90,40,.5);
-  animation:sheetTurn .85s cubic-bezier(.5,0,.35,1) forwards}
-@keyframes sheetTurn{from{transform:rotateY(0)}to{transform:rotateY(-172deg)}}
-@media (prefers-reduced-motion:reduce){.pageflip{display:none!important}}
-.nbp-done{display:none!important}
-/* ---------------- reduced motion: the finished page, held still ---------------- */
+
 @media (prefers-reduced-motion:reduce){
-  .nbp,.nbp *{animation:none!important;transition:none!important}
-  .nbp-stage{opacity:1;transform:none}
-  .nbp-cover,.nbp-sun{display:none}
-  .nbp-props{opacity:1}
-  .dr{stroke-dashoffset:0}
-  .rv{transform:none}
-  .fill{width:319px}
-  .fx,.dash,.nbp-note,.nbp-pencil{opacity:1!important}
-  .bulbglow,.lampglow{opacity:.42}
-  .n1{transform:rotate(2.5deg)}.n2{transform:rotate(-3.5deg)}.n3{transform:rotate(-2deg)}
-  .nbp-skip{opacity:1}
+  .nbp,.nbp *{animation:none !important}
+  .nbp-node,.nbp-word,.nbp-tag,.nbp-load,.nbp-subs,.nbp-skip,.nbp-by{opacity:1}
+  .nbp-bar i{width:100%}
 }
 </style>
 <script>
@@ -1542,8 +1453,8 @@ footer .fleuron{color:var(--blue);font-size:19px;display:block;margin-bottom:7px
   var pl = document.getElementById('pl');
   if (!pl) return;
   // one showing per session — nobody wants the intro twice
-  try { if (sessionStorage.getItem('pl7solve4')) { pl.className = 'nbp nbp-done'; return; } } catch(e){}
-  try { sessionStorage.setItem('pl7solve4','1'); } catch(e){}
+  try { if (sessionStorage.getItem('pl7solve5')) { pl.className = 'nbp nbp-done'; return; } } catch(e){}
+  try { sessionStorage.setItem('pl7solve5','1'); } catch(e){}
 
   var gone = false;
   function done(){ gone = true; if (pl && pl.parentNode) pl.parentNode.removeChild(pl); }
@@ -1552,14 +1463,14 @@ footer .fleuron{color:var(--blue);font-size:19px;display:block;margin-bottom:7px
 
   var still = false;
   try { still = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch(e){}
-  if (still){                                   // no motion: show the page, then leave
+  if (still){                                   // no motion: show it, then leave
     var p0 = pl.querySelector('.pct'); if (p0) p0.textContent = '100%';
-    setTimeout(done, 1800);
+    setTimeout(done, 900);
     return;
   }
 
-  // count the percentage up in step with the ink filling the bar
-  var pct = pl.querySelector('.pct'), t0 = null, START = 8200, DUR = 1350;
+  // the number counts up in step with the bar filling, never ahead of it
+  var pct = pl.querySelector('.pct'), t0 = null, START = 950, DUR = 1450;
   function tick(ts){
     if (gone || !pl.parentNode) return;
     if (t0 === null) t0 = ts;
@@ -1570,79 +1481,163 @@ footer .fleuron{color:var(--blue);font-size:19px;display:block;margin-bottom:7px
   requestAnimationFrame(tick);
 
   var book = pl.querySelector('.nbp-book');
-  setTimeout(function(){ if (book) book.classList.add('clearing'); }, 9450);
-  setTimeout(done, 10600);
-  setTimeout(done, 13000);   // belt and braces: never let the intro trap the app
+  setTimeout(function(){ if (book) book.classList.add('clearing'); }, 2420);
+  setTimeout(done, 3120);
+  setTimeout(done, 6000);   // belt and braces: never let the intro trap the app
 })();
 </script>
 
-<!-- ============================================================
-     THE DESK — everything the notebook is lying on. Purely
-     decorative and pointer-events:none, so it can never sit
-     between a finger and a control.
-     ============================================================ -->
-<div class="desk" aria-hidden="true">
-  <i class="desk-sun"></i><i class="desk-lamp"></i>
-  <i class="desk-books"></i><i class="desk-mug"></i><i class="desk-pencil"></i>
-</div>
+<div class="app">
 
 <!-- ============================================================
-     THE SHEET — the notebook page the whole app is written on.
-     The preloader closes on this exact paper, so the hand-over
-     reads as the intro's page still being open.
+     SIDEBAR — brand, the one primary action, then everything
+     the product can do. On phones it becomes a drawer.
      ============================================================ -->
+<aside class="side" id="side">
+  <a class="brand" href="./" aria-label="7Solve home">
+    <svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><use href="#logo7"/></svg>
+    <span>7<span class="snap">Solve</span></span><i class="spark">✦</i>
+  </a>
+
+  <button class="cta-ask" type="button" data-go="ask"><b>+</b> <span data-i18n="ch2">Ask Your Doubt</span></button>
+
+  <nav class="snav">
+    <button class="snav-i active" type="button" data-go="top"><span class="ic">🏠</span>Home</button>
+    <button class="snav-i" type="button" data-go="tutor"><span class="ic">🎓</span>AI Tutor <span class="tag new">New</span></button>
+    <button class="snav-i" type="button" data-go="notebook"><span class="ic">📓</span>My Notebook</button>
+    <button class="snav-i" type="button" data-go="subjects"><span class="ic">📚</span>Subjects</button>
+    <button class="snav-i" type="button" data-go="follow:fivePractice"><span class="ic">🎯</span>Practice <span class="tag new">New</span></button>
+    <button class="snav-i" type="button" data-go="follow:quizMe"><span class="ic">📝</span>Mock Tests</button>
+    <button class="snav-i" type="button" data-go="notebook"><span class="ic">🕘</span>Previous Doubts</button>
+    <button class="snav-i" type="button" data-go="follow:flashcards"><span class="ic">🃏</span>Flashcards</button>
+    <button class="snav-i" type="button" data-go="follow:mindMap"><span class="ic">🗺️</span>Mind Maps</button>
+    <button class="snav-i" type="button" data-go="follow:revisionBox"><span class="ic">🔁</span>Revision</button>
+    <button class="snav-i" type="button" data-go="follow:examMistakes"><span class="ic">🔥</span>Exam Traps <span class="tag hot">Hot</span></button>
+    <div class="side-sep"></div>
+    <button class="snav-i" type="button" data-go="pro"><span class="ic">💎</span>Pro Features</button>
+    <button class="snav-i" type="button" data-go="account"><span class="ic">⚙️</span>Settings</button>
+    <a class="snav-i" href="https://7by.in/contact.html"><span class="ic">💬</span>Help &amp; Support</a>
+  </nav>
+
+  <div class="pro-card">
+    <h4>Unlock unlimited learning</h4>
+    <p>Go Pro and get access to</p>
+    <ul>
+      <li>Unlimited solutions</li>
+      <li>PDF export &amp; OCR</li>
+      <li>Advanced AI models</li>
+      <li>No ads experience</li>
+    </ul>
+    <button class="go" type="button" data-go="pro">💎 Get 7Solve Pro</button>
+  </div>
+
+  <div class="stats-card">
+    <h4>YOUR LEARNING STATS</h4>
+    <div class="stat-row"><span class="ic">✅</span><span><span class="v" id="statSolved">0</span><span class="k">Doubts solved</span></span></div>
+    <div class="stat-row"><span class="ic">📌</span><span><span class="v" id="statPinned">0</span><span class="k">Pinned notes</span></span></div>
+    <div class="stat-row"><span class="ic">🔥</span><span><span class="v" id="statStreak">1</span><span class="k">Day streak</span></span></div>
+  </div>
+</aside>
+
+<!-- ============================================================
+     THE WORKING COLUMN
+     ============================================================ -->
+<div class="col">
+
+  <header class="topbar">
+    <button class="burger" id="burger" type="button" aria-label="Menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </button>
+    <div class="searchbox">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.2-3.2"/></svg>
+      <input id="globalSearch" type="search" placeholder="Search your doubts, notebook, subjects…" autocomplete="off" aria-label="Search">
+    </div>
+    <div class="toolbar">
+      <div class="toolbar-right">
+        <div class="lang-tabs" id="langTabs">
+          <button class="lang-tab active" data-lang="en">EN</button>
+          <button class="lang-tab" data-lang="hi">हिं</button>
+          <button class="lang-tab" data-lang="te">తెలు</button>
+        </div>
+        <a class="credit-badge home-btn" href="https://7by.in" aria-label="Home">🏠</a>
+        <button class="credit-badge" id="authBadge" style="display:none"></button>
+        <button class="credit-badge" id="creditBadge" style="display:none"></button>
+        <div class="key-btn engine-badge" id="engineBadge">…</div>
+        <button class="credit-badge menu-btn" id="menuBtn" aria-label="Menu">☰</button>
+      </div>
+    </div>
+    <div class="menu-pop" id="menuPop">
+      <a href="https://7by.in">🏠 Home — 7By.in</a>
+      <a href="/blog/">📝 Blog</a>
+      <a href="https://7by.in/about.html">👤 About</a>
+      <a href="https://7by.in/contact.html">📧 Contact</a>
+      <a href="https://7by.in/privacy-policy.html">🔒 Privacy Policy</a>
+      <a href="https://7by.in/terms-of-service.html">📋 Terms</a>
+    </div>
+  </header>
+
 <div class="sheet">
-  <span class="clip clip-l" aria-hidden="true"></span>
-  <span class="clip clip-r" aria-hidden="true"></span>
-  <div class="note-tape note-l">Keep<br>Going!<b>&#9786;</b></div>
-  <div class="note-tape note-r">Don't just<br>Study,<br>Understand.</div>
-
-  <header class="cover">
-  <div class="brand">7<span class="snap">Solve</span> <span style="font-size:.7em">✅</span></div>
-  <span class="brand-rule" aria-hidden="true"></span>
-  <div class="tagline" data-i18n-html="taglineHtml">Snap a photo of any doubt — get the <em class="hl-b">exact answer</em>, explained like a <em class="hl-r">good teacher</em>.</div>
-  <div class="tagline-sub" data-i18n="taglineSub">Class 1–10 · Intermediate (MPC · BiPC · CEC · MEC) · Degree · CA · CMA · US CMA · Jobs & Current Affairs</div>
-</header>
-
-<div class="toolbar">
-  <div class="lang-tabs" id="langTabs">
-    <button class="lang-tab active" data-lang="en">English</button>
-    <button class="lang-tab" data-lang="hi">हिंदी</button>
-    <button class="lang-tab" data-lang="te">తెలుగు</button>
-  </div>
-  <div class="toolbar-right">
-    <a class="credit-badge home-btn" href="https://7by.in" aria-label="Home">🏠 Home</a>
-    <button class="credit-badge" id="authBadge" style="display:none"></button>
-    <button class="credit-badge" id="creditBadge" style="display:none"></button>
-    <div class="key-btn engine-badge" id="engineBadge">…</div>
-    <button class="credit-badge menu-btn" id="menuBtn" aria-label="Menu">☰</button>
-  </div>
-</div>
-<div class="menu-pop" id="menuPop">
-  <a href="https://7by.in">🏠 Home — 7By.in</a>
-  <a href="/blog/">📝 Blog</a>
-  <a href="https://7by.in/about.html">👤 About</a>
-  <a href="https://7by.in/contact.html">📧 Contact</a>
-  <a href="https://7by.in/privacy-policy.html">🔒 Privacy Policy</a>
-  <a href="https://7by.in/terms-of-service.html">📋 Terms</a>
-</div>
-<script>
-(function(){
-  var b = document.getElementById('menuBtn'), p = document.getElementById('menuPop');
-  b.onclick = function(e){ e.stopPropagation(); p.classList.toggle('on'); };
-  document.addEventListener('click', function(e){ if(!p.contains(e.target) && e.target !== b) p.classList.remove('on'); });
-})();
-</script>
-
 <main class="book">
 
-  <!-- CHAPTER I -->
-  <section class="page">
+  <!-- ---------------- hero ---------------- -->
+  <header class="cover hero" id="heroTop">
+    <div class="hero-txt">
+      <h1>Snap. <span class="g">Solve.</span> Understand.</h1>
+      <div class="tagline" data-i18n-html="taglineHtml">Snap a photo of any doubt — get the <em class="hl-b">exact answer</em>, explained like a <em class="hl-r">good teacher</em>.</div>
+      <ul class="hero-pts">
+        <li><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.6-2h6.8L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.2"/></svg></span>Snap any question</li>
+        <li><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>Get the exact answer</li>
+        <li><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>Step-by-step explanation</li>
+        <li><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 1 4 10.5V17H8v-3.5A6 6 0 0 1 12 3z"/><path d="M9.5 20.5h5"/></svg></span>Understand deeply</li>
+      </ul>
+      <div class="tagline-sub" data-i18n="taglineSub">Class 1–10 · Intermediate (MPC · BiPC · CEC · MEC) · Degree · CA · CMA · US CMA · Jobs &amp; Current Affairs</div>
+    </div>
+    <div class="hero-art" aria-hidden="true">
+      <i class="hero-orb"></i>
+      <svg class="hero-mark" viewBox="0 0 64 64"><use href="#logo7"/></svg>
+      <span class="hero-chip c1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 8h3l1.6-2h6.8L17 8h3v11H4z"/></svg>Snap</span>
+      <span class="hero-chip c2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14M12 5v14"/></svg>Solve</span>
+      <span class="hero-chip c3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 5h7v15H4zM13 5h7v15h-7z"/></svg>Explain</span>
+      <span class="hero-chip c4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 18l5-6 4 4 7-9"/></svg>Improve</span>
+    </div>
+  </header>
+
+  <!-- ---------------- what it can do ---------------- -->
+  <div class="feat-row">
+    <button class="feat" type="button" data-go="ask">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.6-2h6.8L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.2"/></svg></span>
+      <b>Snap &amp; Solve</b><span>Instant photo solution</span>
+    </button>
+    <button class="feat" type="button" data-go="tutor">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/></svg></span>
+      <b>AI Chat Tutor</b><span>Ask follow-up doubts</span>
+    </button>
+    <button class="feat" type="button" data-go="ask">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19c3-5 6 2 9-3s4 1 7-3"/><path d="M4 5h16"/></svg></span>
+      <b>Handwritten OCR</b><span>Upload written notes</span>
+    </button>
+    <button class="feat" type="button" data-go="follow:detailSteps">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2.5"/><path d="M8 7h8M8 12h3M8 16h3M15 12v4"/></svg></span>
+      <b>Smart Calculator</b><span>Solve &amp; show steps</span>
+    </button>
+    <button class="feat" type="button" data-go="follow:concepts">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="5" cy="6" r="2"/><circle cx="19" cy="7" r="2"/><circle cx="17" cy="19" r="2"/><path d="M9.5 10.5L6.6 7.6M14.6 11L17.4 8.6M13.6 14.4l2.2 3"/></svg></span>
+      <b>Diagram Solver</b><span>Graphs &amp; geometry</span>
+    </button>
+    <button class="feat" type="button" data-go="ask">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span>
+      <b>Voice to Solve</b><span>Speak your doubt</span>
+    </button>
+  </div>
+
+  <!-- ---------------- CHAPTER I : what are you studying ---------------- -->
+  <section class="page" id="levelPage">
     <div class="chapter">
       <span class="orn">📖</span>
       <h2><span data-i18n="ch1">What are you studying?</span></h2>
       <span class="line"></span>
     </div>
+    <p class="hint">Pick your level — 7Solve then answers in your syllabus, at your standard.</p>
     <div class="level-grid" id="levelGrid"></div>
     <div class="sub-row">
       <div class="field">
@@ -1654,19 +1649,9 @@ footer .fleuron{color:var(--blue);font-size:19px;display:block;margin-bottom:7px
         <select id="subjectSel"></select>
       </div>
     </div>
-    <svg class="dood tr" width="150" height="122" viewBox="0 0 150 122" aria-hidden="true">
-      <path class="dl" d="M14 96 V22 L120 96 Z"/><path class="dl" d="M14 82 h14 v14"/>
-      <text x="0" y="66">a</text><text x="60" y="118">b</text><text x="82" y="52">c</text>
-    </svg>
-    <svg class="dood bl" width="128" height="52" viewBox="0 0 128 52" aria-hidden="true">
-      <text x="2" y="28">E = mc&#178;</text><path class="dl b" d="M2 36 H108"/>
-    </svg>
-    <svg class="dood mr" width="76" height="76" viewBox="0 0 76 76" aria-hidden="true">
-      <path class="dl p" transform="translate(38 38)" d="M0 -26 L6.2 -8.6 L24.7 -8.1 L10.1 3.3 L15.2 21 L0 10.6 L-15.2 21 L-10.1 3.3 L-24.7 -8.1 L-6.2 -8.6 Z"/>
-    </svg>
   </section>
 
-  <!-- CHAPTER II -->
+  <!-- ---------------- CHAPTER II : ask ---------------- -->
   <section class="page" id="askPage">
     <div class="chapter">
       <span class="orn">💬</span>
@@ -1684,7 +1669,7 @@ footer .fleuron{color:var(--blue);font-size:19px;display:block;margin-bottom:7px
           <div id="photoEmpty">
             <div class="cam">📷</div>
             <div class="pb-title" data-i18n="pbTitle">Snap or upload the question</div>
-            <div class="pb-sub" data-i18n="pbSub">tap here · drag & drop · or paste (Ctrl+V)</div>
+            <div class="pb-sub" data-i18n="pbSub">tap here · drag &amp; drop · or paste (Ctrl+V)</div>
             <div class="photo-btns">
               <button class="mini-btn" id="camBtn" type="button">📸 <span data-i18n="camera">Camera</span></button>
               <button class="mini-btn" id="galBtn" type="button">🖼️ <span data-i18n="gallery">Gallery</span></button>
@@ -1701,10 +1686,10 @@ footer .fleuron{color:var(--blue);font-size:19px;display:block;margin-bottom:7px
     </div>
 
     <div class="ask-actions">
-      <button class="solve-btn" id="solveBtn">✒️ <span data-i18n="solve">Solve my doubt</span></button>
+      <button class="solve-btn" id="solveBtn">✨ <span data-i18n="solve">Solve my doubt</span></button>
       <button class="mini-btn" id="hintBtn" title="Get a nudge and try it yourself first">💡 <span data-i18n="hint">Give me a hint</span></button>
       <span class="deep-line" id="modePill" title="Picked automatically from your question — simple doubts use the fastest AI, big problems use the strongest"></span>
-      <span class="quill" id="quill"><span class="nib">🖋️</span><span class="status" data-i18n="thinking">Your teacher is writing the answer…</span></span>
+      <span class="quill" id="quill"><span class="nib"></span><span class="status" data-i18n="thinking">Your teacher is writing the answer…</span></span>
       <span class="status err" id="errMsg"></span>
     </div>
     <div class="hint-box" id="hintBox" style="display:none">
@@ -1712,20 +1697,9 @@ footer .fleuron{color:var(--blue);font-size:19px;display:block;margin-bottom:7px
       <div class="hint-box-body" id="hintBody"></div>
       <button class="mini-btn" id="hintSolveBtn">✒️ <span data-i18n="hintSolve">Show me the full solution</span></button>
     </div>
-    <svg class="dood tr" width="126" height="96" viewBox="0 0 126 96" aria-hidden="true">
-      <path class="dl b" d="M6 46 L114 8 L76 88 L58 56 Z"/><path class="dl b" d="M6 46 L58 56"/>
-      <path class="dl b" style="stroke-dasharray:4 6" d="M56 62 c-18 10-30 4-34 18 c-4 14 10 18 18 10"/>
-    </svg>
-    <svg class="dood bl" width="112" height="112" viewBox="0 0 112 112" aria-hidden="true">
-      <path class="dl" d="M24 88 V26 M24 88 H100"/><path class="dl b" d="M34 34 C46 92 76 92 94 44"/>
-      <text x="4" y="30">y</text><text x="100" y="98">x</text>
-    </svg>
-    <svg class="dood br" width="70" height="70" viewBox="0 0 70 70" aria-hidden="true">
-      <path class="dl v" transform="translate(35 30) scale(1.1)" d="M0 16 C-18 2 -26 -8 -18 -18 C-11 -26 -1 -22 0 -12 C1 -22 11 -26 18 -18 C26 -8 18 2 0 16 Z"/>
-    </svg>
   </section>
 
-  <!-- CHAPTER III -->
+  <!-- ---------------- CHAPTER III : the answer ---------------- -->
   <section class="page" id="answerPage">
     <div class="chapter">
       <span class="orn">📗</span>
@@ -1736,10 +1710,8 @@ footer .fleuron{color:var(--blue);font-size:19px;display:block;margin-bottom:7px
       <div class="answer-meta" id="answerMeta"></div>
       <div class="answer-body" id="answerBody"></div>
     </div>
-    <!-- Interactive AI Tutor Mode panel -->
     <div class="tutor-panel" id="tutorPanel" style="display:none"></div>
 
-    <!-- Check my answer -->
     <div class="check-box" id="checkBox" style="display:none">
       <div class="hint-box-head">🧮 <span data-i18n="checkTitle">Check my answer</span></div>
       <textarea id="checkText" data-i18n-ph="checkPh" placeholder="Type your answer or working here — the tutor will check it and tell you where you went right or wrong…"></textarea>
@@ -1805,24 +1777,10 @@ footer .fleuron{color:var(--blue);font-size:19px;display:block;margin-bottom:7px
       <button class="mini-btn" onclick="askFollowUp()">💬 <span data-i18n="followup">Ask a follow-up</span></button>
       <button class="mini-btn" onclick="newDoubt()">➕ <span data-i18n="newDoubt">New doubt</span></button>
     </div>
-    <svg class="dood tr" width="128" height="60" viewBox="0 0 128 60" aria-hidden="true">
-      <text x="2" y="30">a&#178; + b&#178; = c&#178;</text><path class="dl r" d="M2 38 H120"/>
-    </svg>
-    <svg class="dood mr" width="112" height="96" viewBox="0 0 112 96" aria-hidden="true">
-      <text x="22" y="60" font-size="50" class="b">?</text>
-      <path class="dl" d="M72 26 l16-18 M84 50 l20-8"/>
-    </svg>
-    <svg class="dood bl" width="112" height="112" viewBox="0 0 112 112" aria-hidden="true">
-      <circle class="dl" cx="56" cy="56" r="13" fill="none"/>
-      <path class="dl" d="M45 47 L27 29 M69 51 L89 41 M61 69 L69 91"/>
-      <circle class="dl" cx="21" cy="23" r="9" fill="none"/>
-      <circle class="dl" cx="95" cy="37" r="9" fill="none"/>
-      <circle class="dl" cx="72" cy="98" r="9" fill="none"/>
-    </svg>
   </section>
 
-  <!-- CHAPTER IV -->
-  <section class="page">
+  <!-- ---------------- CHAPTER IV : notebook ---------------- -->
+  <section class="page" id="notebookPage">
     <div class="chapter">
       <span class="orn">📓</span>
       <h2><span data-i18n="ch4">My Notebook</span></h2>
@@ -1835,27 +1793,12 @@ footer .fleuron{color:var(--blue);font-size:19px;display:block;margin-bottom:7px
       <select id="noteFilter" class="nb-filter"></select>
     </div>
     <div class="notebook-list" id="notebookList"></div>
-    <svg class="dood tr" width="112" height="132" viewBox="0 0 112 132" aria-hidden="true">
-      <path class="dl g" d="M30 10 c26 18 26 36 0 54 c-26 18-26 36 0 54"/>
-      <path class="dl g" d="M66 10 c-26 18-26 36 0 54 c26 18 26 36 0 54"/>
-      <path class="dl" d="M36 24 h24 M30 46 h36 M36 68 h24 M30 90 h36"/>
-    </svg>
-    <svg class="dood bl" width="104" height="112" viewBox="0 0 104 112" aria-hidden="true">
-      <path class="dl y" d="M52 12 a26 26 0 0 1 26 26 c0 12-9 16-10 25 h-32 c-1-9-10-13-10-25 a26 26 0 0 1 26-26 Z"/>
-      <path class="dl y" d="M41 73 h22 M45 82 h14"/>
-      <path class="dl y" d="M52 -2 v-8 M84 22 l10-9 M20 22 l-10-9"/>
-    </svg>
-    <svg class="dood br" width="104" height="84" viewBox="0 0 104 84" aria-hidden="true">
-      <path class="dl y" d="M4 50 h18 v-16 h16 v32 h16 v-16 h18"/>
-      <circle class="dl b" cx="84" cy="50" r="12" fill="none"/>
-      <path class="dl b" d="M76 42 l16 16 M92 42 l-16 16"/>
-    </svg>
   </section>
 
 </main>
 
 <footer>
-  <span class="fleuron">❦</span>
+  <span class="fleuron">✦</span>
   <span data-i18n="footer">7Solve — every doubt deserves a good answer. Free forever, from 7By.in. · AI-generated — please verify before your exam.</span>
   <span class="footer-credit">Designed by <a href="https://7by.in" target="_blank" rel="noopener">7By.in</a></span>
   <nav class="footer-links">
@@ -1869,24 +1812,192 @@ footer .fleuron{color:var(--blue);font-size:19px;display:block;margin-bottom:7px
     <a href="https://7by.in/dmca.html">DMCA</a>
   </nav>
 </footer>
-
 </div><!-- /.sheet -->
+</div><!-- /.col -->
 
-<!-- the page that turns when you choose what you are studying -->
+<!-- ============================================================
+     RIGHT RAIL — the tutor, the quick tools, what you just did.
+     ============================================================ -->
+<aside class="rail">
+  <div class="rcard tutor-card">
+    <div class="face"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="11" rx="3.5"/><path d="M12 8V5M9.5 13h.01M14.5 13h.01M9.5 16h5"/></svg></div>
+    <div class="rcard-h" style="justify-content:center">AI Tutor</div>
+    <p>Chat with the AI and learn anything, step by step.</p>
+    <button class="go" type="button" data-go="tutor">Start Chat →</button>
+  </div>
+
+  <div class="rcard">
+    <div class="rcard-h">⚡ Quick Tools</div>
+    <div class="qt-grid">
+      <button class="qt" type="button" data-go="follow:detailSteps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5v14"/></svg>Math Solver</button>
+      <button class="qt" type="button" data-go="follow:anotherMethod"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9h16M4 15h16"/></svg>Equations</button>
+      <button class="qt" type="button" data-go="follow:concepts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19V5M4 19h16M7 15l4-5 3 3 5-7"/></svg>Graphs</button>
+      <button class="qt" type="button" data-go="follow:realLife"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M4 12h16M12 4c2.5 3 2.5 13 0 16"/></svg>Real Life</button>
+      <button class="qt" type="button" data-go="follow:quizMe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.6a2.5 2.5 0 1 1 3 3.4v1M12 16.6h.01"/></svg>Quiz Me</button>
+      <button class="qt" type="button" data-go="follow:examMistakes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4l8 15H4z"/><path d="M12 10v4M12 17h.01"/></svg>Exam Traps</button>
+    </div>
+  </div>
+
+  <div class="rcard">
+    <div class="rcard-h">🕘 Recent Doubts <a class="more" data-go="notebook">View all</a></div>
+    <div id="railRecent"><div class="rail-empty">Your solved doubts will appear here.</div></div>
+  </div>
+
+  <div class="rcard">
+    <div class="rcard-h">🏆 Achievements</div>
+    <div style="font-size:12.6px;color:var(--ink-3)">Level <b id="railLevel" style="color:var(--ink)">1</b> · Learner</div>
+    <div class="xp-bar"><i id="railXp" style="width:6%"></i></div>
+    <div style="font-size:11.4px;color:var(--ink-4)"><span id="railXpN">0</span> / 100 XP</div>
+    <div class="badges">
+      <div class="badge-i"><div class="n" id="badgeStreak">1</div><div class="l">Day streak</div></div>
+      <div class="badge-i"><div class="n" id="badgeSolved">0</div><div class="l">Solved</div></div>
+      <div class="badge-i"><div class="n" id="badgeSaved">0</div><div class="l">Saved</div></div>
+    </div>
+  </div>
+</aside>
+
+</div><!-- /.app -->
+
+<div class="side-scrim" id="sideScrim"></div>
+
+<!-- ---------------- mobile bottom bar ---------------- -->
+<nav class="mnav">
+  <button class="mnav-i active" type="button" data-go="top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7v9H4z"/></svg>Home</button>
+  <button class="mnav-i" type="button" data-go="notebook"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12v16H6z"/><path d="M9 4v16"/></svg>Notebook</button>
+  <button class="mnav-i ask" type="button" data-go="ask"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Ask</button>
+  <button class="mnav-i" type="button" data-go="tutor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/></svg>Tutor</button>
+  <button class="mnav-i" type="button" data-go="menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h.01M12 12h.01M19 12h.01"/></svg>More</button>
+</nav>
+
+<script>
+/* ------------------------------------------------------------
+   Shell wiring. Every data-go target resolves to something the
+   application already does — nothing here is a dead control.
+   ------------------------------------------------------------ */
+(function(){
+  var side = document.getElementById('side'),
+      scrim = document.getElementById('sideScrim'),
+      burger = document.getElementById('burger'),
+      pop = document.getElementById('menuPop'),
+      menuBtn = document.getElementById('menuBtn');
+
+  function drawer(open){
+    if(!side) return;
+    side.classList.toggle('on', open);
+    if(scrim) scrim.classList.toggle('on', open);
+    document.body.style.overflow = open ? 'hidden' : '';
+  }
+  if(burger) burger.addEventListener('click', function(){ drawer(!side.classList.contains('on')); });
+  if(scrim)  scrim.addEventListener('click', function(){ drawer(false); });
+
+  if(menuBtn && pop){
+    menuBtn.addEventListener('click', function(e){ e.stopPropagation(); pop.classList.toggle('on'); });
+    document.addEventListener('click', function(e){
+      if(!pop.contains(e.target) && e.target !== menuBtn) pop.classList.remove('on');
+    });
+  }
+
+  function scrollTo(id){
+    var el = document.getElementById(id);
+    if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+  function say(msg){
+    try { if(window.Pay && Pay.toast) return Pay.toast(msg); } catch(e){}
+  }
+  /* the follow-up tools need an answer to work on */
+  function follow(key){
+    if(window.quickFollow && window.state && state.lastAnswer){ quickFollow(key); return; }
+    say('Solve a doubt first — then this works on your answer.');
+    scrollTo('askPage');
+  }
+
+  var routes = {
+    top:      function(){ scrollTo('heroTop'); },
+    ask:      function(){ scrollTo('askPage'); var q=document.getElementById('qtext'); if(q && innerWidth>980) q.focus(); },
+    subjects: function(){ scrollTo('levelPage'); },
+    notebook: function(){ scrollTo('notebookPage'); },
+    menu:     function(){ drawer(true); },
+    pro:      function(){ try{ if(window.Pay && Pay.open) return Pay.open(); }catch(e){} scrollTo('askPage'); },
+    account:  function(){ try{ if(window.Pay && Pay.account) return Pay.account(); }catch(e){} },
+    tutor:    function(){
+      if(window.startTutorMode && window.state && state.lastAnswer){ startTutorMode(); return; }
+      say('Ask a doubt first — the tutor teaches from your own answer.');
+      scrollTo('askPage');
+    }
+  };
+
+  document.addEventListener('click', function(e){
+    var el = e.target.closest && e.target.closest('[data-go]');
+    if(!el) return;
+    var go = el.getAttribute('data-go');
+    if(el.tagName === 'A' && el.getAttribute('href')) return;
+    e.preventDefault();
+    if(innerWidth <= 980) drawer(false);
+
+    if(go.indexOf('follow:') === 0){ follow(go.slice(7)); }
+    else if(routes[go]) routes[go]();
+
+    /* keep the sidebar and the bottom bar showing where you are */
+    if(el.classList.contains('snav-i') || el.classList.contains('mnav-i')){
+      var sel = el.classList.contains('snav-i') ? '.snav-i' : '.mnav-i';
+      document.querySelectorAll(sel).forEach(function(n){ n.classList.remove('active'); });
+      el.classList.add('active');
+    }
+  });
+
+  /* global search filters the notebook — the one index we actually hold */
+  var gs = document.getElementById('globalSearch');
+  if(gs) gs.addEventListener('input', function(){
+    var ns = document.getElementById('noteSearch');
+    if(!ns) return;
+    ns.value = gs.value;
+    ns.dispatchEvent(new Event('input', {bubbles:true}));
+    if(gs.value) scrollTo('notebookPage');
+  });
+
+  /* the rail and the stats read from the notebook the app already keeps */
+  window.refreshShellStats = function(){
+    var notes = [];
+    try { notes = (window.getNotes && getNotes()) || []; } catch(e){}
+    var solved = notes.length,
+        pinned = notes.filter(function(n){ return n.pinned; }).length,   // saveToNotebook writes `pinned`
+        xp = Math.min(100, solved * 8),
+        lvl = 1 + Math.floor(solved / 12);
+    function set(id, v){ var el = document.getElementById(id); if(el) el.textContent = v; }
+    set('statSolved', solved); set('statPinned', pinned);
+    set('badgeSolved', solved); set('badgeSaved', pinned);
+    set('railLevel', lvl); set('railXpN', solved * 8);
+    var bar = document.getElementById('railXp'); if(bar) bar.style.width = Math.max(6, xp) + '%';
+
+    var box = document.getElementById('railRecent'); if(!box) return;
+    if(!solved){ box.innerHTML = '<div class="rail-empty">Your solved doubts will appear here.</div>'; return; }
+    box.innerHTML = notes.slice(0, 4).map(function(n, i){
+      var q = String(n.q || '').replace(/[<>&]/g, function(c){ return {'<':'&lt;','>':'&gt;','&':'&amp;'}[c]; });
+      var m = String(n.meta || '').replace(/[<>&]/g, function(c){ return {'<':'&lt;','>':'&gt;','&':'&amp;'}[c]; });
+      return '<div class="recent-i" data-i="' + i + '"><span class="dot"></span><span class="tx">' +
+             '<span class="q">' + (q || 'Doubt') + '</span><span class="m">' + m + '</span></span></div>';
+    }).join('');
+    box.querySelectorAll('.recent-i').forEach(function(row){
+      row.addEventListener('click', function(){
+        try { if(window.openNote) openNote(notes[+row.dataset.i]); } catch(e){}
+      });
+    });
+  };
+  /* the notebook re-renders on every save, delete and pin — ride along with it */
+  var boot = setInterval(function(){
+    if(window.renderNotebook && !renderNotebook.__shell){
+      var orig = window.renderNotebook;
+      window.renderNotebook = function(){ var r = orig.apply(this, arguments); try{ refreshShellStats(); }catch(e){} return r; };
+      window.renderNotebook.__shell = true;
+      try { refreshShellStats(); } catch(e){}
+      clearInterval(boot);
+    }
+  }, 200);
+  setTimeout(function(){ clearInterval(boot); }, 8000);
+})();
+</script>
+
 <div class="pageflip" id="pageFlip" aria-hidden="true"><i></i></div>
-
-<!-- The wobble that makes an SVG look drawn rather than plotted. Turbulence
-     displaces every stroke by a couple of pixels, so straight lines bend the
-     way they do under a real pen. Text is left alone — a wobbly label is just
-     an unreadable one. -->
-<svg width="0" height="0" aria-hidden="true" focusable="false"
-     style="position:absolute;pointer-events:none">
-  <filter id="nbInk" x="-12%" y="-12%" width="124%" height="124%">
-    <feTurbulence type="fractalNoise" baseFrequency="0.016" numOctaves="3" seed="5" result="n"/>
-    <feDisplacementMap in="SourceGraphic" in2="n" scale="2.4"
-                       xChannelSelector="R" yChannelSelector="G"/>
-  </filter>
-</svg>
 
 <script>window.__APP_ID='7solve'; window.__APP_NAME='7Solve';</script>
 <script src="config.js"></script>
