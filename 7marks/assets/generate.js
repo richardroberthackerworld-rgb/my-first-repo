@@ -436,6 +436,93 @@
     };
   });
 
+  /* =====================================================================
+     PROGRAMMATIC GENERATION
+     Retry Incorrect, Similar Test, Practice My Mistakes and Quick 5 are all
+     one click, and all of them come through here — the same prompt, the
+     same validation, the same set record, the same preview. Giving each
+     button its own generator is how they would drift apart.
+
+     spec: { subject, topic, count, qtype, difficulty, marks, language,
+             basedOn:[question text], title, note }
+     Resolves to the saved set, or rejects with a message worth showing.
+     ===================================================================== */
+  function runSpec(spec) {
+    var cfg = {
+      subject: spec.subject || 'General', topic: spec.topic || 'General',
+      qtype: spec.qtype || 'mcq', difficulty: spec.difficulty || 'Medium',
+      marks: spec.marks || 2, source: spec.source || 'topic'
+    };
+    var count = M.clamp(spec.count || 5, 1, 100);
+    var typeName = (QTYPES.filter(function (t) { return t[0] === cfg.qtype; })[0] || [])[1] || 'MCQ';
+
+    var prompt =
+      'Set ' + count + ' exam questions.\n' +
+      'Subject: ' + cfg.subject + '\nTopic: ' + cfg.topic + '\n' +
+      'Question type: ' + typeName + '\nDifficulty: ' + cfg.difficulty +
+      '\nMarks each: ' + cfg.marks + '\nLanguage: ' + (spec.language || 'English') + '\n' +
+      (spec.basedOn && spec.basedOn.length
+        ? '\nThe student answered these questions incorrectly. Set NEW questions that test ' +
+          'the same skills at a comparable level. Do NOT repeat them verbatim:\n' +
+          spec.basedOn.slice(0, 10).map(function (t, i) {
+            return (i + 1) + '. ' + String(t).slice(0, 220);
+          }).join('\n') + '\n'
+        : '') +
+      '\nReply with a JSON ARRAY only, no prose. Each item:\n' +
+      '{"question":string,"type":string,"options":[string],"answer":string,' +
+      '"marks":number,"difficulty":string}\n' +
+      'For MCQ give exactly 4 options and put the full correct option text in "answer".';
+
+    return M.ai.generate(prompt, { temp: 0.75, maxTokens: 8192,
+                                   label: spec.label || 'AI question generation' })
+      .then(function (r) {
+        if (r.blocked) { var e = new Error('blocked'); e.blocked = r.blocked; e.status = r.status; throw e; }
+        if (r.demo || !r.text) {
+          throw new Error('The AI service returned nothing, so no questions were created and ' +
+            'nothing was charged. api.php needs its provider keys configured on the server.');
+        }
+        var qs = validate(parseJSON(r.text), cfg);
+        if (!qs.length) {
+          throw new Error('The questions came back without a usable structure and were dropped ' +
+            'rather than shown. Try again, or pick a different question type.');
+        }
+        var marks = qs.reduce(function (a, q) { return a + q.marks; }, 0);
+        return db.sets.add({
+          subject: cfg.subject, topic: cfg.topic, difficulty: cfg.difficulty,
+          language: spec.language || 'English', source: cfg.source,
+          questions: qs, marks: marks,
+          minutes: spec.minutes || Math.max(1, Math.round(qs.length * 1.5)),
+          asked: count, charged: r.charged || 0,
+          note: spec.note || '', prevPct: spec.prevPct
+        });
+      });
+  }
+
+  /** Generate from a spec with a full-screen wait, then open the preview. */
+  function runAndPreview(spec) {
+    var host = d.getElementById('page');
+    host.insertAdjacentHTML('afterbegin',
+      '<div class="genbar" id="genBar"><div class="think">' + esc(spec.wait || 'Generating your questions') +
+      '<i></i><i></i><i></i></div></div>');
+    return runSpec(spec).then(function (s) {
+      pending = s;
+      M.router.go('preview');
+      return s;
+    }).catch(function (err) {
+      var bar = d.getElementById('genBar');
+      if (bar) bar.remove();
+      if (err.blocked) { V.gateModal(err.blocked, err.status); return null; }
+      M.toast(err.message || 'Generation failed', 'err', 6000);
+      return null;
+    });
+  }
+
+  w.M7.gen = {
+    run: runSpec, runAndPreview: runAndPreview,
+    setPending: function (s) { pending = s; },
+    settings: gen
+  };
+
   function chip(t) { return '<span class="pchip">' + t + '</span>'; }
   function qName(id) {
     var t = QTYPES.filter(function (x) { return x[0] === id; })[0];
@@ -515,8 +602,14 @@
         list.length
           ? '<p class="gen-lede">Every question you have got wrong, kept so you can practise ' +
             'exactly those again.</p>' +
-            '<button class="btn btn-v" id="mbGo" style="height:44px;margin-bottom:16px">' +
-            '🎯 Practice my mistakes</button>' +
+            '<div class="mbbar"><b>' + list.length + ' question' +
+            (list.length > 1 ? 's' : '') + ' available</b>' +
+            '<div class="pills">' +
+            [5, 10].filter(function (k) { return k <= list.length; }).map(function (k) {
+              return '<button class="pill" data-mb="' + k + '">Practice ' + k + '</button>';
+            }).join('') +
+            '<button class="btn btn-v" data-mb="all">🎯 Practice all ' + list.length +
+            '</button></div></div>' +
             '<div class="hist">' + list.map(function (m) {
               return '<div class="hrow" data-id="' + m.id + '">' +
                 '<div class="hpct low">✗</div>' +
@@ -533,14 +626,14 @@
             '<a class="btn btn-v" href="#/assistant">Generate questions</a></div>') +
       '</div>' + P.rightRail() + '</div>' + P.footer());
 
-    if ($('#mbGo')) $('#mbGo').onclick = function () {
-      var m = list[0];
-      gen.subject = m.subject || ''; gen.topic = m.topic || '';
-      gen.count = Math.min(10, list.length); gen.source = 'topic';
-      gen.difficulty = m.difficulty || 'Medium';
-      M.router.go('assistant');
-      M.toast('Loaded your weakest questions — press Generate', 'ok', 4200);
-    };
+    /* one click: build the practice set straight away rather than sending
+       the student to the generator to press a second button */
+    $$('[data-mb]').forEach(function (b) {
+      b.onclick = function () {
+        var n = this.dataset.mb === 'all' ? list.length : +this.dataset.mb;
+        w.M7.practiceMistakes(Math.min(n, list.length));
+      };
+    });
     var host = $('#page .hist');
     if (host) host.onclick = function (e) {
       var b = e.target.closest('[data-a="rm"]'); if (!b) return;

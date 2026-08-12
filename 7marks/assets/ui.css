@@ -1071,3 +1071,73 @@
   .hact .pill{flex:1;justify-content:center}
   .imgprev img{width:56px;height:56px}
 }
+
+/* ============================ RESULT & PRACTICE ============================ */
+.genbar{position:sticky;top:0;z-index:60;margin:-4px 0 12px;padding:13px 16px;border-radius:12px;
+  background:var(--violet-bg);border:1px solid #ddd5fb}
+.genbar .think{padding:0;color:var(--violet);font-weight:700}
+
+.res-hero{display:flex;align-items:center;gap:16px;padding:18px;border-radius:14px;flex-wrap:wrap;
+  background:linear-gradient(120deg,var(--violet-bg),#fff);border:1px solid #ddd5fb}
+.res-hero b{display:block;font-size:28px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+.res-hero span{display:block;font-size:15px;font-weight:700;color:var(--violet)}
+.res-hero small{display:block;font-size:12px;color:var(--ink-2);margin-top:3px}
+.res-delta{margin-left:auto;text-align:right;font-size:19px;font-weight:800;flex:none}
+.res-delta.up{color:var(--green)} .res-delta.down{color:var(--orange)}
+.res-delta i{display:block;font-style:normal;font-size:10.5px;font-weight:600;color:var(--ink-3)}
+
+.nextgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:10px}
+.nx{display:flex;gap:11px;align-items:flex-start;padding:13px;border-radius:12px;text-align:left;
+  border:1px solid var(--line);background:#fff;transition:transform .14s,box-shadow .14s,border-color .14s}
+.nx:hover{transform:translateY(-2px);box-shadow:var(--shadow);border-color:var(--violet)}
+.nx span{font-size:19px;flex:none}
+.nx b{display:block;font-size:13px}
+.nx small{display:block;font-size:11px;color:var(--ink-3);margin-top:2px;line-height:1.45}
+.nx.done{background:var(--green-bg);border-color:#bfe8d6;cursor:default}
+.nx.done:hover{transform:none;box-shadow:none;border-color:#bfe8d6}
+
+.impr{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.impr div{padding:13px;border-radius:11px;background:var(--surface-2);border:1px solid var(--line);
+  text-align:center}
+.impr small{display:block;font-size:11px;color:var(--ink-3)}
+.impr b{display:block;font-size:21px;font-weight:800;margin-top:3px}
+
+.rdy{display:flex;align-items:center;gap:14px;padding:15px;border-radius:12px;
+  background:linear-gradient(120deg,var(--teal-bg),#fff);border:1px solid #bfe6ea}
+.rdy b{font-size:30px;font-weight:800;color:var(--teal);letter-spacing:-.02em}
+.rdy span{font-size:11.5px;color:var(--ink-2);line-height:1.5}
+
+.revw{display:flex;flex-direction:column;gap:8px}
+.rv{display:flex;gap:11px;padding:12px;border-radius:11px;border:1px solid var(--line);
+  background:#fff}
+.rv-b{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;
+  justify-content:center;font-weight:800;font-size:14px;flex:none}
+.rv-b.good{background:var(--green-bg);color:var(--green)}
+.rv-b.low{background:var(--red-bg);color:var(--red-ink)}
+.rv-b.mid{background:var(--orange-bg);color:var(--orange)}
+.rv-m{flex:1;min-width:0}
+.rv-m b{display:block;font-size:12.5px;line-height:1.5}
+.rv-s{display:inline-block;font-size:10px;font-weight:800;text-transform:uppercase;
+  letter-spacing:.05em;color:var(--ink-3);margin:4px 0 2px}
+.rv-m small{display:block;font-size:11.5px;color:var(--ink-2)}
+
+.trend{display:flex;align-items:flex-end;gap:10px;height:150px;padding:10px 0}
+.tr{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px;
+  height:100%}
+.tr-bar{width:100%;max-width:44px;border-radius:8px 8px 3px 3px;
+  background:linear-gradient(180deg,var(--violet-vivid),var(--violet));min-height:6px}
+.tr b{font-size:11.5px;font-weight:800}
+.tr small{font-size:9.5px;color:var(--ink-3);text-align:center;line-height:1.2}
+
+.mbbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:13px 15px;border-radius:12px;
+  background:var(--red-bg);border:1px solid #f7cdcf;margin-bottom:16px}
+.mbbar b{font-size:13.5px;color:var(--red-ink)}
+.mbbar .pills{margin-left:auto}
+
+@media(max-width:640px){
+  .nextgrid{grid-template-columns:1fr}
+  .impr{grid-template-columns:1fr}
+  .res-delta{margin-left:0;text-align:left;width:100%}
+  .trend{height:120px;gap:6px}
+  .mbbar .pills{margin-left:0;width:100%}
+}
