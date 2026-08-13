@@ -129,17 +129,37 @@
     var m = d.getElementById('modal');
     var cost = (st && st.ai_cost) || 10;
     if (kind === 'plan') {
+      var out = M.hub.signedIn();
+      /* The whole ladder, cheapest first, because a student comparing prices
+         should see the cheapest one. But Spark is marked as having NO AI:
+         it is 50 rupees cheaper and genuinely cannot run the thing this
+         modal is about, and leading with 49 without saying so would sell a
+         plan that fails the moment it is used. */
+      var rows = [
+        ['spark', '7Marks Spark', 49, '500 credits · study tools only', false],
+        ['pro', '7Marks Pro', 99, '1,000 credits · AI assistant, correction, generation', true],
+        ['infinity', '7Marks Infinity', 999, '10,000 credits · +20 free daily · everything', true]
+      ];
       m.innerHTML = '<div class="modal-c gate"><span class="gate-em">✨</span>' +
-        '<h3>Unlock AI with 7Marks Pro</h3>' +
-        '<p>Your current plan' +
-        (st && st.plan ? ' (<b>' + esc(st.plan.name) + '</b>)' : '') +
-        ' does not include AI tools.</p>' +
-        '<div class="gate-plan"><div><b>7Marks Pro</b><small>1,000 credits a month · ' +
-        'AI assistant, correction, question generation</small></div>' +
-        '<span class="gate-price">₹99<i>/mo</i></span></div>' +
+        '<h3>' + (out ? 'Unlock AI on 7Marks' : 'Sign in to use AI') + '</h3>' +
+        '<p>' + (out
+          ? 'Your current plan' + (st && st.plan ? ' (<b>' + esc(st.plan.name) + '</b>)' : '') +
+            ' does not include AI tools.'
+          : 'Your credits and plan live in your 7by.in account. Sign in to see ' +
+            'them here — it is the same account across every 7by tool.') + '</p>' +
+        '<div class="gate-list">' + rows.map(function (r) {
+          return '<div class="gate-row' + (r[4] ? '' : ' noai') +
+            (r[0] === 'pro' ? ' best' : '') + '">' +
+            '<div><b>' + r[1] + '</b><small>' + r[2 + 1] + '</small>' +
+            '<em class="' + (r[4] ? 'yes' : 'no') + '">' +
+            (r[4] ? '✓ AI included' : '✕ No AI tools') + '</em></div>' +
+            '<span class="gate-price">₹' + r[2] + '<i>/mo</i></span></div>';
+        }).join('') + '</div>' +
         '<div class="m-btns"><button class="btn btn-o" id="gtClose">Not now</button>' +
-        '<a class="btn btn-v" href="#/pricing" id="gtGo">Upgrade to Pro</a></div>' +
-        '<a class="gate-all" href="#/pricing" id="gtAll">View all plans</a></div>';
+        (out
+          ? '<a class="btn btn-v" href="#/pricing" id="gtGo">See plans</a>'
+          : '<button class="btn btn-v" id="gtSignIn">🔑 Sign in</button>') + '</div>' +
+        '<a class="gate-all" href="#/pricing" id="gtAll">Compare all plans</a></div>';
     } else {
       var have = (st && st.credits) || 0;
       m.innerHTML = '<div class="modal-c gate"><span class="gate-em">⚡</span>' +
@@ -153,6 +173,9 @@
     var close = function () { m.classList.remove('open'); };
     $('#gtClose').onclick = close;
     $$('.gate a[href="#/pricing"]').forEach(function (a) { a.onclick = close; });
+    if ($('#gtSignIn')) {
+      $('#gtSignIn').onclick = function () { location.href = M.hub.signInUrl(); };
+    }
   }
 
   /* The credit chip in the top bar. Counts up or down to a new balance
