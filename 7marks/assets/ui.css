@@ -1172,3 +1172,35 @@
   .modes{grid-template-columns:1fr}
   .rec .btn{margin-left:0;width:100%;justify-content:center}
 }
+
+/* ============================ AUTH ============================ */
+.btn-auth{display:flex;align-items:center;gap:6px;height:38px;padding:0 16px;border-radius:99px;
+  background:linear-gradient(135deg,#7c6cf0,#5b4be0);color:#fff;font-weight:800;font-size:13px;
+  border:0;box-shadow:0 3px 10px rgba(91,75,224,.3)}
+.btn-auth:hover{filter:brightness(1.06);transform:translateY(-1px)}
+/* Infinity is the top plan, so its button manages rather than sells */
+.btn-inf{display:flex;align-items:center;gap:6px;height:38px;padding:0 15px;border-radius:99px;
+  background:linear-gradient(135deg,#1b2a5e,#4b3bd0);color:#fff;font-weight:800;font-size:13px;
+  border:1px solid #2b3a76}
+.btn-inf:hover{filter:brightness(1.12)}
+
+.modal-c.auth{position:relative;width:min(400px,100%);padding:26px 24px 24px}
+.auth-top{display:flex;gap:12px;align-items:flex-start;margin-bottom:16px}
+.auth-top svg{flex:none}
+.auth-top h3{font-size:18px}
+.auth-top p{font-size:12px;color:var(--ink-2);margin-top:4px;line-height:1.5}
+.auth-in{width:100%;height:44px;font-size:14px}
+.auth-go{width:100%;justify-content:center;height:46px;margin-top:18px;font-size:14px}
+.auth-msg{padding:10px 13px;border-radius:10px;background:var(--green-bg);color:var(--green);
+  font-size:12.5px;font-weight:600;margin-bottom:14px;line-height:1.5}
+.auth-msg.err{background:var(--red-bg);color:var(--red-ink)}
+.auth-alt{display:flex;justify-content:space-between;gap:10px;margin-top:14px;flex-wrap:wrap}
+.auth-alt button{font-size:12.5px;font-weight:700;color:var(--violet)}
+.auth-alt button:hover{text-decoration:underline}
+.auth-close{position:absolute;top:12px;right:12px;width:30px;height:30px;border-radius:50%;
+  color:var(--ink-3);font-size:14px}
+.auth-close:hover{background:var(--surface-3);color:var(--navy)}
+@media(max-width:640px){
+  .btn-auth span,.btn-inf span{display:inline}
+  .modal-c.auth{padding:22px 18px 20px}
+}

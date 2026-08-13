@@ -65,6 +65,33 @@
     $('#rail').innerHTML = h;
   }
 
+  /**
+   * The one button in the top bar, and what it says depends on where the
+   * student actually is.
+   *
+   * A signed-out student was being shown "Premium", which asks them to buy
+   * before they can even sign in. A Spark subscriber was shown the same
+   * word as a free user, which reads as though their payment did nothing.
+   * Each state now gets the action that is genuinely next for it, and
+   * Infinity — the top plan — is not sold anything at all.
+   */
+  function planCta() {
+    if (!M.hub.signedIn()) {
+      return '<button class="btn-auth" id="signIn">🔑 <span>Sign in</span></button>';
+    }
+    var s = M.credits.chip();
+    var key = s && s.plan ? s.plan.key : 'free';
+    var map = {
+      free:     ['btn-prem', '👑', 'Get Premium'],
+      spark:    ['btn-prem', '⬆️', 'Upgrade to Pro'],
+      pro:      ['btn-inf',  '✨', 'Go Infinity'],
+      infinity: ['btn-inf',  '💎', 'Infinity']
+    };
+    var c = map[key] || map.free;
+    return '<a class="' + c[0] + '" href="#/pricing">' + c[1] +
+           ' <span>' + c[2] + '</span></a>';
+  }
+
   function renderTop() {
     $('#top').innerHTML =
       '<button class="burger" id="burger" aria-label="Open menu" aria-expanded="false">☰</button>' +
@@ -82,7 +109,7 @@
         '<button class="cred-chip" id="credChip" hidden title="Credit history">' +
           '<span class="cc-bolt">⚡</span><span class="cc-n">0</span>' +
           '<span class="cc-plan">FREE</span></button>' +
-        '<a class="btn-prem" href="#/pricing">👑 <span>Premium</span></a>' +
+        planCta() +
         '<div style="position:relative">' +
           '<button class="ico-btn" id="bell" aria-label="Notifications">🔔<i class="dot" id="dot"></i></button>' +
           '<div class="pop" id="notifPop"></div></div>' +
@@ -209,9 +236,9 @@
       (signedIn ? 'Signed in' : 'Not signed in') + '</span></div>' +
       (signedIn
         ? ''
-        : '<a class="pop-i" href="' + M.hub.signInUrl() + '" ' +
+        : '<button class="pop-i" id="popSignIn" ' +
           'style="background:var(--violet-bg);color:var(--violet);font-weight:800">' +
-          '<span>🔑</span>Sign in / Create account</a>') +
+          '<span>🔑</span>Sign in / Create account</button>') +
       [['#/profile', '👤', 'My Profile'], ['#/performance', '📈', 'My Performance'],
        ['#/bookmarks', '🔖', 'Bookmarks'], ['#/premium', '💎', 'Premium'],
        ['#/settings', '⚙️', 'Settings'], ['#/papers', '📄', 'Question Papers']]
@@ -222,6 +249,9 @@
         ? '<button class="pop-i" id="signOut" style="color:var(--red-ink)">' +
           '<span>🚪</span>Sign out</button>'
         : '');
+    if ($('#popSignIn')) {
+      $('#popSignIn').onclick = function () { M.auth.open('signin'); };
+    }
     if (signedIn && $('#signOut')) {
       $('#signOut').onclick = function () { M.hub.signOut(); };
     }
@@ -264,6 +294,17 @@
 
     mountSearch();
     $('#credChip').onclick = function () { M.router.go('credits'); };
+    if ($('#signIn')) $('#signIn').onclick = function () { M.auth.open('signin'); };
+    /* the button's wording depends on the plan, so it is repainted when
+       the plan arrives rather than being fixed at first render */
+    var repaintCta = function () {
+      var host = $('.btn-auth') || $('.btn-prem') || $('.btn-inf');
+      if (!host) return;
+      host.outerHTML = planCta();
+      if ($('#signIn')) $('#signIn').onclick = function () { M.auth.open('signin'); };
+    };
+    w.addEventListener('7m:credits', repaintCta);
+    w.addEventListener('7m:auth', repaintCta);
     M.credits.status().then(paintCredits);
     w.addEventListener('7m:credits', paintCredits);
     w.addEventListener('7m:notif', paintNotifs);
