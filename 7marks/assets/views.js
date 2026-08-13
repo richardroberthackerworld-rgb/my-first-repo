@@ -35,7 +35,18 @@
   ];
 
   function renderRail() {
-    var h = '';
+    /* On phones the header keeps only the brand and the bell, so who you
+       are, what you have and how to sign in live at the top of the drawer
+       instead. Hidden above 640px, where the header has room for them. */
+    var h = '<div class="rail-me">' +
+      '<button class="rail-who" id="railWho"><span class="av" id="railAv">S</span>' +
+      '<span class="rail-nm" id="railNm">Hello, Student!</span></button>' +
+      '<div class="rail-me-r">' +
+      '<button class="cred-chip on" id="railCred" title="Credit history">' +
+      '<span class="cc-bolt">⚡</span><span class="cc-n">0</span>' +
+      '<span class="cc-plan">FREE</span></button>' +
+      planCta().replace('id="signIn"', 'id="railSignIn"') +
+      '</div></div>';
     NAV.forEach(function (n) {
       if (n[1] === null) { h += '<div class="rail-h">' + esc(n[0]) + '</div>'; return; }
       var ext = n[4];
@@ -110,10 +121,12 @@
           '<span class="cc-bolt">⚡</span><span class="cc-n">0</span>' +
           '<span class="cc-plan">FREE</span></button>' +
         planCta() +
-        '<div style="position:relative">' +
+        /* nav-bell stays on phones; nav-who and the chips move into the
+           drawer, so the header is brand + bell and nothing else */
+        '<div class="nav-bell" style="position:relative">' +
           '<button class="ico-btn" id="bell" aria-label="Notifications">🔔<i class="dot" id="dot"></i></button>' +
           '<div class="pop" id="notifPop"></div></div>' +
-        '<div style="position:relative">' +
+        '<div class="nav-who" style="position:relative">' +
           '<button class="who" id="who"><span class="av" id="av">S</span>' +
             '<span><b id="uname">Hello, Student!</b><small>Keep learning!</small></span></button>' +
           '<div class="pop" id="whoPop"></div></div>' +
@@ -200,9 +213,20 @@
       span.style.setProperty('--roll', (span.scrollWidth - span.clientWidth + 6) + 'px');
     }
     b.title = nm;
+    /* the drawer carries its own copy on phones */
+    var rn = $('#railNm'), ra = $('#railAv');
+    if (ra) ra.textContent = nm.charAt(0).toUpperCase();
+    if (rn) { rn.textContent = 'Hello, ' + first + '!'; rn.title = nm; }
   }
 
   function paintCredits() {
+    /* keep the drawer's copy in step with the header's */
+    var rc = $('#railCred'), rs = M.credits.chip();
+    if (rc && rs) {
+      rc.className = 'cred-chip on plan-' + rs.plan.key;
+      rc.querySelector('.cc-plan').textContent = rs.plan.badge;
+      rc.querySelector('.cc-n').textContent = rs.credits.toLocaleString();
+    }
     var chip = $('#credChip');
     if (!chip) return;
     var s = M.credits.chip();
@@ -304,6 +328,18 @@
     }
     if ($('#popSignUp')) {
       $('#popSignUp').onclick = function () { M.auth.open('signup'); };
+    }
+    /* the drawer's copies of the header controls */
+    if ($('#railSignIn')) {
+      $('#railSignIn').onclick = function () { M.auth.open('signin'); };
+    }
+    if ($('#railCred')) {
+      $('#railCred').onclick = function () { location.hash = '#/credits'; };
+    }
+    if ($('#railWho')) {
+      $('#railWho').onclick = function () {
+        location.hash = M.hub.signedIn() ? '#/profile' : '#/premium';
+      };
     }
     if (signedIn && $('#signOut')) {
       $('#signOut').onclick = function () { M.hub.signOut(); };

@@ -1273,3 +1273,34 @@
 .auth-gwrap[hidden]{display:none}
 #auG{display:flex;justify-content:center;min-height:44px}
 #auG>div{width:100%!important}
+
+/* ---- exam palette track ----
+   Scoped to min-width so the ordinary .wrap collapse still wins on
+   narrower screens. It used to be an inline style, which outranked every
+   media query and left the question column a few pixels wide on phones. */
+@media(min-width:1181px){
+  .wrap.exam-w{grid-template-columns:minmax(0,1fr) 260px}
+}
+
+/* ---- the drawer's account block (phones only) ---- */
+.rail-me{display:none}
+.rail-who{display:flex;align-items:center;gap:10px;width:100%;padding:4px 2px 10px;
+  background:none;border:0;cursor:pointer;text-align:left}
+.rail-nm{font-weight:800;font-size:14px;color:var(--ink-1);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.rail-me-r{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  padding-bottom:12px;margin-bottom:6px;border-bottom:1px solid var(--line)}
+.rail-me-r .btn-auth,.rail-me-r .btn-prem,.rail-me-r .btn-inf{flex:1 1 auto}
+
+@media(max-width:640px){
+  /* the header keeps the brand and the bell; everything else is one tap
+     away in the drawer, where there is room to label it */
+  .rail-me{display:block}
+  .nav-r>#credChip,.nav-r>.btn-auth,.nav-r>.btn-prem,.nav-r>.btn-inf,
+  .nav-r>.nav-who{display:none}
+  .topbar{padding-bottom:9px}
+  .nav-bell{position:absolute;right:10px;top:10px;z-index:2}
+  /* with the cluster gone the brand is the only thing on row one, so the
+     row collapses to brand + search */
+  .nav-r{flex-basis:auto;gap:0}
+}

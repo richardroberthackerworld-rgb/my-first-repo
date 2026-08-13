@@ -912,7 +912,11 @@
 
     function paint() {
       var q = s.questions[cur], c = M.exam.counts(), t = M.fmt(M.exam.left());
-      set('<div class="wrap" style="grid-template-columns:minmax(0,1fr) 260px">' +
+      /* The narrower palette track is a CLASS, not an inline style. Inline
+         styles outrank media queries, so setting it here meant the phone
+         layout never collapsed: the question column was squeezed to a few
+         pixels and the palette overflowed on top of it. */
+      set('<div class="wrap exam-w">' +
         '<div class="col">' +
         V.card('📝', 'violet', s.title,
           s.locked ? lockedPanel() :
