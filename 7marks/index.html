@@ -221,15 +221,25 @@
   /* A repeat visit in the same session gets the SAME animation at 2.4x, not
      a skipped one. Skipping made a refresh look like the preloader was
      broken — it appeared for a frame and was gone. */
+  /* Shown on a genuinely fresh open, and again only after an hour away.
+     sessionStorage was the wrong store: it made every reload in a long
+     study session replay the animation, which is noise once you have seen
+     it. localStorage with a timestamp survives reloads and tab closes, so
+     the preloader becomes a greeting rather than a toll gate. */
   var seen = false;
-  try { seen = !!sessionStorage.getItem('7m.seen'); sessionStorage.setItem('7m.seen', '1'); } catch (e) {}
+  try {
+    var lastSeen = parseInt(localStorage.getItem('7m.preAt') || '0', 10);
+    seen = lastSeen > 0 && (Date.now() - lastSeen) < 3600000;   /* one hour */
+    localStorage.setItem('7m.preAt', String(Date.now()));
+  } catch (e) {}
 
   /* draw the logo and write the quote on one clock; both fail to
      "already finished", never to blank */
-  var quote = M.writeQuote(pre, { instant: reduce, speed: seen ? 2.4 : 1 });
+  var quote = M.writeQuote(pre, { instant: reduce || seen, speed: 1 });
 
   /* the preloader must outlast the writing, or the student never sees it */
-  var DUR = reduce ? 350 : (quote ? (quote.runtime + 0.7) * 1000 : 5800);
+  /* within the hour it is gone almost immediately; otherwise it plays */
+  var DUR = (reduce || seen) ? 120 : (quote ? (quote.runtime + 0.7) * 1000 : 5800);
   var fill = d.getElementById('preFill'), pct = d.getElementById('prePct'),
       rocket = d.getElementById('preRocket');
   var t0 = performance.now(), finished = false, booted = false;

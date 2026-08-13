@@ -157,6 +157,27 @@
 
   /* The credit chip in the top bar. Counts up or down to a new balance
      rather than snapping, so a deduction is visible rather than silent. */
+  /* Greet the student by name once the hub tells us one. A long name
+     scrolls within its own width rather than pushing the top bar wider —
+     names in India are frequently longer than a design's placeholder. */
+  function paintName(st) {
+    var nm = (st && st.name) || '';
+    if (!nm) return;
+    M.state.user.name = nm; M.save('user');
+    var b = $('#uname'), av = $('#av');
+    if (av) av.textContent = nm.charAt(0).toUpperCase();
+    if (!b) return;
+    var first = nm.split(/\s+/)[0];
+    b.innerHTML = 'Hello, <span class="nm">' + esc(first) + '</span>!';
+    var span = b.querySelector('.nm');
+    /* only marquee when it genuinely does not fit */
+    if (span && span.scrollWidth > span.clientWidth + 1) {
+      span.classList.add('roll');
+      span.style.setProperty('--roll', (span.scrollWidth - span.clientWidth + 6) + 'px');
+    }
+    b.title = nm;
+  }
+
   function paintCredits() {
     var chip = $('#credChip');
     if (!chip) return;
@@ -305,8 +326,8 @@
     };
     w.addEventListener('7m:credits', repaintCta);
     w.addEventListener('7m:auth', repaintCta);
-    M.credits.status().then(paintCredits);
-    w.addEventListener('7m:credits', paintCredits);
+    M.credits.status().then(function (st) { paintCredits(); paintName(st); });
+    w.addEventListener('7m:credits', function (e) { paintCredits(); paintName(e.detail); });
     w.addEventListener('7m:notif', paintNotifs);
     w.addEventListener('7m:route', function (e) {
       var v = e.detail.name, cat = e.detail.params.cat;

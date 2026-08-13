@@ -1204,3 +1204,16 @@
   .btn-auth span,.btn-inf span{display:inline}
   .modal-c.auth{padding:22px 18px 20px}
 }
+
+/* A long name scrolls inside its own width rather than widening the top bar.
+   Names here are frequently longer than a design's placeholder, and pushing
+   the bar wider is what forced it to wrap to three rows before. */
+.who .nm{display:inline-block;max-width:9ch;overflow:hidden;white-space:nowrap;
+  vertical-align:bottom}
+.who .nm.roll{animation:nameRoll 6s ease-in-out infinite alternate}
+@keyframes nameRoll{
+  0%,25%{transform:translateX(0)}
+  75%,100%{transform:translateX(calc(var(--roll) * -1))}
+}
+@media(max-width:640px){.who .nm{max-width:7ch}}
+@media (prefers-reduced-motion:reduce){.who .nm.roll{animation:none}}

@@ -206,8 +206,11 @@ if ($action === 'status') {
     $plan = p_plan_of($w);
     $led = p_read($who);
     $today = gmdate('Y-m-d');
+    $who2 = is_array($w) ? $w : [];
     p_out(200, [
         'signed_in' => $token !== '',
+        /* the name comes from the hub, which owns it */
+        'name' => (string)($who2['name'] ?? $who2['display_name'] ?? ''),
         'plan' => [
             'key' => $plan['key'], 'name' => $plan['name'], 'badge' => $plan['badge'],
             'ai' => (bool)$plan['ai'], 'support' => $plan['support'],
