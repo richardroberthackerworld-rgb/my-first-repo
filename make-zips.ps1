@@ -1,5 +1,5 @@
 # Builds cPanel/WordPress-ready zips with FORWARD-SLASH paths (Linux/WordPress safe).
-# Windows PowerShell's Compress-Archive uses backslashes which break on Linux — this avoids that.
+# Windows PowerShell's Compress-Archive uses backslashes which break on Linux â€” this avoids that.
 Add-Type -AssemblyName System.IO.Compression | Out-Null
 Add-Type -AssemblyName System.IO.Compression.FileSystem | Out-Null
 
@@ -49,7 +49,7 @@ function New-Zip {
 $base = $PSScriptRoot
 if (-not $base) { $base = (Get-Location).Path }
 
-# 1) WordPress theme — 'sevenby/' at zip root. EXCLUDE .js (its JS loads from the app subdomain)
+# 1) WordPress theme â€” 'sevenby/' at zip root. EXCLUDE .js (its JS loads from the app subdomain)
 #    so the cPanel ClamAV "Foxhole.JS_Zip" false-positive can't block the upload.
 New-Zip -Zip (Join-Path $base 'sevenby-theme.zip') -Roots @((Join-Path $base 'wordpress-theme\sevenby')) -ExcludeExt @('.js')
 
@@ -60,7 +60,7 @@ $appRoots = @('assets','tools','blog') | ForEach-Object { Join-Path $base $_ }
 #    which made "reaches production" the default for any new page dropped at the root.
 #    game.html ("Sacred Glow") was shipping to the audio subdomain that way.
 #    Deliberately NOT here: index.html is the LIGHT 7by.in hub homepage and belongs only
-#    to the main domain (see 7by-pages.zip below) — shipping it would overwrite the
+#    to the main domain (see 7by-pages.zip below) â€” shipping it would overwrite the
 #    subdomain's own homepage, so app-home.html ships as index.html via -Rename instead.
 #    _cardtest.html is a local scratch page. download-ai.html publicly hands out the AI
 #    engine, which contradicts keeping the implementation private. All stay on disk.
@@ -93,9 +93,9 @@ New-Zip -Zip (Join-Path $base 'vocalremover-app.zip') -Roots $appRoots `
 
 # 3) 7Marks + 7Solve static apps for their subdomains (files at zip root).
 #    cPanel ClamAV flags any zip containing .js (Foxhole.JS_Zip false-positive),
-#    so config.js ships as config.js.txt — after uploading, edit your keys into it
+#    so config.js ships as config.js.txt â€” after uploading, edit your keys into it
 #    and RENAME it to config.js in File Manager.
-#    keys.php holds LIVE server-side keys — it must NEVER be zipped or shipped.
+#    keys.php holds LIVE server-side keys â€” it must NEVER be zipped or shipped.
 #    Only keys.example.php goes out; the user copies it to keys.php on the server.
 function New-AppZip {
   param([string]$AppDir, [string]$Zip)
@@ -105,7 +105,7 @@ function New-AppZip {
   Copy-Item (Join-Path $AppDir 'config.js') (Join-Path $stage 'config.js.txt') -Force
   # sw.js is the PWA service worker (needed for the Play Store app). Like
   # config.js it ships as .txt because cPanel's ClamAV false-positives any
-  # zip containing .js — RENAME IT BACK to sw.js after extracting.
+  # zip containing .js â€” RENAME IT BACK to sw.js after extracting.
   $sw = Join-Path $AppDir 'sw.js'
   if (Test-Path -LiteralPath $sw) { Copy-Item $sw (Join-Path $stage 'sw.js.txt') -Force }
   $roots = Get-ChildItem -LiteralPath $AppDir -File |
@@ -113,15 +113,15 @@ function New-AppZip {
     Select-Object -ExpandProperty FullName
   $roots += (Join-Path $stage 'config.js.txt')
   if (Test-Path -LiteralPath (Join-Path $stage 'sw.js.txt')) { $roots += (Join-Path $stage 'sw.js.txt') }
-  # .well-known/assetlinks.json — links the site to the Android app (kills the URL bar)
+  # .well-known/assetlinks.json â€” links the site to the Android app (kills the URL bar)
   $wk = Join-Path $AppDir '.well-known'
   if (Test-Path -LiteralPath $wk) { $roots += $wk }
   # Each app now hosts its OWN blog (moved off 7by.in), plus the stylesheet and
-  # icons those posts need — both must ship or every post loads unstyled.
+  # icons those posts need â€” both must ship or every post loads unstyled.
   # db/ carries the migrations and the one-time setup runner, which have to
-  # reach the server to be any use. config.php is excluded by name below —
+  # reach the server to be any use. config.php is excluded by name below â€”
   # it holds live database credentials and lives ONLY on the server.
-  foreach ($sub in @('blog','assets','db')) {
+  foreach ($sub in @('blog','assets','db','api')) {
     $p = Join-Path $AppDir $sub
     if (Test-Path -LiteralPath $p) { $roots += $p }
   }
@@ -140,7 +140,7 @@ function New-AppZip {
     $hits = [regex]::Matches($html, '<script src="assets/([A-Za-z0-9_.-]+\.js)(?:\?[^"]*)?"></script>')
 
     # Stylesheets are inlined for the SAME reason as the scripts, and it is not
-    # cosmetic. They shipped as assets/ui.css?v=2 on every single deploy — the
+    # cosmetic. They shipped as assets/ui.css?v=2 on every single deploy â€” the
     # URL never changed, so browsers and the host served the first version they
     # ever cached and every later CSS fix was invisible on the live site while
     # looking correct locally. Folding the CSS into index.html removes the
@@ -188,14 +188,14 @@ function New-AppZip {
 New-AppZip -AppDir (Join-Path $base '7marks') -Zip (Join-Path $base '7marks-site.zip')
 New-AppZip -AppDir (Join-Path $base '7solve') -Zip (Join-Path $base '7solve-site.zip')
 
-# 3b) Account hub UPDATE bundle — everything EXCEPT config.php.
+# 3b) Account hub UPDATE bundle â€” everything EXCEPT config.php.
 #     config.php holds the live DB password + secrets on the server, so we never
 #     ship it: the user drops these files in, then hand-edits only config.php.
 $hubDir = Join-Path $base 'account-hub'
 if (Test-Path -LiteralPath $hubDir) {
   # These five self-declare "TEMPORARY / DELETE AFTER USE". They form a closed
   # cluster (they only reference each other) and nothing in ops.php, the
-  # scheduler or either app calls them — verified. ops-patch-api.php in
+  # scheduler or either app calls them â€” verified. ops-patch-api.php in
   # particular rewrites api.php and issues writes, so it must never ship.
   $hubTemp = @('ops-forensics.php','ops-readlog.php','ops-deploycheck.php',
                'ops-patch-api.php','ops-slice3-forensics.php')
@@ -222,7 +222,7 @@ $pageRoots = @('about.html','privacy-policy.html','terms-of-service.html','discl
   ForEach-Object { Join-Path $base $_ } | Where-Object { Test-Path -LiteralPath $_ }
 $pageRoots += (Join-Path $base 'blog')
 $pageRoots += (Join-Path $pgStage 'assets')
-# .htaccess carries the clean-URL rewrite (/blog/post -> post.html) — without it
+# .htaccess carries the clean-URL rewrite (/blog/post -> post.html) â€” without it
 # every blog link 404s, since the cards link without the .html extension.
 $pgHt = Join-Path $base '.htaccess'
 if (Test-Path -LiteralPath $pgHt) { $pageRoots += $pgHt }
