@@ -49,8 +49,25 @@ if ($action === 'health') {
 if ($action === 'whoami') {
     $uid = current_user_id();
     if ($uid === null) {
-        m7_ok(array('signed_in' => false, 'hub_user_id' => null,
-                    'message' => 'No hub session — sign in at account.7by.in.'));
+        /* Say WHICH of the two failures happened. "Not signed in" covers
+           both "you sent no token" and "the hub rejected the one you sent",
+           and those need completely different fixes. */
+        $tok = m7_hub_token();
+        m7_ok(array(
+            'signed_in'      => false,
+            'hub_user_id'    => null,
+            'token_received' => $tok !== '',
+            'reason' => $tok === ''
+                ? 'no_token'
+                : 'hub_rejected_token',
+            'message' => $tok === ''
+                ? 'No hub token was sent with this request. Opening this URL ' .
+                  'directly in a browser will always show this: the token is ' .
+                  'attached by the 7Marks app, not stored as a cookie. Sign in ' .
+                  'inside 7Marks and let the app call this, or append ?t=<token>.'
+                : 'A token was sent but the hub did not accept it. It may have ' .
+                  'expired — sign in again at account.7by.in.'
+        ));
     }
     $row = null;
     try {

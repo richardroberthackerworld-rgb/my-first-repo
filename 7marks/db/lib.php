@@ -89,8 +89,13 @@ function current_user_id(): ?int {
         @session_start();
     }
 
-    /* a fresh enough answer from a moment ago is good enough */
+    /* A fresh enough answer from a moment ago is good enough — but it is
+       keyed on the TOKEN, not just the session. Caching on the session
+       alone would hand a second student the first one's id if they shared
+       a browser session and swapped tokens. */
+    $tokHash = substr(hash('sha256', m7_hub_token()), 0, 16);
     if (!empty($_SESSION['m7_uid']) && !empty($_SESSION['m7_uid_at'])
+        && ($_SESSION['m7_uid_tok'] ?? '') === $tokHash
         && (time() - (int)$_SESSION['m7_uid_at']) < $ttl) {
         return $uid = (int)$_SESSION['m7_uid'];
     }
@@ -104,11 +109,12 @@ function current_user_id(): ?int {
     if ($id > 0) {
         $_SESSION['m7_uid'] = $id;
         $_SESSION['m7_uid_at'] = time();
+        $_SESSION['m7_uid_tok'] = $tokHash;
         m7_touch_mirror($id, (string)($me['user']['name'] ?? $me['name'] ?? ''));
         return $uid = $id;
     }
 
-    unset($_SESSION['m7_uid'], $_SESSION['m7_uid_at']);
+    unset($_SESSION['m7_uid'], $_SESSION['m7_uid_at'], $_SESSION['m7_uid_tok']);
     return $uid = null;
 }
 
@@ -121,23 +127,53 @@ function require_user(): int {
     return $id;
 }
 
-/** Ask the hub something on behalf of the current browser session. */
+/**
+ * The caller's hub token.
+ *
+ * 7Marks has used a TOKEN for this since long before Phase B, sent by the
+ * browser as X-7By-Hub and read by api.php. This reuses that exact
+ * mechanism rather than inventing a second one.
+ *
+ * An earlier version of this file forwarded the browser's cookies instead,
+ * which could never have worked: the hub's session cookie is scoped to
+ * account.7by.in and is simply not sent to 7marks.7by.in. whoami returned
+ * "not signed in" for every request because of it.
+ */
+function m7_hub_token(): string {
+    $t = (string)($_SERVER['HTTP_X_7BY_HUB'] ?? '');
+    if ($t === '') {
+        $auth = (string)($_SERVER['HTTP_AUTHORIZATION'] ?? '');
+        if (stripos($auth, 'Bearer ') === 0) $t = trim(substr($auth, 7));
+    }
+    if ($t === '') $t = (string)($_SERVER['HTTP_X_7BY_TOKEN'] ?? '');
+    /* some hosts hide Authorization from PHP; the app also accepts ?t= */
+    if ($t === '') $t = (string)($_GET['t'] ?? '');
+    return preg_replace('/[^A-Za-z0-9_.\-]/', '', $t);
+}
+
+/**
+ * Ask the hub something as the current student.
+ *
+ * Sends the token as BOTH Authorization: Bearer and X-7By-Token, matching
+ * billing.php — some hosts strip Authorization entirely, and the hub
+ * accepts either, so sending both is what makes this work everywhere.
+ */
 function m7_hub_call(string $action, array $body = array()) {
     $c = m7_config();
     $base = rtrim((string)($c['hub_base'] ?? ''), '/');
-    if ($base === '') return null;
+    $tok  = m7_hub_token();
+    if ($base === '' || $tok === '') return null;
 
     $ch = curl_init($base . '/api.php?action=' . rawurlencode($action));
-    $headers = array('Accept: application/json');
+    $headers = array(
+        'Accept: application/json',
+        'Content-Type: application/json',
+        'Authorization: Bearer ' . $tok,
+        'X-7By-Token: ' . $tok,
+    );
     if ($body) {
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($body));
-        $headers[] = 'Content-Type: application/json';
-    }
-    /* forward the caller's cookies so the hub sees the student's session.
-       Nothing else about the request is passed on. */
-    if (!empty($_SERVER['HTTP_COOKIE'])) {
-        curl_setopt($ch, CURLOPT_COOKIE, (string)$_SERVER['HTTP_COOKIE']);
     }
     curl_setopt_array($ch, array(
         CURLOPT_RETURNTRANSFER => true,
