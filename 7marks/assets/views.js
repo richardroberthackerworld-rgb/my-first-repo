@@ -280,9 +280,18 @@
       (signedIn ? 'Signed in' : 'Not signed in') + '</span></div>' +
       (signedIn
         ? ''
-        : '<button class="pop-i" id="popSignIn" ' +
+        /* All three routes go to account.7by.in, which already owns sign-in,
+           sign-up, the OTP flow and Google. Reimplementing Google here would
+           mean a second OAuth client and a second place for account creation
+           to break, against the same hub. */
+        : '<a class="pop-i gbtn" href="' + M.hub.signInUrl() + '&m=google">' +
+          '<span class="gmark" aria-hidden="true">G</span>Continue with Google</a>' +
+          '<a class="pop-i" href="' + M.hub.signInUrl() + '&m=signup">' +
+          '<span>✨</span>Create a new account</a>' +
+          '<button class="pop-i" id="popSignIn" ' +
           'style="background:var(--violet-bg);color:var(--violet);font-weight:800">' +
-          '<span>🔑</span>Sign in / Create account</button>') +
+          '<span>🔑</span>Sign in with email</button>' +
+          '<p class="pop-note">One 7by.in account works across every 7by tool.</p>') +
       [['#/profile', '👤', 'My Profile'], ['#/performance', '📈', 'My Performance'],
        ['#/bookmarks', '🔖', 'Bookmarks'], ['#/premium', '💎', 'Premium'],
        ['#/settings', '⚙️', 'Settings'], ['#/papers', '📄', 'Question Papers']]

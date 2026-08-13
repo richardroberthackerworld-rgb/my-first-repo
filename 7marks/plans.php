@@ -192,11 +192,43 @@ list($token, $who) = p_who();
 $APP = 'app';
 
 /** Ask the hub for the authoritative wallet. Never cached, never trusted from the client. */
-function p_wallet(array $CFG, string $token): ?array {
+/**
+ * The hub's whole `me` response, fetched once per request.
+ *
+ * p_wallet() returns only the wallet, which is a tool_credits row and has
+ * no name on it — reading a display name from there could never have
+ * worked, which is why the greeting stayed "Hello, Student!". The user
+ * lives at the top level of this body, so anything about the PERSON has to
+ * come from here rather than from their wallet.
+ */
+function p_me(array $CFG, string $token): ?array {
+    static $cache = null, $for = null;
+    if ($cache !== null && $for === $token) return $cache;
     if ($token === '' || !function_exists('hub_call')) return null;
     $r = @hub_call($CFG, 'me', $token, []);
     if (!$r || empty($r['body'])) return null;
-    $b = $r['body'];
+    $for = $token;
+    return $cache = (is_array($r['body']) ? $r['body'] : null);
+}
+
+/** The display name the hub holds for this student, or ''. */
+function p_name(array $CFG, string $token): string {
+    $b = p_me($CFG, $token);
+    if (!is_array($b)) return '';
+    $u = is_array($b['user'] ?? null) ? $b['user'] : $b;
+    foreach (array('name', 'display_name', 'full_name', 'username') as $k) {
+        if (!empty($u[$k]) && is_string($u[$k])) return trim($u[$k]);
+    }
+    /* fall back to the part of the email before the @, which is still far
+       better than calling everyone "Student" */
+    $mail = (string)($u['email'] ?? '');
+    if ($mail !== '' && strpos($mail, '@') > 0) return substr($mail, 0, strpos($mail, '@'));
+    return '';
+}
+
+function p_wallet(array $CFG, string $token): ?array {
+    $b = p_me($CFG, $token);
+    if (!is_array($b)) return null;
     return is_array($b['wallet'] ?? null) ? $b['wallet']
          : (is_array($b['tool'] ?? null) ? $b['tool'] : $b);
 }
@@ -206,7 +238,8 @@ if ($action === 'status') {
     $plan = p_plan_of($w);
     $led = p_read($who);
     $today = gmdate('Y-m-d');
-    $who2 = is_array($w) ? $w : [];
+    /* the name comes from the USER, not the wallet — see p_name() */
+    $who2 = array('name' => p_name($CFG, $token));
     p_out(200, [
         'signed_in' => $token !== '',
         /* the name comes from the hub, which owns it */

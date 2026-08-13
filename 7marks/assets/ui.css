@@ -1236,3 +1236,10 @@
   .gate-row{flex-wrap:wrap}
   .gate-row .gate-price{margin-left:0;width:100%;font-size:16px}
 }
+
+/* ---- sign-in entries in the profile menu ---- */
+.pop-i.gbtn{background:#fff;border:1px solid var(--line);font-weight:800;color:var(--ink-1)}
+.pop-i.gbtn:hover{background:var(--surface-2)}
+.gmark{display:grid;place-items:center;width:18px;height:18px;border-radius:50%;
+  background:#fff;border:1px solid var(--line);font:900 12px/1 system-ui;color:#4285f4}
+.pop-note{margin:6px 10px 2px;font-size:11px;line-height:1.4;color:var(--ink-3)}
