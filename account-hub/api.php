@@ -325,6 +325,80 @@ switch ($action) {
 		break;
 	}
 
+	/* ---- daily credit bonus (added for 7Marks Infinity: +20 a day) --------
+	   ADDITIVE: a new action only. No existing case, query or response is
+	   changed, so nothing 7Solve calls behaves differently.
+
+	   Idempotency is the database's job, not this code's. The ledger row is
+	   INSERTed first, and its UNIQUE (user_id, tool, bonus_key, grant_date)
+	   is what rejects a second claim — so a double-tap, a retry, or two
+	   devices claiming at the same instant cannot each be granted. Only if
+	   that insert succeeds are credits added, and both happen in ONE
+	   transaction, so there can never be a granted bonus with no record or a
+	   record with no credits.
+
+	   The date is UTC_DATE() from the SERVER, so a device with its clock
+	   wound forward gets nothing. The amount comes from the table below,
+	   never from the request body.                                          */
+	case 'bonus': {
+		global $CFG;
+		$u = current_user();
+		if (!$u) json_out(array('ok' => false, 'error' => 'not_authed'), 401);
+
+		$product = substr((string)($in['product'] ?? ''), 0, 40);
+		$tool    = tool_key($product);
+		if ($tool === '') json_out(array('ok' => false, 'error' => 'no_tool'), 400);
+		$bonusKey = preg_replace('/[^a-z0-9_]/', '', strtolower((string)($in['key'] ?? 'daily')));
+		if ($bonusKey === '') $bonusKey = 'daily';
+
+		/* Which plans earn a daily allowance, and how much. Server-side and
+		   overridable from config; a plan that is not listed earns nothing. */
+		$allow = $CFG['daily_bonus'] ?? array('7marks' => array('infinity' => 20));
+		$wallet = tool_wallet((int)$u['id'], $tool);        // also creates the row
+		$plan   = strtolower((string)($wallet['plan'] ?? 'none'));
+		$amount = (int)($allow[$tool][$plan] ?? 0);
+
+		if ($amount < 1) {
+			json_out(array('ok' => false, 'error' => 'not_eligible',
+			               'plan' => $plan, 'tool' => $tool,
+			               'credits' => (int)$wallet['credits']), 403);
+		}
+
+		$pdo = db();
+		try {
+			$pdo->beginTransaction();
+
+			/* The claim, and the guard. A duplicate key here means it was
+			   already taken today — the wallet is then never touched. */
+			$pdo->prepare(
+				'INSERT INTO credit_bonus_log
+				   (user_id, tool, bonus_key, grant_date, credits, plan_at_grant, created_at)
+				 VALUES (?, ?, ?, UTC_DATE(), ?, ?, UTC_TIMESTAMP())'
+			)->execute(array($u['id'], $tool, $bonusKey, $amount, $plan));
+
+			$pdo->prepare(
+				'UPDATE tool_credits SET credits = credits + ? WHERE user_id = ? AND tool = ?'
+			)->execute(array($amount, $u['id'], $tool));
+
+			$pdo->commit();
+		} catch (Throwable $e) {
+			if ($pdo->inTransaction()) $pdo->rollBack();
+			/* 23000 is the integrity violation — i.e. already claimed today */
+			if (strpos((string)$e->getCode(), '23000') === 0) {
+				$w = tool_wallet((int)$u['id'], $tool);
+				json_out(array('ok' => false, 'already_claimed' => true,
+				               'credits' => (int)$w['credits'], 'tool' => $tool));
+			}
+			error_log('bonus failed: ' . $e->getMessage());
+			json_out(array('ok' => false, 'error' => 'bonus_failed'), 500);
+		}
+
+		$after = tool_wallet((int)$u['id'], $tool);
+		json_out(array('ok' => true, 'granted' => $amount,
+		               'credits' => (int)$after['credits'], 'tool' => $tool));
+		break;
+	}
+
 	/* ---- 7Pay webhook (fires on payment.captured — also confirms live-UPI
 	        payments the merchant approves later in the 7Pay dashboard) ---- */
 	case 'sevenpay_webhook': {
