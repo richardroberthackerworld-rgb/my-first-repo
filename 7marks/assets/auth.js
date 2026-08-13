@@ -72,13 +72,14 @@
 
       (msg ? '<div class="auth-msg' + (isErr ? ' err' : '') + '">' + esc(msg) + '</div>' : '') +
 
-      /* Google is offered through account.7by.in, which already has a
-         working Google client. Doing it here would need a second OAuth
-         client ID, and there is no honest way to invent one. */
+      /* Google's own button, rendered by Google's script into this slot and
+         handled here — the student never leaves 7marks.7by.in. The slot is
+         always drawn so its height does not jump when the script lands;
+         gsi() fills it, or hides it if no client ID is configured. */
       ((mode === 'signin' || mode === 'signup')
-        ? '<a class="auth-g" href="' + M.hub.signInUrl() + '&m=google">' +
-          '<span class="auth-g-m" aria-hidden="true">G</span>Continue with Google</a>' +
-          '<div class="auth-or"><span>or use your email</span></div>'
+        ? '<div class="auth-gwrap" id="auGWrap" hidden>' +
+          '<div id="auG"></div>' +
+          '<div class="auth-or"><span>or use your email</span></div></div>'
         : '') +
 
       (mode === 'otp'
@@ -99,7 +100,7 @@
                them by afterwards instead of "Student" */
             ? '<label class="cfg-l">Your name</label>' +
               '<input class="sel auth-in" id="auName" type="text" maxlength="60" ' +
-              'placeholder="e.g. Ananya Sharma" autocomplete="name" value="' +
+              'placeholder="Your name" autocomplete="name" value="' +
               esc(state.name) + '">' +
               '<label class="cfg-l" style="margin-top:12px">Email</label>'
             : '<label class="cfg-l">Email</label>') +
@@ -138,6 +139,23 @@
     });
     var first = m.querySelector('.auth-in');
     if (first) setTimeout(function () { first.focus(); }, 60);
+    gsi();
+  }
+
+  /* login, signup_verify and google all return the user and the token
+     together, so the app can show the account immediately rather than
+     waiting on a follow-up call */
+  function finish(j) {
+    state.busy = false;
+    M.hub.setToken(j.token);
+    /* fall back to the name they just typed, so the greeting is right even
+       if the hub's reply does not echo it back */
+    var nm = (j.user && j.user.name) ? j.user.name : state.name;
+    if (nm) { M.state.user.name = nm; M.save('user'); }
+    d.getElementById('modal').classList.remove('open');
+    M.toast('Signed in', 'ok');
+    /* re-read the plan and balance from the server, then repaint */
+    M.credits.status(true).then(function () { location.reload(); });
   }
 
   function submit() {
@@ -194,18 +212,7 @@
       /* login, signup_verify and google all return the user and the token
          together, so the app can show the account immediately rather than
          waiting on a follow-up call */
-      if (j.token) {
-        M.hub.setToken(j.token);
-        /* fall back to the name they just typed, so the greeting is right
-           even if the hub's reply does not echo it back */
-        var nm = (j.user && j.user.name) ? j.user.name : state.name;
-        if (nm) { M.state.user.name = nm; M.save('user'); }
-        d.getElementById('modal').classList.remove('open');
-        M.toast('Signed in', 'ok');
-        /* re-read the plan and balance from the server, then repaint */
-        M.credits.status(true).then(function () { location.reload(); });
-        return;
-      }
+      if (j.token) return finish(j);
       /* A completed password reset returns ok with no token — the hub does
          not sign you in on a reset. Send them to sign in with the new
          password rather than leaving them on a dead code screen. */
@@ -220,6 +227,71 @@
       state.busy = false;
       draw(e.message || 'That did not work. Please try again.', true);
     });
+  }
+
+  /* ------------------------------------------------------------------
+     Google, in place.
+
+     Google Identity Services draws its own button — that is where the real
+     Google mark comes from, and drawing our own copy of it would breach
+     their branding rules. It hands back an ID token, which goes to our
+     auth.php, which verifies it at the hub. No redirect: the student stays
+     on 7marks.7by.in the whole way through.
+     ------------------------------------------------------------------ */
+  var gid = null;          /* client ID once known; '' means not configured */
+  var gsiLoad = null;      /* the <script> load promise, created once */
+
+  function loadGsi() {
+    if (gsiLoad) return gsiLoad;
+    gsiLoad = new Promise(function (ok, no) {
+      if (w.google && w.google.accounts) return ok();
+      var s = d.createElement('script');
+      s.src = 'https://accounts.google.com/gsi/client';
+      s.async = true; s.defer = true;
+      s.onload = ok;
+      s.onerror = function () { no(new Error('gsi blocked')); };
+      d.head.appendChild(s);
+    });
+    return gsiLoad;
+  }
+
+  function onGoogle(resp) {
+    if (!resp || !resp.credential) return;
+    draw('Signing you in…', false);
+    hubApi('google', { credential: resp.credential })
+      .then(finish)
+      .catch(function (e) { draw(e.message || 'Google sign-in failed.', true); });
+  }
+
+  /** Fill the Google slot on the card, if a client ID is configured. */
+  function gsi() {
+    var wrap = d.getElementById('auGWrap');
+    if (!wrap) return;
+
+    var start = function () {
+      if (!gid) return;                       /* not configured — stay hidden */
+      loadGsi().then(function () {
+        var slot = d.getElementById('auG');
+        if (!slot || !w.google || !w.google.accounts) return;
+        w.google.accounts.id.initialize({
+          client_id: gid,
+          callback: onGoogle,
+          ux_mode: 'popup'                    /* popup, so we never navigate away */
+        });
+        w.google.accounts.id.renderButton(slot, {
+          type: 'standard', theme: 'outline', size: 'large',
+          text: 'continue_with', shape: 'pill',
+          logo_alignment: 'left', width: slot.offsetWidth || 320
+        });
+        wrap.hidden = false;
+      }).catch(function () { /* offline or blocked: email sign-in still works */ });
+    };
+
+    if (gid !== null) return start();
+    fetch(API + '?action=config', { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (j) { gid = (j && j.google_client_id) || ''; start(); })
+      .catch(function () { gid = ''; });
   }
 
   M.auth = { open: open, hubApi: hubApi };

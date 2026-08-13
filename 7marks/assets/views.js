@@ -174,7 +174,8 @@
     $('#gtClose').onclick = close;
     $$('.gate a[href="#/pricing"]').forEach(function (a) { a.onclick = close; });
     if ($('#gtSignIn')) {
-      $('#gtSignIn').onclick = function () { location.href = M.hub.signInUrl(); };
+      /* opens the card here rather than sending them to account.7by.in */
+      $('#gtSignIn').onclick = function () { M.auth.open('signin'); };
     }
   }
 
@@ -280,17 +281,13 @@
       (signedIn ? 'Signed in' : 'Not signed in') + '</span></div>' +
       (signedIn
         ? ''
-        /* All three routes go to account.7by.in, which already owns sign-in,
-           sign-up, the OTP flow and Google. Reimplementing Google here would
-           mean a second OAuth client and a second place for account creation
-           to break, against the same hub. */
-        : '<a class="pop-i gbtn" href="' + M.hub.signInUrl() + '&m=google">' +
-          '<span class="gmark" aria-hidden="true">G</span>Continue with Google</a>' +
-          '<a class="pop-i" href="' + M.hub.signInUrl() + '&m=signup">' +
-          '<span>✨</span>Create a new account</a>' +
-          '<button class="pop-i" id="popSignIn" ' +
+        /* Both open the card on this page. Nothing here navigates to
+           account.7by.in: the student signs in without leaving 7Marks. */
+        : '<button class="pop-i" id="popSignIn" ' +
           'style="background:var(--violet-bg);color:var(--violet);font-weight:800">' +
-          '<span>🔑</span>Sign in with email</button>' +
+          '<span>🔑</span>Sign in</button>' +
+          '<button class="pop-i" id="popSignUp">' +
+          '<span>✨</span>Create a new account</button>' +
           '<p class="pop-note">One 7by.in account works across every 7by tool.</p>') +
       [['#/profile', '👤', 'My Profile'], ['#/performance', '📈', 'My Performance'],
        ['#/bookmarks', '🔖', 'Bookmarks'], ['#/premium', '💎', 'Premium'],
@@ -304,6 +301,9 @@
         : '');
     if ($('#popSignIn')) {
       $('#popSignIn').onclick = function () { M.auth.open('signin'); };
+    }
+    if ($('#popSignUp')) {
+      $('#popSignUp').onclick = function () { M.auth.open('signup'); };
     }
     if (signedIn && $('#signOut')) {
       $('#signOut').onclick = function () { M.hub.signOut(); };

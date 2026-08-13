@@ -61,6 +61,36 @@ const AUTH_ACTIONS = [
 ];
 
 $action = (string)($_GET['action'] ?? '');
+
+/* ------------------------------------------------------------------
+   What the sign-in card needs to draw itself.
+
+   Google's own button has to be rendered by Google's script, which needs
+   the OAuth client ID. That ID is public by design — it ships in the HTML
+   of every page that offers Google sign-in — so serving it is not a leak.
+   It is read from the hub rather than pasted into a second config file,
+   so there is one place it can ever be wrong.
+
+   When no client ID is configured the card simply omits the Google button
+   rather than showing one that cannot work.
+   ------------------------------------------------------------------ */
+if ($action === 'config') {
+    $gid = trim((string)($CFG['hub_google_client_id'] ?? ''));
+    if ($gid === '' && hub_on($CFG)) {
+        $ch = curl_init(rtrim((string)$CFG['hub_base'], '/') . '/api.php?action=config');
+        curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 8]);
+        $j = json_decode((string)curl_exec($ch), true);
+        curl_close($ch);
+        if (is_array($j)) $gid = trim((string)($j['google_client_id'] ?? ''));
+    }
+    /* a placeholder left in the hub's config is not a usable ID */
+    if (stripos($gid, 'TODO') === 0 || strpos($gid, '.apps.googleusercontent.com') === false) {
+        $gid = '';
+    }
+    header('Cache-Control: public, max-age=300');
+    a_out(200, ['ok' => true, 'google_client_id' => $gid]);
+}
+
 if (!isset(AUTH_ACTIONS[$action])) {
     a_out(400, ['error' => 'bad_action', 'message' => 'Unknown sign-in step.']);
 }

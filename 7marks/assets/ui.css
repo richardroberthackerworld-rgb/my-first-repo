@@ -867,7 +867,16 @@
 }
 @media(max-width:640px){
   :root{--nav-h:56px}
-  .topbar{flex-wrap:wrap;height:auto;padding:9px 12px;gap:9px}
+  /* ---- phone header: three centred rows, not a lopsided stack ----
+     The row used to read as burger, brand hard against it, then a cluster
+     of pills jammed to the right edge on a second row. Centring the brand
+     and the action cluster makes the three rows share one axis, and the
+     burger is taken out of flow so it cannot push the brand off-centre. */
+  .topbar{flex-wrap:wrap;height:auto;padding:9px 12px 10px;gap:8px;
+    justify-content:center;position:fixed}
+  .burger{position:absolute;left:10px;top:10px;z-index:2}
+  .brand{order:1;flex-basis:100%;justify-content:center;gap:9px}
+  .nav-r{order:2}
   .search{order:3;flex-basis:100%;max-width:none}
   .search-in{height:38px}
   /* the labels are back, so the row is allowed to wrap rather than run
@@ -875,8 +884,8 @@
   /* flex:none on the base rule stops it shrinking, so wrapping never
      engaged and the row ran 384px wide inside a 320px screen. It is
      allowed to shrink and wrap here — nothing is hidden to make it fit. */
-  .nav-r{flex:1 1 auto;min-width:0;max-width:100%;flex-wrap:wrap;
-    justify-content:flex-end;gap:5px}
+  .nav-r{flex:0 1 auto;min-width:0;max-width:100%;flex-wrap:wrap;
+    justify-content:center;gap:6px}
   .brand-txt small{font-size:10px}
   .who span b{font-size:11px}
   .who span small{display:none}   /* the name stays; only the second line goes */
@@ -1255,3 +1264,12 @@
 .auth-or{display:flex;align-items:center;gap:10px;margin:14px 0 2px;
   font-size:11px;color:var(--ink-3)}
 .auth-or::before,.auth-or::after{content:"";flex:1;height:1px;background:var(--line)}
+
+/* ---- Google's own button sits in this slot ----
+   Google Identity Services renders the real, branded button itself; we
+   only give it a full-width home and a divider underneath. Drawing our
+   own Google mark would breach their branding rules. */
+.auth-gwrap{margin-top:4px}
+.auth-gwrap[hidden]{display:none}
+#auG{display:flex;justify-content:center;min-height:44px}
+#auG>div{width:100%!important}
