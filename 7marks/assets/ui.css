@@ -1243,3 +1243,15 @@
 .gmark{display:grid;place-items:center;width:18px;height:18px;border-radius:50%;
   background:#fff;border:1px solid var(--line);font:900 12px/1 system-ui;color:#4285f4}
 .pop-note{margin:6px 10px 2px;font-size:11px;line-height:1.4;color:var(--ink-3)}
+
+/* ---- Google + divider on the sign-in card ---- */
+.auth-g{display:flex;align-items:center;justify-content:center;gap:10px;
+  width:100%;padding:12px 14px;margin-top:4px;border:1px solid var(--line);
+  border-radius:12px;background:#fff;color:var(--ink-1);font-weight:800;
+  font-size:14px;text-decoration:none;transition:background .15s,border-color .15s}
+.auth-g:hover{background:var(--surface-2);border-color:var(--ink-3)}
+.auth-g-m{display:grid;place-items:center;width:20px;height:20px;border-radius:50%;
+  background:#fff;border:1px solid var(--line);font:900 13px/1 system-ui;color:#4285f4}
+.auth-or{display:flex;align-items:center;gap:10px;margin:14px 0 2px;
+  font-size:11px;color:var(--ink-3)}
+.auth-or::before,.auth-or::after{content:"";flex:1;height:1px;background:var(--line)}

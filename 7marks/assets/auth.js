@@ -15,20 +15,21 @@
   'use strict';
   var M = w.M7;
   var $ = M.qs, esc = M.esc;
-  var HUB = 'https://account.7by.in';
+  /* Our OWN server, not the hub.
 
-  /** Call the hub. Content-Type is set only when there IS a body: on a
-      bodyless GET it forces a CORS preflight that some hosts reject. */
+     This used to post straight to https://account.7by.in/api.php. The hub
+     sends no Access-Control-Allow-Origin header, so the browser blocked
+     every one of those calls before they left the machine — the card
+     rendered and nothing behind it worked. auth.php is same-origin, so CORS
+     never applies, and it forwards to the hub server-to-server. */
+  var API = 'auth.php';
+
   function hubApi(action, body) {
-    var h = {};
-    if (body) h['Content-Type'] = 'application/json';
-    var t = M.hub.token();
-    if (t) { h['Authorization'] = 'Bearer ' + t; h['X-7By-Token'] = t; }
-    return fetch(HUB + '/api.php?action=' + encodeURIComponent(action), {
-      method: body ? 'POST' : 'GET',
-      headers: h,
-      credentials: 'omit',
-      body: body ? JSON.stringify(body) : undefined
+    return fetch(API + '?action=' + encodeURIComponent(action), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify(body || {})
     }).then(function (r) {
       return r.json().catch(function () { return {}; }).then(function (j) {
         if (!r.ok || j.error) {
@@ -39,7 +40,10 @@
     });
   }
 
-  var state = { mode: 'signin', email: '', busy: false };
+  /* `flow` records which journey the code screen belongs to — signing up or
+     resetting a password. Both land on mode 'otp' but hit different hub
+     actions, so the mode alone is not enough to tell them apart. */
+  var state = { mode: 'signin', flow: 'signup', email: '', name: '', busy: false };
 
   function open(mode) {
     state.mode = mode || 'signin';
@@ -68,14 +72,37 @@
 
       (msg ? '<div class="auth-msg' + (isErr ? ' err' : '') + '">' + esc(msg) + '</div>' : '') +
 
+      /* Google is offered through account.7by.in, which already has a
+         working Google client. Doing it here would need a second OAuth
+         client ID, and there is no honest way to invent one. */
+      ((mode === 'signin' || mode === 'signup')
+        ? '<a class="auth-g" href="' + M.hub.signInUrl() + '&m=google">' +
+          '<span class="auth-g-m" aria-hidden="true">G</span>Continue with Google</a>' +
+          '<div class="auth-or"><span>or use your email</span></div>'
+        : '') +
+
       (mode === 'otp'
         ? '<label class="cfg-l">6-digit code</label>' +
           '<input class="sel auth-in" id="auOtp" inputmode="numeric" maxlength="6" ' +
           'placeholder="000000" autocomplete="one-time-code">' +
-          '<label class="cfg-l" style="margin-top:12px">Choose a password</label>' +
-          '<input class="sel auth-in" id="auPass2" type="password" ' +
-          'placeholder="At least 6 characters" autocomplete="new-password">'
-        : '<label class="cfg-l">Email</label>' +
+          /* Only a password RESET sets a new password here. On signup the
+             hub already took the password at step one and hashed it into
+             the pending code, so asking again would be a second, different
+             password that it would ignore. */
+          (state.flow === 'reset'
+            ? '<label class="cfg-l" style="margin-top:12px">Choose a new password</label>' +
+              '<input class="sel auth-in" id="auPass2" type="password" ' +
+              'placeholder="At least 6 characters" autocomplete="new-password">'
+            : '')
+        : (mode === 'signup'
+            /* asked before the email, because it is what the app greets
+               them by afterwards instead of "Student" */
+            ? '<label class="cfg-l">Your name</label>' +
+              '<input class="sel auth-in" id="auName" type="text" maxlength="60" ' +
+              'placeholder="e.g. Ananya Sharma" autocomplete="name" value="' +
+              esc(state.name) + '">' +
+              '<label class="cfg-l" style="margin-top:12px">Email</label>'
+            : '<label class="cfg-l">Email</label>') +
           '<input class="sel auth-in" id="auEmail" type="email" ' +
           'placeholder="you@example.com" autocomplete="email" value="' + esc(state.email) + '">' +
           (mode === 'reset' ? '' :
@@ -87,7 +114,8 @@
 
       '<button class="btn btn-v auth-go" id="auGo">' +
       (mode === 'signup' ? 'Send me a code'
-        : mode === 'otp' ? 'Create account'
+        : mode === 'otp'
+            ? (state.flow === 'reset' ? 'Set new password' : 'Create my account')
         : mode === 'reset' ? 'Send reset code' : 'Sign in') + '</button>' +
 
       '<div class="auth-alt">' +
@@ -116,6 +144,11 @@
     if (state.busy) return;
     var mode = state.mode, go = $('#auGo');
     var email = $('#auEmail') ? $('#auEmail').value.trim() : state.email;
+    if ($('#auName')) state.name = $('#auName').value.trim();
+
+    if (mode === 'signup' && state.name.length < 2) {
+      return draw('Please enter your name.', true);
+    }
 
     if (mode !== 'otp') {
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
@@ -130,17 +163,30 @@
     if (mode === 'signin') {
       call = hubApi('login', { email: email, password: $('#auPass').value });
     } else if (mode === 'signup') {
-      call = hubApi('signup_start', { email: email });
+      /* the hub wants the password at step ONE — it hashes it into the
+         pending code, and signup_verify then needs only the code */
+      var np = $('#auPass').value;
+      if (np.length < 6) { state.busy = false; go.disabled = false;
+        return draw('Choose a password of at least 6 characters.', true); }
+      state.flow = 'signup';
+      call = hubApi('signup_start',
+        { email: email, name: state.name, password: np });
     } else if (mode === 'reset') {
+      state.flow = 'reset';
       call = hubApi('reset_start', { email: email });
     } else {
       var otp = ($('#auOtp').value || '').trim();
-      var pw  = $('#auPass2').value;
       if (otp.length < 4) { state.busy = false; go.disabled = false;
         return draw('Enter the 6-digit code from your email.', true); }
-      if (pw.length < 6) { state.busy = false; go.disabled = false;
-        return draw('Choose a password of at least 6 characters.', true); }
-      call = hubApi('signup_verify', { email: state.email, otp: otp, password: pw });
+      if (state.flow === 'reset') {
+        var pw = $('#auPass2').value;
+        if (pw.length < 6) { state.busy = false; go.disabled = false;
+          return draw('Choose a password of at least 6 characters.', true); }
+        call = hubApi('reset_verify',
+          { email: state.email, code: otp, password: pw });
+      } else {
+        call = hubApi('signup_verify', { email: state.email, code: otp });
+      }
     }
 
     call.then(function (j) {
@@ -150,18 +196,25 @@
          waiting on a follow-up call */
       if (j.token) {
         M.hub.setToken(j.token);
-        if (j.user && j.user.name) {
-          M.state.user.name = j.user.name;
-          M.save('user');
-        }
+        /* fall back to the name they just typed, so the greeting is right
+           even if the hub's reply does not echo it back */
+        var nm = (j.user && j.user.name) ? j.user.name : state.name;
+        if (nm) { M.state.user.name = nm; M.save('user'); }
         d.getElementById('modal').classList.remove('open');
         M.toast('Signed in', 'ok');
         /* re-read the plan and balance from the server, then repaint */
         M.credits.status(true).then(function () { location.reload(); });
         return;
       }
-      /* a code was sent — move to the OTP step */
-      state.mode = (state.mode === 'reset') ? 'otp' : 'otp';
+      /* A completed password reset returns ok with no token — the hub does
+         not sign you in on a reset. Send them to sign in with the new
+         password rather than leaving them on a dead code screen. */
+      if (mode === 'otp' && state.flow === 'reset') {
+        state.mode = 'signin';
+        return draw('Password changed. Sign in with your new password.', false);
+      }
+      /* a code was sent — move to the code step */
+      state.mode = 'otp';
       draw('Code sent. Check your inbox, and your spam folder.', false);
     }).catch(function (e) {
       state.busy = false;
