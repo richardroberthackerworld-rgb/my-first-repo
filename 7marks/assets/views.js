@@ -14,6 +14,7 @@
     ['home',        '🏠', 'Home'],
     ['assistant',   '✨', 'AI Question Assistant', 'new'],
     ['correct',     '🧑‍🏫', 'AI Correct & Score', 'ai'],
+    ['study',       '📚', 'Study Mode'],
     ['quick5',      '⚡', 'Quick 5'],
     ['mytests',     '📝', 'My Tests'],
     ['mistakes',    '❌', 'Mistake Bank'],

@@ -70,6 +70,9 @@
     results:  collection('results', 200),
     mistakes: collection('mistakes', 500),
     achieve:  collection('achieve', 100),
+    /* planned study sessions. A session is only ever marked done by
+       finishing the activity it launched — never by opening it. */
+    sessions: collection('sessions', 200),
 
     /* ---------------------------------------------------------------
        SUBJECTS AND TOPICS

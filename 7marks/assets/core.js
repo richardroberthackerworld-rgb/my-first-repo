@@ -527,6 +527,11 @@
            practised — without these the topic came out as "General" and every
            weak-topic figure downstream was meaningless */
         topic: cfg.topic || '',
+        /* Practice mode: no countdown shown and no auto-submit, but the
+           clock is still recorded so time-used statistics stay real. */
+        untimed: !!cfg.untimed,
+        planId: cfg.planId || null,
+        kind: cfg.kind || 'test',
         difficulty: cfg.difficulty || 'Medium',
         source: cfg.source || 'generated',
         questions: cfg.questions || [],
@@ -687,6 +692,9 @@
          this name, and reading the wrong one silently produced NaN accuracy */
       res.correct = right;
       res.source = s.source || 'generated';
+      res.kind = s.kind || 'test';
+      res.untimed = !!s.untimed;
+      res.planId = s.planId || null;
       res.total = right + wrong + skipped + revealed + needsAI;
       res.subject = (s.subject || '').split(' · ')[0] || 'General';
       res.topic = s.topic || (s.subject || '').split(' · ')[1] || 'General';
@@ -760,7 +768,8 @@
           }
         });
 
-        if (left <= 0 && !self.s.locked) { self.lock(); }
+        /* an untimed practice run has no deadline to hit */
+        if (!self.s.untimed && left <= 0 && !self.s.locked) { self.lock(); }
       }
 
       this._vis = function () { if (!d.hidden) tick(); };

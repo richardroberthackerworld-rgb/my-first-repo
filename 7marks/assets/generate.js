@@ -404,13 +404,15 @@
         '<div><b>' + esc(s.subject) + '</b><small>' + esc(s.topic) + '</small></div>' +
         '<div class="prevmeta">' +
         chip(s.questions.length + ' Questions') + chip(s.marks + ' Marks') +
-        chip(s.minutes + ' Minutes') + chip(esc(s.difficulty)) +
+        (s.untimed ? chip('No time limit') : chip(s.minutes + ' Minutes')) +
+        chip(esc(s.difficulty)) +
         chip(esc(s.language)) + '</div></div>' +
         (s.charged ? '<p class="charged">⚡ ' + s.charged + ' credits used</p>' : '') +
 
         '<div class="pills" style="margin-top:16px">' +
         '<button class="btn btn-v" id="pvStart" style="height:46px;padding:0 26px">' +
-        '▶ Start Test</button>' +
+        (s.kind === 'study' ? '📚 Start Study' : s.kind === 'paper' ? '📝 Start Paper'
+          : '▶ Start Test') + '</button>' +
         '<button class="pill" id="pvEdit">✎ Edit test</button>' +
         '<button class="pill" id="pvAgain">↻ Regenerate</button>' +
         '<button class="pill" id="pvDrop" style="color:var(--red-ink)">Discard</button></div>' +
@@ -493,7 +495,11 @@
           questions: qs, marks: marks,
           minutes: spec.minutes || Math.max(1, Math.round(qs.length * 1.5)),
           asked: count, charged: r.charged || 0,
-          note: spec.note || '', prevPct: spec.prevPct
+          note: spec.note || '', prevPct: spec.prevPct,
+          /* carried so the attempt and the result know what kind of
+             activity this was, and which planned session it belongs to */
+          kind: spec.kind || 'test', untimed: !!spec.untimed,
+          planId: spec.planId || null
         });
       });
   }
@@ -537,7 +543,10 @@
       title: s.subject + ' — ' + s.topic,
       subject: s.subject, topic: s.topic,
       difficulty: s.difficulty, language: s.language, source: s.source,
-      setId: s.id, minutes: s.minutes, autoSubmit: true, sound: true,
+      setId: s.id, minutes: s.minutes, sound: true,
+      kind: s.kind || 'test', untimed: !!s.untimed, planId: s.planId || null,
+      /* a practice run has no deadline, so nothing to auto-submit against */
+      autoSubmit: !s.untimed,
       questions: s.questions.map(function (q) { return JSON.parse(JSON.stringify(q)); })
     });
     M.router.go('exam');
