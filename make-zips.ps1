@@ -118,7 +118,10 @@ function New-AppZip {
   if (Test-Path -LiteralPath $wk) { $roots += $wk }
   # Each app now hosts its OWN blog (moved off 7by.in), plus the stylesheet and
   # icons those posts need — both must ship or every post loads unstyled.
-  foreach ($sub in @('blog','assets')) {
+  # db/ carries the migrations and the one-time setup runner, which have to
+  # reach the server to be any use. config.php is excluded by name below —
+  # it holds live database credentials and lives ONLY on the server.
+  foreach ($sub in @('blog','assets','db')) {
     $p = Join-Path $AppDir $sub
     if (Test-Path -LiteralPath $p) { $roots += $p }
   }
@@ -178,7 +181,9 @@ function New-AppZip {
     }
   }
 
-  New-Zip -Zip $Zip -Roots $roots -ExcludeExt @('.js')
+  # config.php is excluded by NAME so it can never be shipped from any folder:
+  # it holds live database credentials and belongs only on the server.
+  New-Zip -Zip $Zip -Roots $roots -ExcludeExt @('.js') -ExcludeNames @('config.php')
 }
 New-AppZip -AppDir (Join-Path $base '7marks') -Zip (Join-Path $base '7marks-site.zip')
 New-AppZip -AppDir (Join-Path $base '7solve') -Zip (Join-Path $base '7solve-site.zip')
