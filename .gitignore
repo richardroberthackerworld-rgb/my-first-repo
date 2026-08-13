@@ -43,3 +43,6 @@ android/**/build/
 
 # 7Marks credit ledger — per-user transaction data, never commit
 7marks/.ledger/*.json
+
+# 7Marks database credentials — never commit
+7marks/db/config.php
