@@ -184,6 +184,26 @@ if ($action === 'hub-bonus') {
     out('');
 }
 
+/* ----------------------------------------------------------- fix charset */
+if ($action === 'fix-charset') {
+    /* Changes only the DEFAULT for tables created later. Existing tables keep
+       their own charset, which is already utf8mb4, so nothing is rewritten and
+       no data can be lost by running this. */
+    out('Setting the database default charset to utf8mb4 ...');
+    try {
+        $pdo->exec('ALTER DATABASE `' . str_replace('`', '', $dbName) .
+                   '` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
+        out('  done.');
+    } catch (Throwable $e) {
+        out('  could not: ' . $e->getMessage());
+        out('  Shared hosting often withholds ALTER DATABASE. This is harmless:');
+        out('  every table is already utf8mb4, so your data is unaffected.');
+        out('  To change it anyway: phpMyAdmin > select the database >');
+        out('  Operations > Collation > utf8mb4_unicode_ci.');
+    }
+    out('');
+}
+
 /* ---------------------------------------------------------------- verify */
 out('VERIFY');
 out(str_repeat('-', 58));
@@ -204,10 +224,36 @@ foreach ($UNIQUES as $table => $key) {
 out('Integrity keys  : ' . (count($badKeys) ? 'MISSING → ' . implode(', ', $badKeys)
                                             : 'all ' . count($UNIQUES) . ' present'));
 
-/* charset matters: utf8 (3-byte) silently truncates Devanagari and emoji */
-$charset = $pdo->query('SELECT @@character_set_database')->fetchColumn();
-out('Charset         : ' . $charset . ($charset === 'utf8mb4' ? '  OK'
-    : '  ← should be utf8mb4, or Indic text and emoji will be corrupted'));
+/* Charset, measured properly.
+   What actually determines whether Devanagari, Telugu and emoji survive is
+   the charset of each TABLE, not the database default — and every table in
+   schema.sql declares utf8mb4 explicitly. The database default only decides
+   what a future table gets if someone creates one without saying.
+   An earlier version of this check read only the database default and
+   reported NOT READY for a database whose data was perfectly safe. */
+$dbDefault = (string)$pdo->query('SELECT @@character_set_database')->fetchColumn();
+
+$st = $pdo->prepare(
+    "SELECT t.TABLE_NAME, c.CHARACTER_SET_NAME
+       FROM information_schema.TABLES t
+       JOIN information_schema.COLLATIONS c ON c.COLLATION_NAME = t.TABLE_COLLATION
+      WHERE t.TABLE_SCHEMA = ?"
+);
+$st->execute(array($dbName));
+$badTables = array();
+foreach ($st->fetchAll() as $row) {
+    if (strtolower((string)$row['CHARACTER_SET_NAME']) !== 'utf8mb4') {
+        $badTables[] = $row['TABLE_NAME'] . ' (' . $row['CHARACTER_SET_NAME'] . ')';
+    }
+}
+$tablesOk = !count($badTables);
+
+out('Table charset   : ' . ($tablesOk
+    ? 'utf8mb4 on all tables  OK — Indic text and emoji are safe'
+    : 'WRONG on ' . count($badTables) . ' → ' . implode(', ', $badTables)));
+out('Database default: ' . $dbDefault . ($dbDefault === 'utf8mb4' ? '  OK'
+    : "  — only affects tables created later without an explicit charset.\n" .
+      '                  Harmless now; fix with &action=fix-charset'));
 
 $ver = 0;
 try { $ver = (int)$pdo->query('SELECT MAX(version) FROM schema_version')->fetchColumn(); }
@@ -215,8 +261,14 @@ catch (Throwable $e) {}
 out('Schema version  : ' . ($ver ?: 'not applied yet'));
 
 out('');
-$ready = !count($missing) && !count($badKeys) && $charset === 'utf8mb4';
+/* READY depends on what actually protects the data: the tables. The
+   database default is reported, and offered a fix, but does not block. */
+$ready = !count($missing) && !count($badKeys) && $tablesOk;
 out($ready ? 'RESULT: READY — the 7Marks database is set up correctly.'
            : 'RESULT: NOT READY — run this again with &action=migrate');
+if ($ready && $dbDefault !== 'utf8mb4') {
+    out('        Optional: &action=fix-charset sets the database default to');
+    out('        utf8mb4 as well. Not required — your tables are already utf8mb4.');
+}
 out('');
 out('When everything reads READY, DELETE db/setup.php from the server.');
