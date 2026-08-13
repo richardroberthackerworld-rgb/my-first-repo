@@ -192,6 +192,13 @@
 
   /* the drawable variant: strokes carry pathLength + timings so the ring,
      star, seven and tick ink themselves in, in that order */
+  /* A token returned from the account site is stored and stripped from
+     the address bar before anything else runs, so it never ends up in
+     history, a bookmark or a shared link. */
+  if (M.hub && M.hub.capture()) {
+    console.log('7Marks: signed in');
+  }
+
   d.getElementById('preLogo').innerHTML = M.mark(96, true);
 
   var FEATS = [

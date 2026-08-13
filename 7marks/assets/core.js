@@ -321,10 +321,10 @@
     _st: null, _at: 0, _catalogue: null,
 
     _get: function (q, body) {
-      var opt = { credentials: 'include' };
+      var opt = { credentials: 'include', headers: hub.headers({}) };
       if (body) {
         opt.method = 'POST';
-        opt.headers = { 'Content-Type': 'application/json' };
+        opt.headers['Content-Type'] = 'application/json';
         opt.body = JSON.stringify(body);
       }
       return fetch(this.endpoint + '?action=' + q, opt).then(function (r) {
@@ -389,6 +389,59 @@
     }
   };
 
+  /* =====================================================================
+     THE HUB TOKEN
+     7Marks authenticates with a token, not a cookie — the hub's session
+     cookie belongs to account.7by.in and is never sent here. classic.html
+     has always stored it under this key and sent it as X-7By-Hub; the
+     rebuilt app read neither, which is why it always looked signed out.
+
+     The key is app-scoped on purpose: a 7Marks sign-in must not sign the
+     student in to 7Solve, and vice versa.
+     ===================================================================== */
+  var HUB_KEY = 'sevenby_hub_token_' + (w.__APP_ID || 'app');
+
+  var hub = {
+    token: function () {
+      try { return localStorage.getItem(HUB_KEY) || ''; } catch (e) { return ''; }
+    },
+    setToken: function (t) {
+      try {
+        if (t) localStorage.setItem(HUB_KEY, t);
+        else localStorage.removeItem(HUB_KEY);
+      } catch (e) {}
+      w.dispatchEvent(new CustomEvent('7m:auth'));
+    },
+    signedIn: function () { return this.token() !== ''; },
+    /* Sign-in happens on the account site, which owns the forms, the OTP
+       flow and Google. It returns here with the token on the URL. */
+    signInUrl: function () {
+      return 'https://account.7by.in/?return=' +
+        encodeURIComponent(location.origin + location.pathname);
+    },
+    signOut: function () { this.setToken(''); location.reload(); },
+
+    /** Headers every authenticated call must carry. */
+    headers: function (h) {
+      h = h || {};
+      var t = this.token();
+      if (t) { h['X-7By-Hub'] = t; h['Authorization'] = 'Bearer ' + t; }
+      return h;
+    },
+
+    /* A token handed back on the URL is stored and then removed from the
+       address bar, so it is not left in history, bookmarks or a shared link. */
+    capture: function () {
+      var m = /[?&#](?:t|token|hub)=([A-Za-z0-9_.\-]+)/.exec(location.href);
+      if (!m) return false;
+      this.setToken(m[1]);
+      try {
+        history.replaceState(null, '', location.pathname + location.hash.replace(/[?&#](?:t|token|hub)=[^&]*/, ''));
+      } catch (e) {}
+      return true;
+    }
+  };
+
   var ai = {
     endpoint: 'api.php',
     live: null,           /* null = not yet probed, true/false after the first call */
@@ -417,7 +470,7 @@
 
       return fetch(this.endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: hub.headers({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(body),
         signal: opts.signal
       }).then(function (r) {
@@ -869,6 +922,6 @@
     $: $, $$: $$, qs: $, qsa: $$, el: el, esc: esc, pad: pad, clamp: clamp, fmt: fmt,
     store: store, state: state, save: save, addXP: addXP,
     toast: toast, notify: notify, mark: mark, writeQuote: writeQuote,
-    ai: ai, credits: credits, exam: exam, router: router, search: search, hl: hl, beep: beep
+    ai: ai, hub: hub, credits: credits, exam: exam, router: router, search: search, hl: hl, beep: beep
   };
 })(window, document);

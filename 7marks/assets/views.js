@@ -198,15 +198,33 @@
       };
     }
     pop('#bell', '#notifPop'); pop('#who', '#whoPop');
+    /* Sign in is the first thing in this menu when signed out. Without it a
+       student has no way to reach their account at all — the rebuilt app
+       shipped with no sign-in affordance anywhere, so credits and plans
+       could never load however correct the backend was. */
+    var signedIn = M.hub.signedIn();
     $('#whoPop').innerHTML =
       '<div class="pop-h"><b>' + esc(M.state.user.name) + '</b>' +
-      '<span style="font-size:11px;color:var(--ink-3)">Level ' + M.state.user.level + '</span></div>' +
+      '<span style="font-size:11px;color:var(--ink-3)">' +
+      (signedIn ? 'Signed in' : 'Not signed in') + '</span></div>' +
+      (signedIn
+        ? ''
+        : '<a class="pop-i" href="' + M.hub.signInUrl() + '" ' +
+          'style="background:var(--violet-bg);color:var(--violet);font-weight:800">' +
+          '<span>🔑</span>Sign in / Create account</a>') +
       [['#/profile', '👤', 'My Profile'], ['#/performance', '📈', 'My Performance'],
        ['#/bookmarks', '🔖', 'Bookmarks'], ['#/premium', '💎', 'Premium'],
        ['#/settings', '⚙️', 'Settings'], ['#/papers', '📄', 'Question Papers']]
         .map(function (i) {
           return '<a class="pop-i" href="' + i[0] + '"><span>' + i[1] + '</span>' + esc(i[2]) + '</a>';
-        }).join('');
+        }).join('') +
+      (signedIn
+        ? '<button class="pop-i" id="signOut" style="color:var(--red-ink)">' +
+          '<span>🚪</span>Sign out</button>'
+        : '');
+    if (signedIn && $('#signOut')) {
+      $('#signOut').onclick = function () { M.hub.signOut(); };
+    }
     d.addEventListener('click', function () {
       $$('.pop').forEach(function (p) { p.classList.remove('open'); });
       $('#results').classList.remove('open');
