@@ -58,7 +58,7 @@ window.DS_CONFIG = {
      server-side keys. Nobody can read them.
      Leave proxy as "" to keep using the keys below directly (fine for
      local/personal use).                                              */
-  proxy: "",
+  proxy: "api.php",
 
   // Accounts (sign in / sign up). Set this to your account hub URL to show the
   // Sign in button — it is a PUBLIC address, safe in the browser. Leave empty

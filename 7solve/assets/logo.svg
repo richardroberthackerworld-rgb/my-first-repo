@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <!-- The official 7Solve mark. Same geometry as the #logo7 symbol in the app.
+       Kept as a standalone file for the favicon, the PWA icon and OG images —
+       so it is static, and it carries its own white plate because a favicon is
+       drawn against whatever the browser chrome happens to be. -->
+  <defs>
+    <linearGradient id="lgMain" x1="0.15" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#2C7CFF"/>
+      <stop offset=".45" stop-color="#1A56E8"/>
+      <stop offset="1" stop-color="#1740C8"/>
+    </linearGradient>
+    <linearGradient id="lgRed" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F5252F"/>
+      <stop offset="1" stop-color="#D80D18"/>
+    </linearGradient>
+    <linearGradient id="lgSoft" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#F5252F" stop-opacity=".2"/>
+      <stop offset=".5" stop-color="#EC1620" stop-opacity="1"/>
+      <stop offset="1" stop-color="#D80D18" stop-opacity=".25"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="120" height="120" rx="26" fill="#ffffff"/>
+
+  <ellipse cx="60" cy="78" rx="42" ry="15.5" transform="rotate(-13 60 78)"
+           fill="none" stroke="url(#lgSoft)" stroke-width="4.2" stroke-linecap="round"
+           stroke-dasharray="150 44"/>
+
+  <path fill="url(#lgMain)" d="
+    M35.5 33.5
+    C35.5 28.4 38.6 25.4 44 25.2
+    L79.5 24.2
+    C86.4 24 89.6 29.6 86.4 34.6
+    L57.6 96.4
+    C55.4 101 51.4 102.6 48.2 101
+    C45 99.4 44.6 95.4 46.6 90.6
+    L72.6 36.4
+    L44.4 40.8
+    C38.6 41.6 35.5 38.6 35.5 33.5 Z"/>
+
+  <path fill="url(#lgRed)" d="M86.6 47.6 L98.4 59.4 L88.6 69.2 C86 71.8 82.2 71.8 79.6 69.2 L76.8 66.4 Z"/>
+  <path fill="#fff" d="M89.4 44.8 L101.2 56.6 L97.4 60.4 L85.6 48.6 Z"/>
+  <path fill="url(#lgRed)" d="M92.2 42 C95.4 38.8 100.4 38.8 103.6 42 C106.8 45.2 106.8 50.2 103.6 53.4 L104 53 Z"/>
+
+  <g fill="none" stroke="url(#lgRed)" stroke-width="6" stroke-linecap="round">
+    <path d="M84.5 27 L79 18"/>
+    <path d="M95 24.5 L95.5 13"/>
+    <path d="M103 30 L111.5 23.5"/>
+  </g>
+</svg>

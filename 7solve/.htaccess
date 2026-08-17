@@ -22,11 +22,19 @@
 # Block hidden/system files (.git, .env, backups) but ALLOW /.well-known/
 # which Android needs to verify the Play Store app owns this domain.
 RedirectMatch 404 /\.(?!well-known)
-<FilesMatch "\.(log|bak|old|sql|zip|env)$">
+<FilesMatch "\.(log|bak|old|sql|zip|env|jsonl|ndjson)$">
     <IfModule mod_authz_core.c>
         Require all denied
     </IfModule>
 </FilesMatch>
+
+# Contact-form messages land in ./data as JSONL when contact_dir is left at its
+# default. Under the web root that is fetchable, which would hand out every
+# sender's email — so the whole directory is closed. Setting contact_dir to a
+# path outside public_html is still the better answer.
+<IfModule mod_alias.c>
+    RedirectMatch 404 ^/data(/|$)
+</IfModule>
 
 # Don't list folder contents
 Options -Indexes
@@ -67,6 +75,16 @@ ServerSignature Off
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME}\.html -f
     RewriteRule ^(.*)$ $1.html [L]
+
+    # ---- app routes ----
+    # The application is one page with an in-browser router, so /tutor,
+    # /pricing and the rest have no file behind them. They are listed by name
+    # rather than caught with a blanket fallback, so a genuine typo still 404s
+    # instead of silently returning the app, and /blog/, api.php and every real
+    # asset are untouched (they matched -f or -d above and never reach here).
+    RewriteRule ^(home|ask|answer|notebook|levels|tutor|subjects|practice|flashcards|mindmaps|planner|tools|docs|affairs|community|progress|rewards|bookmarks|settings|pricing|credits|profile|contact|mistakes|learning|chapter)/?$ index.html [L]
+    # practice sub-routes: /practice/notes, /practice/doubts, /practice/mistakes
+    RewriteRule ^practice/(notes|doubts|mistakes)/?$ index.html [L]
 </IfModule>
 
 # The Play Store app verifies domain ownership by reading this file, which
@@ -83,3 +101,19 @@ ServerSignature Off
         Require all denied
     </IfModule>
 </FilesMatch>
+
+# ---- caching ----
+# The whole app is one index.html, so a stale copy means a stale product.
+# These three must always be revalidated, or a new upload can sit invisible
+# behind the browser cache (and the service worker, which caches whatever
+# the network hands it) for as long as the heuristic freshness lasts.
+<IfModule mod_headers.c>
+    <FilesMatch "^(index\.html|sw\.js|manifest\.json|config\.js)$">
+        Header set Cache-Control "no-cache, must-revalidate"
+    </FilesMatch>
+    # Fingerprinted or rarely-changing assets can be held for a year. They are
+    # all requested with a ?v= query, so a change to one is a new URL.
+    <FilesMatch "\.(png|jpg|jpeg|gif|webp|svg|ico|woff2?)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+</IfModule>
