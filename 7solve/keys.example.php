@@ -38,9 +38,22 @@ return [
        false = block them */
     'allow_missing_origin' => true,
 
-    /* ---- abuse guard: max AI requests per hour, per visitor IP.
-       Raise it once you add logins/paid plans. 0 = unlimited. ---- */
-    'rate_per_hour' => 60,
+    /* ---- abuse guard: max AI requests per hour, per visitor IP. 0 = unlimited.
+
+       This applies to ANONYMOUS visitors only. Anyone signed in is limited by
+       their CREDITS and nothing else — they keep going until the credits run
+       out, which is what they paid for.
+
+       Why signed-in users are not IP-capped: the cap counts by IP, and a
+       school, college lab or hostel shares ONE public IP, so a per-IP cap
+       caps the whole building rather than a person. Credits are already an
+       exact, server-enforced limit per account, so a second limit on top adds
+       nothing but a way to wrongly block a paying student.
+
+       'rate_per_hour_signed' is left as a knob if you ever want a ceiling on
+       signed-in users too. 0 (the default) means no ceiling. ---- */
+    'rate_per_hour' => 60,        // anonymous visitors
+    'rate_per_hour_signed' => 0,  // signed in — 0 = unlimited, credits decide
 
     /* ---- ANSWER CACHE — your biggest quota saver ----
        Hundreds of students ask the same topics ("plant cell", "quadratic
@@ -71,14 +84,24 @@ return [
     'free_per_day' => ['7marks' => 30, '7solve' => 30],   // matches the hub's 30 free credits/day
 
     /* Plans. amount is in PAISE (9900 = ₹99). Even paid plans use credits, so
-       one heavy user can never drain your API quota. Paid credits unlock the
-       big "Premium" models too. */
+       one heavy user can never drain your API quota.
+
+       These MUST match account-hub/pricing.php AND the pricing page in
+       index.html — the HUB is what actually charges, so a mismatch would show
+       one price and take another. At 10 credits/answer, 1000 = 100 answers.
+
+       'ai' is the entitlement, enforced server-side in api.php: Spark buys the
+       practice tools, not the model. The FREE tier keeps its AI — that is the
+       trial. 'daily' is the bonus the hub pays out once per UTC day.
+       Leave this key out entirely to use the same defaults from billing.php. */
     'plans' => [
-        // MUST match account-hub/pricing.php — the HUB is what actually charges
-        // (Razorpay), so a mismatch here would show one price and charge another.
-        // amount is in PAISE: 4700 = ₹47. At 10 credits/answer: 1000 = 100 answers.
-        'monthly' => ['label' => 'Monthly', 'amount' => 4700,  'credits' => 1000,  'days' => 30],
-        'yearly'  => ['label' => 'Yearly',  'amount' => 49900, 'credits' => 20000, 'days' => 365],
+        'spark' => ['label' => 'Spark',       'amount' => 4900,  'credits' => 500,   'days' => 30, 'ai' => false],
+        'solve' => ['label' => 'Solve+',      'amount' => 9900,  'credits' => 1000,  'days' => 30, 'ai' => true],
+        'ultra' => ['label' => 'Solve Ultra', 'amount' => 99900, 'credits' => 10000, 'days' => 30, 'ai' => true, 'daily' => 20],
+
+        'spark_yearly' => ['label' => 'Spark (yearly)',       'amount' => 49900,  'credits' => 6000,   'days' => 365, 'ai' => false],
+        'solve_yearly' => ['label' => 'Solve+ (yearly)',      'amount' => 99900,  'credits' => 12000,  'days' => 365, 'ai' => true],
+        'ultra_yearly' => ['label' => 'Solve Ultra (yearly)', 'amount' => 999900, 'credits' => 120000, 'days' => 365, 'ai' => true, 'daily' => 20],
     ],
 
     /* ---- ACCOUNTS (account.7by.in) — sign in / sign up ----
@@ -122,4 +145,77 @@ return [
     // processes — so this is what stops a slow provider taking the site down.
     'total_budget' => 60,
     // 'rate_dir' => '/home/USER/7by-ratelimit',  // set if your host's temp dir is wiped often
+
+    /* ---------- contact form ----------
+       Where messages from /#contact go. Every message is written to
+       contact.jsonl first and only then emailed, so a host with mail()
+       disabled still keeps them — the form tells the student the truth
+       either way. Put contact_dir OUTSIDE the web root if you can. */
+    'contact_to'  => '',                              // e.g. 'support@7by.in' — blank = store only
+    // 'contact_dir' => '/home/USER/7solve-messages', // defaults to ./data
+
+    /* ---------- study-data sync ----------
+       A student's notes, mistakes, practice history and goals live on the
+       account so they follow them to any device. Requires hub_base to be set
+       (sync is off without it). Put sync_dir OUTSIDE public_html if you can —
+       .htaccess blocks /data, but a directory the web server cannot reach at
+       all is a stronger guarantee than a rule that can be edited away.
+
+       sync_salt makes stored filenames unguessable even to someone who knows
+       a user's hub id. LEAVE IT BLANK and the server generates a long random
+       salt on first use and keeps it in .sync_salt inside sync_dir — that is
+       the recommended setup, because a forgotten salt is worse than a
+       generated one. Set it by hand only if you are moving existing sync data
+       between servers, and then NEVER change it: changing it orphans every
+       student's synced data. */
+    // 'sync_dir'  => '/home/USER/7solve-sync',   // defaults to ./data/sync
+    'sync_salt' => '',                            // blank = generate + remember one
+    'sync_session_ttl' => 300,                    // seconds a verified token is trusted
+
+    /* ---------- charging once, and only once ----------
+       The browser sends an id with every charge so a retried request — a lost
+       reply on mobile data, a tapped retry — cannot spend a second lot of
+       credits for an answer the student was shown once. This is how long an id
+       is remembered. Longer is safer for the student and costs a few bytes;
+       shorter risks a slow retry being charged again. */
+    'idem_seconds' => 900,                        // 15 minutes
+
+    /* ---------- observability + the quality dashboard ----------
+       api.php writes two logs beside the app:
+
+         ops.jsonl      one line per AI request — model, latency, HTTP code,
+                        cache hit/miss. NO question text, no answer text, no
+                        token, no IP. It answers "is the service healthy and
+                        what is it costing", which needs none of those.
+         quality.jsonl  student ratings, plus what the browser's own checker
+                        concluded. A thumbs-up stores no content; only an
+                        explicit "report" stores the question and answer,
+                        because the student pressed a button that says so.
+
+       Both roll at 8MB and keep one generation back.
+
+       admin.php reads them. It is OFF until admin_token is set to at least 16
+       characters, and refuses to render otherwise — a quality dashboard that
+       defaulted to public would leak what students are asking. Generate one
+       with:  php -r "echo bin2hex(random_bytes(24));"
+       Then open  https://your-site/admin.php?t=THAT_STRING  */
+    'log_on'      => true,
+    // 'log_dir'  => '/home/USER/7solve-logs',    // defaults to ./data
+    'admin_token' => '',                          // blank = dashboard stays off
+
+    /* ---------- live sources for time-sensitive questions ----------
+       "Who is the current…", "when is the exam", "the new scheme" — a model's
+       training data cannot know these, and answering anyway is the worst thing
+       this product can do, because the student cannot tell that answer from a
+       correct one. With this on, those questions fetch real pages first and
+       the answer cites them; with it off, the model is told to answer from
+       training data AND SAY SO. There is no setting that makes it invent a
+       citation.
+
+       Wikipedia is used with no key at all (labelled as an encyclopaedia, not
+       a primary source). Set brave_key for a real web search and the results
+       get considerably better — https://brave.com/search/api/ has a free
+       tier. */
+    'research_on' => true,
+    'brave_key'   => '',                          // optional; blank = Wikipedia only
 ];

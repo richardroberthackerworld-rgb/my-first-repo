@@ -19,13 +19,43 @@
    ============================================================ */
 declare(strict_types=1);
 
-/* ---------- plans (prices in paise: 9900 = ₹99) ---------- */
+/* ---------- plans (prices in paise: 9900 = ₹99) ----------
+   These MUST match what the pricing page shows and what account-hub's
+   pricing.php charges, or a student sees one price and pays another.
+     'ai'    — may this plan spend its credits on AI? Spark deliberately
+               cannot: it buys the practice tools, not the model.
+     'daily' — bonus credits per day (Ultra only; granted by the hub). */
 function bill_plans(array $CFG): array {
     return $CFG['plans'] ?? [
-        'monthly'  => ['label' => 'Monthly',      'amount' => 9900, 'credits' => 500, 'days' => 30],
-        'pack_50'  => ['label' => '50 credits',   'amount' => 2000, 'credits' => 50,  'days' => 365],
-        'pack_150' => ['label' => '150 credits',  'amount' => 4900, 'credits' => 150, 'days' => 365],
+        'spark' => ['label' => 'Spark',       'amount' => 4900,  'credits' => 500,   'days' => 30,  'ai' => false],
+        'solve' => ['label' => 'Solve+',      'amount' => 9900,  'credits' => 1000,  'days' => 30,  'ai' => true],
+        'ultra' => ['label' => 'Solve Ultra', 'amount' => 99900, 'credits' => 10000, 'days' => 30,  'ai' => true, 'daily' => 20],
+
+        'spark_yearly' => ['label' => 'Spark (yearly)',       'amount' => 49900,  'credits' => 6000,   'days' => 365, 'ai' => false],
+        'solve_yearly' => ['label' => 'Solve+ (yearly)',      'amount' => 99900,  'credits' => 12000,  'days' => 365, 'ai' => true],
+        'ultra_yearly' => ['label' => 'Solve Ultra (yearly)', 'amount' => 999900, 'credits' => 120000, 'days' => 365, 'ai' => true, 'daily' => 20],
     ];
+}
+
+/* Base tier for a plan key: 'solve_yearly' -> 'solve'. Monthly and yearly of
+   one tier are a single entitlement, so every check compares tiers. */
+function bill_tier(string $plan): string {
+    return preg_replace('/_yearly$/', '', strtolower($plan));
+}
+
+/* May this plan use AI at all?
+   Only a PAID plan can withhold AI — Spark buys the practice tools, not the
+   model. Free/none/expired are not "AI-less plans": they are users spending the
+   daily free allowance, which has always bought basic AI and is the trial the
+   whole funnel depends on. Unknown plan names also pass, because refusing them
+   would lock out anyone holding an older pass. */
+function bill_plan_ai(array $CFG, string $plan): bool {
+    $plan = strtolower(trim($plan));
+    if ($plan === '' || $plan === 'none' || $plan === 'free' || $plan === 'expired') return true;
+    $plans = bill_plans($CFG);
+    $row = $plans[$plan] ?? $plans[bill_tier($plan)] ?? null;
+    if (!$row) return true;
+    return !isset($row['ai']) || (bool)$row['ai'];
 }
 function bill_apps(): array { return ['7marks', '7solve']; }
 
@@ -54,6 +84,97 @@ function bill_read_pass(array $CFG, string $token): ?array {
 function bill_write_pass(array $CFG, string $token, array $data): void {
     $f = bill_pass_file($CFG, $token);
     if ($f) @file_put_contents($f, json_encode($data), LOCK_EX);
+}
+
+/* ---------- read-modify-write, atomically ------------------------------------
+   Every credit counter here was read with one call and written with another:
+
+       $used = bill_free_used(...);            // read
+       file_put_contents($f, $used + $cost);   // write
+
+   LOCK_EX on the write does not make that safe, because the READ is outside the
+   lock. Two requests arriving together both read 40, both write 50, and the
+   student has had two answers for one answer's worth of credit. On a phone that
+   is not exotic: a double-tap, or a retry after a slow response, is enough.
+
+   This helper holds ONE exclusive lock across the read, the decision and the
+   write, which is what the whole credit system depends on being true. The file
+   is opened 'c+' so it is created if missing and NOT truncated if present —
+   'w+' would empty the counter before the lock was even taken.
+
+   $fn receives the current contents and returns [newContents, result]. If it
+   returns null for newContents, nothing is written.                            */
+function bill_atomic(?string $file, callable $fn) {
+    if (!$file) return $fn('')[1] ?? null;             // no storage → decide, persist nothing
+    $h = @fopen($file, 'c+');
+    if (!$h) return $fn('')[1] ?? null;
+    if (!@flock($h, LOCK_EX)) { @fclose($h); return $fn('')[1] ?? null; }
+    $cur = '';
+    while (!feof($h)) { $chunk = fread($h, 8192); if ($chunk === false) break; $cur .= $chunk; }
+    list($next, $result) = $fn($cur);
+    if ($next !== null) {
+        @ftruncate($h, 0);
+        @rewind($h);
+        @fwrite($h, (string)$next);
+        @fflush($h);
+    }
+    @flock($h, LOCK_UN);
+    @fclose($h);
+    return $result;
+}
+
+/* ---------- idempotency: one answer is charged once -------------------------
+   ?action=charge had no request identity, so a repeat of the same POST spent a
+   second lot of credits for the same answer. That is the one thing §54 names
+   explicitly, and the case is ordinary rather than adversarial: the browser
+   sends the charge, the phone loses signal before the reply arrives, the app or
+   the student tries again, and the student pays twice for one answer.
+
+   The browser now mints an id per delivered answer. The FIRST charge with that
+   id does the work and stores its result; any repeat within the window returns
+   the stored result and spends nothing. Ids are opaque and per-user-scoped by
+   the token, so one student cannot replay another's id to suppress their
+   charge.                                                                      */
+function bill_idem_file(array $CFG, string $scope, string $id): ?string {
+    $dir = bill_dir($CFG);
+    if (!$dir || !preg_match('/^[A-Za-z0-9_\-]{8,64}$/', $id)) return null;
+    $idem = $dir . '/idem';
+    if (!is_dir($idem)) @mkdir($idem, 0700, true);
+    if (!is_dir($idem) || !is_writable($idem)) return null;
+    return $idem . '/' . hash('sha256', $scope . '|' . $id) . '.json';
+}
+function bill_idem_window(array $CFG): int { return max(60, (int)($CFG['idem_seconds'] ?? 900)); }
+
+/* Returns the stored result for a seen id, or null if this id is new. */
+function bill_idem_get(array $CFG, string $scope, string $id): ?array {
+    $f = bill_idem_file($CFG, $scope, $id);
+    if (!$f || !is_file($f)) return null;
+    if (@filemtime($f) < time() - bill_idem_window($CFG)) return null;   // expired → treat as new
+    $d = json_decode((string)@file_get_contents($f), true);
+    return is_array($d) ? $d : null;
+}
+function bill_idem_put(array $CFG, string $scope, string $id, array $result): void {
+    $f = bill_idem_file($CFG, $scope, $id);
+    if (!$f) return;
+    @file_put_contents($f, json_encode($result), LOCK_EX);
+    if (mt_rand(1, 40) === 1) {                     // occasional sweep
+        $dir = dirname($f);
+        foreach ((array)@glob($dir . '/*.json') as $g) {
+            if (@filemtime($g) < time() - 86400) @unlink($g);
+        }
+    }
+}
+/* Claim an id before doing the work. True = this caller owns it and must do the
+   work; false = somebody already claimed it (a duplicate arriving concurrently).
+   'x' fails if the file exists, which is the atomic part. */
+function bill_idem_claim(array $CFG, string $scope, string $id): bool {
+    $f = bill_idem_file($CFG, $scope, $id);
+    if (!$f) return true;                            // cannot track → do the work
+    $h = @fopen($f, 'x');
+    if (!$h) return false;
+    @fwrite($h, json_encode(['pending' => true, 't' => time()]));
+    @fclose($h);
+    return true;
 }
 
 /* ---------- free tier: N credits per device per day ---------- */
@@ -102,8 +223,11 @@ function bill_status(array $CFG, string $app, string $token): array {
     if ($pass && ($pass['app'] ?? '') === $app) {
         $expired = !empty($pass['expires']) && $pass['expires'] < time();
         $credits = max(0, (int)($pass['credits'] ?? 0));
+        $plan    = $expired ? 'expired' : (string)($pass['plan'] ?? 'paid');
         return [
-            'plan'       => $expired ? 'expired' : ($pass['plan'] ?? 'paid'),
+            'plan'       => $plan,
+            'tier'       => bill_tier($plan),
+            'ai'         => bill_plan_ai($CFG, $plan),
             'credits'    => $expired ? 0 : $credits,
             'expires'    => (int)($pass['expires'] ?? 0),
             'free_left'  => $free,
@@ -111,7 +235,7 @@ function bill_status(array $CFG, string $app, string $token): array {
             'paid'       => !$expired && $credits > 0,
         ];
     }
-    return ['plan' => 'free', 'credits' => 0, 'expires' => 0,
+    return ['plan' => 'free', 'tier' => 'free', 'ai' => true, 'credits' => 0, 'expires' => 0,
             'free_left' => $free, 'free_limit' => $limit, 'paid' => false];
 }
 
@@ -174,23 +298,38 @@ function bill_charge(array $CFG, string $app, string $token, bool $premium = fal
     if (!empty($CFG['billing_off'])) return [true, ['plan' => 'off', 'credits' => 0, 'free_left' => 999, 'free_limit' => 999, 'paid' => true]];
     $cost = bill_cost($CFG);
 
-    $pass = $token ? bill_read_pass($CFG, $token) : null;
-    if ($pass && ($pass['app'] ?? '') === $app) {
-        $live = empty($pass['expires']) || $pass['expires'] >= time();
-        if ($live && (int)($pass['credits'] ?? 0) >= $cost) {
+    /* Paid credits first. The whole read-decide-write runs inside one lock on
+       the pass file: reading the balance, checking it, and writing the
+       decrement used to be three separate operations, so two answers arriving
+       together could each read the same balance and each write a decrement of
+       one — the student paid once and was served twice. */
+    $passFile = $token ? bill_pass_file($CFG, $token) : null;
+    if ($passFile && is_file($passFile)) {
+        $spent = bill_atomic($passFile, function (string $cur) use ($app, $cost) {
+            $pass = json_decode($cur, true);
+            if (!is_array($pass) || ($pass['app'] ?? '') !== $app) return [null, false];
+            $live = empty($pass['expires']) || $pass['expires'] >= time();
+            if (!$live || (int)($pass['credits'] ?? 0) < $cost) return [null, false];
             $pass['credits'] = (int)$pass['credits'] - $cost;   // paid credits work for basic AND premium
             $pass['used']    = (int)($pass['used'] ?? 0) + $cost;
-            bill_write_pass($CFG, $token, $pass);
-            return [true, bill_status($CFG, $app, $token)];
-        }
+            return [json_encode($pass), true];
+        });
+        if ($spent) return [true, bill_status($CFG, $app, $token)];
     }
+
     // free daily allowance — cheap models only
     if ($premium) return [false, ['reason' => 'premium'] + bill_status($CFG, $app, $token)];
     $limit = bill_free_limit($CFG, $app);
-    $used  = bill_free_used($CFG, $app);
-    if ($used + $cost > $limit) return [false, ['reason' => 'no_credits'] + bill_status($CFG, $app, $token)];
     $f = bill_free_file($CFG, $app);
-    if ($f) @file_put_contents($f, (string)($used + $cost), LOCK_EX);
+    /* Same story for the free counter: read and write are now one locked
+       section, so the daily allowance cannot be overspent by two requests
+       landing at the same moment. */
+    $ok = bill_atomic($f, function (string $cur) use ($limit, $cost) {
+        $used = (int)trim($cur);
+        if ($used + $cost > $limit) return [null, false];
+        return [(string)($used + $cost), true];
+    });
+    if (!$ok) return [false, ['reason' => 'no_credits'] + bill_status($CFG, $app, $token)];
     if (mt_rand(1, 50) === 1) {   // sweep yesterday's counters
         foreach ((array)@glob(bill_dir($CFG) . '/free_*.txt') as $g) if (@filemtime($g) < time() - 172800) @unlink($g);
     }

@@ -46,3 +46,8 @@ android/**/build/
 
 # 7Marks database credentials — never commit
 7marks/db/config.php
+
+# Runtime data written by the apps at their default paths — contact messages,
+# the ops/quality logs the admin dashboard reads, sync state. Real user content
+# and none of it belongs in git. .htaccess also 404s these directories.
+*/data/

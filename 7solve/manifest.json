@@ -7,8 +7,8 @@
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#fdfaf0",
-  "theme_color": "#fdfaf0",
+  "background_color": "#f4f6fd",
+  "theme_color": "#f4f6fd",
   "lang": "en-IN",
   "dir": "ltr",
   "categories": [
@@ -33,6 +33,18 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    },
+    {
+      "src": "assets/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
+  ],
+  "shortcuts": [
+    { "name": "Ask a doubt",   "short_name": "Ask",      "url": "/#ask" },
+    { "name": "AI Tutor",      "short_name": "Tutor",    "url": "/#tutor" },
+    { "name": "My Notebook",   "short_name": "Notebook", "url": "/#notebook" },
+    { "name": "Flashcards",    "short_name": "Cards",    "url": "/#flashcards" }
   ]
 }

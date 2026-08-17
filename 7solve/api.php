@@ -22,9 +22,43 @@ header('Cache-Control: no-store');
 
 function out(int $code, array $body): void { http_response_code($code); echo json_encode($body); exit; }
 
+/* ------------------------------------------------------------------
+   A fatal here used to be invisible.
+
+   keys.php is hand-edited on the server, and a single missing bracket in
+   it makes PHP stop before this file runs a line — no output, no message,
+   just HTTP 500 on EVERY action. The browser then can't parse the reply,
+   the app decides nobody is signed in, and the site looks broken with
+   nothing anywhere saying why.
+
+   A parse error in an included file cannot be caught with try/catch, but
+   it does reach a shutdown handler, so this turns it into JSON naming the
+   file and line. Registered BEFORE keys.php is loaded, which is the whole
+   point. The message is only echoed for structural errors (parse/compile);
+   other fatals report location only, so a value from a config line can
+   never be printed to the browser.
+   ------------------------------------------------------------------ */
+register_shutdown_function(function (): void {
+    $e = error_get_last();
+    if (!$e) return;
+    $fatal = E_ERROR | E_PARSE | E_COMPILE_ERROR | E_CORE_ERROR | E_USER_ERROR;
+    if (!($e['type'] & $fatal)) return;
+    if (headers_sent()) return;                 // a real response already went out
+    $structural = (bool)($e['type'] & (E_PARSE | E_COMPILE_ERROR));
+    $where = basename((string)$e['file']) . ' line ' . (int)$e['line'];
+    http_response_code(500);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['error' => ['message' => $structural
+        ? ('Server config error in ' . $where . ': ' . $e['message'])
+        : ('Server error in ' . $where . '. Check the PHP error log for details.'),
+        'where' => $where, 'fix' => 'This is a PHP file on your server, not a browser problem.']]);
+});
+
 $cfgFile = __DIR__ . '/keys.php';
 if (!is_file($cfgFile)) out(500, ['error' => ['message' => 'Proxy not configured: copy keys.example.php to keys.php and add your keys.']]);
 $CFG = require $cfgFile;
+if (!is_array($CFG)) out(500, ['error' => ['message' =>
+    'keys.php did not return a settings array. It must start with "<?php return [" and end with "];".']]);
 require_once __DIR__ . '/billing.php';
 
 /* which app is billing this request (7Solve and 7Marks bill separately) */
@@ -103,9 +137,26 @@ function cache_put(?string $dir, string $k, string $body): void {
     }
 }
 
-/* ---------- simple per-IP hourly cap so nobody drains your quota ---------- */
-function rate_ok(array $CFG): bool {
-    $limit = (int)($CFG['rate_per_hour'] ?? 60);
+/* ---------- per-IP hourly cap, for ANONYMOUS visitors only ----------
+   This exists for one job: stop a passer-by with no account draining the API
+   quota. It must never be what stops a student who is signed in.
+
+   A signed-in student is already limited by something real and exact — their
+   credits, enforced server-side on every call. Adding an IP cap on top of that
+   does not make anything safer, and it breaks the case that matters most: a
+   school, a college lab and a hostel all share ONE public IP, so a per-IP cap
+   is a cap on the whole building rather than on a person.
+
+   Nor does skipping it open a hole. A forged token does not reach the hub, so
+   billing falls through to the per-device daily allowance — a tighter limit
+   than this one, not a looser one. Credits are the wall; this is a doormat.
+
+   Signed-in requests are therefore uncapped by default. 'rate_per_hour_signed'
+   remains as a knob for an owner who wants a ceiling anyway; 0 = none. */
+function rate_ok(array $CFG, bool $signedIn = false): bool {
+    $limit = $signedIn
+        ? (int)($CFG['rate_per_hour_signed'] ?? 0)   // 0 = no cap; credits decide
+        : (int)($CFG['rate_per_hour'] ?? 60);
     if ($limit <= 0) return true;
     $dir = trim((string)($CFG['rate_dir'] ?? ''));      // ?? misses an empty string
     if ($dir === '') $dir = sys_get_temp_dir() . '/7by-rl';
@@ -122,6 +173,48 @@ function rate_ok(array $CFG): bool {
     return true;
 }
 
+/* ---------- observability (§43) and the quality record (§44/§45) ------------
+   Two separate logs, because they answer different questions and carry very
+   different data.
+
+   ops.jsonl   — one line per AI request: which model, how long, what code,
+                 cache hit or miss, was the caller signed in. NO question text,
+                 NO answer text, no token, no key, no IP. It exists to answer
+                 "is the service healthy and what is it costing", and none of
+                 that needs to know what a student asked.
+
+   quality.jsonl — what students said about answers, plus what the browser's
+                 own checker found. A thumbs-up carries no content. A REPORT
+                 carries the question, because the student chose to send it and
+                 a report you cannot reproduce is not worth storing.
+
+   Both are capped and both fail silently: logging must never be able to break
+   an answer a student has paid for.                                          */
+function log_dir(array $CFG): ?string {
+    $dir = trim((string)($CFG['log_dir'] ?? ''));
+    if ($dir === '') $dir = rtrim((string)($CFG['contact_dir'] ?? __DIR__ . '/data'), '/\\');
+    if ($dir === '') return null;
+    if (!is_dir($dir)) @mkdir($dir, 0700, true);
+    return (is_dir($dir) && is_writable($dir)) ? $dir : null;
+}
+function log_line(array $CFG, string $file, array $row): void {
+    if (empty($CFG['log_on'] ?? true)) return;
+    $dir = log_dir($CFG);
+    if (!$dir) return;
+    $path = $dir . '/' . $file;
+    /* Roll at ~8MB so a busy month cannot fill the account's disk quota and
+       take the whole site down with it. One generation back is kept. */
+    if (@filesize($path) > 8 * 1024 * 1024) { @rename($path, $path . '.1'); }
+    @file_put_contents($path, json_encode($row, JSON_UNESCAPED_UNICODE) . "\n", FILE_APPEND | LOCK_EX);
+}
+/* A per-request id the browser also sees, so a student's screenshot of an
+   error can be found in the log without searching by time. */
+function request_id(): string {
+    static $rid = null;
+    if ($rid === null) $rid = bin2hex(random_bytes(6));
+    return $rid;
+}
+
 $action = $_GET['action'] ?? '';
 $passTok = preg_replace('/[^a-f0-9]/', '', (string)($_SERVER['HTTP_X_7BY_PASS'] ?? $_GET['pass'] ?? ''));
 // signed-in student: account.7by.in API token (credits live on the ACCOUNT, any device)
@@ -136,6 +229,330 @@ if ($action === 'providers') {
 }
 
 /* ---------- GET ?action=me → this visitor's plan / credits / free left ---------- */
+/* ---------- sync: the student's study data lives on the account ----------
+   Both actions require a hub token and resolve the user id SERVER-SIDE from
+   it. A client-supplied user id is never read, so one student can never
+   address another's records however the request is crafted. */
+if ($action === 'sync.pull' || $action === 'sync.push') {
+    require_once __DIR__ . '/sync.php';
+
+    if (!hub_on($CFG)) out(503, ['error' => ['message' => 'Sync is not configured on this server.']]);
+    $uid = sync_identify($CFG, $hubTok);
+    if ($uid === null) out(401, ['error' => ['message' => 'Sign in to sync your work.'], 'signedOut' => true]);
+
+    if ($action === 'sync.pull') {
+        $since = (int)($_GET['since'] ?? 0);
+        list($records, $rev) = sync_since($CFG, $uid, $since);
+        out(200, ['ok' => true, 'records' => $records, 'rev' => $rev,
+                  'now' => (int)(microtime(true) * 1000), 'count' => count($records)]);
+    }
+
+    if (!rate_ok($CFG)) out(429, ['error' => ['message' => 'Syncing too fast — try again shortly.']]);
+    $raw = file_get_contents('php://input') ?: '[]';
+    if (strlen($raw) > 4 * 1024 * 1024) out(413, ['error' => ['message' => 'That sync batch is too large.']]);
+    $req = json_decode($raw, true) ?: [];
+    $records = (array)($req['records'] ?? []);
+    if (count($records) > 500) out(413, ['error' => ['message' => 'Too many records in one batch.']]);
+
+    list($applied, $conflicts, $rev) = sync_merge($CFG, $uid, $records);
+    out(200, ['ok' => true, 'applied' => $applied, 'conflicts' => $conflicts,
+              'rev' => $rev, 'now' => (int)(microtime(true) * 1000)]);
+}
+
+/* ---------- POST ?action=contact → a message from the contact form ----------
+   Stored on disk first, then emailed. Storage is what makes it reliable: if
+   mail() is disabled or the MTA drops it, the message is still on the server
+   rather than silently lost, and the browser is told honestly which happened. */
+if ($action === 'contact') {
+    if (!rate_ok($CFG)) out(429, ['error' => ['message' => 'Too many messages just now — try again shortly.']]);
+
+    $req  = json_decode(file_get_contents('php://input') ?: '[]', true) ?: [];
+    $name = trim((string)($req['name'] ?? ''));
+    $mail = trim((string)($req['email'] ?? ''));
+    $subj = trim((string)($req['subject'] ?? 'General'));
+    $msg  = trim((string)($req['message'] ?? ''));
+    $hp   = trim((string)($req['website'] ?? ''));      // honeypot: humans never fill this
+
+    if ($hp !== '') out(200, ['ok' => true]);           // a bot — accept and discard
+    if ($name === '' || mb_strlen($name) > 80)  out(400, ['error' => ['message' => 'Please give your name.']]);
+    if (!filter_var($mail, FILTER_VALIDATE_EMAIL))      out(400, ['error' => ['message' => 'That email address does not look right.']]);
+    if (mb_strlen($msg) < 10)  out(400, ['error' => ['message' => 'Please say a little more — at least 10 characters.']]);
+    if (mb_strlen($msg) > 4000) out(400, ['error' => ['message' => 'That message is too long. Keep it under 4000 characters.']]);
+    $allowed = ['General', 'Billing & credits', 'A wrong answer', 'Bug report', 'Partnership'];
+    if (!in_array($subj, $allowed, true)) $subj = 'General';
+
+    $row = [
+        't'  => gmdate('c'),
+        'ip' => substr(hash('sha256', ($_SERVER['REMOTE_ADDR'] ?? '') . ($CFG['app'] ?? '')), 0, 16),
+        'name' => $name, 'email' => $mail, 'subject' => $subj, 'message' => $msg,
+        'ua' => substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 200),
+    ];
+    $stored = false;
+    $dir = trim((string)($CFG['contact_dir'] ?? __DIR__ . '/data'));
+    if ($dir !== '') {
+        if (!is_dir($dir)) @mkdir($dir, 0700, true);
+        if (is_dir($dir)) {
+            $stored = (bool)@file_put_contents(
+                rtrim($dir, '/\\') . '/contact.jsonl',
+                json_encode($row, JSON_UNESCAPED_UNICODE) . "\n",
+                FILE_APPEND | LOCK_EX
+            );
+        }
+    }
+
+    $sent = false;
+    $to = trim((string)($CFG['contact_to'] ?? ''));
+    if ($to !== '' && function_exists('mail')) {
+        $host = preg_replace('/[^a-z0-9.\-]/i', '', (string)($_SERVER['HTTP_HOST'] ?? '7solve.7by.in'));
+        $body = "From: $name <$mail>\nSubject: $subj\nHost: $host\nTime: {$row['t']}\n\n$msg\n";
+        $sent = @mail(
+            $to,
+            '[7Solve] ' . $subj . ' — ' . $name,
+            $body,
+            "From: 7Solve <no-reply@$host>\r\nReply-To: " . $mail . "\r\n" .
+            "Content-Type: text/plain; charset=utf-8\r\nMIME-Version: 1.0"
+        );
+    }
+
+    if (!$stored && !$sent) {
+        out(500, ['error' => ['message' => 'We could not record your message. Please email us directly.']]);
+    }
+    out(200, ['ok' => true, 'stored' => $stored, 'emailed' => $sent]);
+}
+
+/* ---------- POST ?action=quality → what a student thought of an answer ------
+   §45: every answer can be rated, and a disputed one becomes the improvement
+   dataset. Deliberately NOT treated as ground truth — a thumbs-down is stored
+   as an opinion next to what the deterministic checker found, and the two
+   disagreeing is itself the interesting signal. */
+if ($action === 'quality') {
+    if (!origin_allowed($CFG)) out(403, ['error' => ['message' => 'Origin not allowed']]);
+    if (!rate_ok($CFG, $hubTok !== '')) out(429, ['error' => ['message' => 'Too much feedback too fast.']]);
+    $req = json_decode((string)file_get_contents('php://input'), true) ?: [];
+
+    $vote = (string)($req['vote'] ?? '');
+    if (!in_array($vote, ['up', 'down', 'report'], true)) {
+        out(400, ['error' => ['message' => 'Unknown vote']]);
+    }
+    $row = [
+        't'      => gmdate('c'),
+        'app'    => $APP,
+        'vote'   => $vote,
+        'rid'    => preg_replace('/[^a-f0-9]/', '', (string)($req['rid'] ?? '')),
+        'model'  => substr(preg_replace('/[^A-Za-z0-9.\/\-:]/', '', (string)($req['model'] ?? '')), 0, 80),
+        'subject'=> substr((string)($req['subject'] ?? ''), 0, 60),
+        'course' => substr((string)($req['course'] ?? ''), 0, 60),
+        /* what the browser's own checker concluded — 'checked', 'disputed',
+           'worked', 'plain'. A 'disputed' answer that the student then rated
+           UP is as worth reading as the reverse. */
+        'verify' => substr(preg_replace('/[^a-z]/', '', (string)($req['verify'] ?? '')), 0, 16),
+        'failed' => min(20, max(0, (int)($req['failed'] ?? 0))),
+        'signed' => $hubTok !== '',
+    ];
+    /* Only an explicit report carries content, and only what is needed to
+       reproduce it. A thumbs-down stores no text at all. */
+    if ($vote === 'report') {
+        $row['q']      = mb_substr(trim((string)($req['q'] ?? '')), 0, 1200);
+        $row['answer'] = mb_substr(trim((string)($req['answer'] ?? '')), 0, 4000);
+        $row['note']   = mb_substr(trim((string)($req['note'] ?? '')), 0, 500);
+    }
+    log_line($CFG, 'quality.jsonl', $row);
+    out(200, ['ok' => true]);
+}
+
+/* ---------- POST ?action=research → live sources for time-sensitive questions
+   ------------------------------------------------------------------------
+   §13/§14. A model's training data cannot know this year's exam dates, the
+   current holder of an office, or a scheme announced last month, and the worst
+   possible behaviour is to answer anyway. This fetches real sources so the
+   answer can be built on something, and scores them so the student can see
+   WHAT it was built on.
+
+   Two things this deliberately does not do:
+
+     · It never invents a citation. Every source returned here was actually
+       fetched, with the HTTP status and the retrieval time recorded. If no
+       backend is reachable the reply says so and the app falls back to
+       answering from training data WITH that stated — never a fake link.
+
+     · It never fetches a URL the caller chose. The query is user text; the
+       URLs come from a search backend, and every one is then put through
+       url_safe() before a request is made. Without that this endpoint would be
+       an open proxy into the hosting account's private network — the classic
+       SSRF, and a real risk on shared hosting where the metadata service and
+       the neighbours are one hop away.
+   ------------------------------------------------------------------------ */
+
+/* Authority tiers (§14). Primary sources outrank commentary; the tier is shown
+   to the student rather than being used to silently pick a winner. */
+function source_tier(string $host): array {
+    $h = strtolower($host);
+    $is = function (string ...$sfx) use ($h): bool {
+        foreach ($sfx as $s) {
+            if ($h === $s || substr($h, -strlen('.' . $s)) === '.' . $s) return true;
+        }
+        return false;
+    };
+    if ($is('gov.in', 'nic.in', 'gov', 'gov.uk', 'europa.eu') || preg_match('/\.gov\./', $h))
+        return [1, 'Government'];
+    if ($is('ac.in', 'edu', 'ac.uk', 'edu.in') || preg_match('/\.(ac|edu)\./', $h))
+        return [2, 'University'];
+    if ($is('who.int', 'un.org', 'worldbank.org', 'imf.org', 'oecd.org', 'unesco.org',
+            'rbi.org.in', 'sebi.gov.in', 'icai.org', 'icsi.edu', 'nta.ac.in', 'cbse.gov.in',
+            'ncert.nic.in', 'upsc.gov.in', 'ssc.gov.in', 'aicte-india.org', 'ugc.gov.in'))
+        return [1, 'Official body'];
+    if ($is('nature.com', 'science.org', 'nih.gov', 'arxiv.org', 'pubmed.ncbi.nlm.nih.gov', 'doi.org'))
+        return [2, 'Research'];
+    if ($is('wikipedia.org', 'britannica.com'))
+        return [4, 'Encyclopaedia'];
+    if ($is('thehindu.com', 'indianexpress.com', 'reuters.com', 'bbc.co.uk', 'bbc.com',
+            'pib.gov.in', 'livemint.com', 'business-standard.com', 'timesofindia.indiatimes.com'))
+        return [3, 'News'];
+    return [5, 'Other'];
+}
+
+/* Refuse anything that is not a plain public https URL. Blocks private and
+   link-local ranges by resolving the host first, which is what stops a search
+   result (or a redirect) from reaching 127.0.0.1 or 169.254.169.254. */
+function url_safe(string $url): bool {
+    $p = parse_url($url);
+    if (!$p || ($p['scheme'] ?? '') !== 'https') return false;
+    if (isset($p['port']) && !in_array((int)$p['port'], [443], true)) return false;
+    $host = $p['host'] ?? '';
+    if ($host === '' || strlen($host) > 190) return false;
+    if (!preg_match('/^[a-z0-9.\-]+$/i', $host)) return false;      // no userinfo, no IPv6 literals
+
+    $ips = @gethostbynamel($host);
+    if ($ips === false) {
+        $ips = filter_var($host, FILTER_VALIDATE_IP) ? [$host] : [];
+    }
+    if (!$ips) return false;
+    foreach ($ips as $ip) {
+        if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+            return false;                                            // private, loopback, link-local
+        }
+    }
+    return true;
+}
+
+function research_get(string $url, int $timeout = 8, int $maxBytes = 400000): array {
+    if (!url_safe($url)) return ['ok' => false, 'code' => 0, 'body' => '', 'why' => 'blocked'];
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => $timeout,
+        CURLOPT_CONNECTTIMEOUT => 5,
+        /* Redirects are NOT followed automatically: a 302 to an internal
+           address would walk straight past url_safe(). One hop is handled
+           manually below, re-checked. */
+        CURLOPT_FOLLOWLOCATION => false,
+        CURLOPT_PROTOCOLS      => CURLPROTO_HTTPS,
+        CURLOPT_USERAGENT      => '7Solve/1.0 (+https://7solve.7by.in)',
+        CURLOPT_HTTPHEADER     => ['Accept: text/html,application/json;q=0.9'],
+        CURLOPT_BUFFERSIZE     => 16384,
+        CURLOPT_NOPROGRESS     => false,
+        CURLOPT_PROGRESSFUNCTION => function ($ch, $dlTotal, $dlNow) use ($maxBytes) {
+            return $dlNow > $maxBytes ? 1 : 0;                       // abort an oversized body
+        },
+    ]);
+    $body = curl_exec($ch);
+    $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $loc  = (string)curl_getinfo($ch, CURLINFO_REDIRECT_URL);
+    curl_close($ch);
+    if (in_array($code, [301, 302, 303, 307, 308], true) && $loc !== '' && url_safe($loc)) {
+        return research_get($loc, $timeout, $maxBytes);              // one hop, re-validated
+    }
+    return ['ok' => $code === 200 && is_string($body), 'code' => $code,
+            'body' => is_string($body) ? $body : '', 'why' => ''];
+}
+
+if ($action === 'research') {
+    if (!origin_allowed($CFG)) out(403, ['error' => ['message' => 'Origin not allowed']]);
+    if (!rate_ok($CFG, $hubTok !== '')) out(429, ['error' => ['message' => 'Too many searches just now.']]);
+    if (empty($CFG['research_on'] ?? true)) out(200, ['ok' => false, 'off' => true, 'sources' => [],
+        'note' => 'Live sources are switched off on this server.']);
+
+    $req = json_decode((string)file_get_contents('php://input'), true) ?: [];
+    $q = trim((string)($req['q'] ?? ''));
+    if ($q === '' || mb_strlen($q) > 300) out(400, ['error' => ['message' => 'Bad query']]);
+
+    $sources = [];
+    $backend = 'none';
+
+    /* 1 — a real search API if the owner configured one. Nothing here depends
+       on it, but results are far better when it exists. */
+    $braveKey = trim((string)($CFG['brave_key'] ?? ''));
+    if ($braveKey !== '') {
+        $u = 'https://api.search.brave.com/res/v1/web/search?count=6&q=' . rawurlencode($q);
+        $ch = curl_init($u);
+        curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 8,
+            CURLOPT_HTTPHEADER => ['Accept: application/json', 'X-Subscription-Token: ' . $braveKey]]);
+        $r = curl_exec($ch); $c = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
+        if ($c === 200 && is_string($r)) {
+            $j = json_decode($r, true);
+            foreach (($j['web']['results'] ?? []) as $it) {
+                $sources[] = ['title' => (string)($it['title'] ?? ''),
+                              'url' => (string)($it['url'] ?? ''),
+                              'snippet' => strip_tags((string)($it['description'] ?? '')),
+                              'date' => (string)($it['page_age'] ?? '')];
+            }
+            if ($sources) $backend = 'brave';
+        }
+    }
+
+    /* 2 — Wikipedia. No key, no quota, and for a study product it is a
+       legitimate starting point as long as it is LABELLED as an encyclopaedia
+       rather than a primary source, which the tier does. */
+    if (!$sources) {
+        $u = 'https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts|info'
+           . '&inprop=url&exintro=1&explaintext=1&redirects=1&generator=search&gsrlimit=4'
+           . '&gsrsearch=' . rawurlencode($q);
+        $r = research_get($u, 8);
+        if ($r['ok']) {
+            $j = json_decode($r['body'], true);
+            foreach (($j['query']['pages'] ?? []) as $pg) {
+                $sources[] = ['title' => (string)($pg['title'] ?? ''),
+                              'url' => (string)($pg['fullurl'] ?? ''),
+                              'snippet' => mb_substr(trim((string)($pg['extract'] ?? '')), 0, 700),
+                              'date' => (string)($pg['touched'] ?? '')];
+            }
+            if ($sources) $backend = 'wikipedia';
+        }
+    }
+
+    /* Score and sort. The tier is reported, never used to drop a source
+       silently — a student should see that the only thing found was a blog. */
+    $now = gmdate('c');
+    $clean = [];
+    foreach ($sources as $s) {
+        $url = (string)$s['url'];
+        if ($url === '' || !url_safe($url)) continue;                // never surface what we could not verify
+        $host = parse_url($url, PHP_URL_HOST) ?: '';
+        list($tier, $label) = source_tier($host);
+        $clean[] = [
+            'title'   => mb_substr((string)$s['title'], 0, 180),
+            'url'     => $url,
+            'host'    => $host,
+            'snippet' => mb_substr((string)$s['snippet'], 0, 700),
+            'tier'    => $tier,
+            'kind'    => $label,
+            'published' => (string)$s['date'],
+            'retrieved' => $now,
+        ];
+    }
+    usort($clean, function ($a, $b) { return $a['tier'] <=> $b['tier']; });
+    $clean = array_slice($clean, 0, 6);
+
+    log_line($CFG, 'ops.jsonl', ['t' => $now, 'rid' => request_id(), 'app' => $APP,
+        'provider' => 'research', 'model' => $backend, 'cache' => 'miss',
+        'code' => $clean ? 200 : 204, 'ms' => 0, 'ok' => (bool)$clean,
+        'signed' => $hubTok !== '', 'bytes' => 0]);
+
+    out(200, ['ok' => (bool)$clean, 'backend' => $backend, 'sources' => $clean,
+              'retrieved' => $now,
+              'note' => $clean ? '' : 'No live source could be reached for this question.']);
+}
+
 if ($action === 'me') {
     if (!origin_allowed($CFG)) out(403, ['error' => ['message' => 'Origin not allowed']]);
     $st = bill_status($CFG, $APP, $passTok);
@@ -213,23 +630,73 @@ if ($action === 'claim') {
 if ($action === 'charge') {
     if (!origin_allowed($CFG)) out(403, ['error' => ['message' => 'Origin not allowed']]);
     if (!empty($CFG['billing_off'])) out(200, ['ok' => true, 'credits' => 0]);
+
+    /* ---- idempotency (§54) ----
+       The browser mints one id per delivered answer and sends it here. Without
+       it, a charge POST that is retried — a lost reply on a phone, a tapped
+       retry — spends a second lot of credits for an answer the student was only
+       shown once. The id is scoped to the caller's own token, so replaying
+       somebody else's id cannot suppress their charge.
+
+       Three outcomes: a known id replays its stored result and spends nothing;
+       a brand-new id is claimed and does the work; an id claimed but not yet
+       finished (two duplicates in flight at once) is told the charge is already
+       happening rather than being charged again. */
+    $idem  = preg_replace('/[^A-Za-z0-9_\-]/', '', (string)($_SERVER['HTTP_X_7BY_IDEM'] ?? ''));
+    $scope = hash('sha256', ($hubTok !== '' ? 'h:' . $hubTok : 'p:' . $passTok) . '|' . $APP);
+    $mine  = true;
+    if ($idem !== '') {
+        $prev = bill_idem_get($CFG, $scope, $idem);
+        if (is_array($prev) && empty($prev['pending'])) {
+            $prev['idempotent'] = true;                 // already paid for; say so, charge nothing
+            out(200, $prev);
+        }
+        if ($prev === null) {
+            $mine = bill_idem_claim($CFG, $scope, $idem);
+        } else {
+            $mine = false;                              // a duplicate is mid-flight
+        }
+        if (!$mine) out(200, ['ok' => true, 'idempotent' => true, 'pending' => true]);
+    }
+
+    /* Record the outcome under the id before returning it, so the retry that
+       prompted all this gets the same answer instead of a second charge. */
+    $finish = function (array $body) use ($CFG, $scope, $idem) {
+        if ($idem !== '') bill_idem_put($CFG, $scope, $idem, $body);
+        return $body;
+    };
+
     if (hub_on($CFG) && $hubTok !== '') {
         list($ok, $left) = hub_spend($CFG, $APP, $hubTok);   // signed-in: spend account credits
-        if ($ok) out(200, ['ok' => true, 'credits' => is_int($left) ? $left : 0]);
+        if ($ok) out(200, $finish(['ok' => true, 'credits' => is_int($left) ? $left : 0]));
         // Hub unreachable or token rejected. Do NOT hand out free answers and do
         // NOT fail silently — fall back to the device allowance and say so, so a
         // broken hub link shows up instead of looking like credits never move.
         list($ok2, $st2) = bill_charge($CFG, $APP, $passTok, false);
-        out(200, ['ok' => (bool)$ok2, 'hub_error' => is_string($left) ? $left : 'hub_spend_failed',
-                  'billing' => is_array($st2) ? $st2 : null]);
+        out(200, $finish(['ok' => (bool)$ok2, 'hub_error' => is_string($left) ? $left : 'hub_spend_failed',
+                  'billing' => is_array($st2) ? $st2 : null]));
     }
     list($ok, $st) = bill_charge($CFG, $APP, $passTok, false);   // guest: spend the daily free allowance
-    out($ok ? 200 : 402, ['ok' => (bool)$ok, 'billing' => is_array($st) ? $st : null]);
+    /* A refusal is deliberately NOT stored: "you had no credits a moment ago"
+       must not be replayed to a student who has since topped up. */
+    $body = ['ok' => (bool)$ok, 'billing' => is_array($st) ? $st : null];
+    if ($ok) $finish($body);
+    elseif ($idem !== '') { $f = bill_idem_file($CFG, $scope, $idem); if ($f && is_file($f)) @unlink($f); }
+    out($ok ? 200 : 402, $body);
 }
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') out(405, ['error' => ['message' => 'POST only']]);
 if (!origin_allowed($CFG)) out(403, ['error' => ['message' => 'Origin not allowed']]);
-if (!rate_ok($CFG))        out(429, ['error' => ['message' => 'Too many requests from this device — please wait a while and try again.']]);
+if (!rate_ok($CFG, $hubTok !== '')) {
+    /* Say what this actually is. It was reported to the student as a
+       connection problem, which sent them to check their wifi over something
+       happening entirely on our side. The reset is the top of the clock hour,
+       so we can tell them exactly how long. */
+    $mins = 60 - (int)date('i');
+    out(429, ['error' => ['message' => 'Hourly limit reached on this connection. ' .
+              'It resets in about ' . $mins . ' minute' . ($mins === 1 ? '' : 's') . '.'],
+              'rateLimited' => true, 'retryInMinutes' => $mins]);
+}
 
 $rawBody = file_get_contents('php://input') ?: '';
 $maxMb = (int)($CFG['max_body_mb'] ?? 12);           // photos are big; 12MB covers 5 images
@@ -270,6 +737,22 @@ $billStatus = null;
 if (!empty($CFG['billing_off'])) {
     // paywall disabled — everything free
 } elseif ($useHub) {
+    /* Does this plan include AI at all? Spark buys the practice tools, not the
+       model, so having credits is not the same as being allowed to spend them
+       here. The browser checks this too, but a plan name in the browser can be
+       edited — this is the check that actually holds. The hub reports 'ai';
+       when it doesn't (older hub), fall back to our own plan table so the rule
+       still applies rather than silently defaulting to "allowed". */
+    $planName = (string)($hubUser['plan'] ?? '');
+    $aiOk = array_key_exists('ai', $hubUser)
+        ? (bool)$hubUser['ai']
+        : bill_plan_ai($CFG, $planName);
+    if (!$aiOk) {
+        out(402, ['error' => ['message' => 'Your plan does not include AI'],
+                  'needsPlan' => true, 'needsAI' => true,
+                  'billing' => ['signed_in' => true, 'plan' => $planName,
+                                'credits' => (int)($hubUser['credits'] ?? 0), 'ai' => false]]);
+    }
     $bal = (int)($hubUser['credits'] ?? 0);
     if ($bal < $cost) {
         out(402, ['error' => ['message' => 'Out of credits'], 'needsPlan' => true,
@@ -280,6 +763,14 @@ if (!empty($CFG['billing_off'])) {
     // CHECK ONLY — do not spend here. The browser spends once (?action=charge)
     // after it has a good answer, so retries/failures never cost a credit.
     list($okToSpend, $billStatus) = bill_check($CFG, $APP, $passTok, $premium);
+    // Entitlement before balance: telling a Spark holder they are "out of
+    // credits" would be a lie — they have credits, this just isn't what those
+    // credits buy. The free tier keeps its AI, so this only ever stops a plan
+    // that genuinely excludes the model.
+    if (is_array($billStatus) && array_key_exists('ai', $billStatus) && !$billStatus['ai']) {
+        out(402, ['error' => ['message' => 'Your plan does not include AI'],
+                  'needsPlan' => true, 'needsAI' => true, 'billing' => $billStatus]);
+    }
     if (!$okToSpend) {
         $isPremium = ($billStatus['reason'] ?? '') === 'premium';
         out(402, [
@@ -296,9 +787,19 @@ if (!empty($CFG['billing_off'])) {
 /* ---------- same question already answered? serve it instantly ----------
    No charge here — the browser charges once for the delivered answer, and a
    cache hit costs US no AI quota. */
+$t0 = microtime(true);
 if ($cacheable) {
     $hit = cache_get($cDir, $cKey, $cacheHours);
-    if ($hit !== null) { header('X-7By-Cache: HIT'); echo $hit; exit; }
+    if ($hit !== null) {
+        header('X-7By-Cache: HIT');
+        header('X-7By-Request-Id: ' . request_id());
+        log_line($CFG, 'ops.jsonl', ['t' => gmdate('c'), 'rid' => request_id(), 'app' => $APP,
+            'provider' => $provider, 'model' => $model, 'cache' => 'hit', 'code' => 200,
+            'ms' => (int)round((microtime(true) - $t0) * 1000), 'premium' => $premium,
+            'signed' => $useHub, 'bytes' => strlen($hit)]);
+        echo $hit;
+        exit;
+    }
 }
 
 /* ---------- call the provider; rotate keys when one is rate-limited ---------- */
@@ -312,10 +813,12 @@ $perCall  = (int)($CFG['timeout'] ?? 45);
 $budget   = (int)($CFG['total_budget'] ?? max($perCall + 15, 60));
 $deadline = microtime(true) + $budget;
 
+$tried = 0;
 foreach ($keys as $k) {
     // no time left for a meaningful attempt — stop rather than hold the worker
     $left = (int)floor($deadline - microtime(true));
     if ($left < 8) break;
+    $tried++;
     $headers = ['Content-Type: application/json'];
     if ($provider === 'gemini') {
         $headers[] = 'x-goog-api-key: ' . $k;
@@ -357,6 +860,18 @@ if ($cacheable && $gotAnswer) cache_put($cDir, $cKey, $last['text']);
 // NOTE: no charge here. The browser calls ?action=charge exactly once after it
 // has a validated answer on screen, so failed/retried AI calls cost nothing.
 
+/* One line per delivered request. Metadata only — see the note by log_line():
+   the student's question is never written here, on purpose. 'keys' records how
+   many API keys had to be burned through, which is the early warning that a
+   provider's free quota is exhausted. */
+log_line($CFG, 'ops.jsonl', ['t' => gmdate('c'), 'rid' => request_id(), 'app' => $APP,
+    'provider' => $provider, 'model' => $model, 'cache' => 'miss',
+    'code' => (int)$last['code'], 'ms' => (int)round((microtime(true) - $t0) * 1000),
+    'ok' => $gotAnswer, 'premium' => $premium, 'signed' => $useHub,
+    'bytes' => strlen($last['text']), 'keys' => $tried,
+    'err' => $gotAnswer ? null : mb_substr((string)(json_decode($last['text'], true)['error']['message'] ?? ''), 0, 160)]);
+
 header('X-7By-Cache: MISS');
+header('X-7By-Request-Id: ' . request_id());
 http_response_code($last['code']);
 echo $last['text'];
