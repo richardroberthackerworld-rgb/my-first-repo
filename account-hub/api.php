@@ -5,6 +5,9 @@
  * Actions: me, signup, login, logout, google, order, verify, consume, webhook
  */
 require __DIR__ . '/lib.php';
+// Operational layer: incidents, email queue, lifecycle emails. Guarded so a
+// part-finished deploy leaves the hub working rather than fataling.
+if (is_file(__DIR__ . '/ops-events.php')) { require_once __DIR__ . '/ops-events.php'; }
 api_guard();
 cors();
 boot_session();
@@ -102,6 +105,12 @@ switch ($action) {
 		$st->execute(array($data['name'], $email, $data['password_hash'], (int)$CFG['free_signup_credits']));
 		clear_otp($email, 'signup');
 		$_SESSION['uid'] = db()->lastInsertId();
+		// Owner notification only. The member just completed an OTP round-trip,
+		// so they know the account exists; a "welcome" with nothing actionable
+		// in it would be marketing dressed as a transactional email.
+		if (function_exists('ops_signup_hook')) {
+			ops_signup_hook((int)$_SESSION['uid'], $email, $data['name']);
+		}
 		json_out(array('ok' => true, 'user' => public_user(current_user()), 'token' => issue_api_token($_SESSION['uid'])));
 		break;
 	}
@@ -207,8 +216,11 @@ switch ($action) {
 			list($code, $order) = rzp_request('POST', '/orders', $payload);
 		}
 		if ($code >= 300 || empty($order['id'])) fail('Could not start payment. Please try again.', 502);
-		db()->prepare('INSERT INTO transactions (user_id, order_id, plan, amount, credits, currency, status) VALUES (?,?,?,?,?,?,?)')
-			->execute(array($u['id'], $order['id'], $plan, $d['amount_minor'], $d['credits'], $d['currency'], 'created'));
+		// 'product' MUST be stored: grant_from_tx() reads it to credit the right
+		// per-tool wallet (7Solve credits must never land in 7Marks, or in the
+		// legacy global balance that no tool spends from).
+		db()->prepare('INSERT INTO transactions (user_id, order_id, plan, amount, credits, currency, product, status) VALUES (?,?,?,?,?,?,?,?)')
+			->execute(array($u['id'], $order['id'], $plan, $d['amount_minor'], $d['credits'], $d['currency'], $product, 'created'));
 		json_out(array('ok' => true, 'gateway' => $gateway, 'order_id' => $order['id'], 'amount' => $d['amount_minor'],
 			'currency' => $d['currency'], 'credits' => $d['credits'],
 			'key_id' => $gateway === 'sevenpay' ? $CFG['sevenpay']['key_id'] : $CFG['razorpay']['key_id'],
@@ -275,6 +287,15 @@ switch ($action) {
 			->execute(array($payId, 'paid', $tx['id']));
 		// Grant exactly what this order promised — a tool unlock or a credit plan.
 		grant_from_tx($tx);
+		// Receipt + owner copy. Only reachable past the signature check and the
+		// already-paid guard above, so it cannot fire on an unverified claim or
+		// on a replay. $tx still holds the pre-update row, so pass the payment
+		// id that was just confirmed.
+		if (function_exists('ops_purchase_hook')) {
+			$tx['payment_id'] = $payId;
+			$tx['status'] = 'paid';
+			ops_purchase_hook($tx);
+		}
 		json_out(array('ok' => true, 'user' => public_user(current_user()),
 			'tools' => user_tools($u['id'])));
 		break;
@@ -304,6 +325,80 @@ switch ($action) {
 		break;
 	}
 
+	/* ---- daily credit bonus (added for 7Marks Infinity: +20 a day) --------
+	   ADDITIVE: a new action only. No existing case, query or response is
+	   changed, so nothing 7Solve calls behaves differently.
+
+	   Idempotency is the database's job, not this code's. The ledger row is
+	   INSERTed first, and its UNIQUE (user_id, tool, bonus_key, grant_date)
+	   is what rejects a second claim — so a double-tap, a retry, or two
+	   devices claiming at the same instant cannot each be granted. Only if
+	   that insert succeeds are credits added, and both happen in ONE
+	   transaction, so there can never be a granted bonus with no record or a
+	   record with no credits.
+
+	   The date is UTC_DATE() from the SERVER, so a device with its clock
+	   wound forward gets nothing. The amount comes from the table below,
+	   never from the request body.                                          */
+	case 'bonus': {
+		global $CFG;
+		$u = current_user();
+		if (!$u) json_out(array('ok' => false, 'error' => 'not_authed'), 401);
+
+		$product = substr((string)($in['product'] ?? ''), 0, 40);
+		$tool    = tool_key($product);
+		if ($tool === '') json_out(array('ok' => false, 'error' => 'no_tool'), 400);
+		$bonusKey = preg_replace('/[^a-z0-9_]/', '', strtolower((string)($in['key'] ?? 'daily')));
+		if ($bonusKey === '') $bonusKey = 'daily';
+
+		/* Which plans earn a daily allowance, and how much. Server-side and
+		   overridable from config; a plan that is not listed earns nothing. */
+		$allow = $CFG['daily_bonus'] ?? array('7marks' => array('infinity' => 20));
+		$wallet = tool_wallet((int)$u['id'], $tool);        // also creates the row
+		$plan   = strtolower((string)($wallet['plan'] ?? 'none'));
+		$amount = (int)($allow[$tool][$plan] ?? 0);
+
+		if ($amount < 1) {
+			json_out(array('ok' => false, 'error' => 'not_eligible',
+			               'plan' => $plan, 'tool' => $tool,
+			               'credits' => (int)$wallet['credits']), 403);
+		}
+
+		$pdo = db();
+		try {
+			$pdo->beginTransaction();
+
+			/* The claim, and the guard. A duplicate key here means it was
+			   already taken today — the wallet is then never touched. */
+			$pdo->prepare(
+				'INSERT INTO credit_bonus_log
+				   (user_id, tool, bonus_key, grant_date, credits, plan_at_grant, created_at)
+				 VALUES (?, ?, ?, UTC_DATE(), ?, ?, UTC_TIMESTAMP())'
+			)->execute(array($u['id'], $tool, $bonusKey, $amount, $plan));
+
+			$pdo->prepare(
+				'UPDATE tool_credits SET credits = credits + ? WHERE user_id = ? AND tool = ?'
+			)->execute(array($amount, $u['id'], $tool));
+
+			$pdo->commit();
+		} catch (Throwable $e) {
+			if ($pdo->inTransaction()) $pdo->rollBack();
+			/* 23000 is the integrity violation — i.e. already claimed today */
+			if (strpos((string)$e->getCode(), '23000') === 0) {
+				$w = tool_wallet((int)$u['id'], $tool);
+				json_out(array('ok' => false, 'already_claimed' => true,
+				               'credits' => (int)$w['credits'], 'tool' => $tool));
+			}
+			error_log('bonus failed: ' . $e->getMessage());
+			json_out(array('ok' => false, 'error' => 'bonus_failed'), 500);
+		}
+
+		$after = tool_wallet((int)$u['id'], $tool);
+		json_out(array('ok' => true, 'granted' => $amount,
+		               'credits' => (int)$after['credits'], 'tool' => $tool));
+		break;
+	}
+
 	/* ---- 7Pay webhook (fires on payment.captured — also confirms live-UPI
 	        payments the merchant approves later in the 7Pay dashboard) ---- */
 	case 'sevenpay_webhook': {
@@ -325,6 +420,13 @@ switch ($action) {
 					db()->prepare('UPDATE transactions SET status = "paid", payment_id = ? WHERE id = ?')
 						->execute(array($p['id'] ?? '', $tx['id']));
 					grant_from_tx($tx);
+					// Webhooks are retried by the provider, so this WILL run more
+					// than once for the same payment. The dedupe key is the
+					// payment id, so only the first delivery queues an email.
+					if (function_exists('ops_purchase_hook')) {
+						$tx['payment_id'] = $p['id'] ?? '';
+						ops_purchase_hook($tx);
+					}
 				}
 			}
 		}
@@ -346,9 +448,16 @@ switch ($action) {
 			$st->execute(array($oid));
 			$tx = $st->fetch();
 			if ($tx) {
+				$pid = $evt['payload']['payment']['entity']['id'] ?? '';
 				db()->prepare('UPDATE transactions SET status = "paid", payment_id = ? WHERE id = ?')
-					->execute(array($evt['payload']['payment']['entity']['id'] ?? '', $tx['id']));
+					->execute(array($pid, $tx['id']));
 				grant_from_tx($tx);
+				// Same as above: Razorpay retries webhooks, the payment id
+				// dedupes, so a replay cannot send a second receipt.
+				if (function_exists('ops_purchase_hook')) {
+					$tx['payment_id'] = $pid;
+					ops_purchase_hook($tx);
+				}
 			}
 		}
 		json_out(array('ok' => true));

@@ -1,8 +1,12 @@
-/* 7q service worker — network-first so the app always shows the latest
+/* 7Marks service worker — network-first so the app always shows the latest
    site (you update the website, users get it immediately), with a cached
-   shell as the offline fallback. Required for Play Store (TWA) install. */
-const CACHE = '7q-shell-v1';
-const SHELL = ['./', './index.html', './icon-192.png', './icon-512.png'];
+   shell as the offline fallback. Required for Play Store (TWA) install.
+   Bumping CACHE also purges every older cache in the activate handler, so
+   a returning student cannot be served the previous build's index.html. */
+const CACHE = '7marks-shell-v2';
+const SHELL = ['./', './index.html', './assets/theme.css', './assets/ui.css',
+               './assets/catalog.js', './assets/core.js', './assets/views.js',
+               './assets/pages.js', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).catch(() => {}));

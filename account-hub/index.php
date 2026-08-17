@@ -43,7 +43,7 @@ $UNIT = !empty($P['unit_note']) ? $P['unit_note'] : 'Each tool shows how many cr
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title><?php echo htmlspecialchars($P['title']); ?></title>
 	<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-	<link rel="stylesheet" href="/assets/account.css?v=7">
+	<link rel="stylesheet" href="/assets/account.css?v=10">
 	<?php if (!empty($P['accent'])): ?>
 	<style>:root{--primary:<?php echo $P['accent'][0]; ?>;--primary2:<?php echo $P['accent'][1]; ?>}</style>
 	<?php endif; ?>
@@ -195,6 +195,23 @@ $UNIT = !empty($P['unit_note']) ? $P['unit_note'] : 'Each tool shows how many cr
 					<div class="plan-line" id="dPlan"></div>
 				</div>
 				<h3>Buy credits</h3>
+<?php
+				// On the generic hub page there is no tool context, so the buyer must
+				// say which app's wallet to top up — each app has its own balance.
+				if ($pkey === ''):
+					$creditTools = array();
+					foreach ($PRODUCTS as $k => $pr) { if (empty($pr['unlock'])) $creditTools[$k] = $pr['brand']; }
+					if ($creditTools):
+?>
+				<div class="field-row">
+					<label class="lbl-inline" for="buyTool">Add credits to</label>
+					<select id="buyTool" class="tool-select">
+						<?php foreach ($creditTools as $k => $brand): ?>
+						<option value="<?php echo htmlspecialchars($k); ?>"><?php echo htmlspecialchars($brand); ?></option>
+						<?php endforeach; ?>
+					</select>
+				</div>
+<?php   endif; endif; ?>
 				<div class="plans">
 					<?php $m = $PLANS['monthly']; $y = $PLANS['yearly']; ?>
 					<div class="plan">
@@ -219,6 +236,6 @@ $UNIT = !empty($P['unit_note']) ? $P['unit_note'] : 'Each tool shows how many cr
 		</main>
 	</div>
 
-	<script src="/assets/account.js?v=9"></script>
+	<script src="/assets/account.js?v=10"></script>
 </body>
 </html>

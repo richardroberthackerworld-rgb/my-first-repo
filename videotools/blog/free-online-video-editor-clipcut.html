@@ -3,16 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ClipCut: A Free CapCut-Style Video Editor That Runs in Your Browser | VidLab</title>
-  <meta name="description" content="Multi-track timeline, transitions, animated text, AI human effects and color grading — free, no install, no account, no watermark. Meet ClipCut, the browser video editor by 7by.in.">
+  <title>ClipCut: A Free CapCut-Style Video Editor in Your Browser | VidLab</title>
+  <meta name="description" content="Meet ClipCut — a free, watermark-free, CapCut-style video editor that runs entirely in your browser. Multi-track timeline, transitions, animated text, AI human effects, keyframes, masks and 4K MP4 export.">
+  <link rel="canonical" href="https://video.7by.in/blog/free-online-video-editor-clipcut">
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8250159057339426" crossorigin="anonymous"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../style.css">
-  <style>.article{max-width:760px;margin:0 auto;padding:24px 20px 60px}.article h2{margin-top:36px}.article p,.article li{line-height:1.75;color:var(--muted)}.article strong{color:var(--text)}</style>
+  <link rel="stylesheet" href="blog.css">
 </head>
 <body>
+  <div class="read-bar" id="readBar"></div>
 
   <header class="nav">
     <div class="nav-inner">
@@ -26,64 +28,80 @@
     </div>
   </header>
 
-  <article class="article">
-    <div class="section-label">// Guide</div>
-    <h1>ClipCut: A Free CapCut-Style Video Editor That Runs Entirely in Your Browser</h1>
+  <section class="post-hero">
+    <span class="post-cat">● Editor</span>
+    <h1 class="post-h1">ClipCut: A Free CapCut-Style Video Editor That Runs in Your Browser</h1>
+    <div class="post-meta"><span>By <b>VidLab</b></span><span>·</span><span>9 min read</span><span>·</span><span>Updated 2026</span></div>
+  </section>
 
-    <p>Desktop editors are powerful but heavy. Mobile editors are convenient but stamp watermarks and push
-    subscriptions. <a href="../editor/index.html">ClipCut</a> sits in the sweet spot: a real multi-track
-    timeline editor that opens in a browser tab, needs no install and no account, and exports your video with
-    <strong>no watermark</strong> — because everything runs on your own device.</p>
+  <article class="post">
+    <p>There's an awkward gap in video editing. Desktop editors like Premiere and DaVinci are enormously powerful, but they're heavy downloads, they demand a capable computer, and they carry a learning curve measured in weeks. Mobile editors are convenient and quick, but they stamp watermarks on your exports, nag you toward subscriptions, and hit walls the moment you want to do something slightly advanced. Most people making videos — creators, students, small businesses, anyone with a phone full of clips — don't fit neatly into either camp. <a href="../editor/index.html">ClipCut</a> is built for exactly that gap: a real, multi-track timeline editor that opens in a browser tab, needs no install and no account, and exports your video with <strong>no watermark</strong> — because everything runs on your own device.</p>
 
-    <h2>What you get</h2>
+    <p>This is a tour of what it does, how a first project actually goes, why "runs in your browser" is more than a gimmick, and honestly where it fits alongside the heavyweight desktop tools.</p>
+
+    <div class="post-toc">
+      <h4>In this guide</h4>
+      <ol>
+        <li><a href="#what">What ClipCut can do</a></li>
+        <li><a href="#project">A 60-second first project</a></li>
+        <li><a href="#browser">Why "runs in your browser" matters</a></li>
+        <li><a href="#advanced">The advanced touches</a></li>
+        <li><a href="#fit">Where it fits next to CapCut and Premiere</a></li>
+      </ol>
+    </div>
+
+    <h2 id="what">What ClipCut can do</h2>
+    <p>ClipCut is a genuine timeline editor, not a one-click template filler. The core capabilities:</p>
     <ul>
-      <li><strong>Multi-track timeline</strong> — separate tracks for video/images, text, motion graphics and
-      audio. Drag to reorder, drag edges to trim, split at the playhead, duplicate with one key.</li>
-      <li><strong>Framing controls</strong> — Fit shows your media at its original shape; Fill crops it to the
-      frame; custom crop sliders cut exactly the edges you want, CapCut-style.</li>
-      <li><strong>Transitions</strong> — cross fade, wipes, slides, circle reveals, zoom and blur-warp between
-      any two clips.</li>
-      <li><strong>Animated text</strong> — typewriter, neon, wave, bounce, glow-pulse and more, with fonts,
-      outline and background pills.</li>
-      <li><strong>AI human effects</strong> — on-device segmentation powers background blur, green screen,
-      neon outline and silhouette looks with no green screen and no upload.</li>
-      <li><strong>Color grading</strong> — cinematic presets plus full manual control of brightness, contrast,
-      saturation, temperature, tint and vignette per clip.</li>
-      <li><strong>Canvas presets</strong> — 16:9 for YouTube, 9:16 for Reels/Shorts, 1:1 for feeds; quality up
-      to 4K, exported as MP4.</li>
+      <li><strong>Multi-track timeline.</strong> Separate tracks for video and images, text, motion graphics and audio. Drag to reorder, drag edges to trim, split at the playhead, duplicate with a keystroke, and cut the left or right side of a clip in one click.</li>
+      <li><strong>Framing controls.</strong> Fit shows your media at its original shape; Fill crops it to the frame; custom crop sliders cut exactly the edges you want — the flexible, CapCut-style framing that reframes one video for any aspect ratio.</li>
+      <li><strong>Transitions.</strong> Cross fade, fades to black or white, wipes, slides, circle reveals, zoom and blur-warp between any two clips.</li>
+      <li><strong>Animated text.</strong> Typewriter, neon, wave, bounce, glow-pulse and more, with custom fonts, outlines and background pills — captions and titles that read on any footage.</li>
+      <li><strong>AI human effects.</strong> On-device segmentation powers background blur, green screen, neon outline and silhouette looks, with no green screen and nothing uploaded.</li>
+      <li><strong>Color grading.</strong> Cinematic presets plus full manual control of brightness, contrast, saturation, temperature, tint and vignette, applied per clip so you can match shots.</li>
+      <li><strong>Templates.</strong> One-tap styled intros, openers and outros you can customize — a fast start that you're free to take apart.</li>
+      <li><strong>Export.</strong> 16:9 for YouTube, 9:16 for Reels and Shorts, 1:1 for feeds, at quality up to 4K, out as a clean MP4.</li>
     </ul>
 
-    <h2>A 60-second first project</h2>
+    <h2 id="project">A 60-second first project</h2>
+    <p>The fastest way to understand ClipCut is to walk through a real one:</p>
     <ol>
-      <li><strong>Import media</strong> — drag photos, clips and a music file into the Media panel.</li>
-      <li><strong>Build the timeline</strong> — click each item to add it at the playhead. Image clips default
-      to 4 seconds; drag their edges to taste.</li>
-      <li><strong>Add motion</strong> — select a photo clip, open <em>Motion</em>, pick Ken Burns In. Static
-      photos instantly feel filmed.</li>
-      <li><strong>Add a title</strong> — Text tab → pick a style → it drops at the playhead. Drag it anywhere on
-      the preview.</li>
-      <li><strong>Transitions &amp; grade</strong> — select a clip, choose a transition into it and a color
-      preset. "Cinematic" is a safe default.</li>
-      <li><strong>Export</strong> — pick your canvas and quality, hit Export, and download your MP4. The file is
-      yours; nothing was uploaded.</li>
+      <li><strong>Import media.</strong> Drag photos, clips and a music file into the Media panel — or drop them straight onto the timeline.</li>
+      <li><strong>Build the timeline.</strong> Click each item to add it at the playhead. Image clips default to a few seconds; drag their edges to taste.</li>
+      <li><strong>Add motion.</strong> Select a photo clip, open Motion, and pick Ken Burns In. Static photos instantly feel filmed.</li>
+      <li><strong>Add a title.</strong> Open the Text tab, pick a style, and it drops at the playhead. Drag it anywhere on the preview.</li>
+      <li><strong>Transitions and grade.</strong> Select a clip, choose a transition into the next one, and apply a color preset — "Cinematic" is a safe default.</li>
+      <li><strong>Export.</strong> Pick your canvas and quality, hit Export, and download your MP4. The file is yours; nothing was uploaded.</li>
     </ol>
+    <div class="callout"><b>The point of that flow:</b> none of those steps required an account, a download, or a payment — and the finished MP4 has no watermark. That's the whole promise in one project.</div>
 
-    <h2>Why "runs in your browser" matters</h2>
-    <p>Everything in ClipCut — decoding, compositing, effects, AI, encoding — happens on your computer using
-    web technology. That has three consequences worth caring about: your footage stays <strong>private</strong>
-    (it never leaves your machine), the editor is <strong>free to run</strong> (no server farm to pay for, so
-    no forced subscription), and there is <strong>no upload wait</strong> — a 2 GB file opens as fast as a
-    20 MB one.</p>
+    <div class="ad-inline"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-8250159057339426" data-ad-slot="0000000000" data-ad-format="auto" data-full-width-responsive="true"></ins></div>
 
-    <h2>Where it fits next to CapCut and Premiere</h2>
-    <p>ClipCut will not replace a color-managed multicam documentary workflow. It is built for the videos most
-    people actually make: photo slideshows with music, talking-head clips with titles, social cuts in 9:16,
-    quick promos with transitions and a grade. For those, opening a tab beats installing four gigabytes — and
-    pairing it with the <a href="../compressor.html">Compressor</a> and
-    <a href="../watermark-remover.html">Watermark Remover</a> covers the whole pipeline, free.</p>
+    <h2 id="browser">Why "runs in your browser" matters</h2>
+    <p>This isn't a marketing line — it changes the product in three concrete ways. Everything in ClipCut — decoding, compositing, effects, the AI, the encoding — happens on your own computer using web technology, with no server doing the work. That has three consequences worth caring about:</p>
+    <ul>
+      <li><strong>Your footage stays private.</strong> It never leaves your machine. There's no server holding your videos, no privacy policy to trust, nothing to breach.</li>
+      <li><strong>It's genuinely free to run.</strong> Because there's no server farm to pay for, there's no forced subscription to fund one. The editor doesn't need to monetize your every export.</li>
+      <li><strong>There's no upload wait.</strong> A two-gigabyte file opens as fast as a twenty-megabyte one, because there's no upload at all — the file is already on your device, and that's where it stays.</li>
+    </ul>
+    <div class="pullquote">The editor that runs on your device instead of a server is private by default, free by design, and instant by nature — three things that are hard to get all at once anywhere else.</div>
 
-    <p><a class="btn btn-primary" href="../editor/index.html">Open ClipCut free →</a></p>
+    <h2 id="advanced">The advanced touches</h2>
+    <p>Beyond the basics, ClipCut has the details that make longer sessions pleasant and more ambitious edits possible. <strong>Keyframes</strong> let you animate scale, position, rotation and opacity over time — a photo that slowly pushes in, a title that fades up, a logo that drifts across the frame. <strong>Masks</strong> — rectangle, circle and linear, with feather and invert — let you reveal part of a clip for spotlight and shape effects. <strong>Undo and redo</strong> cover every edit, and an <strong>autosave</strong> quietly stores your project in the browser, so closing the tab by accident doesn't lose your work — it offers to restore it when you return. A resizable workspace, keyboard shortcuts, drag-and-drop everywhere, and a live preview that never needs rendering round out the experience. These are the touches you don't notice until you've used an editor that lacks them.</p>
+
+    <h2 id="fit">Where it fits next to CapCut and Premiere</h2>
+    <p>Honesty serves you better than hype here. ClipCut will not replace a color-managed, multicam, feature-length documentary workflow — the heavyweight desktop tools exist for a reason, and for that kind of project they're the right choice. ClipCut is built for the videos most people actually make: photo slideshows with music, talking-head clips with captions and titles, social cuts in 9:16, quick promos with a transition and a grade, product demos, tutorials, reaction videos. For those — which is the vast majority of video created every day — opening a browser tab beats installing four gigabytes and learning a professional suite. And paired with the <a href="compress-video-for-whatsapp-instagram.html">compressor</a> and the <a href="how-to-remove-watermark-from-video.html">watermark remover</a>, it covers the whole everyday pipeline: clean up, edit, and shrink to send — all free, all in the browser, all without a single byte uploaded.</p>
+    <p>If you've been bouncing between a mobile editor that watermarks your work and a desktop suite that's more than you need, ClipCut is the middle that's been missing. Open a tab and make something — the export is yours, clean and complete.</p>
   </article>
+
+  <div class="related">
+    <h3>Keep reading</h3>
+    <div class="related-grid">
+      <a class="related-card" href="how-to-make-a-photo-slideshow-video.html"><span class="rc-cat">Slideshow</span><h4>How to make a photo slideshow video with music</h4></a>
+      <a class="related-card" href="how-to-add-transitions-between-clips.html"><span class="rc-cat">Transitions</span><h4>How to add transitions between clips</h4></a>
+      <a class="related-card" href="color-grading-video-cinematic-look.html"><span class="rc-cat">Color</span><h4>Color grading basics for a cinematic look</h4></a>
+    </div>
+  </div>
 
   <footer class="footer">
     <div class="footer-bottom" style="border-top:none">
@@ -92,5 +110,13 @@
     </div>
   </footer>
 
+  <script>
+    const bar = document.getElementById('readBar');
+    addEventListener('scroll', () => {
+      const h = document.documentElement;
+      const p = h.scrollTop / (h.scrollHeight - h.clientHeight);
+      bar.style.width = Math.max(0, Math.min(1, p)) * 100 + '%';
+    }, { passive: true });
+  </script>
 </body>
 </html>

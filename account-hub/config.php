@@ -73,11 +73,9 @@ return array(
 		'client_id' => '795705423816-2ffl53j83vir4mvau9mo4883afqc8khp.apps.googleusercontent.com',
 	),
 
-	// ---- Plans: price (INR) → credits + validity days ----
-	'plans' => array(
-		'monthly' => array('amount' => 27,  'credits' => 100,  'days' => 30,  'label' => 'Monthly'),
-		'yearly'  => array('amount' => 299, 'credits' => 1400, 'days' => 365, 'label' => 'Yearly'),
-	),
+	// ---- Plans/prices live in pricing.php (per-currency), NOT here. ----
+	// A 'plans' array used to sit here with old prices; it was never read and
+	// only caused confusion. Edit pricing.php to change prices or credits.
 
 	// Free credits granted on signup so new users can try the tools.
 	// 100 credits = 10 uses at the standard 10-credits-per-action. Set 0 to disable.

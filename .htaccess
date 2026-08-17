@@ -1,0 +1,116 @@
+# 7By.in — cache policy
+# Goal: HTML/CSS/JS always update immediately after you upload new files,
+# while images/fonts (which rarely change) stay cached for speed.
+# Also disables the LiteSpeed full-page cache that was serving stale pages.
+
+# ---- Cross-origin isolation -> enables MULTI-CORE (WASM threads) for the AI tools ----
+# The AI separation runs on many CPU threads only when the page is "cross-origin isolated".
+# COEP: credentialless keeps AdSense / CDN / the model loading while enabling this.
+# Scoped to /tools/ only — applying this site-wide breaks the Razorpay checkout iframe
+# on pricing.html (it needs to load cross-origin resources without COEP restrictions).
+<IfModule mod_headers.c>
+  <If "%{REQUEST_URI} =~ m#^/tools/#">
+    Header set Cross-Origin-Opener-Policy "same-origin"
+    Header set Cross-Origin-Embedder-Policy "credentialless"
+  </If>
+</IfModule>
+
+# ---- Security hardening ----
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=(self)"
+  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+  # Allow this subdomain to be iframed only by 7by.in (used by the WordPress "Tool Embed" template)
+  Header always set Content-Security-Policy "frame-ancestors 'self' https://7by.in https://www.7by.in"
+  Header unset X-Powered-By
+  Header unset Server
+</IfModule>
+<IfModule mod_headers.c>
+  <FilesMatch "\.(html|htm)$">
+    Header always set Content-Type "text/html; charset=UTF-8"
+  </FilesMatch>
+</IfModule>
+
+# Block access to hidden/system files (.env, .git, etc.)
+<FilesMatch "^\.">
+  Require all denied
+</FilesMatch>
+<FilesMatch "\.(env|log|json)$">
+  Require all denied
+</FilesMatch>
+
+# Disable directory listing
+Options -Indexes
+ServerSignature Off
+
+# ---- Clean URLs: hide .html and index.html from the address bar ----
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # 1) External redirect: if a visitor lands on /page.html or /folder/index.html,
+  #    send their browser to the clean URL so it's what shows/gets bookmarked/shared.
+  RewriteCond %{THE_REQUEST} \s/+(.*)/index\.html[\s?] [NC]
+  RewriteRule ^ /%1/ [R=301,L]
+  RewriteCond %{THE_REQUEST} \s/+(.*)\.html[\s?] [NC]
+  RewriteRule ^ /%1 [R=301,L]
+
+  # 2) Internal rewrite: serve the real .html file for a clean URL, without changing
+  #    what's shown in the address bar (e.g. /pricing quietly serves pricing.html).
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_FILENAME}\.html -f
+  RewriteRule ^(.*)$ $1.html [L]
+</IfModule>
+
+# ---- Turn OFF LiteSpeed's full-page cache for this site ----
+<IfModule LiteSpeed>
+  CacheDisable public /
+  RewriteEngine On
+  RewriteRule .* - [E=Cache-Control:no-cache]
+</IfModule>
+
+<IfModule mod_headers.c>
+  # HTML: never store — every visit fetches the latest
+  <FilesMatch "\.(html|htm)$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+  </FilesMatch>
+
+  # CSS / JS: keep cached but revalidate on every load.
+  # (The browser sends an If-None-Match; the server returns a fast 304 if unchanged,
+  #  or the new file the moment you update it — so no more stale styles/scripts.)
+  <FilesMatch "\.(css|js|mjs)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+
+  # Images / fonts: safe to cache for a week (bump filename if you replace one)
+  <FilesMatch "\.(png|jpe?g|gif|webp|svg|ico|woff2?|ttf|eot)$">
+    Header set Cache-Control "public, max-age=604800"
+  </FilesMatch>
+</IfModule>
+
+# ---- Also stop mod_expires from over-caching html/css/js (some hosts enable it) ----
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/html "access plus 0 seconds"
+  ExpiresByType text/css "access plus 0 seconds"
+  ExpiresByType application/javascript "access plus 0 seconds"
+  ExpiresByType image/png "access plus 1 week"
+  ExpiresByType image/jpeg "access plus 1 week"
+  ExpiresByType image/svg+xml "access plus 1 week"
+  ExpiresByType font/woff2 "access plus 1 week"
+</IfModule>
+
+# ---- Compression for speed (helps PageSpeed / AdSense) ----
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/css application/javascript application/json image/svg+xml
+</IfModule>
+
+
+# ---- retired slug: the app is 7Marks now, not 7Q ----
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^blog/how-to-generate-question-papers-with-7q/?$ /blog/how-to-generate-question-papers-with-7marks [R=301,L]
+</IfModule>

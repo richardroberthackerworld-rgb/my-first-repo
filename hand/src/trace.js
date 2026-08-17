@@ -434,23 +434,33 @@ export function beziersToPath(curves) {
 }
 
 /**
- * Whole pipeline: mask to an SVG path string.
+ * Whole pipeline: mask to bezier contours.
+ *
+ * This is the shared representation. Emitters for SVG and for PDF both read
+ * it, so a glyph is traced once no matter how many ways it gets drawn — and
+ * the two outputs cannot drift apart, which is the failure that would make a
+ * printed page differ from its preview.
+ */
+export function maskToCurves(mask, w, h, opts = {}) {
+  const { epsilon = 0.6, tolerance = 0.8, cornerAngle = Math.PI / 3, minArea = 2 } = opts;
+  const out = [];
+  for (const c of traceContours(mask, w, h, { minArea })) {
+    const simplified = rdp(c.pts, epsilon, true);
+    if (simplified.length < 2) continue;
+    const curves = fitBeziers(simplified, { tolerance, cornerAngle });
+    if (curves.length) out.push({ outer: c.outer, curves });
+  }
+  return out;
+}
+
+/**
+ * Mask to an SVG path string.
  * Holes come out with opposite winding to their enclosing shape, so the path
  * renders correctly with the default nonzero fill rule and the counter of an
  * "a" stays open.
  */
 export function maskToPath(mask, w, h, opts = {}) {
-  const { epsilon = 0.6, tolerance = 0.8, cornerAngle = Math.PI / 3, minArea = 2 } = opts;
-  const contours = traceContours(mask, w, h, { minArea });
-  const parts = [];
-  for (const c of contours) {
-    const simplified = rdp(c.pts, epsilon, true);
-    if (simplified.length < 2) continue;
-    const curves = fitBeziers(simplified, { tolerance, cornerAngle });
-    const d = beziersToPath(curves);
-    if (d) parts.push(d);
-  }
-  return parts.join('');
+  return maskToCurves(mask, w, h, opts).map(c => beziersToPath(c.curves)).join('');
 }
 
 /** The tracer in the shape store.ensureContours() expects. */

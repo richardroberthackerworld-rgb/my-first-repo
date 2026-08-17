@@ -61,11 +61,24 @@ export function makeDrift(rand, { smoothness = 0.9 } = {}) {
 
   const step1 = v => v * k + (rand() * 2 - 1) * (1 - k);
 
+  /* The walk is stationary, but its tail still reaches five or six standard
+     deviations occasionally. At the default amplitudes that is a letter
+     sitting 2mm off an 8.5mm ruling, which is not "a human wrote this", it is
+     "something went wrong". Clamp the reported value; the underlying walk is
+     left alone so it wanders back naturally instead of sticking to the rail. */
+  const CLAMP = 3;
+  const clamp = v => v < -CLAMP ? -CLAMP : v > CLAMP ? CLAMP : v;
+
   return {
     step() {
       slant = step1(slant); size = step1(size); base = step1(base); pace = step1(pace);
-      return { slant: slant / norm, size: size / norm, base: base / norm, pace: pace / norm };
+      return {
+        slant: clamp(slant / norm), size: clamp(size / norm),
+        base: clamp(base / norm), pace: clamp(pace / norm)
+      };
     },
+    /** The hard bound any consumer can rely on, in standard deviations. */
+    clampAt: CLAMP,
     /* A new line is a small reset — the hand returns to the margin and
        resettles — but not a full one, because fatigue carries over. */
     newLine() { slant *= 0.6; size *= 0.6; base = 0; pace *= 0.6; },

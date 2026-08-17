@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>Sacred Glow</title>
+<link rel="icon" type="image/png" href="/assets/favicon.png?v=7by3">
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg?v=7by3">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=7by3">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8250159057339426" crossorigin="anonymous"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#04020E;font-family:'Outfit',sans-serif;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+
+/* ── SCREENS ── */
+.scr{position:fixed;inset:0;opacity:0;pointer-events:none;transition:opacity .5s;z-index:5}
+.scr.on{opacity:1;pointer-events:all}
+
+/* ── INTRO ── */
+#intro{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
+  background:radial-gradient(ellipse 90% 80% at 50% 42%,#1A0545 0%,#0A0220 55%,#04010C 100%);
+  cursor:pointer;overflow:hidden;
+}
+#ic{position:absolute;inset:0;pointer-events:none}
+
+.intro-inner{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:clamp(14px,2.8vh,26px)}
+
+/* Rotating sacred symbol cluster */
+.orb-cluster{position:relative;width:clamp(130px,26vw,190px);height:clamp(130px,26vw,190px)}
+.oc-ring{position:absolute;border-radius:50%;border:1px solid rgba(200,140,255,.2);animation:cspin 18s linear infinite}
+.oc-ring:nth-child(1){inset:0;animation-duration:18s}
+.oc-ring:nth-child(2){inset:16%;border-color:rgba(100,180,255,.18);animation-direction:reverse;animation-duration:12s}
+.oc-ring:nth-child(3){inset:30%;border-color:rgba(255,200,60,.18);animation-duration:25s}
+@keyframes cspin{to{transform:rotate(360deg)}}
+
+/* Orbiting mini orbs */
+.oc-orb{position:absolute;border-radius:50%;display:flex;align-items:center;justify-content:center;transform-origin:center center}
+.oc-orb:nth-child(4){width:30px;height:30px;top:2px;left:50%;margin-left:-15px;background:radial-gradient(#F0C040,#C08010);box-shadow:0 0 14px rgba(240,192,64,.7);font-size:14px;animation:orbA 6s linear infinite}
+.oc-orb:nth-child(5){width:26px;height:26px;bottom:2px;right:10%;background:radial-gradient(#E05A8A,#A02050);box-shadow:0 0 12px rgba(224,90,138,.7);font-size:12px;animation:orbA 6s linear infinite reverse;animation-delay:-2s}
+.oc-orb:nth-child(6){width:24px;height:24px;top:35%;left:0;background:radial-gradient(#60D8A0,#208050);box-shadow:0 0 12px rgba(96,216,160,.7);font-size:11px;animation:orbA 6s linear infinite;animation-delay:-4s}
+@keyframes orbA{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-6px) scale(1.1)}}
+.oc-center{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:clamp(54px,12vw,80px);height:clamp(54px,12vw,80px);border-radius:50%;
+  background:radial-gradient(ellipse at 38% 32%,rgba(255,240,180,.25),rgba(200,140,20,.08));
+  border:1.5px solid rgba(220,180,40,.3);
+  display:flex;align-items:center;justify-content:center;
+  font-size:clamp(26px,5.5vw,40px);
+  box-shadow:0 0 30px rgba(200,160,20,.35),0 0 80px rgba(200,160,20,.12);
+  animation:centerGlow 3s ease-in-out infinite alternate;
+}
+@keyframes centerGlow{0%{box-shadow:0 0 24px rgba(200,160,20,.35),0 0 60px rgba(200,160,20,.1)}100%{box-shadow:0 0 44px rgba(200,160,20,.6),0 0 100px rgba(200,160,20,.2)}}
+
+.intro-eyebrow{font-size:clamp(9px,1.4vw,11px);letter-spacing:5px;text-transform:uppercase;color:rgba(220,180,100,.45)}
+.intro-title{
+  font-family:'Cinzel Decorative',serif;font-weight:900;
+  font-size:clamp(28px,6.5vw,58px);letter-spacing:clamp(4px,1.5vw,10px);
+  line-height:1.1;text-align:center;
+  background:linear-gradient(175deg,#FFF8D0 0%,#F2CC40 30%,#C09020 65%,#7A5510 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  filter:drop-shadow(0 0 28px rgba(220,180,20,.55));
+  animation:titleDrop 1s .1s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes titleDrop{from{opacity:0;transform:translateY(-28px) scale(.9)}to{opacity:1;transform:none}}
+.intro-tagline{font-family:'Cinzel',serif;font-size:clamp(10px,1.8vw,14px);letter-spacing:clamp(3px,1.5vw,9px);text-transform:uppercase;color:rgba(220,180,80,.45);animation:fadeUp .8s .65s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+.intro-devby{display:flex;flex-direction:column;align-items:center;gap:3px;animation:fadeUp .8s .9s ease both}
+.idb-label{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:rgba(200,160,80,.35)}
+.idb-name{font-family:'Cinzel Decorative',serif;font-size:clamp(17px,3.5vw,24px);letter-spacing:5px;
+  background:linear-gradient(90deg,#C89010,#F5D060,#C89010);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  filter:drop-shadow(0 0 10px rgba(210,160,20,.45))}
+
+.intro-cta{
+  font-size:clamp(9px,1.4vw,11px);letter-spacing:4px;text-transform:uppercase;
+  color:rgba(200,160,80,.45);border:1px solid rgba(200,160,80,.2);
+  padding:9px 22px;border-radius:9999px;
+  animation:fadeUp .8s 1.2s ease both,ctaPulse 2s 2.2s ease-in-out infinite;
+}
+@keyframes ctaPulse{0%,100%{color:rgba(200,160,80,.45);border-color:rgba(200,160,80,.2)}50%{color:rgba(220,180,100,.9);border-color:rgba(220,180,100,.6)}}
+
+/* ── MODE SELECT ── */
+#modes{
+  background:#04020E;overflow-y:auto;
+  display:flex;flex-direction:column;align-items:center;
+}
+.ms-head{width:100%;max-width:500px;padding:clamp(16px,3vh,24px) 16px 8px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.ms-back{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.5);border-radius:10px;padding:7px 14px;cursor:pointer;font-size:13px;transition:all .2s}
+.ms-back:hover{background:rgba(255,255,255,.1);color:#fff}
+.ms-head-txt h2{font-family:'Cinzel',serif;font-size:17px;color:#F0F0F8;font-weight:700}
+.ms-head-txt p{font-size:11px;color:rgba(255,255,255,.3);margin-top:2px}
+.ms-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;width:100%;max-width:500px;padding:8px 16px 28px}
+.mc{
+  border-radius:22px;padding:20px 14px 16px;cursor:pointer;
+  border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.02);
+  display:flex;flex-direction:column;align-items:center;gap:9px;
+  position:relative;overflow:hidden;transition:transform .22s,border-color .22s,box-shadow .22s;
+}
+.mc:hover{transform:translateY(-3px);border-color:rgba(255,255,255,.18)}
+.mc-shine{position:absolute;top:-30px;right:-30px;width:90px;height:90px;border-radius:50%;filter:blur(28px);opacity:.35}
+.mc-icon{
+  width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;
+  position:relative;border:1.5px solid;
+  transition:box-shadow .22s;
+}
+.mc-name{font-family:'Cinzel',serif;font-size:12.5px;font-weight:700;text-align:center}
+.mc-sub{font-size:10px;color:rgba(255,255,255,.3);text-align:center;line-height:1.45}
+.mc-lv{font-size:10px;letter-spacing:1px;margin-top:2px}
+
+/* ── GAME ── */
+#game{background:#04020E}
+#gc{position:absolute;inset:0;display:block}
+/* HUD overlay */
+.g-overlay{position:absolute;inset:0;pointer-events:none;z-index:2;display:flex;flex-direction:column}
+.g-top{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:clamp(12px,2.5vh,20px) clamp(14px,3vw,22px) 0;
+  flex-shrink:0;
+}
+.g-top-box{display:flex;flex-direction:column;align-items:center;gap:1px}
+.g-top-lbl{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.3)}
+.g-top-val{font-family:'Cinzel',serif;font-size:clamp(17px,3.5vw,22px);font-weight:700;color:#F0F0F8}
+.g-mode-badge{font-family:'Cinzel',serif;font-size:clamp(11px,2vw,14px);font-weight:600;padding:5px 13px;border-radius:9999px;border:1px solid;text-align:center}
+.g-menu-btn{
+  pointer-events:all;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
+  color:rgba(255,255,255,.5);border-radius:10px;padding:7px 12px;cursor:pointer;font-size:16px;transition:all .2s;
+}
+.g-menu-btn:hover{background:rgba(255,255,255,.1);color:#fff}
+
+/* Target display */
+.g-target{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  padding-top:clamp(10px,2vh,18px);gap:0;
+}
+.gt-label{font-size:clamp(9px,1.6vw,12px);letter-spacing:4px;text-transform:uppercase;color:rgba(255,255,255,.3)}
+.gt-task{
+  display:flex;align-items:center;gap:12px;margin-top:6px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:16px;padding:10px 18px;
+}
+.gt-icon{font-size:clamp(26px,5.5vw,38px);line-height:1}
+.gt-right{display:flex;flex-direction:column;gap:2px}
+.gt-name{font-family:'Cinzel',serif;font-size:clamp(14px,2.8vw,20px);font-weight:700;color:#F0F0F8}
+.gt-inst{font-size:clamp(11px,1.8vw,13px);color:rgba(255,255,255,.35)}
+.gt-prog{font-family:'Cinzel',serif;font-size:clamp(22px,5vw,32px);font-weight:700;color:#F0F0F8;margin-top:10px;min-height:44px}
+.gt-prog-bar-wrap{width:clamp(140px,30vw,200px);height:5px;background:rgba(255,255,255,.08);border-radius:3px;margin-top:6px}
+.gt-prog-bar{height:100%;border-radius:3px;transition:width .4s ease;background:linear-gradient(90deg,rgba(255,255,255,.3),#fff)}
+
+/* Bottom status */
+.g-bottom{padding:0 20px clamp(14px,3vh,22px);flex-shrink:0;text-align:center}
+.g-status{font-family:'Cinzel',serif;font-size:clamp(13px,2.5vw,17px);font-weight:600;min-height:24px;transition:color .3s}
+.g-hint{font-size:clamp(10px,1.8vw,12px);color:rgba(255,255,255,.2);margin-top:4px;letter-spacing:1px}
+
+/* ── MODALS ── */
+.moverlay{position:fixed;inset:0;z-index:60;background:rgba(2,1,10,.8);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:16px}
+.moverlay.on{display:flex}
+.mcard{
+  background:linear-gradient(155deg,#140830,#0A0420 60%,#100830);
+  border:1px solid rgba(255,255,255,.1);border-radius:28px;
+  max-width:390px;width:100%;overflow:hidden;
+  box-shadow:0 28px 80px rgba(0,0,0,.7);
+  animation:mcIn .45s cubic-bezier(.22,1,.36,1);
+}
+@keyframes mcIn{from{transform:scale(.82) translateY(28px);opacity:0}to{transform:none;opacity:1}}
+.mc-banner{height:5px}
+.mc-body{padding:24px 22px 22px;display:flex;flex-direction:column;align-items:center;gap:13px}
+.mc-big-icon{
+  width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:34px;
+  animation:iconPop .55s .05s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes iconPop{from{transform:scale(0) rotate(-20deg)}80%{transform:scale(1.08) rotate(3deg)}to{transform:none}}
+.mc-eyebrow{font-size:9px;letter-spacing:3.5px;text-transform:uppercase;color:rgba(255,255,255,.3)}
+.mc-main-title{
+  font-family:'Cinzel Decorative',serif;font-size:clamp(18px,4vw,24px);font-weight:900;text-align:center;
+  background:linear-gradient(130deg,#FFF8D0,#F0CC40);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  filter:drop-shadow(0 0 10px rgba(220,180,20,.45));
+}
+.mc-verse-block{
+  width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:15px;padding:14px 16px;
+}
+.mc-verse-label{font-size:9px;letter-spacing:3px;text-transform:uppercase;margin-bottom:7px}
+.mc-verse-text{font-family:'Crimson Text',serif;font-size:clamp(13px,2.3vw,15px);color:rgba(255,255,255,.82);line-height:1.7;font-style:italic}
+.mc-verse-ref{font-size:11px;color:rgba(255,255,255,.32);margin-top:5px}
+.mc-btns{display:flex;flex-direction:column;gap:8px;width:100%}
+.btn-glow{
+  width:100%;padding:13px;border:none;border-radius:13px;cursor:pointer;
+  font-family:'Cinzel',serif;font-size:13.5px;font-weight:700;transition:all .2s;
+  box-shadow:0 4px 20px rgba(0,0,0,.3);
+}
+.btn-glow:hover{transform:translateY(-1px)}
+.btn-soft{
+  width:100%;padding:11px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);
+  border-radius:13px;cursor:pointer;font-size:12.5px;color:rgba(255,255,255,.5);transition:all .2s;
+}
+.btn-soft:hover{background:rgba(255,255,255,.09);color:rgba(255,255,255,.85)}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ INTRO ══════════════ -->
+<div class="scr on" id="intro" onclick="goModes()">
+  <canvas id="ic"></canvas>
+  <div class="intro-inner">
+    <div class="orb-cluster">
+      <div class="oc-ring"></div><div class="oc-ring"></div><div class="oc-ring"></div>
+      <div class="oc-orb">✝</div>
+      <div class="oc-orb">❤</div>
+      <div class="oc-orb">✦</div>
+      <div class="oc-center">✦</div>
+    </div>
+    <div class="intro-eyebrow">Sacred Symbol Game</div>
+    <div class="intro-title">SACRED<br>GLOW</div>
+    <div class="intro-tagline">by Path of Light</div>
+    <div class="intro-devby">
+      <span class="idb-label">Developed By</span>
+      <span class="idb-name">7By</span>
+    </div>
+    <div class="intro-cta">✦ TAP TO BEGIN ✦</div>
+  </div>
+</div>
+
+<!-- ══════════════ MODES ══════════════ -->
+<div class="scr" id="modes" style="display:flex;flex-direction:column;align-items:center">
+  <div class="ms-head">
+    <button class="ms-back" onclick="showScr('intro')">←</button>
+    <div class="ms-head-txt">
+      <h2>Choose Mode</h2>
+      <p>Tap glowing sacred symbols to collect them</p>
+    </div>
+  </div>
+  <div class="ms-grid" id="ms-grid"></div>
+</div>
+
+<!-- ══════════════ GAME ══════════════ -->
+<div class="scr" id="game">
+  <canvas id="gc"></canvas>
+  <div class="g-overlay">
+    <div class="g-top">
+      <div class="g-top-box">
+        <div class="g-top-lbl">Level</div>
+        <div class="g-top-val" id="g-lv">1</div>
+      </div>
+      <div class="g-mode-badge" id="g-mbadge">Classic</div>
+      <div class="g-top-box">
+        <div class="g-top-lbl">Score</div>
+        <div class="g-top-val" id="g-score">0</div>
+      </div>
+    </div>
+    <div class="g-target">
+      <div class="gt-label">Find and tap all</div>
+      <div class="gt-task">
+        <div class="gt-icon" id="gt-icon">✝</div>
+        <div class="gt-right">
+          <div class="gt-name" id="gt-name">Faith</div>
+          <div class="gt-inst">Tap every glowing orb</div>
+        </div>
+      </div>
+      <div class="gt-prog" id="gt-prog">0 / 0</div>
+      <div class="gt-prog-bar-wrap"><div class="gt-prog-bar" id="gt-bar" style="width:0%"></div></div>
+    </div>
+    <div class="g-bottom">
+      <div class="g-status" id="g-status"></div>
+      <div class="g-hint">Avoid the other symbols • Find all targets to advance</div>
+    </div>
+  </div>
+  <button class="g-menu-btn" style="position:absolute;top:clamp(12px,2.5vh,20px);right:clamp(14px,3vw,22px);z-index:3;pointer-events:all" onclick="openMenu()">≡</button>
+</div>
+
+<!-- ══════════════ LEVEL COMPLETE ══════════════ -->
+<div class="moverlay" id="modal-win">
+  <div class="mcard">
+    <div class="mc-banner" id="win-banner"></div>
+    <div class="mc-body">
+      <div class="mc-big-icon" id="win-icon" style="font-size:34px">✦</div>
+      <div class="mc-eyebrow" id="win-eyebrow">CLASSIC · LEVEL 1</div>
+      <div class="mc-main-title">All Symbols Found!</div>
+      <div class="mc-verse-block">
+        <div class="mc-verse-label" id="win-verse-lbl" style="color:rgba(200,160,60,.7)">📖 Scripture</div>
+        <div class="mc-verse-text" id="win-scripture"></div>
+        <div class="mc-verse-ref" id="win-ref"></div>
+      </div>
+      <div class="mc-verse-block" style="margin-top:-4px">
+        <div class="mc-verse-label" style="color:rgba(200,160,60,.7)">✦ Blessing</div>
+        <div class="mc-verse-text" id="win-blessing"></div>
+      </div>
+      <div class="mc-btns">
+        <button class="btn-glow" id="win-next-btn" onclick="nextLevel()">Next Level →</button>
+        <button class="btn-soft" onclick="closeWin();restartLevel()">↺ Replay</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ WRONG PANEL ══════════════ -->
+<div class="moverlay" id="modal-out">
+  <div class="mcard" style="max-width:340px">
+    <div class="mc-body">
+      <div style="font-size:52px">💫</div>
+      <div class="mc-main-title" style="font-size:20px">Keep Going!</div>
+      <p style="font-family:'Crimson Text',serif;font-size:15px;color:rgba(255,255,255,.5);text-align:center;line-height:1.65;font-style:italic;max-width:260px">
+        "I can do all this through him who gives me strength." — Philippians 4:13
+      </p>
+      <div class="mc-btns">
+        <button class="btn-glow" id="out-retry-btn" onclick="closeOut();restartLevel()">Try Again</button>
+        <button class="btn-soft" onclick="closeOut();goModes()">Change Mode</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MENU ══════════════ -->
+<div class="moverlay" id="modal-menu">
+  <div class="mcard" style="max-width:300px">
+    <div class="mc-body">
+      <div style="font-family:'Cinzel',serif;font-size:15px;color:#F0F0F8;font-weight:700">Menu</div>
+      <div class="mc-btns" style="margin-top:4px">
+        <button class="btn-soft" onclick="closeMenu();goModes()">◎ Change Mode</button>
+        <button class="btn-soft" onclick="closeMenu();restartLevel()">↺ Restart Level</button>
+        <button class="btn-soft" onclick="closeMenu()">← Back to Game</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* ═══════════════════════════════════════════
+   GAME DATA
+═══════════════════════════════════════════ */
+const SYMBOLS = {
+  // id: [label, icon, r, g, b]
+  hope:   ['Hope',  '🌿', 76, 175, 130],
+  love:   ['Love',  '❤️', 224, 80,  90],
+  joy:    ['Joy',   '✨', 240, 196, 64],
+  faith:  ['Faith', '✝️', 138, 110, 220],
+  peace:  ['Peace', '🕊️', 90,  184, 224],
+  grace:  ['Grace', '💫', 216, 110, 176],
+  truth:  ['Truth', '📖', 90,  200, 180],
+  light:  ['Light', '⭐', 248, 224, 80],
+  lamb:   ['Lamb',  '🐑', 220, 210, 200],
+  crown:  ['Crown', '👑', 240, 180, 40],
+  dove:   ['Dove',  '🕊️', 160, 200, 240],
+  star:   ['Star',  '⭐', 255, 220, 80],
+  fire:   ['Flame', '🔥', 255, 120, 40],
+  anchor: ['Anchor','⚓', 80,  140, 200],
+  key:    ['Key',   '🗝️', 200, 160, 80],
+  fish:   ['Fish',  '🐟', 80,  160, 220],
+};
+
+const MODES = [
+  {
+    id:'classic', name:'Classic', sub:'The timeless walk of faith',
+    icon:'✝️', center:'✝',
+    a:[220,160,20], bg:'#0E0428', shine:'rgba(220,160,20,.4)',
+    bcol:'rgba(220,160,20,.3)', mbc:'rgba(220,160,20,.25)',
+    banner:'linear-gradient(90deg,#A07010,#F0C040,#A07010)',
+    targets:['hope','love','joy','faith','peace','grace','truth','light'],
+    levels:[
+      {t:'faith', n:4, d:['hope','love','joy','peace'],  scripture:'"Your word is a lamp for my feet, a light on my path."', ref:'— Psalm 119:105', blessing:'May His light guide every step you take today.'},
+      {t:'hope',  n:4, d:['love','joy','faith','peace'], scripture:'"Hope deferred makes the heart sick, but a longing fulfilled is a tree of life."', ref:'— Proverbs 13:12', blessing:'May hope bloom like a garden in your heart.'},
+      {t:'love',  n:5, d:['joy','faith','peace','grace'],scripture:'"For God so loved the world that he gave his one and only Son."', ref:'— John 3:16', blessing:'May the love of God overwhelm you today.'},
+      {t:'joy',   n:5, d:['faith','peace','grace','truth'],scripture:'"The joy of the Lord is your strength."', ref:'— Nehemiah 8:10', blessing:'May unspeakable joy rise up within you.'},
+      {t:'peace', n:5, d:['grace','truth','light','hope'],scripture:'"Peace I leave with you; my peace I give you."', ref:'— John 14:27', blessing:'May the peace that passes understanding guard your heart.'},
+      {t:'grace', n:5, d:['truth','light','hope','love'], scripture:'"For it is by grace you have been saved, through faith."', ref:'— Ephesians 2:8', blessing:'May you walk in the fullness of His grace today.'},
+      {t:'truth', n:6, d:['light','hope','love','joy'],   scripture:'"Then you will know the truth, and the truth will set you free."', ref:'— John 8:32', blessing:'May His truth illuminate every shadow in your life.'},
+      {t:'light', n:6, d:['hope','love','faith','peace'], scripture:'"I am the light of the world. Whoever follows me will never walk in darkness."', ref:'— John 8:12', blessing:'May you shine as a light in your world today.'},
+      {t:'hope',  n:7, d:['love','joy','faith','grace','truth'], scripture:'"May the God of hope fill you with all joy and peace as you trust in him."', ref:'— Romans 15:13', blessing:'May hope fill you to overflowing this day.'},
+      {t:'faith', n:7, d:['hope','love','joy','peace','light'],  scripture:'"With God all things are possible."', ref:'— Matthew 19:26', blessing:'May mountain-moving faith arise in you today.'},
+    ]
+  },
+  {
+    id:'christmas', name:'Christmas', sub:'Glory to God in the highest',
+    icon:'⭐', center:'★',
+    a:[220,60,60], bg:'#0E0808', shine:'rgba(220,60,60,.4)',
+    bcol:'rgba(220,60,60,.3)', mbc:'rgba(220,60,60,.25)',
+    banner:'linear-gradient(90deg,#801010,#E03030,#801010)',
+    targets:['star','dove','crown','lamb','light','joy'],
+    levels:[
+      {t:'star',  n:4, d:['dove','crown','lamb','light'], scripture:'"A star will come out of Jacob; a scepter will rise out of Israel."', ref:'— Numbers 24:17', blessing:'May the star of Bethlehem still lead you to Jesus.'},
+      {t:'dove',  n:4, d:['crown','lamb','light','joy'],  scripture:'"Glory to God in the highest heaven, and on earth peace."', ref:'— Luke 2:14', blessing:'May heaven\'s glory descend on your home today.'},
+      {t:'crown', n:5, d:['star','lamb','light','joy'],   scripture:'"Where is the one who has been born king of the Jews? We saw his star."', ref:'— Matthew 2:2', blessing:'May the King of kings reign in every corner of your life.'},
+      {t:'lamb',  n:5, d:['star','dove','light','joy'],   scripture:'"For to us a child is born, to us a son is given."', ref:'— Isaiah 9:6', blessing:'May the Lamb of God bring peace to all you carry.'},
+      {t:'light', n:5, d:['star','dove','crown','lamb'],  scripture:'"The people walking in darkness have seen a great light."', ref:'— Isaiah 9:2', blessing:'May His Christmas light never dim in your heart.'},
+      {t:'joy',   n:6, d:['star','dove','crown','light'], scripture:'"Do not be afraid. I bring you good news that will cause great joy."', ref:'— Luke 2:10', blessing:'May the angel\'s joy fill every room you enter today.'},
+    ]
+  },
+  {
+    id:'easter', name:'Easter', sub:'He is risen — He is risen indeed',
+    icon:'☀️', center:'✟',
+    a:[140,60,220], bg:'#0C0418', shine:'rgba(140,60,220,.5)',
+    bcol:'rgba(140,60,220,.3)', mbc:'rgba(140,60,220,.25)',
+    banner:'linear-gradient(90deg,#601090,#A040D0,#601090)',
+    targets:['faith','love','light','hope','dove','joy'],
+    levels:[
+      {t:'faith', n:4, d:['love','light','hope','dove'],  scripture:'"He is not here; he has risen, just as he said."', ref:'— Matthew 28:6', blessing:'May the resurrection power of Christ fill your life today.'},
+      {t:'love',  n:4, d:['faith','light','hope','joy'],  scripture:'"But God demonstrates his own love for us: While we were still sinners, Christ died for us."', ref:'— Romans 5:8', blessing:'May the love that sent Jesus to the cross melt every fear.'},
+      {t:'light', n:5, d:['faith','love','hope','dove'],  scripture:'"I am the resurrection and the life."', ref:'— John 11:25', blessing:'May the life of Christ be visible in everything you do.'},
+      {t:'hope',  n:5, d:['faith','love','light','joy'],  scripture:'"We were therefore buried with him through baptism into death in order that... we too may live a new life."', ref:'— Romans 6:4', blessing:'May every old thing give way to new resurrection life in you.'},
+      {t:'dove',  n:6, d:['faith','love','light','hope'], scripture:'"Death has been swallowed up in victory."', ref:'— 1 Corinthians 15:54', blessing:'May you live as one who has overcome through Christ.'},
+      {t:'joy',   n:6, d:['faith','love','light','dove'], scripture:'"Therefore, if anyone is in Christ, the new creation has come."', ref:'— 2 Corinthians 5:17', blessing:'May the joy of new creation overflow from you today.'},
+    ]
+  },
+  {
+    id:'goodfriday', name:'Good Friday', sub:'The sacred sacrifice of love',
+    icon:'🕯️', center:'✠',
+    a:[160,20,30], bg:'#0A0202', shine:'rgba(160,20,30,.45)',
+    bcol:'rgba(160,20,30,.3)', mbc:'rgba(160,20,30,.25)',
+    banner:'linear-gradient(90deg,#500808,#A01818,#500808)',
+    targets:['love','lamb','dove','grace','peace','faith'],
+    levels:[
+      {t:'love',  n:4, d:['lamb','dove','grace','peace'], scripture:'"Greater love has no one than this: to lay down one\'s life for one\'s friends."', ref:'— John 15:13', blessing:'May the greatest love story ever told overwhelm your heart.'},
+      {t:'lamb',  n:5, d:['love','dove','grace','peace'], scripture:'"He was pierced for our transgressions, he was crushed for our iniquities."', ref:'— Isaiah 53:5', blessing:'May His healing wounds bring wholeness to every broken place.'},
+      {t:'dove',  n:5, d:['love','lamb','grace','faith'], scripture:'"Father, forgive them, for they do not know what they are doing."', ref:'— Luke 23:34', blessing:'May the spirit of forgiveness flow through you to others.'},
+      {t:'grace', n:5, d:['love','lamb','dove','peace'],  scripture:'"It is finished."', ref:'— John 19:30', blessing:'May you rest fully in the complete work of Christ.'},
+      {t:'peace', n:6, d:['love','lamb','dove','faith'],  scripture:'"God made him who had no sin to be sin for us, so that in him we might become the righteousness of God."', ref:'— 2 Corinthians 5:21', blessing:'May the peace of the cross guard your heart this day.'},
+      {t:'faith', n:6, d:['love','lamb','grace','peace'], scripture:'"We also glory in our sufferings, because we know that suffering produces perseverance."', ref:'— Romans 5:3', blessing:'May your faith grow stronger through every season.'},
+    ]
+  },
+  {
+    id:'harvest', name:'Harvest', sub:'Fruit of the Spirit',
+    icon:'🌾', center:'❧',
+    a:[200,100,20], bg:'#0E0A02', shine:'rgba(200,100,20,.45)',
+    bcol:'rgba(200,100,20,.3)', mbc:'rgba(200,100,20,.25)',
+    banner:'linear-gradient(90deg,#804010,#D07020,#804010)',
+    targets:['hope','love','joy','peace','grace','truth'],
+    levels:[
+      {t:'joy',   n:4, d:['love','peace','grace','truth'], scripture:'"But the fruit of the Spirit is love, joy, peace, forbearance, kindness, goodness, faithfulness."', ref:'— Galatians 5:22', blessing:'May every fruit of the Spirit blossom richly in your life.'},
+      {t:'peace', n:5, d:['love','joy','grace','hope'],    scripture:'"Remain in me, as I also remain in you. No branch can bear fruit by itself."', ref:'— John 15:4', blessing:'May you remain connected to the Vine and bear much fruit.'},
+      {t:'grace', n:5, d:['joy','peace','truth','hope'],   scripture:'"Give thanks to the Lord, for he is good; his love endures forever."', ref:'— Psalm 107:1', blessing:'May a spirit of gratitude overflow from your heart today.'},
+      {t:'hope',  n:5, d:['love','joy','peace','grace'],   scripture:'"He is like a tree planted by streams of water, which yields its fruit in season."', ref:'— Psalm 1:3', blessing:'May you be deeply rooted and constantly fruitful.'},
+      {t:'love',  n:6, d:['joy','peace','grace','truth'],  scripture:'"The one who sows to please the Spirit, from the Spirit will reap eternal life."', ref:'— Galatians 6:8', blessing:'May every seed you sow in faith reap a hundredfold harvest.'},
+      {t:'truth', n:6, d:['hope','love','joy','peace'],    scripture:'"Let us not become weary in doing good, for at the proper time we will reap a harvest."', ref:'— Galatians 6:9', blessing:'May you never grow weary — your harvest is coming.'},
+    ]
+  },
+  {
+    id:'advent', name:'Advent', sub:'A light shining in the darkness',
+    icon:'🕯️', center:'☆',
+    a:[60,90,200], bg:'#020410', shine:'rgba(60,90,200,.45)',
+    bcol:'rgba(60,90,200,.3)', mbc:'rgba(60,90,200,.25)',
+    banner:'linear-gradient(90deg,#182060,#3050C0,#182060)',
+    targets:['light','hope','peace','dove','joy','faith'],
+    levels:[
+      {t:'light', n:4, d:['hope','peace','dove','joy'],   scripture:'"The people walking in darkness have seen a great light."', ref:'— Isaiah 9:2', blessing:'May His light break through every darkness in your life.'},
+      {t:'hope',  n:4, d:['light','peace','dove','faith'],scripture:'"Arise, shine, for your light has come."', ref:'— Isaiah 60:1', blessing:'May you arise and shine with His reflected glory.'},
+      {t:'peace', n:5, d:['light','hope','dove','joy'],   scripture:'"The light shines in the darkness, and the darkness has not overcome it."', ref:'— John 1:5', blessing:'May no darkness prevail against the light within you.'},
+      {t:'dove',  n:5, d:['light','hope','peace','faith'],scripture:'"A voice of one calling: \'In the wilderness prepare the way for the Lord.\'"', ref:'— Isaiah 40:3', blessing:'May you make a straight path for His arrival in your life.'},
+      {t:'joy',   n:5, d:['light','hope','peace','dove'], scripture:'"Come, Lord Jesus."', ref:'— Revelation 22:20', blessing:'May your heart cry with holy longing for His return.'},
+      {t:'faith', n:6, d:['light','hope','peace','joy'],  scripture:'"He who testifies to these things says, \'Yes, I am coming soon.\'"', ref:'— Revelation 22:20', blessing:'May you live each day in joyful anticipation of His coming.'},
+    ]
+  },
+];
+
+/* ═══════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════ */
+let MODE=null, LV=0, SCORE=0;
+let orbs=[], particles=[], bgStars=[];
+let found=0, targetCount=0, wrongHits=0;
+let phase='idle'; // idle | playing | win | over
+let raf=null;
+let W=0,H=0,SAFE_TOP=0,SAFE_BOT=0;
+const gc=document.getElementById('gc');
+const ctx=gc.getContext('2d');
+
+/* ═══════════════════════════════════════════
+   INTRO STAR CANVAS
+═══════════════════════════════════════════ */
+(()=>{
+  const cv=document.getElementById('ic'),c=cv.getContext('2d');
+  const ss=[];
+  function rsz(){cv.width=innerWidth;cv.height=innerHeight;ss.length=0;for(let i=0;i<130;i++)ss.push({x:Math.random()*cv.width,y:Math.random()*cv.height,r:Math.random()*.8+.15,a:Math.random(),da:(Math.random()-.5)*.007,dx:(Math.random()-.5)*.05,dy:(Math.random()-.5)*.04})}
+  rsz();window.addEventListener('resize',rsz);
+  function draw(){c.clearRect(0,0,cv.width,cv.height);ss.forEach(s=>{s.a+=s.da;if(s.a<0||s.a>1)s.da*=-1;s.x=(s.x+s.dx+cv.width)%cv.width;s.y=(s.y+s.dy+cv.height)%cv.height;c.beginPath();c.arc(s.x,s.y,s.r,0,Math.PI*2);c.fillStyle=`rgba(255,255,255,${s.a*.65})`;c.fill()});requestAnimationFrame(draw)}
+  draw();
+})();
+
+/* ═══════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════ */
+function showScr(id){document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));document.getElementById(id).classList.add('on')}
+function goModes(){buildModes();showScr('modes')}
+
+function buildModes(){
+  const g=document.getElementById('ms-grid');g.innerHTML='';
+  MODES.forEach(m=>{
+    const el=document.createElement('div');el.className='mc';
+    el.innerHTML=`
+      <div class="mc-shine" style="background:${m.shine}"></div>
+      <div class="mc-icon" style="background:rgba(${m.a.join(',')},0.12);border-color:rgba(${m.a.join(',')},0.3);box-shadow:0 0 20px rgba(${m.a.join(',')},0.25)">${m.icon}</div>
+      <div class="mc-name" style="color:rgba(${m.a.join(',')},1)">${m.name}</div>
+      <div class="mc-sub">${m.sub}</div>
+      <div class="mc-lv" style="color:rgba(${m.a.join(',')},0.6)">${m.levels.length} sacred levels</div>`;
+    el.onclick=()=>startMode(m);
+    g.appendChild(el);
+  });
+}
+
+/* ═══════════════════════════════════════════
+   START MODE / LEVEL
+═══════════════════════════════════════════ */
+function startMode(m){
+  MODE=m;LV=0;SCORE=0;wrongHits=0;
+  document.getElementById('g-score').textContent='0';
+  const mb=document.getElementById('g-mbadge');
+  mb.textContent=m.name;mb.style.color=`rgba(${m.a.join(',')},1)`;mb.style.borderColor=`rgba(${m.a.join(',')},0.3)`;
+  showScr('game');
+  resize();
+  loadLevel();
+}
+
+function loadLevel(){
+  if(LV>=MODE.levels.length){showModeComplete();return}
+  phase='playing';found=0;wrongHits=0;orbs=[];particles=[];
+  const lv=MODE.levels[LV];
+  const target=SYMBOLS[lv.t];
+  targetCount=lv.n;
+
+  // HUD
+  document.getElementById('g-lv').textContent=LV+1;
+  document.getElementById('gt-icon').textContent=target[1];
+  document.getElementById('gt-name').textContent=target[0];
+  document.getElementById('g-status').textContent='';
+  updateProg();
+
+  // Style target task box
+  const [r,g,b]=target.slice(2);
+  const box=document.querySelector('.gt-task');
+  box.style.borderColor=`rgba(${r},${g},${b},0.35)`;
+  box.style.background=`rgba(${r},${g},${b},0.07)`;
+  document.querySelector('.gt-prog-bar').style.background=`linear-gradient(90deg,rgba(${r},${g},${b},0.6),rgba(${r},${g},${b},1))`;
+
+  // Spawn orbs
+  spawnOrbs(lv);
+  if(raf)cancelAnimationFrame(raf);
+  loop();
+}
+
+function spawnOrbs(lv){
+  const target=SYMBOLS[lv.t];
+  const [r,g,b]=target.slice(2);
+  const orbR=getOrbR();
+  const margin=orbR*2+20;
+
+  // Target orbs
+  for(let i=0;i<lv.n;i++){
+    orbs.push(makeOrb(lv.t,true,orbR,margin));
+  }
+  // Decoy orbs
+  lv.d.forEach(key=>{
+    const cnt=2+Math.floor(Math.random()*2);
+    for(let i=0;i<cnt;i++)orbs.push(makeOrb(key,false,orbR,margin));
+  });
+  // Shuffle
+  orbs.sort(()=>Math.random()-.5);
+}
+
+function getOrbR(){return Math.max(32,Math.min(48,Math.round(Math.min(W,H)*.085)))}
+
+function makeOrb(key,isTarget,r,margin){
+  const sym=SYMBOLS[key];
+  const [sr,sg,sb]=sym.slice(2);
+  const speed=.3+Math.random()*.5;
+  const angle=Math.random()*Math.PI*2;
+  return {
+    key, isTarget,
+    label:sym[0], icon:sym[1],
+    r,sr,sg,sb,
+    x:margin+Math.random()*(W-margin*2),
+    y:SAFE_TOP+margin+Math.random()*(H-SAFE_TOP-SAFE_BOT-margin*2),
+    vx:Math.cos(angle)*speed,
+    vy:Math.sin(angle)*speed,
+    phase:Math.random()*Math.PI*2,
+    glow:Math.random(),
+    glowDir:Math.random()>.5?1:-1,
+    hit:false,   // collected
+    flash:0,     // wrong hit flash
+    wrongFlash:0,
+    scale:1,
+    entering:1,  // 0→1 entrance scale
+  };
+}
+
+/* ═══════════════════════════════════════════
+   MAIN LOOP
+═══════════════════════════════════════════ */
+function loop(){
+  raf=requestAnimationFrame(loop);
+  update();
+  draw();
+}
+
+function update(){
+  const dt=1;
+
+  // Stars drift
+  bgStars.forEach(s=>{
+    s.x=(s.x+s.dx*dt+W)%W;
+    s.y=(s.y+s.dy*dt+H)%H;
+    s.a+=s.da*dt;if(s.a<0||s.a>1)s.da*=-1;
+  });
+
+  // Orbs
+  orbs.forEach(o=>{
+    if(o.hit)return;
+    o.entering=Math.min(1,o.entering+.04);
+    o.phase+=.025;
+    o.glow+=o.glowDir*.025;if(o.glow<0||o.glow>1)o.glowDir*=-1;
+    if(o.flash>0)o.flash=Math.max(0,o.flash-.05);
+    if(o.wrongFlash>0)o.wrongFlash=Math.max(0,o.wrongFlash-.06);
+
+    o.x+=o.vx*dt;o.y+=o.vy*dt;
+    const minY=SAFE_TOP+o.r,maxY=H-SAFE_BOT-o.r;
+    if(o.x<o.r||o.x>W-o.r)o.vx*=-1;
+    if(o.y<minY||o.y>maxY)o.vy*=-1;
+    o.x=Math.max(o.r,Math.min(W-o.r,o.x));
+    o.y=Math.max(minY,Math.min(maxY,o.y));
+  });
+
+  // Particles
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i];
+    p.x+=p.vx;p.y+=p.vy;p.vy+=.12;
+    p.a=Math.max(0,p.a-p.da);
+    p.s=Math.max(0,p.s-p.ds);
+    if(p.a<=0||p.s<=0)particles.splice(i,1);
+  }
+}
+
+function draw(){
+  gc.width=W;gc.height=H;
+
+  // Background
+  const bg=ctx.createRadialGradient(W*.5,H*.35,0,W*.5,H*.5,Math.max(W,H)*.75);
+  bg.addColorStop(0,`rgba(${MODE.a.join(',')},0.16)`);
+  bg.addColorStop(.5,`rgba(8,4,28,0.97)`);
+  bg.addColorStop(1,'rgba(2,1,8,1)');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+  // Stars
+  bgStars.forEach(s=>{
+    ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(255,255,255,${s.a*.5})`;ctx.fill();
+  });
+
+  // Particles
+  particles.forEach(p=>{
+    ctx.save();ctx.globalAlpha=p.a;
+    ctx.beginPath();ctx.arc(p.x,p.y,p.s,0,Math.PI*2);
+    ctx.fillStyle=p.col;ctx.shadowColor=p.col;ctx.shadowBlur=8;ctx.fill();
+    ctx.restore();
+  });
+
+  // Orbs
+  orbs.forEach(o=>drawOrb(o));
+}
+
+function drawOrb(o){
+  if(o.hit)return;
+  const bobY=Math.sin(o.phase)*3.5;
+  const x=o.x, y=o.y+bobY;
+  const sc=o.entering*(o.scale||1);
+  ctx.save();
+  ctx.translate(x,y);ctx.scale(sc,sc);
+
+  // Outer glow aura
+  const glowR=o.r*(1.9+o.glow*.4);
+  const aura=ctx.createRadialGradient(0,0,o.r*.3,0,0,glowR);
+  const ga=o.wrongFlash>.01?`rgba(255,60,60,`:`rgba(${o.sr},${o.sg},${o.sb},`;
+  aura.addColorStop(0,ga+((.18+o.glow*.12)+o.flash*.2)+')');
+  aura.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=aura;ctx.beginPath();ctx.arc(0,0,glowR,0,Math.PI*2);ctx.fill();
+
+  // Shadow glow
+  ctx.shadowColor=o.wrongFlash>.01?`rgba(255,60,60,${o.wrongFlash})`:`rgba(${o.sr},${o.sg},${o.sb},${.55+o.glow*.45+o.flash*.3})`;
+  ctx.shadowBlur=18+o.glow*14+o.flash*20;
+
+  // Main orb body
+  const body=ctx.createRadialGradient(-o.r*.28,-o.r*.28,0,0,0,o.r);
+  if(o.wrongFlash>.01){
+    body.addColorStop(0,`rgba(255,120,120,0.95)`);
+    body.addColorStop(.55,`rgba(200,40,40,0.7)`);
+    body.addColorStop(1,`rgba(120,0,0,0.4)`);
+  } else {
+    body.addColorStop(0,`rgba(${o.sr},${o.sg},${o.sb},${.85+o.glow*.15+o.flash*.15})`);
+    body.addColorStop(.55,`rgba(${o.sr},${o.sg},${o.sb},${.55+o.glow*.1})`);
+    body.addColorStop(1,`rgba(${Math.round(o.sr*.5)},${Math.round(o.sg*.5)},${Math.round(o.sb*.5)},0.3)`);
+  }
+  ctx.fillStyle=body;
+  ctx.beginPath();ctx.arc(0,0,o.r,0,Math.PI*2);ctx.fill();
+
+  // Ring
+  ctx.shadowBlur=0;
+  ctx.strokeStyle=o.wrongFlash>.01?`rgba(255,100,100,${.5+o.wrongFlash*.5})`:`rgba(${o.sr},${o.sg},${o.sb},${.4+o.glow*.6+o.flash*.4})`;
+  ctx.lineWidth=1.8;
+  ctx.beginPath();ctx.arc(0,0,o.r,0,Math.PI*2);ctx.stroke();
+
+  // Highlight
+  ctx.fillStyle='rgba(255,255,255,0.2)';
+  ctx.beginPath();ctx.ellipse(-o.r*.28,-o.r*.3,o.r*.32,o.r*.18,-Math.PI/5,0,Math.PI*2);ctx.fill();
+
+  // Icon
+  ctx.shadowBlur=0;ctx.shadowColor='transparent';
+  ctx.font=`${o.r*.8}px serif`;
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(o.icon,0,1.5);
+
+  ctx.restore();
+
+  // Label
+  ctx.save();
+  ctx.font=`500 ${Math.round(o.r*.28)}px 'Outfit',sans-serif`;
+  ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.fillStyle=`rgba(255,255,255,${.45+o.glow*.25})`;
+  ctx.fillText(o.label,x,y+bobY+o.r+5);
+  ctx.restore();
+}
+
+/* ═══════════════════════════════════════════
+   INPUT
+═══════════════════════════════════════════ */
+gc.addEventListener('click',onTap);
+gc.addEventListener('touchstart',e=>{e.preventDefault();const t=e.touches[0];onTap({clientX:t.clientX,clientY:t.clientY})},{passive:false});
+
+function onTap(e){
+  if(phase!=='playing')return;
+  const rect=gc.getBoundingClientRect();
+  const tx=e.clientX-rect.left,ty=e.clientY-rect.top;
+  let tapped=null;
+  // Check in reverse (top orbs first)
+  for(let i=orbs.length-1;i>=0;i--){
+    const o=orbs[i];
+    if(o.hit)continue;
+    const bobY=Math.sin(o.phase)*3.5;
+    const dx=tx-o.x,dy=ty-(o.y+bobY);
+    if(Math.sqrt(dx*dx+dy*dy)<o.r+8){tapped=o;break}
+  }
+  if(!tapped)return;
+
+  if(tapped.isTarget){
+    // Correct!
+    tapped.hit=true;
+    found++;
+    SCORE+=10+(LV*5);
+    document.getElementById('g-score').textContent=SCORE;
+    burstParticles(tapped.x,tapped.y+Math.sin(tapped.phase)*3.5,tapped.sr,tapped.sg,tapped.sb,14);
+    updateProg();
+    flashStatus('✦ Found!',`rgba(${tapped.sr},${tapped.sg},${tapped.sb},1)`);
+    if(found>=targetCount){
+      phase='win';
+      setTimeout(()=>showWin(),500);
+    }
+  } else {
+    // Wrong orb
+    tapped.wrongFlash=1;
+    wrongHits++;
+    burstParticles(tapped.x,tapped.y,255,60,60,6);
+    flashStatus('Not that one…','rgba(255,100,100,0.9)');
+    if(wrongHits>=5){phase='over';setTimeout(()=>showOut(),600)}
+  }
+}
+
+function burstParticles(x,y,r,g,b,n){
+  for(let i=0;i<n;i++){
+    const ang=Math.random()*Math.PI*2;
+    const spd=1.5+Math.random()*3;
+    particles.push({
+      x,y,
+      vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd-1,
+      a:.9+Math.random()*.1,da:.025+Math.random()*.02,
+      s:3+Math.random()*4,ds:.08+Math.random()*.06,
+      col:`rgba(${r},${g},${b},1)`
+    });
+  }
+  // Large glow flash orbs
+  for(let i=0;i<4;i++){
+    const ang=Math.random()*Math.PI*2;
+    const spd=.8+Math.random()*1.5;
+    particles.push({
+      x,y,vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd-0.5,
+      a:.6,da:.012,s:8+Math.random()*6,ds:.1,
+      col:`rgba(255,255,255,0.9)`
+    });
+  }
+}
+
+function updateProg(){
+  const pct=targetCount>0?Math.round(found/targetCount*100):0;
+  document.getElementById('gt-prog').textContent=`${found} / ${targetCount}`;
+  document.getElementById('gt-bar').style.width=pct+'%';
+}
+
+let statusTimer=null;
+function flashStatus(txt,col){
+  const el=document.getElementById('g-status');
+  el.textContent=txt;el.style.color=col;
+  if(statusTimer)clearTimeout(statusTimer);
+  statusTimer=setTimeout(()=>{el.textContent='';},1400);
+}
+
+/* ═══════════════════════════════════════════
+   WIN / LEVEL COMPLETE
+═══════════════════════════════════════════ */
+function showWin(){
+  // Victory burst
+  for(let i=0;i<5;i++){
+    setTimeout(()=>{
+      const x=W*.2+Math.random()*W*.6,y=H*.2+Math.random()*H*.5;
+      const [r,g,b]=MODE.a;
+      burstParticles(x,y,r,g,b,12);
+    },i*120);
+  }
+  setTimeout(()=>{
+    const lv=MODE.levels[LV];
+    const target=SYMBOLS[lv.t];
+    const [tr,tg,tb]=target.slice(2);
+    document.getElementById('win-banner').style.background=MODE.banner;
+    const iw=document.getElementById('win-icon');
+    iw.textContent=target[1];
+    iw.style.background=`radial-gradient(ellipse,rgba(${tr},${tg},${tb},.2),rgba(${tr},${tg},${tb},.05))`;
+    iw.style.border=`1.5px solid rgba(${tr},${tg},${tb},.3)`;
+    document.getElementById('win-eyebrow').textContent=`${MODE.name.toUpperCase()} · LEVEL ${LV+1}`;
+    document.getElementById('win-scripture').textContent=lv.scripture;
+    document.getElementById('win-ref').textContent=lv.ref;
+    document.getElementById('win-blessing').textContent=lv.blessing;
+    const nb=document.getElementById('win-next-btn');
+    const isLast=LV+1>=MODE.levels.length;
+    nb.textContent=isLast?'All Levels Complete ✦':`Level ${LV+2} →`;
+    nb.style.background=`linear-gradient(135deg,rgba(${MODE.a.join(',')},0.8),rgba(${MODE.a.join(',')},1))`;
+    nb.style.color=`#fff`;nb.style.boxShadow=`0 4px 24px rgba(${MODE.a.join(',')},0.45)`;
+    document.getElementById('modal-win').classList.add('on');
+  },650);
+}
+
+function closeWin(){document.getElementById('modal-win').classList.remove('on')}
+function nextLevel(){closeWin();LV++;loadLevel()}
+function restartLevel(){document.getElementById('modal-win').classList.remove('on');loadLevel()}
+
+function showOut(){
+  const nb=document.getElementById('out-retry-btn');
+  nb.style.background=`linear-gradient(135deg,rgba(${MODE.a.join(',')},0.8),rgba(${MODE.a.join(',')},1))`;
+  document.getElementById('modal-out').classList.add('on');
+}
+function closeOut(){document.getElementById('modal-out').classList.remove('on')}
+
+function showModeComplete(){
+  // reuse win modal
+  document.getElementById('win-banner').style.background=MODE.banner;
+  document.getElementById('win-icon').textContent=MODE.icon;
+  document.getElementById('win-eyebrow').textContent=`${MODE.name.toUpperCase()} · COMPLETE!`;
+  document.getElementById('win-scripture').textContent='"Well done, good and faithful servant! You have been faithful with a few things; I will put you in charge of many things."';
+  document.getElementById('win-ref').textContent='— Matthew 25:21';
+  document.getElementById('win-blessing').textContent='You have gathered all the sacred symbols. May His light remain with you always.';
+  const nb=document.getElementById('win-next-btn');
+  nb.textContent='Choose Another Mode';
+  nb.onclick=()=>{closeWin();goModes()};
+  document.getElementById('modal-win').classList.add('on');
+}
+
+function openMenu(){document.getElementById('modal-menu').classList.add('on')}
+function closeMenu(){document.getElementById('modal-menu').classList.remove('on')}
+
+/* ═══════════════════════════════════════════
+   RESIZE
+═══════════════════════════════════════════ */
+function resize(){
+  W=window.innerWidth;H=window.innerHeight;
+  gc.width=W;gc.height=H;
+  const hudEl=document.querySelector('.g-top');
+  const statEl=document.querySelector('.g-bottom');
+  SAFE_TOP=hudEl?(hudEl.offsetHeight+hudEl.offsetTop+100):160;
+  SAFE_BOT=statEl?statEl.offsetHeight+20:70;
+
+  // init bg stars
+  if(bgStars.length===0){
+    for(let i=0;i<90;i++)bgStars.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*.7+.15,a:Math.random(),da:(Math.random()-.5)*.006,dx:(Math.random()-.5)*.04,dy:(Math.random()-.5)*.03});
+  }
+  // Reposition orbs if active
+  if(phase==='playing'&&orbs.length){
+    const orbR=getOrbR();
+    const m=orbR*2+20;
+    orbs.forEach(o=>{
+      o.r=orbR;
+      o.x=Math.max(o.r,Math.min(W-o.r,o.x));
+      o.y=Math.max(SAFE_TOP+o.r,Math.min(H-SAFE_BOT-o.r,o.y));
+    });
+  }
+}
+
+window.addEventListener('resize',()=>{
+  resize();
+  if(document.getElementById('game').classList.contains('on')){
+    // Recalc safe zones after layout settles
+    setTimeout(resize,100);
+  }
+});
+
+resize();
+</script>
+</body>
+</html>

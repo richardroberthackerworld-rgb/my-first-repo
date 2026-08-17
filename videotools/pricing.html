@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pricing — Free Video Tools &amp; Pro Credits | VidLab by 7by.in</title>
+  <meta name="description" content="Most VidLab video tools are free forever — the editor, compressor and toolkit. The AI Watermark Remover and Background Remover run on credits: 2 credits per minute of video. Pro is ₹47/month or ₹499/year.">
+  <link rel="canonical" href="https://7vidlabs.7by.in/pricing">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8250159057339426" crossorigin="anonymous"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* the shared 7By layout injects an audio-focused nav, mobile menu and
+       footer alongside the auth/payment plumbing — hide all of them; this
+       page keeps its own video nav and footer (the #auth-ov modal stays). */
+    body > nav, body > footer, #mnav, #mnav-ov, #upgrade-modal { display: none !important; }
+
+    .pricing-hero { padding: 54px 20px 30px; text-align: center; }
+    .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; max-width: 940px; margin: 0 auto 56px; padding: 0 20px; }
+    .p-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-xl);
+      padding: 34px 26px; position: relative; transition: transform .2s ease, box-shadow .2s ease;
+      display: flex; flex-direction: column;
+    }
+    .p-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-card); }
+    .p-card.featured { border-color: var(--video); background: linear-gradient(165deg, var(--video-dim), var(--surface)); box-shadow: var(--shadow-pop); }
+    .p-card.featured::before {
+      content: 'BEST VALUE'; position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+      background: var(--video); color: #fff; font-size: 10px; font-weight: 800; letter-spacing: 2px;
+      padding: 4px 14px; border-radius: 20px;
+    }
+    .p-tier { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); margin-bottom: 14px; }
+    .p-price { font-size: 46px; font-weight: 800; line-height: 1; margin-bottom: 4px; color: var(--ink); }
+    .p-period { font-size: 14px; color: var(--muted); margin-bottom: 24px; }
+    .p-feats { list-style: none; display: flex; flex-direction: column; gap: 11px; margin: 0 0 26px; padding: 0; flex: 1; }
+    .p-feats li { font-size: 14px; color: var(--muted); display: flex; align-items: flex-start; gap: 10px; line-height: 1.4; }
+    .p-feats li::before { content: '✓'; color: var(--success); font-weight: 800; flex-shrink: 0; }
+    .p-feats li.no { color: var(--dim); }
+    .p-feats li.no::before { content: '✕'; color: var(--dim); }
+    .p-feats li b { color: var(--ink); font-weight: 700; }
+    .btn-full { width: 100%; justify-content: center; }
+
+    .credit-wrap { max-width: 840px; margin: 0 auto; padding: 0 20px; }
+    .compare-table { width: 100%; border-collapse: collapse; margin: 0 auto 56px; }
+    .compare-table th, .compare-table td { padding: 13px 18px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
+    .compare-table th { font-family: 'JetBrains Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+    .compare-table td:first-child { color: var(--ink); font-weight: 500; }
+    .compare-table td:not(:first-child) { text-align: center; font-family: 'JetBrains Mono', monospace; }
+    .tick { color: var(--success); } .cross { color: var(--dim); }
+
+    .topup { text-align: center; max-width: 560px; margin: 0 auto 60px; padding: 30px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-xl); }
+    .faq-wrap { max-width: 720px; margin: 0 auto; padding: 0 20px 70px; }
+    .faq-item { border-bottom: 1px solid var(--border); padding: 18px 0; }
+    .faq-q { font-weight: 700; font-size: 16px; color: var(--ink); }
+    .faq-a { font-size: 14.5px; color: var(--muted); line-height: 1.6; margin-top: 8px; }
+    .sec-h { text-align: center; font-size: 26px; font-weight: 800; letter-spacing: -0.5px; margin: 0 0 30px; }
+    @media (max-width: 768px) { .pricing-grid { grid-template-columns: 1fr; } .compare-table { font-size: 12px; } .compare-table th, .compare-table td { padding: 10px 8px; } }
+  </style>
+</head>
+<body>
+
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="logo" href="index.html"><span class="logo-mark">▶</span> Vid<b>Lab</b></a>
+      <nav class="nav-links">
+        <a href="index.html">All Tools</a>
+        <a href="editor/index.html">ClipCut Editor</a>
+        <a href="blog/index.html">Blog</a>
+        <a href="pricing.html" class="active">Pricing</a>
+      </nav>
+      <span id="creditBadge" class="mono" style="font-size:12px;color:var(--muted);margin-right:8px"></span>
+      <button onclick="openAuth &amp;&amp; openAuth('signin')" class="btn btn-ghost" style="margin-right:8px">Sign In</button>
+      <a href="#plans" class="btn btn-primary nav-cta">⭐ Get Pro</a>
+    </div>
+  </header>
+
+  <section class="pricing-hero">
+    <div class="hero-badge"><span class="dot"></span> SIMPLE CREDIT PRICING</div>
+    <h1>Most video tools are <span class="grad-text">free forever</span>.<br>AI tools run on credits.</h1>
+    <p class="hero-sub" style="max-width:640px;margin:10px auto 0">The <strong>ClipCut editor</strong>, <strong>compressor</strong> and <strong>video toolkit</strong> are free and unlimited — no account, no watermark. The two AI tools, the <strong>Watermark Remover</strong> and <strong>Background Remover</strong>, use credits at just <strong style="color:var(--video)">2 credits per minute of video</strong>.</p>
+  </section>
+
+  <section class="section" id="plans" style="padding-top:20px">
+    <div class="pricing-grid">
+      <div class="p-card">
+        <div class="p-tier">Free</div>
+        <div class="p-price">₹0</div>
+        <div class="p-period">forever</div>
+        <ul class="p-feats">
+          <li><b>ClipCut video editor</b> — unlimited</li>
+          <li><b>Video compressor</b> — unlimited</li>
+          <li><b>Trim · convert · GIF toolkit</b> — unlimited</li>
+          <li>No account, no watermark</li>
+          <li>Private by design — nothing uploaded</li>
+          <li><b>20 free credits every day</b> for the AI tools</li>
+          <li class="no">Watermark Remover beyond daily credits</li>
+          <li class="no">Background Remover beyond daily credits</li>
+        </ul>
+        <a href="index.html" class="btn btn-ghost btn-full">Use Free Tools</a>
+      </div>
+
+      <div class="p-card featured">
+        <div class="p-tier">Annual · Best Value</div>
+        <div class="p-price" style="color:var(--video)">₹499</div>
+        <div class="p-period">per year</div>
+        <ul class="p-feats">
+          <li><b>20,000 credits / year</b></li>
+          <li>≈ 10,000 minutes of AI video processing</li>
+          <li><b>+20 free credits every day</b></li>
+          <li>AI Watermark Remover + Background Remover</li>
+          <li>Every free tool, unlimited</li>
+          <li>Priority processing</li>
+        </ul>
+        <button onclick="pay('annual')" class="btn btn-primary btn-full">Get Annual — ₹499</button>
+      </div>
+
+      <div class="p-card">
+        <div class="p-tier">Monthly</div>
+        <div class="p-price" style="color:var(--violet)">₹47</div>
+        <div class="p-period">per month</div>
+        <ul class="p-feats">
+          <li><b>1,000 credits / month</b></li>
+          <li>≈ 500 minutes of AI video processing</li>
+          <li>AI Watermark Remover + Background Remover</li>
+          <li>Every free tool, unlimited</li>
+          <li>No long commitment</li>
+        </ul>
+        <button onclick="pay('monthly')" class="btn btn-ghost btn-full">Get Monthly — ₹47</button>
+      </div>
+    </div>
+
+    <div class="credit-wrap">
+      <h2 class="sec-h">How credits work</h2>
+      <table class="compare-table">
+        <thead><tr><th>Tool</th><th>Free</th><th>Monthly ₹47</th><th>Annual ₹499</th></tr></thead>
+        <tbody>
+          <tr><td>ClipCut Video Editor</td><td class="tick">Unlimited</td><td class="tick">Unlimited</td><td class="tick">Unlimited</td></tr>
+          <tr><td>Video Compressor</td><td class="tick">Unlimited</td><td class="tick">Unlimited</td><td class="tick">Unlimited</td></tr>
+          <tr><td>Trim · Convert · GIF Toolkit</td><td class="tick">Unlimited</td><td class="tick">Unlimited</td><td class="tick">Unlimited</td></tr>
+          <tr><td>AI Watermark Remover</td><td class="cross">Credits</td><td class="tick">2 cr / min</td><td class="tick">2 cr / min</td></tr>
+          <tr><td>AI Background Remover</td><td class="cross">Credits</td><td class="tick">2 cr / min</td><td class="tick">2 cr / min</td></tr>
+          <tr><td>Credits included</td><td>0</td><td>1,000 / mo</td><td>20,000 / yr</td></tr>
+          <tr><td>Free daily credits</td><td>20 / day</td><td>20 / day</td><td>20 / day</td></tr>
+          <tr><td>Watermark on exports</td><td class="tick">Never</td><td class="tick">Never</td><td class="tick">Never</td></tr>
+          <tr><td>Private — nothing uploaded</td><td class="tick">✓</td><td class="tick">✓</td><td class="tick">✓</td></tr>
+        </tbody>
+      </table>
+
+      <div class="topup">
+        <div style="font-size:32px;margin-bottom:10px">⚡</div>
+        <h3>Top up your credits</h3>
+        <p style="color:var(--muted);font-size:14px;margin:8px 0 20px">Credits are added to your account the moment payment completes. Sign in first so they land on the right account.</p>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+          <button onclick="pay('annual')" class="btn btn-primary">₹499 · 20,000 credits</button>
+          <button onclick="pay('monthly')" class="btn btn-ghost">₹47 · 1,000 credits</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="background:var(--surface);border-top:1px solid var(--border)">
+    <h2 class="sec-h">Frequently asked questions</h2>
+    <div class="faq-wrap">
+      <div class="faq-item"><div class="faq-q">Which video tools are free?</div><div class="faq-a">The ClipCut video editor, the video compressor, and the trim/convert/GIF toolkit are completely free and unlimited — no account, no credits, and no watermark on anything you export. Only the two AI tools, the Watermark Remover and the Background Remover, use credits, because AI processing is heavier to run.</div></div>
+      <div class="faq-item"><div class="faq-q">How do credits work?</div><div class="faq-a">The AI Watermark Remover and Background Remover cost 2 credits per minute of video — so a clip up to 1 minute is 2 credits, and a 10-minute video is 20 credits. You're only charged when the tool finishes a successful run; previewing is always free. Everyone gets 20 free credits every day.</div></div>
+      <div class="faq-item"><div class="faq-q">Do I need an account?</div><div class="faq-a">Not to use the free tools or your 20 daily free credits. Sign in when you want credits tied to your account rather than to one device, so a paid top-up follows you everywhere. Sign-in is with Google or a real Gmail address.</div></div>
+      <div class="faq-item"><div class="faq-q">Do unused credits roll over?</div><div class="faq-a">Monthly credits reset each month. Annual credits stay valid for the full year. The 20 free daily credits don't carry over — they refresh every day.</div></div>
+      <div class="faq-item"><div class="faq-q">Is my video uploaded anywhere?</div><div class="faq-a">No. Every VidLab tool processes your video on your own device, in your browser — your footage never leaves your computer. Credits simply meter access to the AI tools.</div></div>
+      <div class="faq-item"><div class="faq-q">What payment methods work?</div><div class="faq-a">UPI, cards, net banking and wallets are all supported at checkout via Razorpay. Credits appear on your account as soon as the payment goes through. Credits are non-refundable once added.</div></div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-bottom" style="border-top:none">
+      <span>© 2026 7BY.IN — VIDLAB · DEVELOPED BY 7BY.IN · FOUNDER &amp; CEO SHIRANDASU SANDEEP</span>
+      <span><a href="index.html">ALL TOOLS</a> · <a href="https://7by.in/privacy-policy">PRIVACY</a></span>
+    </div>
+  </footer>
+
+  <script src="assets/credits.js"></script>
+  <script src="assets/layout.js"></script>
+  <script src="assets/app.js"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script>
+    // injectLayout wires up the auth modal (#auth-ov), sign-in, currentUser,
+    // apiPost, Credits and API_BASE. Its own nav/footer are hidden by CSS above;
+    // links inside the auth modal point back to the main 7By site.
+    if (typeof injectLayout === 'function') injectLayout('https://7by.in/');
+    if (typeof initFaq === 'function') { try { initFaq(); } catch (e) {} }
+
+    // live credit badge
+    function renderCreditBadge() {
+      var el = document.getElementById('creditBadge');
+      if (el && window.Credits) el.textContent = '⚡ ' + Credits.balance() + ' credits';
+    }
+    window.renderCredits = renderCreditBadge;
+    renderCreditBadge();
+
+    // Razorpay checkout via the 7By Account Hub (creates order + verifies signature)
+    async function pay(plan) {
+      if (!window.API_BASE) { (window.toast || alert)('Payments are temporarily unavailable'); return; }
+      var u = (typeof currentUser === 'function' && currentUser());
+      if (!u) { (window.toast || alert)('Please sign in first'); if (typeof openAuth === 'function') openAuth('signin'); return; }
+      plan = (plan === 'annual') ? 'yearly' : plan;   // hub plan keys are monthly / yearly
+      try {
+        var order = await apiPost('/api/pay/order', { plan }, true);
+        var rzp = new Razorpay({
+          key: order.key_id, amount: order.amount, currency: order.currency || 'INR',
+          name: 'VidLab · 7By.in', description: (order.label || 'VidLab Pro credits'), order_id: order.order_id,
+          prefill: { email: (order.email || u.email || ''), name: (order.name || u.name || '') }, theme: { color: '#FF006E' },
+          handler: async function (resp) {
+            try {
+              await apiPost('/api/pay/verify', {
+                razorpay_order_id: resp.razorpay_order_id,
+                razorpay_payment_id: resp.razorpay_payment_id,
+                razorpay_signature: resp.razorpay_signature, plan
+              }, true);
+              (window.toast || alert)('Payment successful — credits added to your account');
+              if (window.Credits && Credits.sync) Credits.sync().then(renderCreditBadge);
+            } catch (e) { (window.toast || alert)('Payment verification failed: ' + e.message); }
+          }
+        });
+        rzp.open();
+      } catch (e) { (window.toast || alert)(e.message || 'Could not start checkout'); }
+    }
+  </script>
+</body>
+</html>

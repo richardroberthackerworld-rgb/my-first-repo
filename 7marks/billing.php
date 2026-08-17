@@ -160,7 +160,21 @@ function hub_me(array $CFG, string $userToken, string $app = ''): ?array {
    call never costs the student anything and no refund path is needed (the hub's
    consume clamps count to >= 1, so a "negative refund" would charge again). */
 function hub_spend(array $CFG, string $app, string $userToken): array {
-    $r = hub_call($CFG, 'consume', $userToken, ['count' => bill_cost($CFG), 'product' => $app]);
+    return hub_spend_n($CFG, $app, $userToken, bill_cost($CFG));
+}
+
+/**
+ * Spend an explicit number of credits.
+ *
+ * plans.php charges a flat 10 per AI generation regardless of what
+ * bill_cost() is configured to, so it needs to name the amount. The hub's
+ * consume endpoint routes to tool_spend(), whose UPDATE is guarded on
+ * credits >= count — that guard, not anything here, is what stops two
+ * concurrent spends both taking the same last credits.
+ */
+function hub_spend_n(array $CFG, string $app, string $userToken, int $count): array {
+    if ($count < 1) return [false, 'bad_count'];
+    $r = hub_call($CFG, 'consume', $userToken, ['count' => $count, 'product' => $app]);
     if (!$r) return [false, 'hub_unreachable'];
     if (!empty($r['body']['ok'])) return [true, (int)($r['body']['credits'] ?? 0)];
     return [false, (string)($r['body']['error'] ?? 'hub_error')];

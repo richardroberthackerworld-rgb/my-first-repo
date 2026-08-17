@@ -11,8 +11,10 @@ async function pick(pathname) {
   let p = decodeURIComponent(pathname);
   if (p.endsWith("/")) p += "index.html";
 
-  // shared files that live at the repo root but ship to the subdomain root
-  if (p.startsWith("/assets/") || p === "/pricing.html") {
+  // shared assets live at the repo root but ship to the subdomain root.
+  // (pricing.html is NOT shared — the subdomain has its own video pricing
+  //  page in videotools/, so it falls through to the root serve below.)
+  if (p.startsWith("/assets/")) {
     const shared = Bun.file(repo + p);
     if (await shared.exists()) return shared;
   }

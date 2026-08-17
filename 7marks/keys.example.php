@@ -30,6 +30,10 @@ return [
         'github'     => '',   // github_pat_...     https://github.com/settings/tokens  (Models: Read-only)
     ],
 
+    /* ---- owner token: unlocks ?action=keyhealth (masked key status).
+       Set a long random string. Leave EMPTY to disable the endpoint entirely. ---- */
+    'owner_token' => '',
+
     /* ---- only these sites may use the proxy (stops others stealing your quota) ---- */
     'allow_origins' => ['7marks.7by.in', '7by.in', 'www.7by.in', 'localhost:3050'],
 

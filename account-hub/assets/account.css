@@ -113,6 +113,12 @@ body{font-family:'Outfit',system-ui,sans-serif;color:var(--ink);background:#0b0a
 .credit-label{position:relative;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;opacity:.9;margin-top:4px}
 .plan-line{position:relative;font-size:13px;opacity:.9;margin-top:10px}
 h3{font-size:16px;font-weight:800;margin-bottom:12px}
+/* "Add credits to <tool>" picker (generic hub page only) */
+.field-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.lbl-inline{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;color:var(--muted);text-transform:uppercase}
+.tool-select{flex:1;min-width:150px;font-family:'Outfit';font-size:15px;font-weight:600;padding:11px 13px;border:1.5px solid var(--line2);border-radius:12px;background:#fbfbff;color:var(--ink);cursor:pointer}
+.tool-select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 4px var(--soft)}
+
 .plans{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .plan{position:relative;border:1.5px solid var(--line);border-radius:14px;padding:18px;text-align:center;transition:.2s}
 .plan:hover{border-color:var(--primary);transform:translateY(-3px);box-shadow:0 12px 26px rgba(91,61,245,.14)}

@@ -1,0 +1,151 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>7Hand — start here</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  :root { --bg:#F7F8FC; --fg:#101425; --muted:#5A6072; --line:#E2E6F0; --card:#fff;
+          --accent:#0F766E; --warn:#D97706; --bad:#DC2626; }
+  * { box-sizing:border-box }
+  body { margin:0; padding:40px 20px 80px; background:var(--bg); color:var(--fg);
+         font:16px/1.62 ui-sans-serif,system-ui,'Segoe UI',Roboto,sans-serif }
+  .wrap { max-width:760px; margin:0 auto }
+  h1 { font-size:32px; letter-spacing:-.8px; margin:0 0 6px }
+  .lede { color:var(--muted); font-size:17px; margin:0 0 32px }
+  h2 { font-size:13px; text-transform:uppercase; letter-spacing:1.6px; color:var(--muted);
+       font-family:ui-monospace,SFMono-Regular,Menlo,monospace; margin:38px 0 12px;
+       padding-top:20px; border-top:1px solid var(--line) }
+  h3 { font-size:17px; margin:22px 0 6px }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:11px; padding:20px 22px; margin:14px 0 }
+  .go { display:flex; gap:12px; flex-wrap:wrap; margin:20px 0 }
+  .go a { flex:1; min-width:210px; text-decoration:none; background:var(--fg); color:#fff;
+          padding:16px 18px; border-radius:10px; display:block }
+  .go a.alt { background:#EDF0F7; color:var(--fg) }
+  .go b { display:block; font-size:16px; margin-bottom:2px }
+  .go span { font-size:13px; opacity:.72 }
+  ol { padding-left:22px } ol li { margin:7px 0 }
+  ul { padding-left:20px } ul li { margin:5px 0 }
+  code { font:13.5px ui-monospace,SFMono-Regular,Menlo,monospace; background:#EAEEF7;
+         padding:2px 6px; border-radius:5px }
+  pre { background:#101425; color:#E8ECF6; padding:14px 16px; border-radius:9px; overflow-x:auto;
+        font:13px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace }
+  pre code { background:none; padding:0; color:inherit }
+  table { border-collapse:collapse; width:100%; font-size:14.5px; margin:12px 0 }
+  th,td { text-align:left; padding:9px 11px; border-bottom:1px solid var(--line); vertical-align:top }
+  th { font:600 11px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace; color:var(--muted);
+       text-transform:uppercase; letter-spacing:1px }
+  .flag { border-left:3px solid var(--warn); background:#FEF6EA; padding:14px 18px; border-radius:0 9px 9px 0; margin:16px 0 }
+  .flag.stop { border-color:var(--bad); background:#FDEFEF }
+  .flag b { display:block; margin-bottom:3px }
+  .muted { color:var(--muted); font-size:14.5px }
+  .swatch { display:inline-block; width:11px; height:11px; border-radius:3px; margin-right:5px; vertical-align:-1px }
+</style>
+
+<div class="wrap">
+  <h1>Try it with your handwriting</h1>
+  <p class="lede">Twenty minutes. No printing, no scanner — a phone photo of something you already
+  wrote is enough.</p>
+
+  <div class="go">
+    <a href="./tools/learn.html"><b>1 · Learn my handwriting →</b><span>Upload a photo of a page you wrote</span></a>
+    <a class="alt" href="./app.html"><b>2 · Write with it →</b><span>Type anything, download a PDF</span></a>
+  </div>
+
+  <h2>Photograph a page you already wrote</h2>
+  <div class="card">
+    <p style="margin-top:0">Any page of your handwriting. Old notes, a past assignment, anything.</p>
+    <ul>
+      <li><b>Print-style beats joined-up cursive.</b> Letters that touch get discarded — the
+        software only uses words where it can tell the letters apart. Cursive still works, it
+        just keeps fewer words per page.</li>
+      <li><b>Dark pen, light paper.</b> Blue or black. Not pencil, not red.</li>
+      <li><b>Flat and evenly lit.</b> Daylight near a window. Avoid a hard shadow across the page.</li>
+      <li><b>Fill the frame, straight on.</b> A slight tilt is corrected automatically.</li>
+      <li><b>Include capitals, numbers and punctuation somewhere.</b> This matters more than
+        you'd think — see the warning below.</li>
+    </ul>
+  </div>
+
+  <h2>Learn your handwriting</h2>
+  <ol>
+    <li>Open <a href="./tools/learn.html">learn.html</a> and choose your photo.</li>
+    <li>Press <b>Analyse page</b>. Boxes appear over the writing:
+      <span class="swatch" style="background:#0F766E"></span>lines,
+      <span class="swatch" style="background:#D97706"></span>words,
+      <span class="swatch" style="background:#DC2626"></span>letters,
+      <span class="swatch" style="background:#2563EB"></span>baseline.
+      If those look wrong, everything after will be wrong — adjust <i>Speck floor</i> or
+      <i>Word gap</i> and analyse again.</li>
+    <li><b>Type what the page says</b>, one line in the box per line on the page. This is the
+      only manual step.</li>
+    <li>Press <b>Build style</b>, then <b>Download style</b>. You get a <code>.json</code> file.</li>
+  </ol>
+  <p class="muted"><b>A third to half of your words will be skipped, and that is correct.</b>
+  It only uses words it is certain about. One wrongly labelled letter would mean every future
+  “a” is secretly an “o”, and nothing would ever catch it.</p>
+
+  <h2>Write with it</h2>
+  <ol>
+    <li>Open <a href="./app.html">app.html</a> → <b>Load style file</b> → pick your
+      <code>.json</code>.</li>
+    <li>Type or paste anything.</li>
+    <li>Set <i>Writing size</i> and <i>Line spacing</i> to match your notebook. 8.5&nbsp;mm is
+      standard Indian ruled paper.</li>
+    <li><b>Download PDF</b> and print at <b>100% scale</b> — not “fit to page”.</li>
+  </ol>
+  <p class="muted"><i>Reroll</i> gives a different variation of the same text. The seed is saved,
+  so the same seed always reproduces exactly the same page.</p>
+
+  <h2>The thing that will probably go wrong</h2>
+  <div class="flag">
+    <b>Whatever your photo doesn’t contain, your style won’t have.</b>
+    Photograph a page of all lowercase and you get lowercase-only handwriting. Type a capital
+    <code>T</code> and it is skipped — the app lists which characters are missing.
+    <p style="margin:10px 0 0"><b>Fix:</b> write one extra line with the missing pieces,
+    photograph it, and run it through learn.html as a second page:</p>
+<pre><code>ABCDEFGHIJKLM NOPQRSTUVWXYZ
+0123456789 . , ; : ! ? ' " ( ) -</code></pre>
+    <p style="margin:10px 0 0">Space the letters out so they don’t touch — more of them survive.</p>
+  </div>
+
+  <h2>What to change</h2>
+  <p><b>To just test it: nothing.</b> It works as-is. You type the transcript yourself.</p>
+  <p>To have it <b>read the page for you</b>, pick one:</p>
+  <table>
+    <tr><th></th><th>Edit</th><th>Runs with</th><th>Safe to publish</th></tr>
+    <tr><td><b>Local testing</b></td><td><code>config.js</code></td><td><code>start.bat</code></td>
+        <td style="color:var(--bad)"><b>No</b></td></tr>
+    <tr><td><b>Real hosting</b></td><td><code>api/config.php</code></td><td>PHP hosting only</td>
+        <td style="color:var(--accent)"><b>Yes</b></td></tr>
+  </table>
+  <p>For local testing, open <code>config.js</code> and change two lines:</p>
+<pre><code>proxy: './api/ocr.php',   →   proxy: null,
+gemini: ''                →   gemini: 'AIza...your key...'</code></pre>
+  <p>Free key, no card, ~1500 requests a day:
+    <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer">aistudio.google.com/apikey</a></p>
+  <div class="flag stop">
+    <b>Only do this on your own machine.</b>
+    In local mode the key sits in the page source where anyone can read it. For a public site
+    use <code>api/config.php</code>, which keeps the key on the server — but that needs PHP
+    hosting, so <code>start.bat</code> won’t run it.
+  </div>
+
+  <h2>What to tell me</h2>
+  <div class="card">
+    <ol style="margin:0">
+      <li><b>Do the red boxes land on single letters?</b> If they cut letters in half or swallow
+        two at once, that is the segmentation and it is fixable.</li>
+      <li><b>What percentage of words matched?</b> Under about 30% means the letter splitting is
+        struggling with your hand.</li>
+      <li><b>Does the output look like your writing?</b> Print it, put it beside something you
+        actually wrote, and look.</li>
+      <li><b>What is the first thing that looks obviously fake?</b> Spacing, letters too uniform,
+        sitting too high or low? Each has a different fix.</li>
+    </ol>
+    <p class="muted" style="margin-bottom:0">Send the style <code>.json</code> if something looks
+    wrong — it contains the extracted letters and shows exactly what was captured.</p>
+  </div>
+
+  <p class="muted" style="margin-top:34px">Everything runs on your machine. No page, photo or
+  style is uploaded anywhere — unless you turn on automatic reading above, which sends the photo
+  to Google and nothing else.</p>
+</div>

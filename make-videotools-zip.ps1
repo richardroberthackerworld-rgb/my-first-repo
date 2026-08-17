@@ -12,7 +12,7 @@
 # Usage:  .\make-videotools-zip.ps1
 #         .\make-videotools-zip.ps1 -Subdomain clip.7by.in
 param(
-  [string]$Subdomain = 'video.7by.in',
+  [string]$Subdomain = '7vidlabs.7by.in',
   [string]$MainDomain = '7by.in'
 )
 
@@ -55,22 +55,34 @@ $sharedAssets | ForEach-Object {
   if (Test-Path -LiteralPath $p) { Put-File $p (Join-Path $sub ('assets\' + $_)) }
 }
 
-# pricing page retargeted for the subdomain (source file left untouched:
-# the main site keeps using it as-is)
-$pricing = [System.IO.File]::ReadAllText((Join-Path $base 'pricing.html'), $utf8)
-$pricing = $pricing.Replace("injectLayout('')", "injectLayout('https://$MainDomain/')")
-$pricing = $pricing.Replace('href="tools/audio-cutter"', "href=""https://$MainDomain/tools/audio-cutter""")
-$pricing = $pricing.Replace("https://$MainDomain/pricing", "https://$Subdomain/pricing")
-Put-Text $pricing (Join-Path $sub 'pricing.html')
+# pricing: the subdomain ships videotools/pricing.html (video-specific,
+# already copied above with the rest of the app). The main site keeps its
+# own audio pricing.html unchanged. Nothing to retarget here.
 
 Put-Text "google.com, pub-8250159057339426, DIRECT, f08c47fec0942fa0`n" (Join-Path $sub 'ads.txt')
 Put-Text "User-agent: *`nAllow: /`n`nSitemap: https://$Subdomain/sitemap.xml`n" (Join-Path $sub 'robots.txt')
 
-$paths = @('', 'watermark-remover', 'compressor', 'bg-remover', 'image-watermark', 'toolkit', 'pricing',
+$paths = @('', 'watermark-remover', 'compressor', 'bg-remover', 'toolkit', 'pricing',
            'editor/', 'blog/', 'blog/how-to-remove-watermark-from-video',
            'blog/compress-video-for-whatsapp-instagram',
            'blog/remove-video-background-without-green-screen',
-           'blog/free-online-video-editor-clipcut')
+           'blog/free-online-video-editor-clipcut',
+           'blog/add-subtitles-captions-to-video-free',
+           'blog/best-video-sizes-for-social-media',
+           'blog/how-to-make-a-youtube-intro-free',
+           'blog/add-music-to-video-free',
+           'blog/convert-video-to-gif-guide',
+           'blog/how-to-trim-and-cut-a-video-free',
+           'blog/how-to-speed-up-or-slow-down-a-video',
+           'blog/how-to-add-text-to-a-video',
+           'blog/video-formats-explained-mp4-mov-webm',
+           'blog/how-to-make-a-photo-slideshow-video',
+           'blog/how-to-add-transitions-between-clips',
+           'blog/color-grading-video-cinematic-look',
+           'blog/how-to-make-instagram-reels-free',
+           'blog/how-to-remove-or-mute-audio-from-a-video',
+           'blog/how-to-add-stickers-and-emojis-to-a-video',
+           'blog/how-to-make-a-tiktok-video-free')
 $sb = New-Object System.Text.StringBuilder
 [void]$sb.AppendLine('<?xml version="1.0" encoding="UTF-8"?>')
 [void]$sb.AppendLine('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')

@@ -17,10 +17,84 @@ Design doc, with the full 14-task plan and the reasoning behind every decision:
 | T2 donor sheet | `sheet.html`, `src/sheet.js` | done |
 | T3 ingest | `tools/ingest.html`, `src/capture.js` | done |
 | T4 tracer | `src/trace.js` | done |
-| T11 harness | `test.html` | partial — covers T1-T4 only |
+| T5 layout | `src/layout.js` | done |
+| T6 realism | `src/realism.js` | done |
+| T7 preview | `app.html`, `src/render.js` | done |
+| T8 PDF export | `src/pdf.js` | done |
+| — learn from a page | `src/page.js`, `tools/learn.html` | done |
+| T13 transcription | `src/ocr.js` | done, untested against a live API |
+| T14 key proxy | `api/ocr.php` | done, untested against a live API |
+| T12 build | `../make-hand-zip.ps1` | done |
+| T11 harness | `test.html` | covers everything above |
 
-**72 tests green.** Everything else (layout, realism, render, export, app, payments,
-OCR, key proxy, infra) is not started.
+**131 tests green.** Not started: **T10 payments — there is no paywall.**
+Everything runs client-side and the server only sees transcription requests, so
+nothing currently stops anyone exporting as much as they like.
+
+Photograph a page you already wrote, have it read, and get new text back in
+that same hand as a print-ready PDF.
+
+## Transcription
+
+**Optional.** Everything works without it — you type what the page says. This
+automates that one step and nothing else.
+
+The model never sees a glyph and never decides which blob is which letter. It
+only produces text, which the alignment step then checks against the ink and
+discards where the two disagree. So the model can misread a word without doing
+damage: that word is skipped, exactly like one with joined letters.
+
+Two ways to run it:
+
+| | Key lives | Use |
+|---|---|---|
+| **Proxy** (default) | on your server | anything public |
+| **Direct** | in page source | your own machine only |
+
+Direct mode logs a warning every time it runs. A key on a public OCR button is
+lifted and burned within days.
+
+To enable:
+
+```bash
+cp hand/api/config.example.php hand/api/config.php
+# add one free key: https://aistudio.google.com/apikey
+```
+
+`api/config.php` is gitignored, denied by `api/.htaccess`, and the build script
+refuses to run if it finds it staged or spots anything key-shaped in the output.
+
+The proxy owns the prompt — the client only sends an image. Otherwise the
+endpoint is a free general-purpose vision model for anyone who finds the URL,
+paid for out of your quota. It is rate limited per caller, 12 requests per 10
+minutes by default.
+
+## PDF export
+
+Written by hand rather than vendored, for a reason that is not stubbornness: the
+whole task is glyph reuse, and no general-purpose JS PDF library exposes Form
+XObjects. PDF is a plain text format; the writer is about 230 lines.
+
+Every glyph variant becomes a Form XObject defined once, and each occurrence is a
+two-line reference:
+
+```
+q  a b c d e f cm  /G17 Do  Q
+```
+
+A 120-page record is roughly a quarter of a million placements. Writing the bezier
+path out for each one is tens of millions of path segments — minutes to build, tens
+of megabytes, and a phone PDF viewer that gives up. With 73 characters at 5 variants
+there are only 365 distinct shapes in the entire job. Measured on the two-page sample:
+1,254 letters, 159 shapes, 141 KB.
+
+Pages are emitted one at a time and released before the next begins, so peak memory
+is one page rather than the whole document.
+
+Both emitters read the same cached curves from `render.js`, so a glyph is traced once
+and the print cannot disagree with the preview it was approved from. A test asserts
+the flattened PDF matrix lands the baseline in the same place the nested SVG
+transforms do.
 
 ## Running it
 
@@ -31,9 +105,14 @@ npx serve -p 3130 .
 ES modules need a real origin, so `file://` will not work. There is no build step and
 no dependencies.
 
+- App: <http://localhost:3130/hand/app.html> — click **Demo style** to try it instantly
 - Tests: <http://localhost:3130/hand/test.html>
 - Donor sheet: <http://localhost:3130/hand/sheet.html>
 - Ingest: <http://localhost:3130/hand/tools/ingest.html>
+
+The demo style renders a serif typeface through the real pipeline. It exercises
+layout but is **not handwriting and will not fool anyone** — it exists so the app is
+usable before a donor has been scanned.
 
 ## Capturing a donor
 
@@ -70,6 +149,27 @@ sheets still leaves a usable style.
 phone-photo design where the sheet itself might be tilted. After fiducial rectification
 the sheet is already square, and any slant left in a glyph is the donor's own italic
 hand. Removing it would destroy the exact thing being captured.
+
+## Why the wobble looks the way it does
+
+Uniformity gets machine-written pages caught, but the obvious fix is also wrong.
+Rolling an independent random number per letter produces a *jitter texture* that reads
+as machine-made in a different way. Real handwriting **drifts**: slant, size and
+baseline wander together and slowly, because they all come from one hand getting
+tired, speeding up, or shifting grip.
+
+So `realism.js` runs one smoothed random walk per hand and everything reads from it.
+There is a test asserting the lag-1 autocorrelation stays above 0.75, and a companion
+test proving independent noise *fails* that same check — so the test measures something
+real rather than passing by construction.
+
+Two smaller rules that matter more than they look:
+
+- **The same sample is never used twice in a row for one character.** A doubled letter
+  (`ll`, `oo`, `ee`) rendered with two identical shapes is the single most obvious tell
+  on a page, and English is full of them.
+- **Everything derives from a seed stored with the document.** Without it the preview
+  disagrees with the export and reopening a file changes the handwriting.
 
 ## The two decisions this code exists to enforce
 

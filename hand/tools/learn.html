@@ -1,0 +1,355 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Learn my handwriting — 7Hand</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Photograph a page you already wrote and 7Hand learns the shape of your letters. No template sheet, no printing, no scanner.">
+<link rel="canonical" href="https://7hand.7by.in/tools/learn">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#1D4ED8">
+<style>
+  :root { --bg:#F7F8FC; --fg:#101425; --muted:#5A6072; --ok:#059669; --warn:#D97706; --bad:#DC2626;
+          --line:#E2E6F0; --card:#fff; --accent:#0F766E; }
+  * { box-sizing:border-box }
+  body { margin:0; padding:24px; background:var(--bg); color:var(--fg);
+         font:15px/1.5 ui-sans-serif,system-ui,'Segoe UI',Roboto,sans-serif }
+  .wrap { max-width:1240px; margin:0 auto }
+  h1 { font-size:22px; letter-spacing:-.4px; margin:0 0 2px }
+  .sub { color:var(--muted); margin:0 0 18px; font-size:14px }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:16px }
+  .row { display:flex; gap:12px; align-items:center; flex-wrap:wrap }
+  button { font:600 14px/1 inherit; padding:10px 16px; border:0; border-radius:7px;
+           background:var(--fg); color:#fff; cursor:pointer }
+  button.ghost { background:#EDF0F7; color:var(--fg) }
+  button:disabled { opacity:.4; cursor:not-allowed }
+  label.opt { font-size:13px; color:var(--muted); display:flex; gap:6px; align-items:center }
+  label.opt input { width:72px; font:inherit; padding:4px 6px; border:1px solid #CBD2E0; border-radius:6px }
+  .status { font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace; padding:9px 12px; border-radius:7px; margin-top:10px }
+  .status.ok { background:#E6F7F1; color:var(--ok) } .status.warn { background:#FEF3E2; color:var(--warn) }
+  .status.bad { background:#FDECEC; color:var(--bad) } .status.busy { background:#EEF1F8; color:var(--muted) }
+  .split { display:grid; grid-template-columns:1fr 420px; gap:16px; align-items:start }
+  @media (max-width:1000px) { .split { grid-template-columns:1fr } }
+  #stage { position:relative; display:inline-block; max-width:100% }
+  #stage canvas { display:block; max-width:100%; height:auto; border:1px solid var(--line); border-radius:8px; background:#fff }
+  textarea { width:100%; min-height:260px; font:13px/1.7 ui-monospace,SFMono-Regular,Menlo,monospace;
+             padding:10px; border:1px solid #CBD2E0; border-radius:7px; resize:vertical }
+  .glyphs { display:flex; flex-wrap:wrap; gap:5px; margin-top:12px }
+  figure { margin:0; width:58px; text-align:center }
+  figure svg { width:52px; height:52px; border:1px solid var(--line); border-radius:5px; background:#fff }
+  figcaption { font:11px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace; color:var(--muted) }
+  table { border-collapse:collapse; width:100%; font-size:13px; margin-top:10px }
+  th,td { text-align:left; padding:5px 8px; border-bottom:1px solid var(--line) }
+  th { font:600 11px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace; color:var(--muted);
+       text-transform:uppercase; letter-spacing:1px }
+  td.skip { color:var(--warn) }
+  .muted { color:var(--muted); font-size:13px }
+  code { font:12px ui-monospace,SFMono-Regular,Menlo,monospace; background:#EEF1F8; padding:1px 5px; border-radius:4px }
+  .legend { display:flex; gap:14px; font-size:12px; color:var(--muted); margin-top:8px; flex-wrap:wrap }
+  .swatch { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:4px; vertical-align:-1px }
+</style>
+
+<div class="wrap">
+  <h1>Learn a hand from a page</h1>
+  <p class="sub">Photograph something you already wrote. No template sheet, no printing, no scanner.
+    &nbsp;<a href="../" style="color:var(--accent)">← 7Hand</a>
+    &nbsp;<a href="../app.html" style="color:var(--accent)">Write with a style →</a></p>
+
+  <div class="card">
+    <div class="row">
+      <input type="file" id="file" accept="image/*">
+      <label class="opt">Speck floor <input id="minArea" type="number" value="14" min="1" max="400"></label>
+      <label class="opt">Word gap <input id="gapFrac" type="number" value="0.28" min="0.1" max="1" step="0.02"></label>
+      <button id="analyse" disabled>Analyse page</button>
+    </div>
+    <div id="msg" class="status busy">Load a photo of a handwritten page. Dark pen, reasonably even light.</div>
+  </div>
+
+  <div class="split">
+    <div class="card">
+      <strong>Detected structure</strong>
+      <div class="legend">
+        <span><span class="swatch" style="background:#0F766E"></span>line</span>
+        <span><span class="swatch" style="background:#D97706"></span>word</span>
+        <span><span class="swatch" style="background:#DC2626"></span>letter</span>
+        <span><span class="swatch" style="background:#2563EB"></span>baseline</span>
+      </div>
+      <div id="stage"></div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="row" style="justify-content:space-between; align-items:baseline">
+          <strong>What does it say?</strong>
+          <button id="readIt" class="ghost" style="padding:7px 12px" disabled>Read it for me</button>
+        </div>
+        <p class="muted" style="margin:6px 0 8px">One line here per line on the page. Only words where the letter
+        count matches the ink are used — the rest are skipped, and skipping is fine.</p>
+        <div id="ocrMsg"></div>
+        <textarea id="transcript" spellcheck="false" placeholder="type the page, one line per line"></textarea>
+        <div class="row" style="margin-top:10px">
+          <button id="build" disabled>Build style</button>
+          <button id="download" class="ghost" disabled>Download style</button>
+        </div>
+        <div id="buildMsg"></div>
+      </div>
+
+      <div class="card" id="resultCard" style="display:none">
+        <strong>Extracted</strong>
+        <div class="glyphs" id="glyphs"></div>
+        <table id="tally"><thead><tr><th>Word</th><th>Used</th></tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { redChannel, luminance } from '../src/capture.js';
+import { analysePage, alignTranscript, lineMetrics } from '../src/page.js';
+import { createStyle, addVariant, makeVariant, styleToJSON, incompleteGlyphs, variantMask } from '../src/store.js';
+import { maskToPath } from '../src/trace.js';
+import { transcribe, checkLineCount } from '../src/ocr.js';
+import { ocrConfig, ocrAvailable } from '../config.js';
+
+const $ = id => document.getElementById(id);
+const msg = (t, k = 'busy') => { const m = $('msg'); m.className = 'status ' + k; m.textContent = t; };
+const yieldUI = () => new Promise(r => setTimeout(r, 16));
+
+let scan = null, page = null, style = null, sourceFile = null;
+
+const ocrNote = (t, k = 'busy') =>
+  $('ocrMsg').innerHTML = `<div class="status ${k}" style="margin:0 0 8px">${esc(t)}</div>`;
+
+/* ---------- transcription ---------- */
+
+$('readIt').addEventListener('click', async () => {
+  if (!sourceFile || !page) return;
+  const btn = $('readIt');
+  btn.disabled = true;
+  const was = btn.textContent;
+  try {
+    const out = await transcribe(sourceFile, ocrConfig(), {
+      onProgress: s => { btn.textContent = s + '…'; ocrNote(s + '…'); }
+    });
+    $('transcript').value = out.text;
+
+    /* Alignment pairs transcript line N with ink line N. If the counts
+       disagree every later line is out of step and the page yields nothing,
+       so say so plainly rather than letting it fail silently downstream. */
+    const check = checkLineCount(out.text, page.stats.lines);
+    if (check.ok) {
+      ocrNote(`Read by ${out.provider}. ${check.got} lines, matching the page. Check it, fix anything wrong, then build.`, 'ok');
+    } else {
+      ocrNote(check.hint + ' Fix the line breaks before building.', 'warn');
+    }
+  } catch (err) {
+    ocrNote(err.message, 'bad');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = was;
+  }
+});
+
+$('file').addEventListener('change', async e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  msg('Reading ' + f.name + '…');
+  await yieldUI();
+  try {
+    const bmp = await createImageBitmap(f);
+    /* Cap the working size. A 12MP phone photo is tens of millions of pixels
+       and every pass here walks all of them; ~1600px on the long edge keeps a
+       letter comfortably above 100px, which is more than the tracer needs. */
+    const scale = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+    const w = Math.round(bmp.width * scale), h = Math.round(bmp.height * scale);
+    const c = new OffscreenCanvas(w, h);
+    const ctx = c.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(bmp, 0, 0, w, h);
+    const img = ctx.getImageData(0, 0, w, h);
+    /* Luminance, not the red channel: there are no blue guides to drop here,
+       and luminance keeps a blue ballpoint as dark as a black one. */
+    scan = { gray: luminance(img), w, h, bmp, scale };
+    sourceFile = f;
+    msg(`Loaded ${bmp.width}x${bmp.height}, working at ${w}x${h}. Press Analyse.`, 'ok');
+    $('analyse').disabled = false;
+  } catch (err) {
+    msg('Could not read that image: ' + err.message, 'bad');
+  }
+});
+
+$('analyse').addEventListener('click', async () => {
+  msg('Deskewing and segmenting…');
+  await yieldUI();
+  try {
+    page = analysePage(scan.gray, scan.w, scan.h, {
+      minArea: +$('minArea').value || 14,
+      gapFrac: +$('gapFrac').value || 0.28
+    });
+  } catch (err) {
+    msg('Analysis failed: ' + err.message, 'bad');
+    return;
+  }
+  draw();
+  const s = page.stats;
+  const weak = page.lines.filter(l => { const m = lineMetrics(l); return !m || !m.confident; }).length;
+  const avgWords = s.lines ? s.words / s.lines : 0;
+
+  msg(
+    `${s.lines} lines, ${s.words} words, ${s.letters} letter shapes. ` +
+    `Skew corrected ${page.skew.toFixed(2)}°.` +
+    (s.cropped ? ' Cropped to the paper.' : '') +
+    (s.curlCorrected ? ` Straightened ${s.curlPx}px of page curl.` : '') +
+    (s.rulesRemoved ? ` Removed ${s.rulesRemoved} printed rule(s).` : '') +
+    (weak ? ` ${weak} line(s) had too few plain letters to place a baseline confidently.` : ''),
+    weak ? 'warn' : 'ok'
+  );
+
+  /* A page that comes back as a couple of huge "words" means segmentation
+     failed, not that the page is odd. Say so, rather than letting the user
+     type a whole transcript against a page that cannot use it. */
+  if (s.lines > 0 && avgWords < 1.6 && s.letters > 20) {
+    ocrNote(
+      `Only ${s.words} word(s) were found across ${s.lines} line(s), which is too few — ` +
+      `word splitting has failed on this page. Typing the transcript will not help until it is fixed. ` +
+      `Try a photo with more even lighting, or raise the Speck floor if the paper is textured.`,
+      'bad'
+    );
+  }
+  $('transcript').placeholder = Array.from({ length: Math.min(s.lines, 6) }, (_, i) => 'line ' + (i + 1)).join('\n');
+  $('build').disabled = false;
+
+  /* Transcription is a convenience, never a requirement. When it is not
+     configured the tool still works end to end by typing, so say that
+     instead of showing a dead button. */
+  if (ocrAvailable()) {
+    $('readIt').disabled = false;
+    $('readIt').title = 'Have a vision model transcribe the page, then check it';
+  } else {
+    $('readIt').disabled = true;
+    $('readIt').title = 'Not configured — see hand/config.js';
+    ocrNote('Automatic reading is not set up, so type the page below. See hand/config.js to enable it.', 'busy');
+  }
+});
+
+function draw() {
+  const stage = $('stage');
+  stage.textContent = '';
+  const maxW = 760;
+  const s = Math.min(1, maxW / scan.w);
+  const cw = Math.round(scan.w * s), ch = Math.round(scan.h * s);
+  const cv = document.createElement('canvas');
+  cv.width = cw; cv.height = ch;
+  const ctx = cv.getContext('2d');
+
+  /* Show the DESKEWED binary, not the original photo: what the segmenter
+     actually worked on is what the user needs to see when a box looks wrong. */
+  const img = ctx.createImageData(scan.w, scan.h);
+  for (let i = 0; i < page.bin.length; i++) {
+    const v = page.bin[i] ? 20 : 255;
+    img.data[i * 4] = img.data[i * 4 + 1] = img.data[i * 4 + 2] = v;
+    img.data[i * 4 + 3] = 255;
+  }
+  const tmp = new OffscreenCanvas(scan.w, scan.h);
+  tmp.getContext('2d').putImageData(img, 0, 0);
+  ctx.drawImage(tmp, 0, 0, cw, ch);
+
+  ctx.lineWidth = 1;
+  for (const line of page.lines) {
+    ctx.strokeStyle = 'rgba(15,118,110,.55)';
+    ctx.strokeRect(1, line.top * s, cw - 2, (line.bottom - line.top + 1) * s);
+
+    const m = lineMetrics(line);
+    if (m) {
+      ctx.strokeStyle = 'rgba(37,99,235,.75)';
+      ctx.beginPath();
+      ctx.moveTo(0, m.baseline * s); ctx.lineTo(cw, m.baseline * s); ctx.stroke();
+      ctx.strokeStyle = 'rgba(37,99,235,.35)';
+      ctx.beginPath();
+      ctx.moveTo(0, m.xheight * s); ctx.lineTo(cw, m.xheight * s); ctx.stroke();
+    }
+
+    for (const word of line.words) {
+      ctx.strokeStyle = 'rgba(217,119,6,.75)';
+      ctx.strokeRect(word.left * s, word.top * s, (word.right - word.left + 1) * s, (word.bottom - word.top + 1) * s);
+      ctx.strokeStyle = 'rgba(220,38,38,.6)';
+      for (const L of word.letters) {
+        ctx.strokeRect(L.left * s, L.top * s, L.w * s, L.h * s);
+      }
+    }
+  }
+  stage.appendChild(cv);
+}
+
+/* ---------- build the style ---------- */
+
+$('build').addEventListener('click', async () => {
+  const text = $('transcript').value;
+  if (!text.trim()) { $('buildMsg').innerHTML = '<div class="status warn">Type what the page says first.</div>'; return; }
+
+  const align = alignTranscript(page, text);
+  style = createStyle('From a page', { id: 'page-' + Date.now().toString(36) });
+
+  const metrics = new Map();
+  page.lines.forEach((l, i) => metrics.set(i, lineMetrics(l)));
+
+  const rows = [];
+  let added = 0, dropped = 0;
+
+  for (const r of align.results) {
+    if (!r.pairs) { rows.push({ text: r.text || '(no transcript)', note: r.reason, ok: false }); continue; }
+    const m = metrics.get(r.line);
+    if (!m || !m.confident) { rows.push({ text: r.text, note: 'baseline not confident on this line', ok: false }); dropped++; continue; }
+    let used = 0;
+    for (const { ch, letter } of r.pairs) {
+      try {
+        addVariant(style, ch, makeVariant({
+          mask: letter.mask, w: letter.w, h: letter.h,
+          baseline: m.baseline - letter.top,
+          xheight: m.xheight - letter.top
+        }));
+        added++; used++;
+      } catch (e) { dropped++; }
+    }
+    rows.push({ text: r.text, note: used + ' letters', ok: true });
+  }
+
+  const tbody = document.querySelector('#tally tbody');
+  tbody.textContent = '';
+  for (const r of rows.slice(0, 60)) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${esc(r.text)}</td><td class="${r.ok ? '' : 'skip'}">${esc(r.note)}</td>`;
+    tbody.appendChild(tr);
+  }
+
+  const chars = Object.keys(style.glyphs).length;
+  const short = incompleteGlyphs(style, 3);
+  $('resultCard').style.display = '';
+  $('buildMsg').innerHTML =
+    `<div class="status ${chars ? 'ok' : 'bad'}">` +
+    `${align.matched} word(s) matched, ${align.skipped} skipped. ` +
+    `<b>${added} samples across ${chars} characters.</b>` +
+    (chars ? ` ${short.length} character(s) still have fewer than 3 samples — another page would fill them in.` : ' Nothing usable was extracted.') +
+    `</div>`;
+
+  const gl = $('glyphs');
+  gl.textContent = '';
+  for (const ch of Object.keys(style.glyphs).sort()) {
+    const v = style.glyphs[ch][0];
+    const d = maskToPath(variantMask(v), v.w, v.h);
+    const fig = document.createElement('figure');
+    fig.innerHTML = `<svg viewBox="0 0 ${v.w} ${v.h}"><path d="${d}" fill="#101425"/></svg>` +
+      `<figcaption>${esc(ch)} ×${style.glyphs[ch].length}</figcaption>`;
+    gl.appendChild(fig);
+  }
+  $('download').disabled = chars === 0;
+});
+
+$('download').addEventListener('click', () => {
+  const blob = new Blob([styleToJSON(style)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = style.id + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+</script>

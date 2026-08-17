@@ -90,14 +90,10 @@ function db() {
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 	try { $pdo->exec("ALTER TABLE transactions ADD COLUMN credits INT NULL, ADD COLUMN currency VARCHAR(8) NULL"); } catch (Exception $e) { /* columns already exist */ }
 	try { $pdo->exec("ALTER TABLE transactions ADD COLUMN tool VARCHAR(40) NULL"); } catch (Exception $e) { /* already exists */ }
-	// RENAME: the question-paper app was internally '7q' and is now '7marks'
-	// everywhere. Carry existing wallets, purchases and usage over to the new
-	// key so nobody loses credits or a Pro plan. IGNORE skips the rare case
-	// where a '7marks' row already exists (the '7q' leftover is then unused).
-	try { $pdo->exec("UPDATE IGNORE tool_credits SET tool = '7marks' WHERE tool = '7q'"); } catch (Exception $e) {}
-	try { $pdo->exec("UPDATE transactions  SET tool = '7marks' WHERE tool = '7q'"); } catch (Exception $e) {}
-	try { $pdo->exec("UPDATE usage_log     SET product = '7marks' WHERE product = '7q'"); } catch (Exception $e) {}
-	try { $pdo->exec("UPDATE IGNORE entitlements SET tool = '7marks' WHERE tool = '7q'"); } catch (Exception $e) {}
+	// Which product page the credits were bought from. grant_from_tx() needs this
+	// to top up the RIGHT per-tool wallet — without it a 7Solve purchase would
+	// land in the legacy global balance and the student would see 0 credits.
+	try { $pdo->exec("ALTER TABLE transactions ADD COLUMN product VARCHAR(40) NULL"); } catch (Exception $e) { /* already exists */ }
 	// Per-tool unlocks (entitlements). One row per (user, tool); NULL expiry = lifetime.
 	$pdo->exec("CREATE TABLE IF NOT EXISTS entitlements (
 		id INT AUTO_INCREMENT PRIMARY KEY,
@@ -117,6 +113,28 @@ function db() {
 		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		INDEX idx_email_purpose (email, purpose)
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+	/* RENAME: the question-paper app was internally '7q' and is now '7marks'.
+	   Carry existing wallets, purchases and usage across so nobody loses credits
+	   or a Pro plan. This runs AFTER every table exists, is skipped once there is
+	   nothing left to move, and catches Throwable — a migration must never be
+	   able to take the whole hub down with a 500. */
+	try {
+		$need = $pdo->query("SELECT 1 FROM tool_credits WHERE tool = '7q' LIMIT 1")->fetchColumn();
+		if ($need) {
+			$pdo->exec("UPDATE IGNORE tool_credits SET tool = '7marks' WHERE tool = '7q'");
+			$pdo->exec("DELETE FROM tool_credits WHERE tool = '7q'");   // leftovers IGNORE skipped
+		}
+		foreach (array(
+			"UPDATE transactions SET tool    = '7marks' WHERE tool    = '7q'",
+			"UPDATE transactions SET product = '7marks' WHERE product = '7q'",
+			"UPDATE usage_log    SET product = '7marks' WHERE product = '7q'",
+			"UPDATE IGNORE entitlements SET tool = '7marks' WHERE tool = '7q'",
+		) as $sql) {
+			try { $pdo->exec($sql); } catch (Throwable $e) { /* column/table may not exist yet */ }
+		}
+	} catch (Throwable $e) { /* never block sign-in over a migration */ }
+
 	return $pdo;
 }
 

@@ -58,6 +58,16 @@ import {
   redChannel, luminance, otsuThreshold, binarize, findFiducials,
   solveHomography, applyHomography, quadIsSane, warpGray, cropCell, despeckle
 } from './src/capture.js';
+import { makeRng, hashSeed, makeDrift, makeVariantPicker, DEFAULT_JITTER } from './src/realism.js';
+import { layout, styleScale, DEFAULT_PAGE } from './src/layout.js';
+import { buildGlyphDefs, pageSVG, variantPath } from './src/render.js';
+import { buildPdf, glyphMatrix, variantPdfOps } from './src/pdf.js';
+import {
+  estimateSkew, rotateGray, findLines, findWords, findLetters,
+  analysePage, lineMetrics, alignTranscript, detectRuling, removeRuling,
+  findPageBounds, cropGray, dropOversized, estimateCurl, applyCurl
+} from './src/page.js';
+import { transcribe, prepareImage, checkLineCount, VISION_PROVIDERS } from './src/ocr.js';
 
 /* ---------- tiny assertion harness ---------- */
 const out = document.getElementById('visual');
@@ -1027,6 +1037,1083 @@ test('an extracted glyph sits on the baseline it was drawn against', () => {
   ok(v.baseline <= v.h + 4, `baseline (${v.baseline}) fell below the glyph (h=${v.h})`);
 });
 
+/* ================= T6: realism ================= */
+section('T6 — seeded randomness');
+
+test('the same seed produces the same sequence, always', () => {
+  const a = makeRng(42), b = makeRng(42);
+  for (let i = 0; i < 50; i++) eq(a(), b(), 'divergence at draw ' + i);
+});
+
+test('different seeds produce different sequences', () => {
+  const a = makeRng(1), b = makeRng(2);
+  let same = 0;
+  for (let i = 0; i < 50; i++) if (a() === b()) same++;
+  ok(same < 3, 'seeds 1 and 2 produced ' + same + ' identical draws');
+});
+
+test('drift is CORRELATED, not per-letter noise — the whole point', () => {
+  const rand = makeRng(7);
+  const d = makeDrift(rand, { smoothness: 0.9 });
+  const seq = [];
+  for (let i = 0; i < 4000; i++) seq.push(d.step().slant);
+
+  /* Lag-1 autocorrelation. Independent noise sits near 0; a hand that drifts
+     sits high. If this ever drops, the realism layer has silently regressed
+     into the jitter texture it exists to avoid. */
+  const mean = seq.reduce((a, b) => a + b, 0) / seq.length;
+  let num = 0, den = 0;
+  for (let i = 1; i < seq.length; i++) num += (seq[i] - mean) * (seq[i - 1] - mean);
+  for (let i = 0; i < seq.length; i++) den += (seq[i] - mean) ** 2;
+  const acf = num / den;
+  ok(acf > 0.75, 'lag-1 autocorrelation was ' + acf.toFixed(3) + ', expected > 0.75 (drift, not noise)');
+});
+
+test('independent noise would FAIL that same test — proving it measures something', () => {
+  const rand = makeRng(7);
+  const seq = [];
+  for (let i = 0; i < 4000; i++) seq.push(rand() * 2 - 1);
+  const mean = seq.reduce((a, b) => a + b, 0) / seq.length;
+  let num = 0, den = 0;
+  for (let i = 1; i < seq.length; i++) num += (seq[i] - mean) * (seq[i - 1] - mean);
+  for (let i = 0; i < seq.length; i++) den += (seq[i] - mean) ** 2;
+  ok(Math.abs(num / den) < 0.1, 'independent noise should have near-zero autocorrelation');
+});
+
+test('drift is hard-bounded — one letter can never fly off the line', () => {
+  const d = makeDrift(makeRng(3), { smoothness: 0.92 });
+  let max = 0;
+  for (let i = 0; i < 40000; i++) {
+    const s = d.step();
+    max = Math.max(max, Math.abs(s.size), Math.abs(s.slant), Math.abs(s.base));
+  }
+  ok(max <= d.clampAt + 1e-9, 'drift reached ' + max.toFixed(2) + ' sigma, clamp is ' + d.clampAt);
+  ok(max > 1.5, 'drift only reached ' + max.toFixed(2) + ' sigma — that is too tame to look human');
+});
+
+test('a new line partly resets the hand but keeps fatigue', () => {
+  const d = makeDrift(makeRng(11), { smoothness: 0.95 });
+  for (let i = 0; i < 500; i++) d.step();
+  const before = d.peek();
+  d.newLine();
+  const after = d.peek();
+  eq(after.base, 0, 'baseline resets fully at the margin');
+  ok(Math.abs(after.slant) < Math.abs(before.slant) + 1e-9, 'slant should relax, not grow');
+});
+
+test('the same variant is never used twice in a row for one character', () => {
+  const pick = makeVariantPicker(makeRng(5));
+  let prev = -1;
+  for (let i = 0; i < 500; i++) {
+    const v = pick('l', 5);
+    ok(v !== prev, 'repeated variant ' + v + ' at draw ' + i + ' — "ll" would show two identical letters');
+    ok(v >= 0 && v < 5, 'variant index out of range');
+    prev = v;
+  }
+});
+
+test('a single-variant character does not break the picker', () => {
+  const pick = makeVariantPicker(makeRng(5));
+  for (let i = 0; i < 10; i++) eq(pick('q', 1), 0);
+});
+
+/* ================= T5: layout ================= */
+section('T5 — layout');
+
+/* A style built from a real typeface, through the same makeVariant() path a
+   scan takes. Not handwriting, but the right shape of data for layout. */
+function fontStyle(chars = 'abcdefghijklmnopqrstuvwxyz ., ', variants = 3) {
+  const style = createStyle('test font style', { id: 'tf' });
+  const S = 90, cv = document.createElement('canvas');
+  cv.width = S; cv.height = S;
+  const ctx = cv.getContext('2d', { willReadFrequently: true });
+  const faces = ['46px Georgia, serif', '44px "Times New Roman", serif', '48px Georgia, serif'];
+  for (const ch of new Set(chars.replace(/ /g, ''))) {
+    for (let k = 0; k < variants; k++) {
+      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, S, S);
+      ctx.fillStyle = '#000'; ctx.font = faces[k % faces.length];
+      ctx.textBaseline = 'alphabetic';
+      const m = ctx.measureText(ch);
+      ctx.fillText(ch, (S - m.width) / 2, 62);
+      const d = ctx.getImageData(0, 0, S, S).data;
+      const mask = new Uint8Array(S * S);
+      for (let i = 0, p = 0; p < mask.length; i += 4, p++) mask[p] = d[i] < 128 ? 1 : 0;
+      try { addVariant(style, ch, makeVariant({ mask, w: S, h: S, baseline: 62, xheight: 62 - 22 })); }
+      catch (e) { /* glyph the face cannot draw */ }
+    }
+  }
+  return style;
+}
+
+const TS = fontStyle();
+const LOREM = 'the quick brown fox jumps over the lazy dog and then does it again because that is what foxes do on a long afternoon in the sun. ';
+
+test('styleScale uses the median x-height and rejects an empty style', () => {
+  const s = styleScale(TS, 2.6);
+  ok(s > 0 && Number.isFinite(s), 'scale was ' + s);
+  throws(() => styleScale(createStyle('empty'), 2.6), /no usable x-height/);
+});
+
+test('lays text out into pages and glyphs', () => {
+  const doc = layout(LOREM.repeat(6), TS, { seed: 1 });
+  ok(doc.stats.pages >= 1, 'expected at least one page');
+  ok(doc.stats.glyphs > 100, 'expected plenty of glyphs, got ' + doc.stats.glyphs);
+  eq(doc.missing.length, 0, 'the test style covers this text');
+});
+
+test('the same seed reproduces the page exactly', () => {
+  const a = layout(LOREM, TS, { seed: 99 });
+  const b = layout(LOREM, TS, { seed: 99 });
+  const flat = d => JSON.stringify(d.pages.map(p => p.lines.map(l => l.glyphs.map(g => [g.ch, g.vi, r3(g.ax), r3(g.ay), r3(g.s), r3(g.rot)]))));
+  eq(flat(a), flat(b), 'identical seeds must give identical pages, or the preview will not match the print');
+});
+function r3(v) { return Math.round(v * 1000) / 1000; }
+
+test('a different seed gives a visibly different page', () => {
+  const a = layout(LOREM, TS, { seed: 1 });
+  const b = layout(LOREM, TS, { seed: 2 });
+  const ga = a.pages[0].lines.flatMap(l => l.glyphs);
+  const gb = b.pages[0].lines.flatMap(l => l.glyphs);
+  let diff = 0;
+  for (let i = 0; i < Math.min(ga.length, gb.length); i++) {
+    if (ga[i].vi !== gb[i].vi || Math.abs(ga[i].rot - gb[i].rot) > 0.01) diff++;
+  }
+  ok(diff > ga.length * 0.3, 'only ' + diff + ' of ' + ga.length + ' glyphs differed between seeds');
+});
+
+test('no glyph is placed past the right margin', () => {
+  const P = DEFAULT_PAGE;
+  const doc = layout(LOREM.repeat(4), TS, { seed: 4 });
+  const limit = P.pageW - P.marginRight;
+  let worst = 0;
+  for (const page of doc.pages) {
+    for (const line of page.lines) {
+      for (const g of line.glyphs) {
+        const v = TS.glyphs[g.ch][g.vi];
+        worst = Math.max(worst, g.ax + v.w * g.s);
+      }
+    }
+  }
+  /* Line-end compression is allowed to run a little long, but only a little. */
+  ok(worst <= limit + (P.pageW - P.marginLeft - P.marginRight) * 0.09,
+    'text ran to ' + worst.toFixed(1) + 'mm, right margin is at ' + limit + 'mm');
+});
+
+test('baselines sit on the ruling and glyphs stay near their line', () => {
+  const doc = layout(LOREM.repeat(3), TS, { seed: 6, linePitch: 8.5 });
+  const P = doc.settings;
+  /* The drift is clamped at 3 sigma, so the worst a glyph may stray is
+     3 x baselineMm. Anything past that is a bug, not a flourish. */
+  const tolerance = DEFAULT_JITTER.baselineMm * 3 + 1e-9;
+  let worst = 0;
+  for (const page of doc.pages) {
+    for (const line of page.lines) {
+      const n = (line.baselineY - P.marginTop) / P.linePitch;
+      near(n, Math.round(n), 1e-9, 'a line baseline fell off the ruling');
+      for (const g of line.glyphs) worst = Math.max(worst, Math.abs(g.ay - line.baselineY));
+    }
+  }
+  ok(worst <= tolerance, `a glyph strayed ${worst.toFixed(3)}mm from its line, limit is ${tolerance.toFixed(3)}mm`);
+  ok(worst > 0.05, 'no glyph moved at all — the baseline wobble is not being applied');
+});
+
+test('pages break at the line count the page can hold', () => {
+  const doc = layout(LOREM.repeat(30), TS, { seed: 8 });
+  ok(doc.stats.pages > 1, 'this much text should need more than one page, got ' + doc.stats.pages);
+  for (const page of doc.pages.slice(0, -1)) {
+    eq(page.lines.length, doc.stats.linesPerPage, 'a full page should be full');
+  }
+  const last = doc.pages[doc.pages.length - 1];
+  ok(last.lines.length <= doc.stats.linesPerPage, 'the last page must not overflow');
+});
+
+test('characters the style lacks are reported and skipped, never thrown', () => {
+  const doc = layout('abc कख xyz', TS, { seed: 1 });
+  ok(doc.missing.length > 0, 'Devanagari should be reported missing');
+  ok(doc.stats.glyphs > 0, 'the renderable characters should still lay out');
+  const chars = doc.pages[0].lines.flatMap(l => l.glyphs).map(g => g.ch).join('');
+  ok(!/[ऀ-ॿ]/.test(chars), 'a missing character leaked into the output');
+});
+
+test('empty and whitespace-only text produce no glyphs and no crash', () => {
+  eq(layout('', TS, { seed: 1 }).stats.glyphs, 0);
+  eq(layout('   \n\n  ', TS, { seed: 1 }).stats.glyphs, 0);
+});
+
+test('a word longer than the line does not loop forever', () => {
+  const doc = layout('a'.repeat(400), TS, { seed: 1 });
+  ok(doc.stats.glyphs === 400, 'all 400 letters should be placed, got ' + doc.stats.glyphs);
+  ok(doc.stats.pages < 20, 'runaway pagination: ' + doc.stats.pages + ' pages');
+});
+
+test('writing size actually changes the page count', () => {
+  const small = layout(LOREM.repeat(6), TS, { seed: 3, xHeightMm: 2.0 });
+  const big = layout(LOREM.repeat(6), TS, { seed: 3, xHeightMm: 3.6 });
+  ok(big.stats.pages >= small.stats.pages, 'bigger writing should need at least as many pages');
+  ok(big.scale > small.scale, 'scale should track the requested x-height');
+});
+
+/* ================= T7: render ================= */
+section('T7 — render');
+
+test('glyph shapes are defined once and reused', () => {
+  const doc = layout(LOREM.repeat(6), TS, { seed: 2 });
+  const defs = buildGlyphDefs(doc, TS);
+  ok(defs.count <= 26 * 3 + 4, 'more definitions (' + defs.count + ') than the style has variants');
+  ok(doc.stats.glyphs > defs.count * 5,
+    `${doc.stats.glyphs} placements should reuse ${defs.count} shapes — that reuse is what keeps the PDF small`);
+});
+
+test('a page emits one <use> per glyph and no NaN', () => {
+  const doc = layout(LOREM, TS, { seed: 2 });
+  const defs = buildGlyphDefs(doc, TS);
+  const svg = pageSVG(doc, TS, 0, defs);
+  const uses = (svg.match(/<use /g) || []).length;
+  eq(uses, doc.pages[0].lines.flatMap(l => l.glyphs).length, 'every glyph must be emitted');
+  ok(!/NaN|Infinity|undefined/.test(svg), 'non-finite value reached the SVG');
+  ok(svg.startsWith('<svg') && svg.endsWith('</svg>'));
+});
+
+test('the transform puts each baseline exactly on its line', () => {
+  const doc = layout('handwriting', TS, { seed: 12, jitter: { baselineMm: 0, slantDeg: 0 } });
+  const defs = buildGlyphDefs(doc, TS);
+  const svg = pageSVG(doc, TS, 0, defs);
+  const host = document.createElement('div');
+  host.style.cssText = 'position:absolute;left:-9999px';
+  host.innerHTML = svg;
+  document.body.appendChild(host);
+  const el = host.querySelector('svg');
+  const line = doc.pages[0].lines.find(l => l.glyphs.length);
+  const uses = [...el.querySelectorAll('use')];
+  /* Walk the transform the browser actually resolved and check where the
+     glyph's own baseline point ended up. */
+  const g = line.glyphs[0];
+  const v = TS.glyphs[g.ch][g.vi];
+  const pt = el.createSVGPoint();
+  pt.x = 0; pt.y = v.baseline;
+  /* The element's OWN transform, in viewBox units. getCTM() would fold in the
+     viewport scale as well (210mm across 794px is a 3.78x factor) and the
+     comparison against millimetre coordinates would be meaningless. */
+  const m = uses[0].transform.baseVal.consolidate().matrix;
+  const out = pt.matrixTransform(m);
+  host.remove();
+  near(out.y, g.ay, 0.05, 'glyph baseline landed off its line');
+  near(out.x, g.ax, 0.05, 'glyph left edge landed off its anchor');
+});
+
+test('ruled background draws one line per available line', () => {
+  const doc = layout('one line', TS, { seed: 1, ruled: true });
+  const svg = pageSVG(doc, TS, 0, buildGlyphDefs(doc, TS));
+  const rules = (svg.match(/<line /g) || []).length;
+  eq(rules, doc.stats.linesPerPage + 1, 'expected one rule per line plus the margin rule');
+});
+
+test('plain paper draws no ruling', () => {
+  const doc = layout('one line', TS, { seed: 1, ruled: false, marginRule: false });
+  const svg = pageSVG(doc, TS, 0, buildGlyphDefs(doc, TS));
+  eq((svg.match(/<line /g) || []).length, 0);
+});
+
+/* ================= T8: PDF export ================= */
+section('T8 — PDF export');
+
+/* Async tests need their own runner: the harness above is synchronous. */
+const pending = [];
+function atest(name, fn) { pending.push({ name, fn }); }
+
+atest('produces a structurally valid PDF', async () => {
+  const doc = layout(LOREM, TS, { seed: 1 });
+  const out = await buildPdf(doc, TS, { compress: false });
+  const text = await out.blob.text();
+  ok(text.startsWith('%PDF-1.7'), 'missing PDF header');
+  ok(text.trimEnd().endsWith('%%EOF'), 'missing EOF marker');
+  ok(/\/Type\s*\/Catalog/.test(text), 'no catalog');
+  ok(/\/Type\s*\/Pages/.test(text), 'no page tree');
+  ok(/\/Type\s*\/Page[^s]/.test(text), 'no page object');
+  ok(/\btrailer\b/.test(text) && /\bstartxref\b/.test(text), 'no trailer');
+});
+
+atest('the xref offsets actually point at their objects', async () => {
+  /* A PDF with a wrong xref opens in some readers and not others. This walks
+     every entry and checks the bytes at that offset really begin that object,
+     which is the one structural thing a reader cannot recover from. */
+  const doc = layout(LOREM, TS, { seed: 2 });
+  const out = await buildPdf(doc, TS, { compress: false });
+  const text = await out.blob.text();
+
+  const startxref = +text.slice(text.lastIndexOf('startxref') + 9).trim().split(/\s/)[0];
+  ok(Number.isFinite(startxref) && startxref > 0 && startxref < text.length, 'startxref out of range');
+  ok(text.startsWith('xref', startxref), 'startxref does not point at the xref table');
+
+  const header = text.slice(startxref).split('\n');
+  const [first, count] = header[1].split(' ').map(Number);
+  eq(first, 0, 'xref should start at object 0');
+
+  let checked = 0;
+  for (let i = 1; i < count; i++) {
+    const entry = header[1 + i + 1];
+    const off = +entry.slice(0, 10);
+    ok(text.startsWith(`${i} 0 obj`, off),
+      `xref entry ${i} points at offset ${off}, which reads "${text.slice(off, off + 18)}"`);
+    checked++;
+  }
+  ok(checked > 3, 'expected several objects to check, saw ' + checked);
+});
+
+atest('every glyph shape is embedded once and referenced many times', async () => {
+  const doc = layout(LOREM.repeat(8), TS, { seed: 3 });
+  const out = await buildPdf(doc, TS, { compress: false });
+  const text = await out.blob.text();
+  const forms = (text.match(/\/Subtype\s*\/Form/g) || []).length;
+  const draws = (text.match(/\/G\d+ Do/g) || []).length;
+  eq(forms, out.shapes, 'one Form XObject per distinct shape');
+  eq(draws, out.placements, 'one draw call per letter on the page');
+  ok(draws > forms * 8,
+    `${draws} placements should reuse ${forms} shapes — that reuse is what keeps the file small`);
+});
+
+atest('reuse keeps the file far smaller than inlining every glyph would', async () => {
+  const doc = layout(LOREM.repeat(8), TS, { seed: 4 });
+  const out = await buildPdf(doc, TS, { compress: false });
+  /* Rough cost of inlining: each placement would carry its own path. Compare
+     against the size of the embedded shapes times the number of placements. */
+  const text = await out.blob.text();
+  const formBytes = (text.match(/\/Subtype \/Form[\s\S]*?endobj/g) || [])
+    .reduce((a, s) => a + s.length, 0);
+  const naive = (formBytes / Math.max(1, out.shapes)) * out.placements;
+  ok(out.bytes < naive * 0.3,
+    `export is ${(out.bytes / 1024) | 0}KB; inlining would be roughly ${(naive / 1024) | 0}KB`);
+});
+
+atest('compression shrinks the file and keeps it valid', async () => {
+  const doc = layout(LOREM.repeat(4), TS, { seed: 5 });
+  const plain = await buildPdf(doc, TS, { compress: false });
+  const zipped = await buildPdf(doc, TS, { compress: true });
+  if (typeof CompressionStream === 'undefined') {
+    eq(zipped.bytes, plain.bytes, 'no CompressionStream here, so sizes should match');
+    return;
+  }
+  ok(zipped.bytes < plain.bytes * 0.8,
+    `compressed ${(zipped.bytes / 1024) | 0}KB vs plain ${(plain.bytes / 1024) | 0}KB`);
+  const t = await zipped.blob.text();
+  ok(t.startsWith('%PDF-1.7') && t.trimEnd().endsWith('%%EOF'), 'compressed file is malformed');
+  ok(/\/Filter \/FlateDecode/.test(t), 'streams should be marked FlateDecode');
+});
+
+atest('the glyph matrix puts the baseline exactly where SVG puts it', async () => {
+  /* The one place the two emitters could silently disagree: SVG nests four
+     transforms, PDF must flatten them into one matrix by hand. If this drifts,
+     the print differs from the preview it was approved from. */
+  const doc = layout('handwriting sample', TS, { seed: 12 });
+  const g = doc.pages[0].lines.find(l => l.glyphs.length).glyphs[0];
+  const v = TS.glyphs[g.ch][g.vi];
+  const m = glyphMatrix(g, v.baseline);
+
+  /* Apply the flattened matrix to the glyph's own baseline-left point. */
+  const px = 0, py = v.baseline;
+  const x = m[0] * px + m[2] * py + m[4];
+  const y = m[1] * px + m[3] * py + m[5];
+  near(x, g.ax, 1e-6, 'PDF matrix put the glyph left edge off its anchor');
+  near(y, g.ay, 1e-6, 'PDF matrix put the baseline off its line');
+});
+
+atest('a rotated glyph pivots about the baseline, same as SVG', async () => {
+  const g = { ch: 'a', vi: 0, ax: 40, ay: 100, s: 0.12, rot: 6 };
+  const m = glyphMatrix(g, 250);
+  const x = m[2] * 250 + m[4];
+  const y = m[3] * 250 + m[5];
+  near(x, g.ax, 1e-6, 'rotation moved the anchor');
+  near(y, g.ay, 1e-6, 'rotation moved the anchor');
+});
+
+atest('a non-finite coordinate is refused, not written into the file', async () => {
+  const doc = layout('abc', TS, { seed: 1 });
+  const line = doc.pages[0].lines.find(l => l.glyphs.length);
+  line.glyphs[0].ax = NaN;
+  let threw = null;
+  try { await buildPdf(doc, TS, { compress: false }); } catch (e) { threw = e; }
+  ok(threw && /non-finite/.test(threw.message),
+    'a NaN coordinate must throw, not produce a file that opens blank in some readers');
+});
+
+atest('a multi-page document emits one page object per page', async () => {
+  const doc = layout(LOREM.repeat(30), TS, { seed: 6 });
+  ok(doc.stats.pages > 1, 'need a multi-page document for this test');
+  const out = await buildPdf(doc, TS, { compress: false });
+  const text = await out.blob.text();
+  eq((text.match(/\/Type \/Page[^s]/g) || []).length, doc.stats.pages, 'page object count');
+  eq(out.pages, doc.stats.pages);
+  const kids = text.match(/\/Kids \[([^\]]*)\]/)[1].trim().split(/\s+0 R/).filter(Boolean);
+  eq(kids.length, doc.stats.pages, 'page tree must list every page');
+});
+
+/* ================= Learning from a written page ================= */
+section('Page analysis — no template, no grid, nothing known');
+
+/**
+ * Render text as a "photographed page": a real font, rotated by a known
+ * skew, with a little noise. Not handwriting, but it has the properties that
+ * matter here — irregular word widths, ascenders, descenders, and no grid.
+ */
+function fakePage(lines, { skew = 0, size = 30, noise = 0 } = {}) {
+  const W = 900, H = 90 + lines.length * Math.round(size * 2.1);
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d', { willReadFrequently: true });
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+  ctx.translate(W / 2, H / 2); ctx.rotate(skew * Math.PI / 180); ctx.translate(-W / 2, -H / 2);
+  ctx.fillStyle = '#14213a';
+  ctx.font = size + 'px Georgia, serif';
+  ctx.textBaseline = 'alphabetic';
+  lines.forEach((t, i) => ctx.fillText(t, 60, 70 + i * Math.round(size * 2.1)));
+  const img = ctx.getImageData(0, 0, W, H);
+  const gray = luminance(img);
+  if (noise) {
+    const rnd = makeRng(9);
+    for (let i = 0; i < gray.length; i++) {
+      gray[i] = Math.max(0, Math.min(255, gray[i] + (rnd() * 2 - 1) * noise));
+    }
+  }
+  return { gray, w: W, h: H };
+}
+
+test('estimateSkew recovers a known tilt', () => {
+  for (const truth of [-3.5, 0, 2.75]) {
+    const p = fakePage(['handwriting sample text', 'second line of writing', 'third line here'], { skew: truth });
+    const bin = binarize(p.gray, otsuThreshold(p.gray));
+    const found = estimateSkew(bin, p.w, p.h);
+    near(found, truth, 0.6, `skew ${truth}° was measured as ${found}°`);
+  }
+});
+
+test('rotateGray leaves a straight page alone', () => {
+  const p = fakePage(['abc def'], { skew: 0 });
+  eq(rotateGray(p.gray, p.w, p.h, 0), p.gray, 'a zero rotation should not copy or resample');
+});
+
+test('findLines counts the lines on a page', () => {
+  const lines = ['first line of text', 'second line of text', 'third line', 'fourth line here'];
+  const p = fakePage(lines);
+  const bin = binarize(p.gray, otsuThreshold(p.gray));
+  eq(findLines(bin, p.w, p.h).length, lines.length);
+});
+
+test('findWords splits a line at the spaces, not inside words', () => {
+  const p = fakePage(['one two three four five']);
+  const bin = binarize(p.gray, otsuThreshold(p.gray));
+  const line = findLines(bin, p.w, p.h)[0];
+  eq(findWords(bin, p.w, p.h, line).length, 5);
+});
+
+test('word splitting adapts to writing size instead of using a fixed gap', () => {
+  /* The same words at two sizes must still be five words. A fixed pixel gap
+     would glue the small one together or shatter the large one. */
+  for (const size of [18, 46]) {
+    const p = fakePage(['one two three four five'], { size });
+    const bin = binarize(p.gray, otsuThreshold(p.gray));
+    const line = findLines(bin, p.w, p.h)[0];
+    eq(findWords(bin, p.w, p.h, line).length, 5, 'at size ' + size);
+  }
+});
+
+test('findLetters merges the dot of an i with its stem', () => {
+  const p = fakePage(['ii'], { size: 44 });
+  const bin = binarize(p.gray, otsuThreshold(p.gray));
+  const line = findLines(bin, p.w, p.h)[0];
+  const word = findWords(bin, p.w, p.h, line)[0];
+  eq(findLetters(bin, p.w, word).length, 2, 'two i letters, not four blobs');
+});
+
+test('findLetters drops specks below the floor', () => {
+  const p = fakePage(['no'], { size: 40 });
+  const bin = binarize(p.gray, otsuThreshold(p.gray));
+  const line = findLines(bin, p.w, p.h)[0];
+  const word = findWords(bin, p.w, p.h, line)[0];
+  /* Plant a 2px speck inside the word box. */
+  bin[(word.top + 2) * p.w + (word.left + 2)] = 1;
+  bin[(word.top + 2) * p.w + (word.left + 3)] = 1;
+  eq(findLetters(bin, p.w, word, { minArea: 12 }).length, 2, 'the speck must not become a third letter');
+});
+
+section('Page analysis — RULED notebook paper');
+
+/**
+ * A page of ruled notebook paper, which is what students actually write on.
+ * Printed rules run edge to edge, plus the red margin rule down the left.
+ * Writing sits ON the lines, so strokes cross them and descenders hang
+ * through them — exactly the case that must survive rule removal.
+ */
+function ruledPage(lines, { size = 30, pitch = 76, skew = 0, ruleGrey = 150,
+                            bow = 0, edges = false } = {}) {
+  const W = 900, H = 100 + lines.length * pitch + 60;
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d', { willReadFrequently: true });
+  ctx.fillStyle = '#fdfdf8'; ctx.fillRect(0, 0, W, H);
+
+  if (edges) {
+    /* The dark background either side of a photographed page. */
+    ctx.fillStyle = '#2b2b30';
+    ctx.fillRect(0, 0, 24, H);
+    ctx.fillRect(W - 30, 0, 30, H);
+    ctx.fillRect(0, 0, W, 14);
+  }
+
+  ctx.translate(W / 2, H / 2); ctx.rotate(skew * Math.PI / 180); ctx.translate(-W / 2, -H / 2);
+
+  /* Printed ruling. `bow` curves each rule the way page curl and perspective
+     curve them in a photograph of a bound notebook — which is the case that
+     defeated row-based detection. */
+  const ruleY = (i, x) => 60 + i * pitch + 0.5 + bow * Math.sin(Math.PI * x / W);
+  ctx.strokeStyle = `rgb(${ruleGrey},${ruleGrey + 12},${ruleGrey + 24})`;
+  ctx.lineWidth = 1.6;
+  for (let i = 0; i < lines.length + 4; i++) {
+    ctx.beginPath();
+    ctx.moveTo(20, ruleY(i, 20));
+    for (let x = 20; x <= W - 20; x += 6) ctx.lineTo(x, ruleY(i, x));
+    ctx.stroke();
+  }
+
+  /* red margin rule */
+  ctx.strokeStyle = 'rgb(190,120,130)';
+  ctx.beginPath(); ctx.moveTo(64.5, 10); ctx.lineTo(64.5, H - 10); ctx.stroke();
+
+  /* writing, sitting on the rules and following their curve */
+  ctx.fillStyle = '#16233f';
+  ctx.font = size + 'px Georgia, serif';
+  ctx.textBaseline = 'alphabetic';
+  lines.forEach((t, i) => {
+    let x = 80;
+    for (const ch of t) {
+      ctx.fillText(ch, x, ruleY(i, x));
+      x += ctx.measureText(ch).width;
+    }
+  });
+
+  return { gray: luminance(ctx.getImageData(0, 0, W, H)), w: W, h: H };
+}
+
+const RULED = ['one two three', 'nose worn menu', 'never mind me', 'pack my box now'];
+
+test('printed ruling is detected', () => {
+  const p = ruledPage(RULED);
+  const bin = binarize(p.gray, otsuThreshold(p.gray));
+  const r = detectRuling(bin, p.w, p.h);
+  ok(r.horizontalRuns >= RULED.length,
+    `found ${r.horizontalRuns} horizontal rule runs, expected at least ${RULED.length}`);
+  ok(r.verticalRuns >= 1, 'the red margin rule should be found');
+});
+
+test('CURVED ruling is detected — a photographed page, not a flat scan', () => {
+  /* The case that beat the first version. A bound notebook photographed at an
+     angle has rules that bow, so no image row contains a long run and
+     row-based detection finds almost nothing. On the real page it caught 3
+     rules out of about 30, and no amount of rotation fixes a curve. */
+  const p = ruledPage(RULED, { bow: 14, skew: -1.75 });
+  const bin = binarize(p.gray, otsuThreshold(p.gray));
+  const r = detectRuling(bin, p.w, p.h);
+  ok(r.horizontalRuns >= RULED.length,
+    `only ${r.horizontalRuns} rule runs found on a bowed page`);
+});
+
+test('blank paper has no ruling to find', () => {
+  const p = fakePage(RULED, { size: 30 });
+  const bin = binarize(p.gray, otsuThreshold(p.gray));
+  const r = detectRuling(bin, p.w, p.h);
+  eq(r.horizontalRuns, 0, 'invented a rule on blank paper');
+  eq(r.verticalRuns, 0, 'invented a margin rule on blank paper');
+});
+
+test('handwriting alone is never mistaken for ruling', () => {
+  /* The threshold has to sit above the longest horizontal stroke handwriting
+     produces and below the shortest rule. If it drifts down, letters get
+     erased and the cause is invisible. */
+  const p = fakePage(['mmm www ooo', 'the quick brown fox'], { size: 44 });
+  const bin = binarize(p.gray, otsuThreshold(p.gray));
+  const r = detectRuling(bin, p.w, p.h);
+  eq(r.horizontalRuns, 0, 'handwriting was mistaken for a rule');
+});
+
+test('removing the ruling keeps the strokes that cross it', () => {
+  const p = ruledPage(RULED);
+  const bin = binarize(p.gray, otsuThreshold(p.gray));
+  const ruling = detectRuling(bin, p.w, p.h);
+  const cleaned = removeRuling(bin, p.w, p.h, ruling);
+
+  const before = bin.reduce((a, v) => a + v, 0);
+  const after = cleaned.reduce((a, v) => a + v, 0);
+  ok(after < before * 0.9, 'the rules should be gone: ' + before + ' -> ' + after);
+
+  /* The writing must survive. Ink that was never marked as rule should be
+     almost entirely intact. */
+  let kept = 0, total = 0;
+  for (let i = 0; i < bin.length; i++) {
+    if (bin[i] && !ruling.mask[i]) { total++; if (cleaned[i]) kept++; }
+  }
+  eq(kept, total, `${total - kept} pixels of writing were destroyed`);
+});
+
+test('THE BUG: a ruled page segments into its real lines and words', () => {
+  /* Reported from a real photo: a ruled page came back as "2 lines, 2 words"
+     because the printed rules welded every line together and filled every
+     word gap. Every earlier test used blank paper, which is the one kind of
+     page a student never writes on. */
+  const p = ruledPage(RULED, { skew: -1.5 });
+  const page = analysePage(p.gray, p.w, p.h);
+
+  ok(page.stats.rulesRemoved > 0, 'no ruling was removed');
+  eq(page.stats.lines, RULED.length, `got ${page.stats.lines} lines, expected ${RULED.length}`);
+
+  const expectedWords = RULED.reduce((a, l) => a + l.split(' ').length, 0);
+  ok(page.stats.words >= expectedWords - 1,
+    `got ${page.stats.words} words, expected about ${expectedWords}`);
+  ok(page.stats.words <= expectedWords + 2, `got ${page.stats.words} words, too many`);
+});
+
+test('a ruled page still yields usable glyph samples', () => {
+  const p = ruledPage(RULED);
+  const page = analysePage(p.gray, p.w, p.h);
+  const align = alignTranscript(page, RULED.join('\n'));
+  ok(align.matched >= 6, `only ${align.matched} of ${RULED.reduce((a,l)=>a+l.split(' ').length,0)} words aligned on ruled paper`);
+
+  let confident = 0;
+  for (const line of page.lines) { const m = lineMetrics(line); if (m && m.confident) confident++; }
+  ok(confident >= RULED.length - 1, `only ${confident} of ${page.lines.length} lines had a confident baseline`);
+});
+
+test('faint ruling is removed as well as dark ruling', () => {
+  for (const grey of [110, 150, 185]) {
+    const p = ruledPage(RULED, { ruleGrey: grey });
+    const page = analysePage(p.gray, p.w, p.h);
+    eq(page.stats.lines, RULED.length, `at rule grey ${grey}: got ${page.stats.lines} lines`);
+  }
+});
+
+test('THE REAL PHOTO CASE: tilt and dark page edges', () => {
+  /* As close to the reported failure as a synthetic page gets: a notebook
+     photographed at an angle, tilted, with the dark background showing either
+     side. Page curl is covered separately below — it is only partly solved. */
+  const p = ruledPage(RULED, { skew: -1.75, edges: true });
+  const page = analysePage(p.gray, p.w, p.h);
+
+  ok(page.stats.rulesRemoved > 0, 'no ruling removed from a photographed page');
+  eq(page.stats.cropped, true, 'the dark surroundings should have been cropped away');
+  eq(page.stats.lines, RULED.length,
+    `got ${page.stats.lines} lines, expected ${RULED.length}`);
+
+  const expected = RULED.reduce((a, l) => a + l.split(' ').length, 0);
+  ok(page.stats.words >= expected - 3,
+    `got ${page.stats.words} words, expected about ${expected}`);
+
+  const align = alignTranscript(page, RULED.join('\n'));
+  ok(align.matched >= 4, `only ${align.matched} of ${expected} words aligned on a photographed page`);
+});
+
+test('curl is measured, and only corrected when it is worth the blur', () => {
+  /* Straightening resamples the image, which softens stroke edges; a softened
+     edge can bridge to its neighbour when thresholded again, merging letters.
+     Below a few pixels the curve does not break line finding, so correcting
+     it would cost more than it gains. */
+  const flat = ruledPage(RULED);
+  const a = analysePage(flat.gray, flat.w, flat.h);
+  eq(a.stats.curlCorrected, false, 'a flat page must not be resampled');
+
+  const bent = ruledPage(RULED, { bow: 12 });
+  const b = analysePage(bent.gray, bent.w, bent.h);
+  ok(b.stats.curlPx >= 6, 'curl on a bowed page was measured as only ' + b.stats.curlPx + 'px');
+  eq(b.stats.curlCorrected, true, 'a clearly bowed page should be straightened');
+});
+
+test('correcting curl reduces it rather than doubling it', () => {
+  /* The sign of the correction is easy to get backwards and does not fail
+     loudly — it doubles the curve instead of removing it, and the page just
+     segments a bit worse. */
+  const p = ruledPage(RULED, { bow: 14 });
+  const bin = binarize(p.gray, otsuThreshold(p.gray));
+  const shifts = estimateCurl(bin, p.w, p.h);
+  const before = Math.max(...shifts.map(Math.abs));
+
+  const fixed = applyCurl(p.gray, p.w, p.h, shifts);
+  const after = Math.max(...estimateCurl(binarize(fixed, otsuThreshold(fixed)), p.w, p.h).map(Math.abs));
+
+  ok(after < before * 0.5,
+    `curl went from ${before.toFixed(1)}px to ${after.toFixed(1)}px — the correction is being applied backwards`);
+});
+
+test('the paper is found inside a photo and the desk cropped away', () => {
+  const p = ruledPage(RULED, { edges: true });
+  const box = findPageBounds(p.gray, p.w, p.h);
+  ok(box.cropped, 'the dark surroundings were not cropped');
+  ok(box.x >= 20 && box.x < 60, 'left edge landed at ' + box.x + ', expected near the paper edge (24)');
+  ok(box.w < p.w - 30, 'crop is barely narrower than the image: ' + box.w + ' of ' + p.w);
+  ok(box.h > p.h * 0.9, 'cropped away too much vertically: ' + box.h + ' of ' + p.h);
+});
+
+test('a page with no surroundings is left alone', () => {
+  const p = ruledPage(RULED);
+  const box = findPageBounds(p.gray, p.w, p.h);
+  ok(box.w > p.w * 0.95 && box.h > p.h * 0.95,
+    'cropped a page that had nothing to crop: ' + box.w + 'x' + box.h);
+});
+
+test('dark page edges do not become lines of their own', () => {
+  /* A blob spanning the image height puts ink in every row, so the horizontal
+     projection never drops and the entire page merges into one band. That is
+     what turned a real thirty-line page into "1 line, 2 words". */
+  const p = ruledPage(RULED, { edges: true });
+  const page = analysePage(p.gray, p.w, p.h);
+  eq(page.stats.cropped, true, 'the photo was not cropped to the paper');
+  eq(page.stats.lines, RULED.length, 'the page edge was counted as a line of writing');
+  ok(page.stats.words >= RULED.reduce((a, l) => a + l.split(' ').length, 0) - 2,
+    'words did not survive the edges: ' + page.stats.words);
+});
+
+test('a photographed page reads the same as a clean page', () => {
+  /* The real measure: after cropping, a page shot on a dark desk should give
+     the same answer as the identical page with nothing around it. Comparing
+     against the uncropped run is meaningless — its extra "letters" are shards
+     of the desk edge, not writing. */
+  const plain = ruledPage(RULED);
+  const photo = ruledPage(RULED, { edges: true });
+  const a = analysePage(plain.gray, plain.w, plain.h);
+  const b = analysePage(photo.gray, photo.w, photo.h);
+
+  eq(b.stats.cropped, true, 'the photo should have been cropped');
+  eq(b.stats.lines, a.stats.lines, 'line count differs from the clean page');
+  eq(b.stats.letters, a.stats.letters,
+    `letter count differs: clean ${a.stats.letters}, photo ${b.stats.letters}`);
+  ok(Math.abs(b.stats.words - a.stats.words) <= 1,
+    `word count differs: clean ${a.stats.words}, photo ${b.stats.words}`);
+});
+
+test('cropping is what recovers the page, not a coincidence', () => {
+  const p = ruledPage(RULED, { edges: true });
+  const noCrop = analysePage(p.gray, p.w, p.h, { cropToPage: false });
+  const withCrop = analysePage(p.gray, p.w, p.h);
+  ok(withCrop.stats.lines > noCrop.stats.lines,
+    `turning cropping off should collapse the page: ${noCrop.stats.lines} vs ${withCrop.stats.lines} lines`);
+});
+
+test('without rule removal the words collapse, proving the fix does the work', () => {
+  const p = ruledPage(RULED);
+  const off = analysePage(p.gray, p.w, p.h, { removeRuling: false });
+  eq(off.stats.rulesRemoved, 0);
+  /* A printed rule runs the full width, so with it present every column in a
+     line has ink and there is no gap left to split words on. The whole line
+     becomes one word. */
+  ok(off.stats.words <= off.stats.lines + 1,
+    `expected the rules to weld each line into one word, got ${off.stats.words} words across ${off.stats.lines} lines`);
+
+  const on = analysePage(p.gray, p.w, p.h);
+  ok(on.stats.words > off.stats.words * 2,
+    `removal should recover the real words: ${off.stats.words} -> ${on.stats.words}`);
+});
+
+test('a word containing no letters is never emitted', () => {
+  /* The bug that made a real page yield 1 match from 13 words: a scrap of the
+     margin rule survived as a wordless smudge at the start of every line, and
+     alignment pairs the Nth ink word with the Nth transcript word — so every
+     real word after it was compared against its neighbour's text. */
+  const p = ruledPage(RULED);
+  const page = analysePage(p.gray, p.w, p.h);
+  for (const line of page.lines) {
+    for (const word of line.words) {
+      ok(word.letters.length > 0,
+        `an empty word at x=${word.left}..${word.right} would shift every word after it`);
+    }
+  }
+});
+
+section('Page analysis — baseline from the letters themselves');
+
+test('descenders do not drag the baseline down', () => {
+  /* "gypsy pygmy" is almost all descenders; "nonsense scene" has none. The
+     baseline must sit ABOVE the descenders in the first case and at the foot
+     of the letters in the second — the mode ignores descenders where a mean
+     would be pulled down by them.
+     Measured as a fraction of the line's own height, because the two pages
+     are cropped to their own paper and their absolute coordinates are not
+     comparable. */
+  const drop = (text) => {
+    const p = fakePage([text], { size: 34 });
+    const line = analysePage(p.gray, p.w, p.h).lines[0];
+    const m = lineMetrics(line);
+    ok(m, 'no metrics for "' + text + '"');
+    return (line.bottom - m.baseline) / (line.bottom - line.top + 1);
+  };
+
+  const plain = drop('nonsense scene occurs');
+  const descenders = drop('the puppy jumped happily');
+
+  ok(plain < 0.12,
+    `a line with no descenders should end at its baseline, got ${plain.toFixed(2)} below it`);
+  ok(descenders > plain + 0.06,
+    `descenders should hang below the baseline: plain ${plain.toFixed(2)} vs descenders ${descenders.toFixed(2)}`);
+});
+
+test('x-height is measured from short letters, not ascenders', () => {
+  const p = fakePage(['nose worn menu'], { size: 36 });
+  const m = lineMetrics(analysePage(p.gray, p.w, p.h).lines[0]);
+  ok(m.confident, 'this line should be confident');
+  ok(m.xHeightPx > 5, 'x-height came out as ' + m.xHeightPx);
+  ok(m.xheight < m.baseline, 'x-height line must sit above the baseline');
+});
+
+test('a line with too little to go on is flagged, not guessed', () => {
+  const p = fakePage(['l'], { size: 36 });
+  const page = analysePage(p.gray, p.w, p.h);
+  if (page.lines.length) {
+    const m = lineMetrics(page.lines[0]);
+    eq(m.confident, false, 'one tall letter is not enough to place a baseline');
+  }
+});
+
+section('Page analysis — alignment');
+
+test('a matched word maps one blob to one letter, in order', () => {
+  const p = fakePage(['one two three'], { size: 34 });
+  const page = analysePage(p.gray, p.w, p.h);
+  const a = alignTranscript(page, 'one two three');
+  ok(a.matched >= 2, `only ${a.matched} of 3 words matched`);
+  for (const r of a.results.filter(r => r.pairs)) {
+    eq(r.pairs.length, [...r.text].length, 'a matched word must pair every letter');
+    /* Blobs must be handed out left to right, or "on" becomes "no". */
+    const xs = r.pairs.map(p => p.letter.left);
+    eq(JSON.stringify(xs), JSON.stringify(xs.slice().sort((a, b) => a - b)), 'pairs must run left to right');
+  }
+});
+
+test('a word whose blob count disagrees is SKIPPED, never guessed at', () => {
+  /* The whole safety property. One mislabelled glyph means every future "a"
+     is actually an "o", and nothing downstream would ever flag it. Skipping
+     is not a failure mode here, it is the design: a page has hundreds of
+     words and a style needs five samples per letter. */
+  const p = fakePage(['one two three'], { size: 34 });
+  const page = analysePage(p.gray, p.w, p.h);
+  const bad = alignTranscript(page, 'oneXX twoXX threeXX');
+  eq(bad.matched, 0, 'no word should match a transcript with extra letters');
+  eq(bad.skipped, bad.results.length);
+  ok(bad.results.every(r => /ink blob/.test(r.reason)), 'every skip must say why');
+});
+
+test('ligature-prone words are skipped without taking the good ones down', () => {
+  const p = fakePage(['one two three'], { size: 34 });
+  const page = analysePage(p.gray, p.w, p.h);
+  const a = alignTranscript(page, 'one two three');
+  ok(a.matched + a.skipped === a.results.length, 'every word must be accounted for');
+  ok(a.matched > 0, 'at least some words must survive, or the yield is unusable');
+});
+
+test('missing transcript lines are reported, not crashed on', () => {
+  const p = fakePage(['first line', 'second line'], { size: 32 });
+  const page = analysePage(p.gray, p.w, p.h);
+  const a = alignTranscript(page, 'first line');
+  ok(a.skipped >= 2, 'the untranscribed line should be skipped');
+  ok(a.results.some(r => /no transcript/.test(r.reason || '')), 'and say so');
+});
+
+test('end to end: a tilted page becomes labelled glyph samples', () => {
+  const lines = ['one two three', 'nose worn menu', 'never mind me'];
+  const p = fakePage(lines, { skew: -2.5, noise: 8 });
+  const page = analysePage(p.gray, p.w, p.h);
+  eq(page.stats.lines, 3, 'three lines after deskew');
+  near(page.skew, -2.5, 0.8, 'skew should be corrected');
+
+  const align = alignTranscript(page, lines.join('\n'));
+  /* Yield is expected to be partial — joined letters and split strokes get
+     discarded on purpose. What matters is that enough survives to build a
+     style from one page, not that every word is used. */
+  ok(align.matched >= 5, `only ${align.matched} of 9 words aligned — yield too low to be useful`);
+
+  const style = createStyle('from page');
+  let added = 0, failed = 0;
+  page.lines.forEach((line, li) => {
+    const m = lineMetrics(line);
+    if (!m || !m.confident) return;
+    for (const r of align.results.filter(r => r.line === li && r.pairs)) {
+      for (const { ch, letter } of r.pairs) {
+        try {
+          addVariant(style, ch, makeVariant({
+            mask: letter.mask, w: letter.w, h: letter.h,
+            baseline: m.baseline - letter.top, xheight: m.xheight - letter.top
+          }));
+          added++;
+        } catch (e) { failed++; }
+      }
+    }
+  });
+  /* Yield, not raw count: what matters is the fraction of the page's letters
+     that survive. Around 60% is normal with a font that joins letters, and a
+     real hand that lifts the pen between letters does better. */
+  const onPage = lines.join('').replace(/\s/g, '').length;
+  const yieldPct = added / onPage;
+  ok(yieldPct >= 0.4, `only ${Math.round(yieldPct * 100)}% of the page's letters were captured`);
+  ok(Object.keys(style.glyphs).length >= 8, 'expected a decent character spread');
+
+  /* Every pairing that survived alignment must convert. A failure here means
+     alignment handed out a blob that was not a usable glyph. */
+  eq(failed, 0, failed + ' aligned glyphs failed to convert');
+
+  /* And the captured glyphs must actually be traceable into curves. */
+  const ch = Object.keys(style.glyphs)[0];
+  const v = style.glyphs[ch][0];
+  const d = maskToPath(variantMask(v), v.w, v.h);
+  ok(d.startsWith('M') && !/NaN/.test(d), 'a captured glyph did not trace cleanly');
+});
+
+/* ================= T13: transcription ================= */
+section('T13 — transcription (network stubbed)');
+
+function pngBlob(w = 40, h = 20) {
+  const cv = document.createElement('canvas');
+  cv.width = w; cv.height = h;
+  const ctx = cv.getContext('2d');
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = '#000'; ctx.fillText('hi', 4, 14);
+  return new Promise(r => cv.toBlob(r, 'image/png'));
+}
+
+/** Swap fetch for a scripted responder, restore afterwards. */
+async function withFetch(handler, fn) {
+  const real = globalThis.fetch;
+  const calls = [];
+  globalThis.fetch = async (url, init) => {
+    calls.push({ url: String(url), init });
+    return handler(String(url), init, calls.length);
+  };
+  try { return await fn(calls); } finally { globalThis.fetch = real; }
+}
+const jsonRes = (obj, status = 200) =>
+  new Response(JSON.stringify(obj), { status, headers: { 'Content-Type': 'application/json' } });
+
+atest('prepareImage downscales a large photo before upload', async () => {
+  const cv = document.createElement('canvas');
+  cv.width = 4000; cv.height = 3000;
+  const ctx = cv.getContext('2d');
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 4000, 3000);
+  const big = await new Promise(r => cv.toBlob(r, 'image/jpeg', 0.9));
+  const out = await prepareImage(big, { maxEdge: 1600 });
+  eq(Math.max(out.width, out.height), 1600, 'long edge should be capped');
+  eq(out.height, 1200, 'aspect ratio must be preserved');
+  ok(out.dataUrl.startsWith('data:image/jpeg;base64,'), 'should encode as a jpeg data url');
+});
+
+atest('with nothing configured it says so instead of failing obscurely', async () => {
+  let threw = null;
+  try { await transcribe(await pngBlob(), {}); } catch (e) { threw = e; }
+  ok(threw && /no transcription is configured/i.test(threw.message), 'got: ' + (threw && threw.message));
+});
+
+atest('the proxy path sends the image and returns the text', async () => {
+  await withFetch(
+    () => jsonRes({ text: 'first line\nsecond line', provider: 'gemini' }),
+    async calls => {
+      const out = await transcribe(await pngBlob(), { proxy: '/api/ocr.php' });
+      eq(out.text, 'first line\nsecond line');
+      eq(out.provider, 'gemini');
+      eq(calls.length, 1);
+      const body = JSON.parse(calls[0].init.body);
+      ok(body.image.startsWith('data:image/'), 'the image should be sent as a data url');
+      /* The server owns the prompt. If the client could set one, the endpoint
+         is a free vision model for whoever finds the URL. */
+      eq('prompt' in body, false, 'the client must not send a prompt to the proxy');
+    }
+  );
+});
+
+atest('markdown fences and stray line numbers are stripped', async () => {
+  await withFetch(
+    () => jsonRes({ text: '```\n1. the first line\n2. the second line\n```' }),
+    async () => {
+      const out = await transcribe(await pngBlob(), { proxy: '/x' });
+      eq(out.text, 'the first line\nthe second line',
+        'a fenced, numbered response would otherwise become the transcript verbatim');
+    }
+  );
+});
+
+atest('a rate limit is reported as a wait, not as a crash', async () => {
+  await withFetch(
+    () => jsonRes({ error: 'Rate limit reached. Try again in about 3 minute(s).' }, 429),
+    async () => {
+      let threw = null;
+      try { await transcribe(await pngBlob(), { proxy: '/x' }); } catch (e) { threw = e; }
+      ok(threw && /too many requests/i.test(threw.message), 'got: ' + (threw && threw.message));
+    }
+  );
+});
+
+atest('the direct path falls through to the second provider', async () => {
+  await withFetch(
+    (url, init, n) => n === 1
+      ? jsonRes({ error: { message: 'quota exhausted' } }, 429)
+      : jsonRes({ choices: [{ message: { content: 'read by the fallback' } }] }),
+    async calls => {
+      const out = await transcribe(await pngBlob(), { keys: { gemini: 'k1', github: 'k2' } });
+      eq(out.text, 'read by the fallback');
+      eq(out.provider, 'github');
+      eq(calls.length, 2, 'it should have tried both');
+      ok(/generativelanguage/.test(calls[0].url), 'gemini first');
+      ok(/models\.github\.ai/.test(calls[1].url), 'github second');
+    }
+  );
+});
+
+atest('when every provider fails it names each reason', async () => {
+  await withFetch(
+    () => jsonRes({ error: { message: 'boom' } }, 500),
+    async () => {
+      let threw = null;
+      try { await transcribe(await pngBlob(), { keys: { gemini: 'k', github: 'k' } }); } catch (e) { threw = e; }
+      ok(threw, 'should have thrown');
+      ok(/gemini: boom/.test(threw.message) && /github: boom/.test(threw.message),
+        '"transcription failed" alone is useless when the cause is a quota reset hours away — got: ' + threw.message);
+    }
+  );
+});
+
+atest('an empty response is treated as a failure, not as an empty page', async () => {
+  await withFetch(
+    () => jsonRes({ candidates: [{ content: { parts: [{ text: '   ' }] } }] }),
+    async () => {
+      let threw = null;
+      try { await transcribe(await pngBlob(), { keys: { gemini: 'k' } }); } catch (e) { threw = e; }
+      ok(threw && /empty response/.test(threw.message), 'got: ' + (threw && threw.message));
+    }
+  );
+});
+
+atest('the image never leaves without a key present', async () => {
+  await withFetch(
+    () => { throw new Error('fetch should not have been called'); },
+    async () => {
+      let threw = null;
+      try { await transcribe(await pngBlob(), { keys: { gemini: '', github: '' } }); } catch (e) { threw = e; }
+      ok(threw && /no transcription is configured/i.test(threw.message), 'no key must mean no request, got: ' + (threw && threw.message));
+    }
+  );
+});
+
+test('checkLineCount catches a transcript that is out of step with the page', () => {
+  /* Alignment pairs transcript line N with ink line N. A count mismatch puts
+     every later line out of step and the page yields nothing, so this has to
+     be caught before the user presses build. */
+  const good = checkLineCount('one\ntwo\nthree', 3);
+  eq(good.ok, true); eq(good.got, 3); eq(good.hint, null);
+
+  const merged = checkLineCount('one two\nthree', 3);
+  eq(merged.ok, false);
+  ok(/merged/.test(merged.hint), 'should suggest lines were merged: ' + merged.hint);
+
+  const split = checkLineCount('one\ntwo\nthree\nfour', 3);
+  eq(split.ok, false);
+  ok(/split|added a heading/.test(split.hint), 'should suggest a split: ' + split.hint);
+});
+
+test('blank lines in a transcript do not count as lines of writing', () => {
+  eq(checkLineCount('one\n\n\ntwo', 2).ok, true);
+});
+
 /* ---------- visual check ---------- */
 const samples = {
   'o (hole)': `
@@ -1093,10 +2180,33 @@ for (const [label, a] of Object.entries(samples)) {
   out.appendChild(fig);
 }
 
-/* ---------- summary ---------- */
+/* ---------- async tests, then the summary ---------- */
 const s = document.getElementById('summary');
+s.textContent = `running ${pending.length} async tests…`;
+
+/* The PDF tests are async (compression and Blob reads are promise-based), so
+   they run after everything synchronous and report into the same tally. The
+   summary is only written once they finish, or a green banner would appear
+   before the slowest tests had a chance to fail. */
+for (const { name, fn } of pending) {
+  let err = null;
+  try { await fn(); } catch (e) { err = e; }
+  const row = document.createElement('div');
+  row.className = 'case';
+  row.innerHTML = `<span class="tag ${err ? 'bad' : 'ok'}">${err ? 'FAIL' : 'PASS'}</span><span>${name}</span>`;
+  list.appendChild(row);
+  if (err) {
+    fail++;
+    const why = document.createElement('div');
+    why.className = 'why';
+    why.textContent = (err.stack || String(err)).split('\n').slice(0, 3).join('\n');
+    list.appendChild(why);
+  } else pass++;
+}
+
 s.className = fail ? 'fail' : 'pass';
 s.textContent = fail
   ? `${fail} FAILED · ${pass} passed`
   : `All ${pass} tests passed`;
+window.__done = true;
 </script>
