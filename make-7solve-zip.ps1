@@ -124,7 +124,10 @@ foreach ($js in $renamed) { $roots += (Join-Path $stage ($js + '.txt')) }
 
 # .well-known/assetlinks.json links the site to the Android app (kills the URL bar).
 # blog/ and assets/ must both ship or every post loads unstyled.
-foreach ($sub in @('.well-known','blog','assets')) {
+# docs/ carries the public API reference. It ships because a developer
+# integrating /v1 expects the documentation on the vendor's own domain, and a
+# reference that exists only in the repo is a reference nobody can read.
+foreach ($sub in @('.well-known','blog','assets','docs')) {
   $p = Join-Path $src $sub
   if (Test-Path -LiteralPath $p) { $roots += $p }
 }

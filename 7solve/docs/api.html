@@ -1,0 +1,687 @@
+<title>7Solve Verification API</title>
+<style>
+  /* ---------- tokens: light is the bare :root ---------- */
+  :root {
+    --paper:      #F6F8FC;
+    --surface:    #FFFFFF;
+    --sunk:       #EEF2F9;
+    --ink:        #151E36;
+    --ink-soft:   #4A5673;
+    --ink-faint:  #6E7A94;
+    --rule:       #DCE3F0;
+    --rule-soft:  #E8EDF6;
+    --accent:     #2C4BC4;
+    --accent-wash:#E9EDFC;
+
+    --ok:      #0F7048;
+    --ok-bg:   #E2F3EA;
+    --warn:    #8A5B00;
+    --warn-bg: #FBEEDA;
+    --bad:     #A81F1A;
+    --bad-bg:  #FBE6E4;
+    --mute:    #57617A;
+    --mute-bg: #E9EDF4;
+
+    --shadow: 0 1px 2px rgba(21,30,54,.06), 0 8px 24px rgba(21,30,54,.05);
+
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "Cascadia Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:      #0C1120;
+      --surface:    #131A2C;
+      --sunk:       #0F1626;
+      --ink:        #E7ECF7;
+      --ink-soft:   #A8B3CA;
+      --ink-faint:  #838FA8;
+      --rule:       #26304A;
+      --rule-soft:  #1D2639;
+      --accent:     #8FA6FF;
+      --accent-wash:#1B2444;
+
+      --ok:      #5BD99B;
+      --ok-bg:   #10301F;
+      --warn:    #E5B457;
+      --warn-bg: #33260B;
+      --bad:     #FF8C82;
+      --bad-bg:  #3A1512;
+      --mute:    #9AA5BC;
+      --mute-bg: #1B2233;
+
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 28px rgba(0,0,0,.32);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:      #0C1120;
+    --surface:    #131A2C;
+    --sunk:       #0F1626;
+    --ink:        #E7ECF7;
+    --ink-soft:   #A8B3CA;
+    --ink-faint:  #838FA8;
+    --rule:       #26304A;
+    --rule-soft:  #1D2639;
+    --accent:     #8FA6FF;
+    --accent-wash:#1B2444;
+
+    --ok:      #5BD99B;
+    --ok-bg:   #10301F;
+    --warn:    #E5B457;
+    --warn-bg: #33260B;
+    --bad:     #FF8C82;
+    --bad-bg:  #3A1512;
+    --mute:    #9AA5BC;
+    --mute-bg: #1B2233;
+
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 28px rgba(0,0,0,.32);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    display: grid;
+    grid-template-columns: 232px minmax(0, 1fr);
+    gap: 56px;
+    max-width: 1140px;
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+
+  /* ---------- rail ---------- */
+  nav {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    max-height: 100vh;
+    overflow-y: auto;
+    padding: 48px 0 40px;
+  }
+  .brand {
+    font-family: var(--serif);
+    font-size: 21px;
+    letter-spacing: -.01em;
+    margin: 0 0 4px;
+  }
+  .brand span { color: var(--accent); }
+  .brand-sub {
+    font-size: 12px;
+    color: var(--ink-faint);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    margin: 0 0 28px;
+  }
+  nav h4 {
+    font-size: 11px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 24px 0 8px;
+    font-weight: 600;
+  }
+  nav a {
+    display: block;
+    padding: 4px 0;
+    color: var(--ink-soft);
+    text-decoration: none;
+    font-size: 14px;
+    border-left: 2px solid transparent;
+    padding-left: 12px;
+    margin-left: -14px;
+  }
+  nav a:hover { color: var(--accent); border-left-color: var(--accent); }
+  nav a code { font-size: 12.5px; }
+
+  main { padding: 48px 0 120px; min-width: 0; }
+
+  h1 {
+    font-family: var(--serif);
+    font-size: clamp(32px, 4.4vw, 44px);
+    line-height: 1.12;
+    letter-spacing: -.02em;
+    margin: 0 0 14px;
+    text-wrap: balance;
+  }
+  h2 {
+    font-family: var(--serif);
+    font-size: 27px;
+    letter-spacing: -.01em;
+    margin: 64px 0 10px;
+    padding-top: 28px;
+    border-top: 1px solid var(--rule);
+    text-wrap: balance;
+  }
+  h3 {
+    font-size: 15px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 32px 0 10px;
+    font-weight: 600;
+  }
+  p { margin: 0 0 16px; max-width: 68ch; }
+  .lede { font-size: 18.5px; color: var(--ink-soft); max-width: 62ch; }
+  a { color: var(--accent); }
+
+  code {
+    font-family: var(--mono);
+    font-size: .875em;
+    background: var(--sunk);
+    padding: .12em .38em;
+    border-radius: 4px;
+    border: 1px solid var(--rule-soft);
+  }
+  pre {
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.62;
+    background: var(--sunk);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 16px 18px;
+    overflow-x: auto;
+    margin: 0 0 18px;
+  }
+  pre code { background: none; border: 0; padding: 0; font-size: inherit; }
+
+  /* ---------- the receipt: this product's signature output ---------- */
+  .receipt {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    padding: 20px 22px;
+    margin: 28px 0 8px;
+    font-family: var(--mono);
+    font-size: 13.5px;
+    overflow-x: auto;
+  }
+  .receipt-row { display: flex; gap: 12px; align-items: baseline; padding: 5px 0; white-space: nowrap; }
+  .receipt-q { color: var(--ink-faint); padding-bottom: 10px; margin-bottom: 6px; border-bottom: 1px dashed var(--rule); white-space: nowrap; }
+  .mark { font-weight: 700; width: 1.1em; flex: none; }
+  .mark.no { color: var(--bad); }
+  .mark.yes { color: var(--ok); }
+
+  /* ---------- verdict pills ---------- */
+  .pill {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: .05em;
+    padding: 2px 9px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    white-space: nowrap;
+  }
+  .pill.checked    { color: var(--ok);   background: var(--ok-bg);   border-color: var(--ok); }
+  .pill.stepfail   { color: var(--warn); background: var(--warn-bg); border-color: var(--warn); }
+  .pill.disputed   { color: var(--bad);  background: var(--bad-bg);  border-color: var(--bad); }
+  .pill.unverified { color: var(--mute); background: var(--mute-bg); border-color: var(--mute); }
+
+  .method {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: .07em;
+    padding: 3px 9px;
+    border-radius: 5px;
+    background: var(--accent-wash);
+    color: var(--accent);
+    border: 1px solid var(--accent);
+  }
+  .endpoint {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 0 0 6px;
+  }
+  .endpoint .path { font-family: var(--mono); font-size: 16px; font-weight: 600; }
+  .endpoint .auth {
+    font-size: 11.5px; letter-spacing: .05em; text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 0 20px;
+    font-size: 14.5px;
+  }
+  .scroll { overflow-x: auto; margin-bottom: 20px; }
+  .scroll table { margin-bottom: 0; }
+  th {
+    text-align: left;
+    font-size: 11px;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 600;
+    padding: 0 14px 8px 0;
+    border-bottom: 1px solid var(--rule);
+    white-space: nowrap;
+  }
+  td {
+    padding: 10px 14px 10px 0;
+    border-bottom: 1px solid var(--rule-soft);
+    vertical-align: top;
+  }
+  td:last-child, th:last-child { padding-right: 0; }
+  td code { white-space: nowrap; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  .note {
+    border-left: 3px solid var(--accent);
+    background: var(--accent-wash);
+    padding: 14px 18px;
+    border-radius: 0 8px 8px 0;
+    margin: 0 0 20px;
+  }
+  .note p:last-child { margin-bottom: 0; }
+  .note strong { color: var(--ink); }
+
+  .warn-note { border-left-color: var(--bad); background: var(--bad-bg); }
+
+  footer {
+    margin-top: 72px;
+    padding-top: 24px;
+    border-top: 1px solid var(--rule);
+    color: var(--ink-faint);
+    font-size: 13.5px;
+  }
+
+  a:focus-visible, nav a:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 3px;
+  }
+
+  @media (max-width: 900px) {
+    .wrap { grid-template-columns: 1fr; gap: 0; padding: 0 20px; }
+    nav {
+      position: static;
+      max-height: none;
+      padding: 32px 0 8px;
+      border-bottom: 1px solid var(--rule);
+    }
+    nav h4 { margin-top: 18px; }
+    main { padding-top: 32px; }
+  }
+</style>
+
+<div class="wrap">
+  <nav>
+    <p class="brand">7<span>Solve</span></p>
+    <p class="brand-sub">API v1</p>
+
+    <h4>Start</h4>
+    <a href="#what">What this is</a>
+    <a href="#auth">Authentication</a>
+    <a href="#verdicts">The four verdicts</a>
+
+    <h4>Endpoints</h4>
+    <a href="#verify"><code>POST /verify</code></a>
+    <a href="#math"><code>POST /math/solve</code></a>
+    <a href="#solve"><code>POST /solve</code></a>
+    <a href="#health"><code>GET /health</code></a>
+
+    <h4>Account</h4>
+    <a href="#keys">Managing keys</a>
+    <a href="#usage"><code>GET /usage</code></a>
+    <a href="#limits">Limits</a>
+    <a href="#errors">Errors</a>
+  </nav>
+
+  <main>
+    <h1>Tell your students the answer is wrong<br>before they do.</h1>
+    <p class="lede">
+      7Solve checks a maths answer against its own question — with a parser and a
+      substitution engine, not a second language model. It costs nothing per call
+      because nothing is generated.
+    </p>
+
+    <div class="receipt">
+      <div class="receipt-q">POST /v1/verify &nbsp;→&nbsp; x² + y² + 1 = 3xy &nbsp;·&nbsp; answer: (5,3)</div>
+      <div class="receipt-row"><span class="mark no">✗</span><span>(x,y) = (5,3) in x²+y²+1=3xy gives 35 ≠ 45</span></div>
+      <div class="receipt-row"><span class="mark yes">✓</span><span>16 − 24 = −8</span></div>
+      <div class="receipt-row" style="padding-top:12px">
+        <span class="pill disputed">DISPUTED</span>
+        <span style="color:var(--ink-faint)">the answer contradicts the question</span>
+      </div>
+    </div>
+    <p style="color:var(--ink-faint); font-size:14px">
+      A real response. The model that produced <code>(5,3)</code> was confident and wrong;
+      35 ≠ 45 is not an opinion.
+    </p>
+
+    <h2 id="what">What this is</h2>
+    <p>
+      Every AI tutor sometimes returns a confident wrong answer, and a student
+      revising for an exam cannot tell it from a correct one. This API is the check
+      that sits between the two.
+    </p>
+    <p>
+      Send a question and a proposed answer. You get back a verdict, plus the
+      arithmetic behind it, so you can show the working or suppress the answer
+      entirely. The answer can come from your model, your content team, or the
+      student — it does not have to come from us.
+    </p>
+
+    <h3>Base URL</h3>
+    <pre><code>https://7solve.7by.in/v1</code></pre>
+
+    <h2 id="auth">Authentication</h2>
+    <p>Every endpoint except <code>/health</code> needs a key in the header.</p>
+    <pre><code>Authorization: Bearer 7solve_live_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6</code></pre>
+    <div class="note">
+      <p>
+        <strong>Keys are shown once.</strong> We store only a SHA-256 of the key, the
+        same way a password is stored, so a stolen key file is worth nothing on its own —
+        and a key you lose cannot be recovered. Save it when it is issued and rotate it
+        if it leaks.
+      </p>
+    </div>
+
+    <h2 id="verdicts">The four verdicts</h2>
+    <p>
+      Every verification resolves to one of four states. They are not a confidence
+      score, and they are not ranked on a single axis — each one means a different
+      thing about what was tested.
+    </p>
+    <div class="scroll">
+      <table>
+        <tr><th>Status</th><th>Means</th><th>What to do</th></tr>
+        <tr>
+          <td><span class="pill checked">CHECKED</span></td>
+          <td>Every check that could run agreed with the answer.</td>
+          <td>Show it.</td>
+        </tr>
+        <tr>
+          <td><span class="pill stepfail">STEPFAIL</span></td>
+          <td>The answer stands, but a step in the working does not hold.</td>
+          <td>Show it with the caveat. Often a typo in the explanation.</td>
+        </tr>
+        <tr>
+          <td><span class="pill disputed">DISPUTED</span></td>
+          <td>The answer contradicts the question.</td>
+          <td><strong>Do not show it as correct.</strong> Re-solve or escalate.</td>
+        </tr>
+        <tr>
+          <td><span class="pill unverified">UNVERIFIED</span></td>
+          <td>Nothing here could be checked mechanically.</td>
+          <td>Treat exactly as you would an unchecked answer.</td>
+        </tr>
+      </table>
+    </div>
+    <div class="note warn-note">
+      <p>
+        <strong>UNVERIFIED is not a pass.</strong> It is the honest result for
+        “explain photosynthesis”, for a question with no equation in it, and for
+        anything the parser declines. If your code maps
+        <code>status != "DISPUTED"</code> to “safe to show”, you have turned a
+        silence into an approval — which is the one way this API can make your
+        product worse rather than better. Check <code>verified === true</code>.
+      </p>
+    </div>
+
+    <h2 id="verify">Verify an answer</h2>
+    <div class="endpoint">
+      <span class="method">POST</span>
+      <span class="path">/v1/verify</span>
+      <span class="auth">key required</span>
+    </div>
+    <p>The core endpoint. No model is called, so there is no per-call cost and no upstream to be down.</p>
+
+    <h3>Request</h3>
+    <pre><code>curl https://7solve.7by.in/v1/verify \
+  -H "Authorization: Bearer $SEVENSOLVE_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "Find positive integers x,y with x^2+y^2+1=3xy",
+    "answer":   "The smallest solution is (5,3)."
+  }'</code></pre>
+    <div class="scroll">
+      <table>
+        <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+        <tr><td><code>question</code></td><td>string</td><td>Required. LaTeX is accepted and stripped before parsing.</td></tr>
+        <tr><td><code>answer</code></td><td>string</td><td>Required. Markdown and LaTeX both fine.</td></tr>
+      </table>
+    </div>
+
+    <h3>Response</h3>
+    <pre><code>{
+  "success": true,
+  "api_version": "v1",
+  "status": "DISPUTED",
+  "verified": false,
+  "means": "The answer contradicts the question. Do not show it to a student as correct.",
+  "checks_run": 1,
+  "checks_passed": 0,
+  "checks_failed": 1,
+  "checks": [
+    {
+      "kind": "subst",
+      "ok": false,
+      "text": "(x,y) = (5,3) in x^2+y^2+1=3xy gives 35 ≠ 45"
+    }
+  ]
+}</code></pre>
+    <div class="scroll">
+      <table>
+        <tr><th>Field</th><th>Notes</th></tr>
+        <tr><td><code>verified</code></td><td>Boolean. <code>true</code> only for <code>CHECKED</code>. This is the field to branch on.</td></tr>
+        <tr><td><code>checks[].kind</code></td><td><code>subst</code> disputes the answer; <code>arith</code> disputes a step in the working.</td></tr>
+        <tr><td><code>checks[].text</code></td><td>Human-readable and safe to show a student verbatim.</td></tr>
+        <tr><td><code>checks</code> order</td><td>Failures first. A receipt that buries the failure under ten ticks contradicts its own heading.</td></tr>
+      </table>
+    </div>
+
+    <h3>What it can check</h3>
+    <p>
+      Substituting claimed roots and tuples back into the question’s equation;
+      arithmetic written in the working; exact surd forms such as
+      <code>82 ± 30√7</code>; fraction equalities. It deliberately declines
+      trigonometric equations, because degrees-or-radians is a convention your
+      question may not share and a wrong verdict is worse than none.
+    </p>
+
+    <h2 id="math">Solve, deterministically</h2>
+    <div class="endpoint">
+      <span class="method">POST</span>
+      <span class="path">/v1/math/solve</span>
+      <span class="auth">key required</span>
+    </div>
+    <p>
+      Solves without asking a model anything, so it cannot hallucinate and costs
+      nothing per call.
+    </p>
+
+    <pre><code>curl https://7solve.7by.in/v1/math/solve \
+  -H "Authorization: Bearer $SEVENSOLVE_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"equation": "x^2 - 164x + 424 = 0"}'</code></pre>
+
+    <pre><code>{
+  "success": true,
+  "status": "SOLVED",
+  "kind": "quadratic",
+  "variable": "x",
+  "roots": [2.627460668, 161.372539332],
+  "exact_form": ["82 + 30√7", "82 - 30√7"],
+  "discriminant": 25200,
+  "method": "exact (quadratic formula)",
+  "complete": true
+}</code></pre>
+
+    <div class="scroll">
+      <table>
+        <tr><th>Status</th><th>Means</th></tr>
+        <tr><td><code>SOLVED</code></td><td>Roots found. Check <code>complete</code>.</td></tr>
+        <tr><td><code>IDENTITY</code></td><td>True for every value of the variable.</td></tr>
+        <tr><td><code>NO_SOLUTION</code></td><td>Reduces to a false statement.</td></tr>
+        <tr><td><code>NO_SOLUTION_FOUND</code></td><td>Nothing found in the searched range. Not the same as “none exist”.</td></tr>
+        <tr><td><code>UNDEFINED</code></td><td>Division by zero, or a root of a negative.</td></tr>
+        <tr><td><code>UNSUPPORTED</code></td><td>Outside what it can prove it handles. <code>reason</code> says why.</td></tr>
+      </table>
+    </div>
+
+    <div class="note">
+      <p>
+        <strong><code>complete: false</code> means the root list may be partial.</strong>
+        Linear and quadratic equations are solved exactly and are always complete.
+        Anything else falls to numeric bisection over −1000 to 1000, which misses
+        roots outside that range and repeated roots that never cross zero. The
+        response says so in <code>note</code> rather than leaving you to find out.
+      </p>
+    </div>
+
+    <p>
+      It refuses more than one variable, trigonometric equations, and anything the
+      parser declines. A solver that guesses is indistinguishable from one that
+      knows, so this one does not guess.
+    </p>
+
+    <h2 id="solve">Solve with a model, then verify</h2>
+    <div class="endpoint">
+      <span class="method">POST</span>
+      <span class="path">/v1/solve</span>
+      <span class="auth">key required</span>
+    </div>
+    <p>
+      Routes the question to a language model, verifies the reply, and — if the
+      verdict is <span class="pill disputed">DISPUTED</span> — discards it and tries
+      the next engine. You get the first answer that survives checking, not the
+      first answer produced.
+    </p>
+
+    <pre><code>curl https://7solve.7by.in/v1/solve \
+  -H "Authorization: Bearer $SEVENSOLVE_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "Solve x^2 + 4x + 6 = 0",
+    "class": "10",
+    "subject": "mathematics",
+    "language": "English",
+    "explanation_level": "class_10"
+  }'</code></pre>
+
+    <div class="scroll">
+      <table>
+        <tr><th>Field</th><th>Notes</th></tr>
+        <tr><td><code>question</code></td><td>Required. Up to 8000 characters.</td></tr>
+        <tr><td><code>class</code>, <code>subject</code>, <code>language</code>, <code>explanation_level</code></td><td>Optional. They shape how the answer is written.</td></tr>
+      </table>
+    </div>
+
+    <p>
+      The response carries <code>answer</code>, the same <code>verification</code>
+      block as <code>/verify</code>, the <code>engine</code> that produced it, and an
+      <code>attempts</code> array showing every engine tried with its latency and
+      outcome. If every engine returned a disputed answer, <code>status</code> is
+      <code>UNCERTAIN</code> and the best available reply is returned clearly
+      labelled — never silently.
+    </p>
+    <p>
+      Unlike the two endpoints above, this one calls a model, so it is the one with a
+      real per-call cost and a dependency on upstream availability.
+    </p>
+
+    <h2 id="health">Health</h2>
+    <div class="endpoint">
+      <span class="method">GET</span>
+      <span class="path">/v1/health</span>
+      <span class="auth">no key</span>
+    </div>
+    <p>Safe to poll from a monitor. The engine field reflects a live self-check of the verifier, not just “the process is up”.</p>
+    <pre><code>{
+  "success": true,
+  "status": "HEALTHY",
+  "engine": "ok",
+  "detail": null,
+  "store": "writable",
+  "time": "2026-08-18T03:55:00+00:00"
+}</code></pre>
+    <p><code>status</code> is <code>HEALTHY</code>, <code>DEGRADED</code>, or <code>DOWN</code>. A degraded engine returns 200 with a <code>detail</code> string; a down one returns 503.</p>
+
+    <h2 id="keys">Managing keys</h2>
+    <p>Key administration uses your admin token, not a customer key.</p>
+    <pre><code># issue
+curl -X POST https://7solve.7by.in/v1/keys \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"label": "acme-edtech", "rate_per_hour": 600}'
+
+# list (prefixes only — never the key itself)
+curl https://7solve.7by.in/v1/keys -H "Authorization: Bearer $ADMIN_TOKEN"
+
+# revoke
+curl -X DELETE https://7solve.7by.in/v1/keys/k_9f3c1a2b \
+  -H "Authorization: Bearer $ADMIN_TOKEN"</code></pre>
+    <p>
+      Revoking marks a key dead but keeps its history, so a key id in an old log can
+      still be explained.
+    </p>
+
+    <h2 id="usage">Usage</h2>
+    <div class="endpoint">
+      <span class="method">GET</span>
+      <span class="path">/v1/usage</span>
+      <span class="auth">key required</span>
+    </div>
+    <p>Returns this key’s own counters — the current hour against its limit, and totals per day broken down by route.</p>
+
+    <h2 id="limits">Limits</h2>
+    <div class="scroll">
+      <table>
+        <tr><th>Limit</th><th class="num">Value</th><th>On exceeding</th></tr>
+        <tr><td>Requests per hour, per key</td><td class="num">600 by default</td><td><code>429</code> with <code>Retry-After</code></td></tr>
+        <tr><td>Request body</td><td class="num">256 KB</td><td><code>413</code></td></tr>
+        <tr><td><code>/solve</code> question</td><td class="num">8,000 chars</td><td><code>413</code></td></tr>
+        <tr><td><code>/math/solve</code> input</td><td class="num">2,000 chars</td><td><code>413</code></td></tr>
+      </table>
+    </div>
+    <p>
+      Every authenticated response carries <code>X-RateLimit-Limit</code> and
+      <code>X-RateLimit-Remaining</code>. The window is fixed and resets on the hour.
+    </p>
+
+    <h2 id="errors">Errors</h2>
+    <p>Every failure has the same shape, including the ones thrown by the framework itself.</p>
+    <pre><code>{
+  "success": false,
+  "api_version": "v1",
+  "status": "RATE_LIMITED",
+  "message": "This key has used its 600 requests for this hour."
+}</code></pre>
+    <div class="scroll">
+      <table>
+        <tr><th>Status</th><th class="num">HTTP</th><th>Means</th></tr>
+        <tr><td><code>UNAUTHORIZED</code></td><td class="num">401</td><td>Missing, unrecognised, or revoked key.</td></tr>
+        <tr><td><code>NEEDS_CLARIFICATION</code></td><td class="num">400</td><td>A required field is missing or empty.</td></tr>
+        <tr><td><code>RATE_LIMITED</code></td><td class="num">429</td><td>Hourly limit reached. Honour <code>Retry-After</code>.</td></tr>
+        <tr><td><code>FAILED</code></td><td class="num">4xx / 5xx</td><td>Everything else. <code>message</code> says what went wrong.</td></tr>
+      </table>
+    </div>
+    <p>
+      Unknown routes return <code>401</code> rather than <code>404</code> when
+      unauthenticated — route names are not revealed to callers without a key.
+    </p>
+
+    <footer>
+      7Solve API v1 · <a href="https://7solve.7by.in">7solve.7by.in</a><br>
+      Verification runs on a parser and a substitution engine. No second model grades the first.
+    </footer>
+  </main>
+</div>
