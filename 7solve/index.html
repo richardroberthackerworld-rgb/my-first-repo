@@ -8,7 +8,7 @@
 <!-- Build stamp. Bump this whenever the site is rebuilt: it is the one place
      to look to answer "is the new version actually live?" — Settings shows it,
      the console logs it, and you can read it straight out of view-source. -->
-<meta name="7solve-build" content="2026-08-18.24">
+<meta name="7solve-build" content="2026-08-18.26">
 <link rel="icon" href="favicon.ico?v=7by4" sizes="any">
 <link rel="icon" href="assets/logo.svg?v=7by4" type="image/svg+xml">
 <link rel="icon" href="favicon.png?v=7by4" type="image/png" sizes="96x96">
@@ -13735,6 +13735,174 @@ var Verify = (function(){
             'working shown, so the final answer does not follow from the steps given' }];
   }
 
+  /* ---------- PRIMALITY, computed not believed ----------
+     "It seems 5779 is prime" is a guess wearing the clothes of a statement.
+     Primality is decidable in microseconds; letting a model estimate it is the
+     clearest case there is of trusting an LLM with something a computer settles.
+     PORT of Checks::isPrime / primality in verify.php. */
+  function isPrime(n){
+    if(!isFinite(n) || n < 2 || n !== Math.floor(n)) return false;
+    var small = [2,3,5,7,11,13,17,19,23,29,31,37], i;
+    for(i = 0; i < small.length; i++){
+      if(n === small[i]) return true;
+      if(n % small[i] === 0) return false;
+    }
+    /* Deterministic Miller-Rabin over this witness set — proven correct well
+       past any number a school question produces. No probabilistic answer. */
+    var d = n - 1, r = 0;
+    while(d % 2 === 0){ d /= 2; r++; }
+    var mulmod = function(a, b, m){
+      /* Split to stay exact past 2^53, which naive a*b%m does not. */
+      var res = 0; a %= m;
+      while(b > 0){
+        if(b % 2 === 1) res = (res + a) % m;
+        a = (a * 2) % m; b = Math.floor(b / 2);
+      }
+      return res;
+    };
+    var powmod = function(b, e, m){
+      var res = 1; b %= m;
+      while(e > 0){ if(e % 2 === 1) res = mulmod(res, b, m); b = mulmod(b, b, m); e = Math.floor(e / 2); }
+      return res;
+    };
+    for(i = 0; i < small.length; i++){
+      var x = powmod(small[i], d, n);
+      if(x === 1 || x === n - 1) continue;
+      var ok = false;
+      for(var j = 1; j < r; j++){ x = mulmod(x, x, n); if(x === n - 1){ ok = true; break; } }
+      if(!ok) return false;
+    }
+    return true;
+  }
+  function firstFactor(n){ for(var i = 2; i * i <= n; i++) if(n % i === 0) return i; return n; }
+
+  function primality(md){
+    var s = deLatexSafe(md), out = [], seen = {}, m;
+    var re = /(-?\d{1,15})\s*(?:is|seems\s+to\s+be|appears\s+to\s+be|looks)\s+(not\s+prime|composite|prime)\b/gi;
+    while((m = re.exec(s)) !== null){
+      if(out.length >= 8) break;
+      var n = parseInt(m[1], 10);
+      if(!(n >= 0) || n > 999999999999 || seen[n]) continue;
+      seen[n] = 1;
+      var claimPrime = /prime/i.test(m[2]) && !/not/i.test(m[2]) && !/composite/i.test(m[2]);
+      var really = isPrime(n);
+      out.push({kind:'primality', ok:(claimPrime === really),
+        text: claimPrime
+          ? (really ? n + ' is prime — confirmed by exact test'
+                    : n + ' is NOT prime: ' + n + ' = ' + firstFactor(n) + ' × ' + (n / firstFactor(n)))
+          : (really ? n + ' IS prime, but the answer calls it composite'
+                    : n + ' is composite — confirmed by exact test')});
+    }
+    return out;
+  }
+
+  /* ---------- COMPLETENESS: a truncated answer is not an answer ----------
+     "If a, b, c are all odd: a² + b² + c² is …" was shown to a student as a
+     finished solution. Presenting half a proof as a whole one is worse than
+     showing an error, because nothing on the page says it stopped. */
+  function completeness(md){
+    var s = String(deLatexSafe(md)).replace(/\s+$/, '');
+    if(!s) return [];
+    var why = null;
+    var lines = s.split(/\r?\n/), lastLine = '';
+    for(var i = lines.length - 1; i >= 0; i--){ if(lines[i].trim()){ lastLine = lines[i].trim(); break; } }
+
+    /* A short mathematical result is not a truncated sentence. An earlier rule
+       flagged any last line lacking a full stop, which fires on
+       "x = 2 and x = -2" — most correct answers. Only a line left hanging on a
+       word that CANNOT end a statement is unfinished. */
+    if(lastLine && /(?:^|\s)(is|are|was|were|be|the|a|an|of|and|or|to|for|with|if|then|so|we|it|that|which|by|from|as|but|since|because|where|when|gives?|equals?|becomes?|[=+\-*\/^<>,])\s*$/i.test(lastLine))
+      why = 'the last line stops mid-sentence: "…' + lastLine.slice(-60) + '"';
+    if(!why && /\b(therefore|hence|thus|so we get|which gives)\s*[:,]?\s*$/i.test(s.slice(-160)))
+      why = 'the answer ends on "therefore" with no conclusion after it';
+
+    var count = function(hay, needle){ return hay.split(needle).length - 1; };
+    var dd = count(s, '$$'), dollars = count(s, '$') - 2 * dd;
+    if(!why && dd % 2 !== 0)                                   why = 'an unclosed $$…$$ block';
+    if(!why && dollars % 2 !== 0)                              why = 'an unclosed $…$ formula';
+    if(!why && count(s, '\\[') !== count(s, '\\]'))            why = 'an unclosed \\[…\\] block';
+    if(!why && count(s, '\\(') !== count(s, '\\)'))            why = 'an unclosed \\(…\\) formula';
+    var open = count(s, '(') - count(s, ')');
+    if(!why && open > 1)                                       why = open + ' unclosed brackets';
+
+    if(!why) return [];
+    return [{kind:'truncated', ok:false,
+      text:'this solution is not finished — ' + why + '. It must not be shown as a completed answer'}];
+  }
+
+  /* ---------- UNPROVED CLAIMS ----------
+     Every other check asks whether a NUMBER is right. None reads the sentence
+     carrying the actual mathematical claim, so an answer could substitute four
+     correct tuples, pass everything, and conclude "there are infinitely many
+     prime sums" on the strength of "observing the density of primes" — and be
+     reported FULLY_VERIFIED. That happened in production.
+
+     Four correct substitutions are evidence. They are not a proof of
+     infinitude, and the gap between those two is the entire failure.
+
+     A THEOREM NAME IS NOT A PROOF. Citing Dirichlet does not make a sequence
+     an arithmetic progression, and this engine cannot check that it is — so a
+     bare citation FAILS rather than passes. A checker that accepts one theorem
+     name accepts any theorem name.
+
+     This never asserts a claim is false, only that the answer has not shown it
+     true — a different and much safer statement.
+
+     PORT of Checks::unproved in verify.php. Change one, change both. */
+  var CLAIM_RE = {
+    infinitude: /\b(infinitely\s+many|there\s+are\s+infinite|unbounded(?:ly)?\s+many|arbitrarily\s+(?:large|many))\b/i,
+    universal:  /\b(for\s+all\s+|for\s+every\s+|always\s+(?:holds|true)|in\s+every\s+case)\b/i,
+    exclusive:  /\b(only\s+(?:solutions?|values?|these|\(|the\s+pair)|the\s+unique\s+solution|no\s+other\s+(?:solutions?|values?)|these\s+are\s+all\s+the)\b/i,
+    never:      /\b(never\s+(?:happens|holds|occurs|prime)|is\s+never\b|cannot\s+ever\b)\b/i
+  };
+  var PROOF_RE = /\b(induction|inductive\s+step|base\s+case|contradiction|suppose\s+not|assume\s+for\s+contradiction|vieta|descent|infinite\s+descent|pigeonhole|well[-\s]ordering|minimal\s+counterexample|bijection|construct(?:ion|ed)?\s+(?:a|an|the)\s+|therefore\s+by\s+induction|q\.?e\.?d|∎|hence\s+every|for\s+each\s+k\b|recurrence\s+gives)\b/i;
+  var HANDWAVE_RE = /\b(observing\s+the\s+density|density\s+of\s+primes|it\s+is\s+(?:clear|obvious|well[-\s]known)\s+that|grows?\s+(?:without\s+bound|exponentially|rapidly)[^.]{0,40}(?:therefore|so|hence|thus)|no\s+(?:obvious\s+)?(?:modular\s+)?obstruction|heuristic|numerical\s+evidence\s+suggests|seems?\s+to\s+(?:be|suggest)|appears?\s+to\s+(?:be|hold)|one\s+can\s+conclude|we\s+can\s+conclude)\b/i;
+  var THEOREM_RE = /\b(dirichlet|green[-\s]tao|bertrand|chebyshev|fermat'?s?\s+little|euler'?s?\s+theorem|wilson'?s?\s+theorem|chinese\s+remainder|mordell|siegel|roth'?s?\s+theorem)\b/i;
+  var DENIAL_RE = /\b(do(?:es)?\s+not\s+(?:establish|prove|show|follow|imply)|not\s+(?:established|proved|proven|shown)|cannot\s+(?:be\s+)?(?:prove|establish|conclude)|no\s+proof\s+that|without\s+(?:proving|establishing)|fails?\s+to\s+(?:establish|prove|show)|is\s+not\s+enough\s+to)\b/i;
+  var CLAIM_LABEL = {
+    infinitude: 'that infinitely many exist',
+    universal:  'that it holds in every case',
+    exclusive:  'that these are the only solutions',
+    never:      'that it never happens'
+  };
+
+  function unproved(md){
+    var s = deLatexSafe(md).replace(/```[\s\S]*?```/g, ' ');   // code is not prose
+    var kind = null;
+    for(var name in CLAIM_RE){
+      if(!Object.prototype.hasOwnProperty.call(CLAIM_RE, name)) continue;
+      var m = s.match(CLAIM_RE[name]);
+      if(!m) continue;
+      /* An answer that DECLINES the claim must never be punished for it.
+         "the argument does not establish that infinitely many exist" is the
+         correct, honest reply, and flagging it would teach the solver that
+         hedging costs as much as overclaiming — exactly backwards. */
+      var at = m.index, before = s.slice(Math.max(0, at - 90), at);
+      if(DENIAL_RE.test(before)) continue;
+      kind = name; break;
+    }
+    if(!kind) return [];
+
+    var hasProof = PROOF_RE.test(s);
+    var hw = s.match(HANDWAVE_RE), th = s.match(THEOREM_RE);
+    var label = CLAIM_LABEL[kind];
+
+    if(hw) return [{kind:'claim', ok:false, claimType:kind,
+      text:'the answer claims ' + label + ', but supports it with "' + String(hw[0]).trim() +
+           '" — which concedes it is not a proof; examples and density arguments are evidence, ' +
+           'not a demonstration'}];
+    if(!hasProof && th) return [{kind:'claim', ok:false, claimType:kind,
+      text:'the answer claims ' + label + ' by citing ' + String(th[0]).trim() +
+           ', but does not establish that this problem satisfies that theorem\'s hypotheses — ' +
+           'naming a theorem is a citation, not an argument'}];
+    if(!hasProof) return [{kind:'claim', ok:false, claimType:kind,
+      text:'the answer claims ' + label + ' without an argument that establishes it — no ' +
+           'induction, descent, contradiction or construction appears in the working'}];
+    return [{kind:'claim', ok:true, claimType:kind,
+      text:'the answer claims ' + label + ' and gives an argument for it (this engine checks ' +
+           'that reasoning is PRESENT, not that it is correct)'}];
+  }
+
   /* ---------- PRESENTATION: self-correction leakage ----------
      "Wait, let me re-check that" is not a mathematical error, and it must never
      make an answer read as wrong. It is a PRODUCT error: a student revising for
@@ -14194,6 +14362,9 @@ var Verify = (function(){
     /* first in the receipt: if the question was misread, every verdict below is about a different problem */
     try { checks = checks.concat(trace(question, text)); } catch(e){}
     try { checks = checks.concat(presentation(text)); } catch(e){}
+    try { checks = checks.concat(unproved(text)); } catch(e){}
+    try { checks = checks.concat(primality(text)); } catch(e){}
+    try { checks = checks.concat(completeness(full)); } catch(e){}
     try { checks = integrity(question, full).concat(checks); } catch(e){}
     /* validity comes before everything: an impossible question makes every other verdict moot */
     try { checks = questionCheck(question, text).concat(checks); } catch(e){}
@@ -14249,7 +14420,7 @@ var Verify = (function(){
        "⚠ Partially verified". Every answer looked half-checked. */
     var PROOF = {subst:1, transform:1, arith:1, chem:1, identity:1, bound:1,
                  divis:1, unique:1, condition:1, extremum:1,
-                 integrity:1, units:1, trace:1, question:1};
+                 integrity:1, units:1, trace:1, question:1, claim:1, primality:1, truncated:1};
     /* A soft check is advisory: it reports what could NOT be tested, not a
        problem found. It belongs in the receipt and nowhere near the failure
        count, because a caveat must never decide the badge. */
@@ -14278,7 +14449,7 @@ var Verify = (function(){
     /* units belongs here, not in the milder step-level bucket: an answer to
        "find the acceleration" given in newtons is wrong whatever the
        arithmetic did. */
-    var ANSWER_LEVEL = {subst:1, extremum:1, condition:1, unique:1, chem:1, bound:1, transform:1, units:1, integrity:1, question:1};
+    var ANSWER_LEVEL = {subst:1, extremum:1, condition:1, unique:1, chem:1, bound:1, transform:1, units:1, integrity:1, question:1, claim:1, primality:1, truncated:1};
     var failedAnswer  = failed.filter(function(c){ return ANSWER_LEVEL[c.kind]; });
     var failedWorking = failedProofs.filter(function(c){ return !ANSWER_LEVEL[c.kind]; });
 
@@ -14316,7 +14487,7 @@ var Verify = (function(){
              hasSteps:hasSteps, numeric:numeric };
   }
 
-  return { run:run, evalFlat:evalFlat, arithmetic:arithmetic, units:units, integrity:integrity, trace:trace, questionCheck:questionCheck, presentation:presentation, leaks:leaks,
+  return { run:run, evalFlat:evalFlat, arithmetic:arithmetic, units:units, integrity:integrity, trace:trace, questionCheck:questionCheck, presentation:presentation, leaks:leaks, unproved:unproved, primality:primality, isPrime:isPrime, completeness:completeness,
            substitution:substitution, consistency:consistency,
            chemistry:chemistry, parseFormula:parseFormula, parseSide:parseSide,
            units:units, unitPresence:unitPresence, bounds:bounds,
@@ -14416,7 +14587,7 @@ function paintVerif(md){
                 integrity:'Question read correctly', units:'Units',
                 trace:'Final answer follows the working',
                 reaches:'Traced to the working', unit:'Unit', bound:'Range',
-                question:'The question itself', presentation:'Presentation',
+                question:'The question itself', presentation:'Presentation', claim:'Claim not proved', primality:'Primality', truncated:'Incomplete',
                 chem:'Atoms counted', unitmiss:'Unit',
                 transform:'Transformation tested', identity:'Identity tested',
                 divis:'Divisibility tested', unique:'Completeness tested',
