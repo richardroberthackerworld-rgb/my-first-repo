@@ -1365,6 +1365,127 @@ final class Checks
                     . '. It must not be shown as a completed answer']];
     }
 
+    /* ---------- CLAIM TAXONOMY ----------
+       The checks above ask whether the answer's NUMBERS are right. This asks
+       what KIND of statement each assertion is, because two of them are things
+       no solver is entitled to assert and no engine here can confirm.
+
+       STATUS CLAIMS. "It is currently an open conjecture" promotes the
+       solver's own failure into a theorem about the state of mathematics.
+       "I cannot prove this" and "nobody can prove this" are entirely different
+       claims, and only the first was ever established. This engine cannot know
+       what is open, so it says so rather than agreeing or disagreeing.
+
+       DENSITY CLAIMS. "exactly one-third of all Markov triples have an odd
+       sum" was false — the real figure is about 26% — but the fault is not the
+       number. It is the word EXACTLY attached to a proportion of an infinite
+       family with no argument behind it. A wrong proportion and a lucky one
+       are the same failure.
+
+       Neither is ever called FALSE. Both are reported as claims the system
+       could not establish, which is the honest position and the one §5 asks
+       for. Advisory where the answer is otherwise sound, so a good solution is
+       not condemned for one over-confident sentence — but never silent. */
+    private const STATUS_RE =
+        '/\b(open\s+(?:conjecture|problem|question)|unsolved\s+(?:problem|question)|'
+      . 'remains?\s+(?:unproven|unsolved|open)|no\s+known\s+proof|it\s+is\s+conjectured|'
+      . 'long[-\s]standing\s+conjecture|deep\s+unsolved|famous\s+conjecture|'
+      . 'has\s+never\s+been\s+proved|nobody\s+has\s+proved)\b/iu';
+
+    private const DENSITY_RE =
+        '/\b(exactly\s+(?:one|a|two|three)[-\s](?:third|half|quarter|fifth)s?|'
+      /* No trailing \b on the percentage forms: "%" is not a word character,
+         so \b after it demands a following letter and "exactly 25% of" never
+         matched. The alternation ends where each phrase ends. */
+      . 'exactly\s+\d+(?:\.\d+)?\s*(?:%|percent)|precisely\s+\d+(?:\.\d+)?\s*(?:%|percent)|'
+      . '(?:one|two|three)[-\s](?:third|half|quarter)s?\s+of\s+all|'
+      . 'exactly\s+half\s+of\s+all)/iu';
+
+    public static function taxonomy(string $answer): array
+    {
+        $s = self::deLatex($answer);
+        $s = preg_replace('/```[\s\S]*?```/u', ' ', $s);
+        $out = [];
+
+        if (preg_match(self::STATUS_RE, $s, $m)) {
+            $out[] = ['kind' => 'taxonomy', 'ok' => false, 'soft' => true,
+                'claimStatus' => 'STATUS_UNESTABLISHED',
+                'text' => 'the answer states that this is "' . trim($m[0]) . '" — a claim about what '
+                        . 'mathematics currently knows, not about this problem. The system could not '
+                        . 'establish that claim: being unable to prove something is not evidence that '
+                        . 'nobody has'];
+        }
+        if (preg_match(self::DENSITY_RE, $s, $m)) {
+            $out[] = ['kind' => 'taxonomy', 'ok' => false, 'soft' => true,
+                'claimStatus' => 'PROPORTION_UNESTABLISHED',
+                'text' => 'the answer asserts a precise proportion ("' . trim($m[0]) . '") of an '
+                        . 'infinite family. The system could not establish it — and a proportion that '
+                        . 'happens to be right without an argument is the same failure as one that is '
+                        . 'wrong'];
+        }
+        return $out;
+    }
+
+    /* ---------- CONTRADICTION ----------
+       The working derives one value and the final answer states another:
+
+         2x + 4 = 14  →  2x = 10  →  x = 5   …then   "Therefore x = 7"
+
+       Neither `trace` nor `substitution` catches this on its own. trace only
+       asks whether the final value APPEARS in the working, and x = 7 might
+       appear as a line number or a coefficient. substitution tests the final
+       value against the question, so it reports "7 is wrong" — true, but it
+       never notices that the answer's OWN working already said 5.
+
+       The difference matters to a student. "Your answer is wrong" and "your
+       answer contradicts your line 3" are different pieces of information,
+       and the second one points at where it went wrong.
+
+       Deliberately narrow: one variable, and only when the working states a
+       value for it. Where both values can be tested against the question it
+       also says WHICH one the working got right — that is the sentence worth
+       reading. */
+    public static function contradiction(string $question, string $answer): array
+    {
+        $found = self::findEquation(self::deLatex($question));
+        if ($found === null || count($found['eq']['vars']) !== 1) return [];
+        $v = $found['eq']['vars'][0];
+
+        $md      = self::deLatex($answer);
+        $working = self::withHead($md, '📝');
+        if (trim($working) === '') return [];
+        $zone = self::claimZone($md);
+
+        $derived = self::claimedRoots($working, $v);
+        $final   = self::claimedRoots($zone, $v);
+        if (!count($derived) || !count($final)) return [];
+
+        /* The working's LAST statement is what it concluded. */
+        $last = $derived[count($derived) - 1];
+        $near = static fn(float $a, float $b): bool
+            => abs($a - $b) <= max(1.0, abs($a), abs($b)) * 1e-6;
+
+        foreach ($final as $f) if ($near($f, $last)) return [];      // they agree
+
+        /* They disagree. Which one does the question actually support? */
+        $holds = static function (float $x) use ($found, $v): ?bool {
+            return Algebra::holdsAt($found['eq'], [$v => $x]);
+        };
+        $lastOk  = $holds($last);
+        $finalOk = $holds($final[0]);
+
+        $text = 'the working concludes ' . $v . ' = ' . Algebra::round6($last)
+              . ' but the answer states ' . $v . ' = ' . Algebra::round6($final[0])
+              . ' — a solution cannot disagree with its own steps';
+        if ($lastOk === true && $finalOk === false) {
+            $text .= '. Substituting both into ' . trim($found['src'])
+                   . ' shows the WORKING is right and the final line is the mistake';
+        } elseif ($lastOk === false && $finalOk === true) {
+            $text .= '. Substituting both shows the final answer is right and a step above it is wrong';
+        }
+        return [['kind' => 'contradiction', 'ok' => false, 'text' => $text]];
+    }
+
     /* ---------- the verdict ----------
        Answer-level failures dispute the ANSWER. Working-level failures dispute
        a STEP, which is a different and lesser claim, and flattening the two
@@ -1401,7 +1522,15 @@ final class Checks
             Units::check($question, $body),
             self::trace($question, $body),
             self::presentation($body),
-            self::unproved($body)
+            self::unproved($body),
+            self::primality($body),
+            /* completeness reads the FULL answer: truncation is about where the
+               reply stops, and the 📌 block is stripped from $body. */
+            self::completeness($answer),
+            self::taxonomy($body),
+            /* A solution that disagrees with its own working. Answer-level,
+               and it points at WHERE it went wrong, not only that it did. */
+            self::contradiction($question, $answer)
         );
 
         /* A soft check is advisory: it reports something worth telling the
@@ -1420,7 +1549,7 @@ final class Checks
            in the milder step-level bucket. */
         /* integrity is answer-level and then some: a misread question makes
            the answer wrong no matter how clean the working is. */
-        $answerLevel = ['subst' => true, 'units' => true, 'integrity' => true, 'question' => true, 'claim' => true, 'primality' => true, 'truncated' => true];
+        $answerLevel = ['subst' => true, 'units' => true, 'integrity' => true, 'question' => true, 'claim' => true, 'primality' => true, 'truncated' => true, 'contradiction' => true];
 
         /* A question with no answer is its own outcome, and flattening it into
            "the answer is wrong" tells a student to try again at something
@@ -1453,7 +1582,7 @@ final class Checks
             return $seen ? 'VERIFIED' : 'NOT_CHECKED';
         };
         $question   = $layer($checks, ['integrity' => 1]);
-        $arithmetic = $layer($checks, ['arith' => 1, 'subst' => 1, 'units' => 1, 'question' => 1, 'claim' => 1, 'primality' => 1, 'truncated' => 1]);
+        $arithmetic = $layer($checks, ['arith' => 1, 'subst' => 1, 'units' => 1, 'question' => 1, 'claim' => 1, 'primality' => 1, 'truncated' => 1, 'contradiction' => 1]);
         $traceState = $layer($checks, ['trace' => 1]);
 
         /* NOT_CHECKED is not a failure. Requiring all three layers to have RUN

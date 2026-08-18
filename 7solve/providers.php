@@ -42,11 +42,21 @@ const PROVIDER_MODEL_OK = [
    Cerebras is the proven workhorse, while Gemini has been returning 429 on
    this quota. Each entry is tried until one returns usable text. */
 const SOLVE_CHAIN = [
+    /* Ordered from one day of measured traffic, not preference:
+         openai/gpt-oss-120b  32/33  97%
+         gemma-4-31b          12/14  86%
+         gemini-3.1-flash-lite 6/6  100%
+         mistral-large-latest  2/2  100%
+       gemini-3-flash-preview managed 13/33 — quota, so it sits behind the
+       lite model rather than in front of it. deepseek/deepseek-r1 (0/11) and
+       openai/gpt-4o (0/10) are gone: a link that never answers still costs a
+       round trip out of the 60-second budget. */
     ['groq',       'openai/gpt-oss-120b'],
     ['cerebras',   'gemma-4-31b'],
-    ['gemini',     'gemini-3-flash-preview'],
+    ['gemini',     'gemini-3.1-flash-lite'],
     ['mistral',    'mistral-large-latest'],
-    ['openrouter', 'deepseek/deepseek-r1'],
+    ['groq',       'qwen/qwen3.6-27b'],
+    ['gemini',     'gemini-3-flash-preview'],
 ];
 
 function provider_keys(array $CFG, string $provider): array
