@@ -8,7 +8,7 @@
 <!-- Build stamp. Bump this whenever the site is rebuilt: it is the one place
      to look to answer "is the new version actually live?" — Settings shows it,
      the console logs it, and you can read it straight out of view-source. -->
-<meta name="7solve-build" content="2026-08-18.35">
+<meta name="7solve-build" content="2026-08-18.45">
 <link rel="icon" href="favicon.ico?v=7by4" sizes="any">
 <link rel="icon" href="assets/logo.svg?v=7by4" type="image/svg+xml">
 <link rel="icon" href="favicon.png?v=7by4" type="image/png" sizes="96x96">
@@ -706,6 +706,33 @@ textarea#qtext:focus{outline:none;border-color:var(--brand);background:#fff;box-
 .answer-body table{width:100%;border-collapse:collapse;margin:.9em 0;font-size:14px}
 .answer-body th,.answer-body td{padding:9px 12px;border:1px solid var(--line);text-align:left}
 .answer-body th{background:var(--surface-3);font-weight:700;color:var(--ink)}
+/* Synthetic division. The generic .answer-body table rule stretches to 100%
+   and boxes every cell, which is wrong here: this is a numeric alignment, not
+   a data grid. Only two rules are drawn — the vertical one after the root and
+   the horizontal one above the result — because those are the two the method
+   actually has. Tabular figures keep the columns true at any digit width. */
+.sd-wrap{margin:1.1em 0;overflow-x:auto}
+.answer-body table.sd{width:auto;border-collapse:collapse;margin:0;font-size:15px;
+  font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+.answer-body table.sd td{border:0;padding:5px 14px;text-align:right;
+  min-width:2.6em;white-space:nowrap;color:var(--ink)}
+/* Both rules use --ink-4, not the --line hairline. The hairline is the right
+   weight for a card edge, where the border is a boundary; here the two rules
+   ARE the method — the vertical one separates the divisor from the
+   coefficients, the horizontal one marks where the addition lands — and at
+   #e6e9f7 on an #f4f6fd surface they measured almost invisible (1.25:1).
+   --ink-4 was the first pick and measured 2.36:1, under the 3:1 a non-text
+   mark needs, so it came down to --ink-3 at 4.69:1 on the page and 5.07:1 on
+   a white card — the same measure-and-darken the rest of this palette went
+   through. Both tokens already exist; no new colour is introduced. */
+.answer-body table.sd td.sd-root{
+  border-right:1.5px solid var(--ink-3);font-weight:700;text-align:center;
+  padding-right:16px;color:var(--ink-2)}
+.answer-body table.sd tr.sd-prod td{color:var(--ink-2)}
+.answer-body table.sd tr.sd-out td{border-top:1.5px solid var(--ink-3);font-weight:700}
+.answer-body table.sd tr.sd-out td.sd-root{border-top:0}
+.answer-body table.sd td.sd-rem{color:var(--ok,#16a34a)}
+.sd-cap{margin:.5em 0 0;font-size:13.5px;color:var(--ink-2)}
 .answer-body .diagram{
   margin:1.1em 0;padding:16px;border-radius:var(--r);
   background:var(--surface-2);border:1px solid var(--line);text-align:center;
@@ -8153,6 +8180,10 @@ var Deriv = (function(){
        the standard reading. Anything longer or ambiguous is left alone and
        refused downstream — the rule is still never guess. */
     normalise: function(src){
+      /* The renderer writes products with a middot — "cos(x²) · 2x" — and the
+         tokeniser does not know that character, so the engine could not read
+         back an expression it had written itself. */
+      src = String(src || '').replace(/·/g, '*');
       var FN = 'sin|cos|tan|asin|acos|atan|ln|log|log2|log10|exp|sqrt|cbrt|abs';
       return String(src || '')
         .replace(new RegExp('\\b(' + FN + ')\\s*\\^\\s*(\\d+)\\s+([a-z])\\b', 'gi'),
@@ -8182,10 +8213,15 @@ var Deriv = (function(){
     _str: str, _simp: simp
   };
 })();
-W.Deriv = Deriv;
+/* window, not W: `var W = window` is declared in a LATER script block, so
+   at THIS point in load order W does not exist yet. Writing window.Deriv here
+   threw a ReferenceError that aborted the rest of this block — taking the
+   Solve handler with it. W === window, so this is the same assignment made
+   safe against load order. */
+window.Deriv = Deriv;
 
 var LocalSolve = (function(){
-  var V = function(){ return (typeof W !== 'undefined' && W.Verify) || null; };
+  var V = function(){ return (window.Verify) || null; };
 
   function frac(n){
     /* Write a decimal as a fraction where that is exact and short — a student
@@ -8394,7 +8430,7 @@ var LocalSolve = (function(){
 
   return { solve: solve };
 })();
-W.LocalSolve = LocalSolve;
+window.LocalSolve = LocalSolve;   // see the note on window.Deriv above
 
 /* ---- automatic complexity detection: quick / normal / deep ---- */
 const DEEP_WORDS = /calculate|compute|prove|derive|evaluate|solve for|find the (value|area|volume|roots)|show that|journal entr|ledger|balance sheet|trial balance|depreciat|amorti[sz]|variance|marginal cost|contribution|break.?even|\bnpv\b|\birr\b|cash flow|ratio analysis|taxable|\bgst\b|consolidat|equilibrium|projectile|thermodynam|stoichiometr|mole concept|quadratic|polynomial|trigonometr|logarithm|matrix|determinant|probability|permutation|combination|integrat|differenti|derivative|vector|theorem|step by step|working note|हल करें|सिद्ध|गणना|साधించండి|లెక్కించండి|నిరూపించండి/i;
@@ -8664,14 +8700,14 @@ async function getAnswer(userText, img, opts){
     if(!md || typeof md !== 'string') return false;
     if(md.indexOf('## ✅') < 0 || md.indexOf('## 📝') < 0) return false;
     try {
-      if(W.Verify && W.Verify.completeness && W.Verify.completeness(md).length) return false;
+      if(window.Verify && window.Verify.completeness && window.Verify.completeness(md).length) return false;
     } catch(e){ return false; }        // cannot check it → do not ship it
     return validate(md);
   };
 
-  if(!img && !(opts && opts.sysText) && W.LocalSolve){
+  if(!img && !(opts && opts.sysText) && window.LocalSolve){
     try {
-      const local = W.LocalSolve.solve(userText);
+      const local = window.LocalSolve.solve(userText);
       if(local && local.md && offlineOk(local.md)){
         /* Same shape every caller already reads: {text, via}. `via` normally
            carries {id, model} for the engine that answered, so the offline
@@ -9596,7 +9632,7 @@ function renderGate(md){
 
   return { ok:true, mode: repairs.length ? 'repaired' : 'pass', md: out, repairs: repairs };
 }
-W.renderGate = renderGate;
+window.renderGate = renderGate;   // same load-order reason
 
 function nbRender(mount, md){
   /* THE GATE. Validate before a single pixel, not after. */
@@ -9615,7 +9651,7 @@ function nbRender(mount, md){
     return;
   }
   md = gate.md;
-  if(gate.repairs && gate.repairs.length) W.lastRenderRepairs = gate.repairs;
+  if(gate.repairs && gate.repairs.length) window.lastRenderRepairs = gate.repairs;
 
   try {
     const tmp = document.createElement('div');
@@ -9973,7 +10009,107 @@ function sanitizeSvg(src){
     return new XMLSerializer().serializeToString(svg);
   }catch(e){ return null; }
 }
+/* ============================================================
+   SYNTHETIC DIVISION
+   ------------------------------------------------------------
+   Models lay this out as hand-aligned ASCII:
+
+       2 | 1  -6  11  -6
+         |    2  -8    6
+       ------------------
+         1  -4   3    0
+
+   Alignment is the only thing carrying the meaning — which
+   product sits under which coefficient IS the method. Unfenced,
+   every line took the <p> branch, the runs of spaces collapsed
+   to one, and the student got four ragged sentences of loose
+   numbers. Fenced, it survived as monospace but still rendered
+   as a lump of code in the middle of a maths answer.
+
+   So: read the block, and lay it out as a real table where the
+   columns are structural rather than a happy accident of
+   character widths.
+
+   The arithmetic is RE-DERIVED from the root and the top row,
+   and the model's own middle and bottom rows must match it. A
+   block that does not reconcile is left exactly as it came in,
+   as preformatted text. This renderer will not put a wrong
+   computation into a clean table and lend it the authority of
+   good typesetting — that is the whole failure mode this
+   codebase exists to prevent. It formats what is already right;
+   it never repairs, and it never invents.
+   ============================================================ */
+function synDivParse(lines, start){
+  const num = t => { const m = String(t).trim(); return /^[+-]?\d+$/.test(m) ? parseInt(m,10) : null; };
+  const nums = t => { const p = String(t).trim().split(/\s+/).map(num); return p.every(x=>x!==null) && p.length ? p : null; };
+  const RULE = /^[\s|│├+=]*[-─—_]{3,}[\s|│+=-]*$/;
+
+  const head = String(lines[start]||'').match(/^\s*([+-]?\d+)\s*[|│]\s*([+-]?\d[\d\s+-]*?)\s*$/);
+  if(!head) return null;
+  const root = num(head[1]); const top = nums(head[2]);
+  if(root === null || !top || top.length < 3) return null;   // needs a real polynomial
+
+  /* Walk the next few lines for the products row, the rule and the result.
+     Any of the three may be absent or ordered slightly differently; what is
+     NOT optional is a result row that reconciles. */
+  let prod = null, out = null, end = start, seenRule = false;
+  for(let i = start + 1; i < lines.length && i <= start + 4; i++){
+    const L = String(lines[i]||'');
+    if(RULE.test(L)){ seenRule = true; end = i; continue; }
+    const bar = L.match(/^\s*[|│]\s*([+-]?\d[\d\s+-]*?)\s*$/);
+    if(bar && !prod && !out){ prod = nums(bar[1]); end = i; continue; }
+    const plain = L.match(/^\s*([+-]?\d[\d\s+-]*?)\s*$/);
+    if(plain){
+      const v = nums(plain[1]);
+      if(v && !prod && !seenRule){ prod = v; end = i; continue; }
+      if(v){ out = v; end = i; break; }
+    }
+    break;
+  }
+  if(!out || out.length !== top.length) return null;
+
+  /* re-derive, then demand agreement */
+  const wantOut = [top[0]], wantProd = [];
+  for(let k = 1; k < top.length; k++){
+    const p = wantOut[k-1] * root;
+    wantProd.push(p);
+    wantOut.push(top[k] + p);
+  }
+  if(out.some((v,i)=>v !== wantOut[i])) return null;
+  if(prod){
+    const q = prod.length === wantProd.length + 1 ? prod.slice(1) : prod;   // some models pad a leading blank
+    if(q.length !== wantProd.length || q.some((v,i)=>v !== wantProd[i])) return null;
+  }
+  return { root, top, prod: wantProd, out: wantOut, end };
+}
+
+function synDivHtml(d){
+  const n = d.top.length;
+  const cell = (v,cls) => '<td'+(cls?' class="'+cls+'"':'')+'>'+(v===null?'':String(v).replace(/-/g,'−'))+'</td>';
+  const rootCell = '<td class="sd-root">' + String(d.root).replace(/-/g,'−') + '</td>';
+  const blank = '<td class="sd-root"></td>';
+
+  let h = '<div class="sd-wrap"><table class="sd" role="presentation"><tbody>';
+  h += '<tr class="sd-top">' + rootCell + d.top.map(v=>cell(v)).join('') + '</tr>';
+  h += '<tr class="sd-prod">' + blank + cell(null) +
+       d.prod.map(v=>cell(v)).join('') + '</tr>';
+  h += '<tr class="sd-out">' + blank +
+       d.out.map((v,i)=>cell(v, i === n-1 ? 'sd-rem' : '')).join('') + '</tr>';
+  h += '</tbody></table>';
+
+  const r = d.root, rem = d.out[n-1];
+  const factor = 'x ' + (r < 0 ? '+ ' + Math.abs(r) : '− ' + r);
+  h += '<p class="sd-cap">' + (rem === 0
+      ? 'Remainder 0 — so (' + factor + ') is a factor, and the row above gives the quotient.'
+      : 'Remainder ' + String(rem).replace(/-/g,'−') + ' — so (' + factor + ') is not a factor.')
+    + '</p></div>';
+  return h;
+}
+
 function renderFence(lang, buf){
+  /* a model that fences its synthetic division still deserves the table */
+  const sd = synDivParse(buf, 0);
+  if(sd && sd.end >= buf.length - 1) return synDivHtml(sd);
   const raw = unescapeHtml(buf.join('\n')).trim();
   // models sometimes label the fence xml/html or forget the label — detect <svg content directly
   if(lang==='svg' || raw.startsWith('<svg')){
@@ -10010,13 +10146,21 @@ function mdToHtml(md){
     .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
     .replace(/(^|[^*])\*([^*\n]+)\*/g,'$1<em>$2</em>')
     .replace(/`([^`]+)`/g,'<code>$1</code>');
-  for(const raw of lines){
+  for(let li=0; li<lines.length; li++){
+    const raw = lines[li];
     if(raw.trim().startsWith('```')){
       if(inCode){ html+=renderFence(codeLang, codeBuf); codeBuf=[]; inCode=false; codeLang=''; }
       else { closeLists(); flushTable(); inCode=true; codeLang=raw.trim().slice(3).trim().toLowerCase(); }
       continue;
     }
     if(inCode){ codeBuf.push(raw); continue; }
+    /* before the table and paragraph branches: an unfenced synthetic division
+       is destroyed by both of them, and its first line can also look enough
+       like a pipe table to be swallowed whole. */
+    {
+      const sd = synDivParse(lines, li);
+      if(sd){ closeLists(); flushTable(); html += synDivHtml(sd); li = sd.end; continue; }
+    }
     if(/^\s*\|.*\|/.test(raw)){ closeLists(); inTable=true; tableBuf.push(raw); continue; }
     else flushTable();
     let m;
@@ -13197,7 +13341,13 @@ var Verify = (function(){
      comparing its own inconsistency. Mirrors Checks::claimedRoots in
      verify.php. */
   function claimedRootsOf(md, v0){
-      var NUM = '-?\\d+(?:\\.\\d+)?(?:\\s*\\/\\s*-?\\d+(?:\\.\\d+)?)?';
+      /* Strip markdown emphasis before reading any value. An answer written as
+         "x = **82 + 30√7**" could not be parsed: the tokeniser turns ** into ^,
+         so the whole tail failed and the word-eating fallback harvested the
+         fragment 82 — which satisfies nothing, and reported a CORRECT answer
+         as disputed. Emphasis is presentation, never mathematics. */
+      md = String(md == null ? '' : md).replace(/\*\*|__|(?<![\w*])\*(?!\*)/g, '');
+      var NUM ='-?\\d+(?:\\.\\d+)?(?:\\s*\\/\\s*-?\\d+(?:\\.\\d+)?)?';
       var SEP = '\\s*(?:,|or|and|;|या|మరియు)\\s*';
       var one = function(r){
         var f = String(r).match(/^\s*(-?\d+(?:\.\d+)?)\s*\/\s*(-?\d+(?:\.\d+)?)\s*$/);
@@ -13280,6 +13430,210 @@ var Verify = (function(){
         });
       }
     return roots.map(function(r){ return r.v; });
+  }
+
+  /* ============================================================
+     SOLUTION COMPLETENESS
+     ------------------------------------------------------------
+     substitution proves "every root offered is genuine". It does
+     NOT prove "these are all of them", and the difference is a
+     mark: x³ − 6x² + 11x − 6 = 0 answered "x = 1, x = 2" passed
+     every check in the engine, because 1 and 2 really are roots
+     and nothing counted them against the degree.
+
+     This establishes the complete real solution set independently
+     and compares. It is deliberately NOT a value count — degree
+     is not the number of real roots, and the spec cases prove
+     why: (x−2)² = 0 has one distinct root and multiplicity two,
+     x² + 1 = 0 has none over the reals.
+
+     Method, and it is exact rather than numerical wherever it
+     matters:
+       1. f(x) = L − R, sampled at x = 0…7.
+       2. Finite differences give the degree, and a row that never
+          vanishes means it is not a polynomial at all — that is
+          what keeps this off sin x and 2^x.
+       3. Newton's forward form recovers the coefficients, which
+          are then required to be integers. Anything else bails.
+       4. Rational roots come from the rational-root theorem and
+          are deflated by synthetic division, so the school cases
+          are found EXACTLY, not by a root-finder that might miss
+          one. What is left is degree ≤ 2 and closed-form, or the
+          check gives no verdict.
+
+     Everything outside that is a bail, not a guess — several
+     variables, trig, non-integer coefficients, a quartic with two
+     irrational pairs. Rule 1 of this codebase: no verdict beats a
+     wrong verdict, and a checker that flags correct work teaches
+     students to ignore every warning it ever prints.
+
+     KNOWN LIMIT, stated rather than hidden: completeness is
+     asserted over the REALS. When a polynomial has complex roots
+     the check refuses to certify the answer complete and says so
+     advisorily instead — it does not fail a correct real-only
+     answer, and it does not pretend a real-only answer is the
+     whole solution set either. ============================================================ */
+
+  /* integer coefficients of f(x) = L − R, lowest power first, or null */
+  function polyOf(eq, v){
+    var MAXD = 6, y = [], i, env;
+    for(i = 0; i <= MAXD + 1; i++){
+      env = {}; env[v] = i;
+      var a = evalAt(eq.L, env), b = evalAt(eq.R, env);
+      if(a === null || b === null || !isFinite(a) || !isFinite(b)) return null;
+      y.push(a - b);
+    }
+    var scale = 1; y.forEach(function(t){ scale = Math.max(scale, Math.abs(t)); });
+    var rows = [y.slice()], d = -1, k, j;
+    for(k = 1; k <= MAXD + 1; k++){
+      var prev = rows[k-1], cur = [];
+      for(j = 0; j + 1 < prev.length; j++) cur.push(prev[j+1] - prev[j]);
+      rows.push(cur);
+      if(cur.length && cur.every(function(t){ return Math.abs(t) <= 1e-7 * scale; })){ d = k - 1; break; }
+    }
+    if(d < 1) return null;                       /* constant, or no degree found → not ours */
+
+    /* f(x) = Σ Δᵏf(0)/k! · x(x−1)…(x−k+1) */
+    var T = [1], out = [], fact = 1;
+    for(j = 0; j <= d; j++) out.push(0);
+    for(k = 0; k <= d; k++){
+      if(k > 0) fact *= k;
+      var c = rows[k][0] / fact;
+      for(j = 0; j < T.length; j++) out[j] = (out[j] || 0) + c * T[j];
+      var nT = []; for(j = 0; j <= T.length; j++) nT.push(0);
+      for(j = 0; j < T.length; j++){ nT[j+1] += T[j]; nT[j] += -k * T[j]; }
+      T = nT;
+    }
+    /* Integer coefficients only. A float coefficient means either a genuinely
+       non-integer polynomial or accumulated sampling error, and there is no way
+       to tell which from here — so neither gets a verdict. */
+    var ints = [];
+    for(j = 0; j < out.length; j++){
+      var r = Math.round(out[j]);
+      if(Math.abs(out[j] - r) > 1e-6 * Math.max(1, Math.abs(out[j]))) return null;
+      ints.push(r);
+    }
+    while(ints.length > 1 && ints[ints.length-1] === 0) ints.pop();
+    return ints.length >= 2 ? ints : null;
+  }
+
+  /* every distinct real root, exactly; null when it cannot be certain */
+  function realRootsOf(eq, v){
+    var a = polyOf(eq, v);
+    if(!a) return null;
+    var deg = a.length - 1, roots = [], mult = 0, i;
+
+    var divisors = function(n){
+      n = Math.abs(n); var out = [];
+      for(var q = 1; q <= n && q <= 5000; q++) if(n % q === 0) out.push(q);
+      return out;
+    };
+    /* x = 0 first: the rational-root theorem needs a non-zero constant term */
+    while(a.length > 1 && a[0] === 0){ a = a.slice(1); roots.push(0); mult++; }
+
+    if(a.length > 1){
+      var ps = divisors(a[0]), qs = divisors(a[a.length-1]), cand = [], seen = {};
+      ps.forEach(function(p){ qs.forEach(function(q){
+        [p/q, -p/q].forEach(function(x){
+          var k = String(Math.round(x * 1e9));
+          if(!seen[k]){ seen[k] = 1; cand.push(x); }
+        });
+      }); });
+      /* deflate each rational root as many times as it divides */
+      for(i = 0; i < cand.length; i++){
+        var r = cand[i], guard = 0;
+        while(a.length > 1 && guard++ < 8){
+          /* synthetic division of Σ a[j]x^j by (x − r), highest power first */
+          var hi = a.slice().reverse(), q2 = [hi[0]], j;
+          for(j = 1; j < hi.length; j++) q2.push(hi[j] + q2[j-1] * r);
+          var rem = q2.pop();
+          if(Math.abs(rem) > 1e-9 * Math.max(1, Math.abs(a[0]))) break;
+          a = q2.reverse();
+          mult++;
+          if(roots.indexOf(r) < 0 && !roots.some(function(x){ return Math.abs(x - r) < 1e-9; })) roots.push(r);
+        }
+      }
+    }
+
+    var left = a.length - 1;
+    if(left === 2){
+      var C = a[0], B = a[1], A = a[2], disc = B*B - 4*A*C;
+      if(disc > 1e-9){
+        [(-B + Math.sqrt(disc)) / (2*A), (-B - Math.sqrt(disc)) / (2*A)].forEach(function(x){
+          if(!roots.some(function(y){ return Math.abs(y - x) < 1e-9; })) roots.push(x);
+        });
+        mult += 2;
+      } else if(disc > -1e-9){
+        var x0 = -B / (2*A);
+        if(!roots.some(function(y){ return Math.abs(y - x0) < 1e-9; })) roots.push(x0);
+        mult += 2;                                 /* a double root, one value */
+      }
+      /* disc < 0: a complex pair, contributing no real root */
+    } else if(left > 2){
+      return null;                                 /* cannot certify completeness */
+    }
+
+    roots.sort(function(p, q){ return p - q; });
+    return { real: roots, degree: deg, realMult: mult, complex: deg - mult };
+  }
+
+  function solutionCompleteness(question, md){
+    var dl = (typeof window !== 'undefined' && window.deLatex7) || function(x){ return x; };
+    var found = findEquation(dl(String(question == null ? '' : question)));
+    if(!found) return [];
+    var eq = found.eq;
+    if(eq.vars.length !== 1) return [];
+    if(hasTrig(eq.L) || hasTrig(eq.R)) return [];
+    var v = eq.vars[0];
+    var info = realRootsOf(eq, v);
+    if(!info) return [];
+
+    var zone = claimZone(md);
+    var show = function(n){
+      var r = Math.round(n * 1e6) / 1e6;
+      return String(Math.abs(r - Math.round(r)) < 1e-9 ? Math.round(r) : r).replace(/-/g, '−');
+    };
+    var NONE = /\bno\s+(real\s+)?(solutions?|roots?)\b|\b(has|there\s+are)\s+no\s+real\b/i;
+    var COMPLEXY = /(^|[^a-z])i([^a-z]|$)|\bimaginary\b|\bcomplex\b/i;
+
+    /* --- nothing real to find --- */
+    if(!info.real.length){
+      if(NONE.test(zone))
+        return [{ kind:'roots', ok:true, text:'no real solutions exist, and the answer says so' }];
+      if(COMPLEXY.test(zone))
+        return [{ kind:'roots', ok:false, soft:true,
+          text:'this equation has no real solutions and the answer gives complex ones — ' +
+               'complex roots are outside what this engine can check, so the answer is not verified' }];
+      return [];
+    }
+
+    var claimed = claimedRootsOf(zone, v);
+    if(!claimed.length) return [];
+    /* A value that is not a root at all is substitution's verdict to give.
+       Reporting it here too would print the same fault twice under two names. */
+    var isRoot = function(x){ return info.real.some(function(r){ return Math.abs(r - x) <= 1e-7 * Math.max(1, Math.abs(r)); }); };
+    if(!claimed.every(isRoot)) return [];
+
+    var missing = info.real.filter(function(r){
+      return !claimed.some(function(x){ return Math.abs(r - x) <= 1e-7 * Math.max(1, Math.abs(r)); });
+    });
+    if(missing.length){
+      return [{ kind:'roots', ok:false,
+        text:'the solution is incomplete — ' + v + ' = ' + missing.map(show).join(', ') +
+             (missing.length > 1 ? ' are also roots' : ' is also a root') +
+             ' and ' + (missing.length > 1 ? 'are' : 'is') + ' missing from the answer' }];
+    }
+    /* Complete over the reals. If the polynomial also has a complex pair, this
+       check will not call the answer complete — it says what it verified. */
+    if(info.complex > 0){
+      return [{ kind:'roots', ok:false, soft:true,
+        text:'all ' + info.real.length + ' real solution' + (info.real.length > 1 ? 's are' : ' is') +
+             ' accounted for, but this equation also has complex roots that are outside what ' +
+             'this engine can check' }];
+    }
+    return [{ kind:'roots', ok:true,
+      text:'all ' + info.real.length + ' solution' + (info.real.length > 1 ? 's are' : ' is') +
+           ' accounted for' }];
   }
 
   function substitution(question, md){
@@ -13994,7 +14348,20 @@ var Verify = (function(){
     if(sum){
       var s = headline(sum);
       if(s && !near(a.n, s.n, a.raw.length > s.raw.length ? a.raw : s.raw)){
-        checks.push({ kind:'agree', ok:false,
+        /* TIER 3 — a prose hint, and marked soft so it can never be
+           authoritative. It reads numbers out of the Answer and Summary
+           sections and compares them, which is a reasonable smell test on a
+           model's prose and a bad one on a deterministic solver: LocalSolve's
+           own steps legitimately contain "a = 1, b = -164, c = 424", and this
+           read those coefficients as competing answers. It failed on EVERY
+           offline answer, and on a derivative — where no Tier 1 check runs —
+           it was the only failure present, so a correct, deterministically
+           computed result showed "⚠ Partially verified".
+
+           A prose hint must never overrule mathematics. It stays because it is
+           still worth saying on an AI answer; it is advisory because it is not
+           evidence. */
+        checks.push({ kind:'agree', ok:false, soft:true,
           text:'the Answer says ' + a.raw + ', the Summary says ' + s.raw });
       } else if(s){
         checks.push({ kind:'agree', ok:true, text:'Answer and Summary state the same result' });
@@ -14279,6 +14646,84 @@ var Verify = (function(){
     return [{ kind:'trace', ok:false,
       text: v + ' = ' + orphans.join(', ') + ' is stated as the answer but never appears in the ' +
             'working shown, so the final answer does not follow from the steps given' }];
+  }
+
+  /* ---------- TIER 1: DERIVATIVE ----------
+     A derivative question has no equation to substitute into, so before this
+     existed NO Tier 1 check could run on one — and a correct, deterministically
+     computed derivative reached the student with a warning badge, because the
+     only check that spoke was a prose hint.
+
+     This differentiates the ORIGINAL expression independently and compares the
+     result to what the answer claims, by evaluating both at scattered points.
+     The answer's own prose is not evidence; neither is the fact that
+     LocalSolve produced it. Two expressions that agree at eight unrelated
+     reals are the same function for this purpose, and one that disagrees
+     anywhere is not.
+
+     Refuses — says nothing — whenever it cannot compute the truth itself. */
+  function derivativeCheck(question, md){
+    if(typeof Deriv === 'undefined' || !Deriv) return [];
+    var q = deLatexSafe(question);
+    var dm = q.match(/(?:d\s*\/\s*d([a-z])|differentiate|derivative\s+of)\s*[:\s]*(.+)$/i);
+    if(!dm) return [];
+    var body = String(dm[2] || '').trim().replace(/[?.]+$/, '')
+                 .replace(/\s+with\s+respect\s+to\s+[a-z]\s*$/i, '').trim();
+    if(/^\(.*\)$/.test(body)){
+      var inner = body.slice(1, -1), d = 0, ok = true;
+      for(var i = 0; i < inner.length; i++){
+        if(inner[i] === '(') d++; else if(inner[i] === ')' && --d < 0){ ok = false; break; }
+      }
+      if(ok && d === 0) body = inner;
+    }
+    var truth = Deriv.of(Algebra, body, (dm[1] || '').toLowerCase() || null);
+    if(!truth) return [];                       // cannot compute it → no verdict
+
+    /* What the answer claims, read from the claim zone with emphasis stripped. */
+    var zone = claimZone(deLatexSafe(md)).replace(/\*\*|__/g, '');
+    /* The heading line "Answer" PARSES — every letter is its own variable, so
+       it reads as a·n·s·w·e·r — and being first it won over the real answer
+       below it. A candidate must therefore use only the variable being
+       differentiated; anything else is prose that happens to be parseable. */
+    var v0 = truth.variable;
+    var line = null, claimed = null;
+    zone.split(/\r?\n/).forEach(function(L){
+      if(line) return;
+      var t = L.replace(/^[\s#>✅🎯*]+/, '').replace(/^d\s*\/\s*d[a-z]\s*=?\s*/i, '').trim();
+      if(!t || !/[a-z0-9]/i.test(t)) return;
+      var ast = Algebra.parse(Deriv.normalise(t));
+      if(!ast) return;
+      var vs = Object.keys(varsOf(ast));
+      if(vs.length && vs.some(function(x){ return x !== v0; })) return;   // prose, not maths
+      line = t; claimed = ast;
+    });
+    if(!line || !claimed) return [];
+    var actual = Algebra.parse(Deriv.normalise(truth.result));
+    if(!actual) return [];
+    var v = v0;
+
+    /* Sample ALL points, never stopping early. The loop used to run while
+       `same` held, so the first mismatch ended it with seen = 1 — and the
+       seen < 3 guard below then threw away the very disagreement it had just
+       found. A wrong derivative produced no verdict at all instead of a
+       disputed one. The guard is there for "too little evidence to speak",
+       which is not the same as "found the answer immediately". */
+    var seen = 0, same = true;
+    for(var k = 0; k < 8; k++){
+      var env = {}; env[v] = 0.83 + k * 1.19;
+      var A1 = evalAt(claimed, env), A2 = evalAt(actual, env);
+      if(!isFinite(A1) || !isFinite(A2)) continue;
+      seen++;
+      if(Math.abs(A1 - A2) > Math.max(1, Math.abs(A1), Math.abs(A2)) * 1e-7) same = false;
+    }
+    if(seen < 3) return [];                     // too little evidence to speak
+
+    return [{kind:'deriv', ok:same,
+      text: same
+        ? 'differentiating ' + truth.expr + ' independently gives ' + truth.result +
+          ', which matches the answer'
+        : 'differentiating ' + truth.expr + ' independently gives ' + truth.result +
+          ', but the answer states ' + line}];
   }
 
   /* ---------- CONTRADICTION ----------
@@ -14988,6 +15433,7 @@ var Verify = (function(){
     var checks = [];
     try { checks = checks.concat(arithmetic(text)); } catch(e){}
     try { checks = checks.concat(substitution(question, text)); } catch(e){}
+    checks = checks.concat(solutionCompleteness(question, text));
     try { checks = checks.concat(units(question, text)); } catch(e){}
     /* first in the receipt: if the question was misread, every verdict below is about a different problem */
     try { checks = checks.concat(trace(question, text)); } catch(e){}
@@ -14999,6 +15445,8 @@ var Verify = (function(){
     /* A solution that disagrees with its own working: answer-level, and it
        points at WHERE it went wrong rather than only that it did. */
     try { checks = checks.concat(contradiction(question, text)); } catch(e){}
+    /* TIER 1 for derivatives — the only mathematical check a derivative can have */
+    try { checks = checks.concat(derivativeCheck(question, text)); } catch(e){}
     try { checks = integrity(question, full).concat(checks); } catch(e){}
     /* validity comes before everything: an impossible question makes every other verdict moot */
     try { checks = questionCheck(question, text).concat(checks); } catch(e){}
@@ -15015,7 +15463,14 @@ var Verify = (function(){
     try { checks = checks.concat(quantifier(text)); } catch(e){}
     try { checks = checks.concat(exampleAsProof(text)); } catch(e){}
     try { checks = checks.concat(consistency(text)); } catch(e){}
-    try { checks = checks.concat(units(question, text)); } catch(e){}
+    /* units() was wired here a SECOND time — it already runs near the top of
+       this function. Every dimensional warning was therefore appended twice,
+       and a student asking for an acceleration answered in newtons saw the
+       identical sentence printed twice in the receipt. It also made the
+       negative control for units vacuous on this side: cutting one of two
+       identical lines leaves the check running, so the control only ever
+       proved the PHP wiring. Found by making parity compare production run()
+       against production run() instead of a hand-recomposed pipeline. */
     /* A chemistry answer's WORKING legitimately contains the unbalanced
        starting equation — that is the question. Judge the equation the answer
        puts forward, and only fall back to the whole reply when the answer
@@ -15054,7 +15509,7 @@ var Verify = (function(){
        "⚠ Partially verified". Every answer looked half-checked. */
     var PROOF = {subst:1, transform:1, arith:1, chem:1, identity:1, bound:1,
                  divis:1, unique:1, condition:1, extremum:1,
-                 integrity:1, units:1, trace:1, question:1, claim:1, primality:1, truncated:1, contradiction:1};
+                 integrity:1, units:1, trace:1, question:1, claim:1, primality:1, truncated:1, contradiction:1, deriv:1, roots:1};
     /* A soft check is advisory: it reports what could NOT be tested, not a
        problem found. It belongs in the receipt and nowhere near the failure
        count, because a caveat must never decide the badge. */
@@ -15083,7 +15538,7 @@ var Verify = (function(){
     /* units belongs here, not in the milder step-level bucket: an answer to
        "find the acceleration" given in newtons is wrong whatever the
        arithmetic did. */
-    var ANSWER_LEVEL = {subst:1, extremum:1, condition:1, unique:1, chem:1, bound:1, transform:1, units:1, integrity:1, question:1, claim:1, primality:1, truncated:1, contradiction:1};
+    var ANSWER_LEVEL = {subst:1, extremum:1, condition:1, unique:1, chem:1, bound:1, transform:1, units:1, integrity:1, question:1, claim:1, primality:1, truncated:1, contradiction:1, deriv:1, roots:1};
     var failedAnswer  = failed.filter(function(c){ return ANSWER_LEVEL[c.kind]; });
     var failedWorking = failedProofs.filter(function(c){ return !ANSWER_LEVEL[c.kind]; });
 
@@ -15121,8 +15576,8 @@ var Verify = (function(){
              hasSteps:hasSteps, numeric:numeric };
   }
 
-  return { run:run, evalFlat:evalFlat, arithmetic:arithmetic, units:units, integrity:integrity, trace:trace, questionCheck:questionCheck, presentation:presentation, leaks:leaks, unproved:unproved, primality:primality, isPrime:isPrime, completeness:completeness, taxonomy:taxonomy, contradiction:contradiction,
-           substitution:substitution, consistency:consistency,
+  return { run:run, evalFlat:evalFlat, arithmetic:arithmetic, units:units, integrity:integrity, trace:trace, questionCheck:questionCheck, presentation:presentation, leaks:leaks, unproved:unproved, primality:primality, isPrime:isPrime, completeness:completeness, taxonomy:taxonomy, contradiction:contradiction, derivativeCheck:derivativeCheck,
+           substitution:substitution, solutionCompleteness:solutionCompleteness, consistency:consistency,
            chemistry:chemistry, parseFormula:parseFormula, parseSide:parseSide,
            units:units, unitPresence:unitPresence, bounds:bounds,
            transformCheck:transformCheck, identityCheck:identityCheck,
