@@ -8,7 +8,7 @@
 <!-- Build stamp. Bump this whenever the site is rebuilt: it is the one place
      to look to answer "is the new version actually live?" — Settings shows it,
      the console logs it, and you can read it straight out of view-source. -->
-<meta name="7solve-build" content="2026-08-17.3">
+<meta name="7solve-build" content="2026-08-18.9">
 <link rel="icon" href="favicon.ico?v=7by4" sizes="any">
 <link rel="icon" href="assets/logo.svg?v=7by4" type="image/svg+xml">
 <link rel="icon" href="favicon.png?v=7by4" type="image/png" sizes="96x96">
@@ -2152,7 +2152,8 @@ footer{
 /* The left edge of the answer card carries the verification state, but never
    alone — the stamp beside the heading says it in words too. */
 .answer-body .nb-answer[data-verify="disputed"]{border-left-color:var(--err)}
-.answer-body .nb-answer[data-verify="partial"]{border-left-color:var(--warn)}
+.answer-body .nb-answer[data-verify="partial"],
+.answer-body .nb-answer[data-verify="stepfail"]{border-left-color:var(--warn)}
 .answer-body .nb-answer[data-verify="worked"],
 .answer-body .nb-answer[data-verify="explained"],
 .answer-body .nb-answer[data-verify="plain"]{border-left-color:var(--line-2)}
@@ -7933,8 +7934,14 @@ const MODEL_MAP = {
   gemini:     { text:['gemini-3-flash-preview','gemini-3.1-flash-lite'],
                 vision:['gemini-3-flash-preview','gemini-3.1-flash-lite'],
                 deep:['gemini-3-flash-preview'] },      // pro tiers answer 429 on this quota
-  groq:       { text:['llama-3.3-70b-versatile','llama-3.1-8b-instant'],
-                deep:['llama-3.3-70b-versatile'] },
+  /* Probed against the live account on 2026-08-18: the Llama models that used
+     to be here are GONE from Groq entirely — /v1/models lists neither
+     llama-3.3-70b-versatile nor llama-3.1-8b-instant, which is why the error
+     read "does not exist OR you do not have access". It was both halves of
+     that sentence, and replacing the key alone would not have fixed it.
+     gpt-oss-120b answers the Vieta-jumping Diophantine correctly in ~4s. */
+  groq:       { text:['openai/gpt-oss-120b','openai/gpt-oss-20b'],
+                deep:['openai/gpt-oss-120b'] },
   cerebras:   { text:['gemma-4-31b'] },
   mistral:    { text:['mistral-large-latest'], deep:['mistral-large-latest'] },
   /* Kept so an account WITH credit still routes here; this key has no free
@@ -7942,8 +7949,29 @@ const MODEL_MAP = {
   openrouter: { text:['meta-llama/llama-3.3-70b-instruct'],
                 coding:['qwen/qwen3-coder'],
                 deep:['deepseek/deepseek-r1'] },
-  github:     { text:['openai/gpt-4o'] }                 // currently retired upstream
+  /* RETIRED UPSTREAM — kept only so the entry is here if it comes back. It is
+     no longer wired into any chain in planRoute(); a 410 is not a key we can
+     rotate our way out of. */
+  github:     { text:['openai/gpt-4o'] }
 };
+
+/* What makes two requests deserve the SAME cached answer.
+
+   Not the provider and not the model — those change on every call by design,
+   and having them in the cache key was why the hit rate sat at 3%. What
+   genuinely changes the answer a student should get is the level it is pitched
+   at, the language it is written in, and the subject it is treated as. Those
+   three, and nothing else.
+
+   Kept deliberately short and stable: anything volatile in here (a timestamp,
+   a session id, an inferred confidence score) would silently make every
+   request unique again and quietly undo the whole fix. */
+function cacheTag(){
+  const lvl  = (state.level || '').toString();
+  const lang = (state.lang  || 'en').toString();
+  const subj = (($('subjectSel') && $('subjectSel').value) || '').toString().toLowerCase();
+  return [lvl, lang, subj].join('|');
+}
 
 /* ---- automatic complexity detection: quick / normal / deep ---- */
 const DEEP_WORDS = /calculate|compute|prove|derive|evaluate|solve for|find the (value|area|volume|roots)|show that|journal entr|ledger|balance sheet|trial balance|depreciat|amorti[sz]|variance|marginal cost|contribution|break.?even|\bnpv\b|\birr\b|cash flow|ratio analysis|taxable|\bgst\b|consolidat|equilibrium|projectile|thermodynam|stoichiometr|mole concept|quadratic|polynomial|trigonometr|logarithm|matrix|determinant|probability|permutation|combination|integrat|differenti|derivative|vector|theorem|step by step|working note|हल करें|सिद्ध|गणना|साधించండి|లెక్కించండి|నిరూపించండి/i;
@@ -7982,10 +8010,15 @@ function planRoute(hasImage, qText){
   const add = (id, models) => { if(active(id) && models) models.forEach(m=>out.push({id, model:m})); };
   const mode = assessComplexity(qText!==undefined ? qText : $('qtext').value, hasImage);
   if(mode==='deep'){                  // 🧠 big question → strongest reasoning models first, normal chain as fallback
-    add('gemini', MODEL_MAP.gemini.deep);                    // 2.5 Pro solves text AND photos
+    if(!hasImage) add('groq', MODEL_MAP.groq.deep);          // gpt-oss-120b: text only, but the strongest prover here
+    add('gemini', MODEL_MAP.gemini.deep);                    // solves text AND photos
     if(!hasImage){
-      add('github', MODEL_MAP.github.deep);                  // DeepSeek-R1: strongest free step-by-step numericals solver
+      /* The old line here read MODEL_MAP.github.deep, which has never existed
+         — github only ever defined .text — so this was a no-op wearing the
+         comment of a working fallback. Deep questions had exactly two real
+         attempts, not three. Mistral is a genuine one. */
       add('openrouter', MODEL_MAP.openrouter.deep);          // big reasoning MoEs are text-only
+      add('mistral', MODEL_MAP.mistral.deep);
     }
   } else if(mode==='quick' && !hasImage){ // ⚡ simple question → fastest models first (saves the big-model quotas)
     add('groq', MODEL_MAP.groq.text);
@@ -8009,10 +8042,18 @@ function planRoute(hasImage, qText){
     add('openrouter', MODEL_MAP.openrouter.text);
     add('groq', MODEL_MAP.groq.text);
   } else if(cat==='reasoning'){       // math / physics / accounts → strong reasoning
-    add('gemini', MODEL_MAP.gemini.text);
-    add('github', MODEL_MAP.github.text);   // GPT-4o (50/day) — strong at accounts/quant
-    add('cerebras', MODEL_MAP.cerebras.text);
+    /* Cerebras leads because it is the one that ANSWERS. The dashboard's own
+       ops log settled this: on the reasoning path Gemini was returning 429
+       (quota) and GitHub Models 410 (retirement brownout), so both burned
+       real seconds before Cerebras — third in the old order — produced the
+       text. Order by what replies, not by what we wish replied.
+
+       GitHub Models is deliberately absent: it is retiring upstream, so it is
+       not a key we can fix, and every attempt spent ~14s of the total budget.
+       Put 'github' back on the line below if it ever returns. */
     add('groq', MODEL_MAP.groq.text);
+    add('cerebras', MODEL_MAP.cerebras.text);
+    add('gemini', MODEL_MAP.gemini.text);
     add('openrouter', MODEL_MAP.openrouter.text);
   } else {                            // general / language / essays → fast + capable
     add('gemini', MODEL_MAP.gemini.text);
@@ -8086,7 +8127,7 @@ async function callGeminiModel(model, sys, userText, img, prior, apiKey, noThink
   // proxy mode → the server adds the key and returns the provider's reply unchanged
   const res = PROXY
     ? await fetch(PROXY, { method:'POST', headers:proxyHeaders(),
-        body: JSON.stringify({ provider:'gemini', model, payload }) })
+        body: JSON.stringify({ provider:'gemini', model, payload, cacheTag:cacheTag() }) })
     : await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,{
         method:'POST', headers:{'Content-Type':'application/json','x-goog-api-key':apiKey||key('gemini')},
         body: JSON.stringify(payload) });
@@ -8106,13 +8147,25 @@ async function callOpenAICompat(id, model, sys, userText, img, prior, apiKey){
     : userText;
   const messages = [{role:'system',content:sys},{role:'user',content:userContent}];
   if(prior) messages.push({role:'assistant',content:prior},{role:'user',content:CONTINUE_MSG});
-  const payload = { model, messages, temperature:.4, max_tokens:8192 };
+  /* Groq's free tier meters PROMPT + COMPLETION against 8000 tokens a minute,
+     so asking for 8192 is refused with a 413 before the model runs — the
+     request is over the limit simply by existing. 4096 is well beyond what a
+     student answer needs and leaves room for a long question. */
+  const payload = { model, messages, temperature:.4, max_tokens: id==='groq' ? 4096 : 8192 };
+  /* gpt-oss streams its thinking into a SEPARATE `reasoning` field and leaves
+     `content` empty until that finishes. Left at the default effort it will
+     happily spend the entire token budget thinking and return a 200 carrying
+     no answer at all — measured: 400 tokens produced 923 characters of
+     reasoning and zero characters of content. 'low' still solves the hard
+     Diophantine correctly and lands in ~4s. We never read `reasoning`: it is
+     the model's private working, and rule 6 says the student never sees it. */
+  if(/gpt-oss/.test(model)) payload.reasoning_effort = 'low';
   const headers = {'Content-Type':'application/json','Authorization':'Bearer '+(apiKey||key(id))};
   if(id==='openrouter') headers['X-Title'] = '7Solve';
   // proxy mode → the server adds the key and returns the provider's reply unchanged
   const res = PROXY
     ? await fetch(PROXY, { method:'POST', headers:proxyHeaders(),
-        body: JSON.stringify({ provider:id, model, payload }) })
+        body: JSON.stringify({ provider:id, model, payload, cacheTag:cacheTag() }) })
     : await fetch(OA_BASE[id], { method:'POST', headers, body: JSON.stringify(payload) });
   noteRid(res);
   const data = await res.json();
@@ -8483,7 +8536,15 @@ STRICT RULES:
      A label naming a box goes INSIDE it, centred, with the box at least 9 × (number of characters) + 20 wide. Any other label sits at least 16px clear of every stroke. Give every <text> an explicit font-size between 13 and 17, and before finishing check that no two labels overlap and no label sits on a shape that is not its own.
 4. Math: use plain text notation (×, ÷, √, ², ³, fractions like 3/4). NEVER use LaTeX like \\frac or $...$.
 5. ACCURACY IS NON-NEGOTIABLE. For MCQs state the correct option clearly. For any numerical/calculation, work it out step by step and re-check the arithmetic before giving the result; state any assumption. For current affairs, note your knowledge date if the answer may have changed recently. If you are genuinely unsure, say so rather than inventing a confident wrong figure.
-6. VERIFY BEFORE YOU ANSWER. This is a paid product students revise from, so a confident wrong answer costs them marks. Before writing the Answer section, check your own work silently: substitute the result back into the original equation or condition; re-add every sum; confirm the units of the final quantity are the units the question asks for; confirm your explanation actually reaches the number you are about to state. If the check fails, solve it again — do NOT publish the first attempt. Show the check itself as the last numbered step whenever it is short enough to write in one line (e.g. "Check: 2² − 5(2) + 6 = 0 ✓").
+6. SOLVE FIRST, THEN WRITE. This is a paid product students revise from, so a confident wrong answer costs them marks — and a visible argument with yourself costs their confidence. Work the problem out and check it BEFORE you begin writing, then present one clean derivation of the answer you finished with.
+
+   The student must never see you thinking. Do not write "Wait", "Hold on", "Let me re-check", "Let me recalculate", "Actually", "Hmm", "I made a mistake", "Is that right?", "Let me reconsider", "on second thought", "let me try again", or any other narration of your own process. If a line turns out wrong while you are working, fix it silently and write only the corrected version. An answer that visibly corrects itself reads as an answer that cannot be trusted, even when the final value is right.
+
+   Say each thing ONCE. Do not recompute a quantity you have already established, restate a result in three forms, or verify the same step twice in different words. Length must come from rigour, never from repetition: a hard problem earns more careful justification, not the same calculation three times over.
+
+   The Verification section is the ONE place a check belongs, and it is a deliberate final check of the finished answer against the original question — not a running commentary. Keep it to a few lines.
+
+   Do not assert a mathematical claim you have not justified. "The maximum occurs when two variables are equal" is not a reason; it is the thing that needs one. Give the actual argument — a boundary or discriminant condition, AM–GM, convexity, Lagrange multipliers, symmetry with a stated reason, whichever genuinely applies — or choose a method you can justify. For a maximum or minimum, showing that a candidate is feasible is NOT showing it is optimal; say explicitly why nothing else does better.
 7. NEVER CONTRADICT YOURSELF. The value in the Answer section, the value the steps arrive at, and the value in the Summary must be the same number with the same unit. If two methods give different results, say so plainly and resolve it — never present one and quietly drop the other.
 8. SAY WHAT YOU ASSUMED. If the question is missing something you had to supply (g = 9.8 m/s², the triangle is right-angled, the current syllabus, standard temperature and pressure), put it in the Important Notes section as an explicit "Assumed:" line. An assumption presented as a given is a wrong answer waiting to happen.
 9. YOU ARE ALLOWED NOT TO KNOW. If the question is missing information you cannot reasonably assume, is self-contradictory, rests on a false premise, or asks for something that changes with time and you cannot be current on it — say exactly that in the Answer section, say what is missing or wrong, and ask for the one thing that would let you solve it. Do not fill the gap with an invented figure, a fabricated citation, a made-up statute number or a plausible-sounding mechanism. "I need the value of X to solve this" is a good answer; a confident guess is not.
@@ -12063,9 +12124,22 @@ var Verify = (function(){
       if(out.length >= 12) break;                       // a cap, not a sample: 12 lines is plenty
       var before = md[m.index - 1] || ' ';
       var after  = md[m.index + m[0].length] || ' ';
-      if(/[A-Za-z0-9_.^]/.test(before)) continue;       // mid-token
+      /* A radical, a superscript or a bracket immediately before the match
+         means the digits are PART of a larger term, not a number of their own.
+         "2√3/3 + 1/3 = 13/3" was being read as "3/3 + 1/3 = 13/3" — the tail of
+         a surd — and reported as failed arithmetic on a completely correct
+         answer. That is the worst kind of false positive: it tells a student
+         their right answer is wrong. */
+      if(/[A-Za-z0-9_.^√∛∜)]/.test(before)) continue;   // mid-token or inside a surd
       if(/[A-Za-z0-9^]/.test(after)) continue;          // "= 25x", "= 3rd", "= 2^3"
       if(/[()^√%]/.test(m[0])) continue;                // ambiguous by rule 1
+      /* The same term can also be split by the match STARTING mid-surd a few
+         characters in — scan back over the digits/operators of this expression
+         to the first thing that is not part of a number, and refuse if it is a
+         radical. */
+      var back = m.index - 1;
+      while(back >= 0 && /[\d\s.,+\-*\/×÷]/.test(md[back])) back--;
+      if(back >= 0 && /[√∛∜]/.test(md[back])) continue;
 
       /* An arithmetic check is only honest if the WHOLE expression is numeric.
          "x² − 64x − 100x + 1024 − 600 = 0" ends in a numeric tail that reads
@@ -12612,6 +12686,13 @@ var Verify = (function(){
         var minus = constOf(tail.replace(/[±∓]/g, '-'));
         if(plus !== null && minus !== null) got = [plus, minus];
       }
+      /* A ± family that will not resolve to two REAL numbers is a value this
+         engine cannot represent — "x = -2 ± i√2" is the ordinary case, and it
+         is CORRECT. Falling through to the word-eater below harvests the "-2",
+         substitutes a fragment of the answer into the equation and fails a
+         right answer, which is the one outcome this checker must never
+         produce. Rule 1: no verdict beats a wrong verdict. */
+      if(!got.length && /[±∓]/.test(tail)) continue;
       if(!got.length){
         /* one value: eat words off the end until what is left is a constant */
         var words = tail.split(/\s+/);
@@ -13032,6 +13113,166 @@ var Verify = (function(){
     }).filter(Boolean);
   }
 
+  /* ---------- a real global optimum, for the class where one is computable
+     ------------------------------------------------------------------------
+     "The maximum occurs where two variables coincide" is an assertion, and the
+     reported answers kept asserting it. For three variables under the two
+     elementary symmetric constraints it does not have to be asserted at all,
+     because the feasible set is ONE-DIMENSIONAL and can be swept exhaustively:
+
+       x+y+z = s  and  xy+yz+zx = q   ⟹   x,y,z are the roots of
+       t³ − s·t² + q·t − r = 0,  for whatever r = xyz makes all three real.
+
+     So r is the only freedom left. The cubic has three real roots exactly when
+     f(t₁) ≥ 0 ≥ f(t₂) at its two turning points, which pins r to a closed
+     interval — and that interval IS the feasible set. Sweeping it and
+     evaluating the objective gives the true global extremum, with the endpoints
+     (where two roots coincide) falling out as a RESULT rather than an
+     assumption.
+
+     This is numeric, not symbolic, so it is reported as what it is: a global
+     search over the feasible set at a stated resolution, refined around the
+     best point. It is enough to catch an answer that is not optimal, which is
+     the failure that matters. */
+  /* The feasible set, parametrised the simple way. Fix x; then y+z = s−x and
+     yz = q − x(s−x), so y and z are the roots of one quadratic and are real
+     exactly when its discriminant is non-negative. Sweeping x therefore visits
+     every feasible triple.
+
+     An earlier version solved the cubic in t and bisected for its three roots.
+     It was wrong — the outer brackets did not always contain a sign change, so
+     bisection returned an interval endpoint and the "roots" it produced did not
+     even sum to s. This form has no such failure mode: one quadratic, one
+     discriminant, no bracketing. */
+  function feasibleTriple(s, q, x){
+    var sum = s - x, prod = q - x * (s - x);
+    var d = sum * sum - 4 * prod;
+    if(d < 0) return null;
+    var rt = Math.sqrt(d);
+    return [x, (sum - rt) / 2, (sum + rt) / 2];
+  }
+
+  /* s and q from the question, however it states the second constraint */
+  function symmetricConstraints(q0){
+    var txt = String(q0 || '').replace(/\s+/g, '');
+    var num = function(re){ var m = txt.match(re); return m ? parseFloat(m[1]) : null; };
+    var s  = num(/x\+y\+z=(-?\d+(?:\.\d+)?)/i);
+    var qq = num(/(?:xy\+yz\+zx|xy\+xz\+yz|yz\+zx\+xy)=(-?\d+(?:\.\d+)?)/i);
+    var p2 = num(/(?:x²\+y²\+z²|x\^2\+y\^2\+z\^2)=(-?\d+(?:\.\d+)?)/i);
+    if(s === null) return null;
+    if(qq === null && p2 !== null) qq = (s * s - p2) / 2;   // the standard identity
+    if(qq === null) return null;
+    return {s:s, q:qq};
+  }
+
+  /* The thing being optimised. grabExpr is not used here: it treats "xyz" as a
+     word (three letters, no digits) and refused the most common objective there
+     is. Here a run of x/y/z IS the expression. */
+  function objectiveOf(q0){
+    var m = String(q0 || '').match(
+      /(?:maximi[sz]e|minimi[sz]e|maximum value of|minimum value of|largest value of|smallest value of|greatest value of|least value of|maximum of|minimum of|maximum|minimum)\s*:?\s*([^.,;?\n]{1,60})/i);
+    if(!m) return null;
+    var words = m[1].trim().split(/\s+/);
+    for(var n = words.length; n > 0; n--){
+      var cand = words.slice(0, n).join(' ').replace(/[.,;:]+$/, '').trim();
+      if(!cand) continue;
+      var ast = parse(cand);
+      if(!ast) continue;
+      var vs = Object.keys(varsOf(ast));
+      if(!vs.length) continue;
+      if(vs.some(function(v){ return 'xyz'.indexOf(v) < 0; })) continue;
+      return {ast:ast, src:cand};
+    }
+    return null;
+  }
+
+  /* What value does the answer actually claim? Try the whole line as one exact
+     expression first — "(594 + 22√3)/9" is a single number, and reading it as
+     "594" was how a wrong answer looked like a different wrong answer. */
+  function claimedValue(md){
+    var zone = claimZone(md);
+    var lines = String(zone).split(/\n/);
+    for(var i = 0; i < lines.length; i++){
+      var line = lines[i].replace(/^[\s#*>✅🎯]+/, '').replace(/[.,;]+$/, '').trim();
+      if(!line || !/\d/.test(line)) continue;
+      var whole = constOf(line);
+      if(whole !== null) return whole;
+      var m = line.match(/\(?[-\d][^\s]*(?:\s*[+\-*\/×÷]\s*[^\s]+)*/);
+      if(m){ var v = constOf(m[0]); if(v !== null) return v; }
+    }
+    var nums = values(zone);
+    return nums.length ? nums[0].n : null;
+  }
+
+  function extremumCheck(question, md){
+    var c = symmetricConstraints(question);
+    if(!c) return [];
+    var obj = objectiveOf(question);
+    if(!obj) return [];
+    var wantMax = !/minimi[sz]e|minimum|smallest|least/i.test(String(question));
+
+    var span = Math.abs(c.s) + Math.sqrt(Math.abs(c.q)) + 30;
+    var lo = c.s / 3 - span, hi = c.s / 3 + span;
+    var evalAtX = function(x){
+      var t = feasibleTriple(c.s, c.q, x);
+      if(!t) return null;
+      var v = evalAt(obj.ast, {x:t[0], y:t[1], z:t[2]});
+      return isFinite(v) ? {v:v, t:t} : null;
+    };
+    var scan = function(a, b, steps){
+      var best = null;
+      for(var i = 0; i <= steps; i++){
+        var r = evalAtX(a + (b - a) * i / steps);
+        if(!r) continue;
+        if(!best || (wantMax ? r.v > best.v : r.v < best.v)){ best = {v:r.v, t:r.t, x:a + (b - a) * i / steps}; }
+      }
+      return best;
+    };
+    var coarse = scan(lo, hi, 40000);
+    if(!coarse) return [];
+    var w = (hi - lo) / 40000;
+    var fine = scan(coarse.x - w, coarse.x + w, 4000);
+    var best = (fine && (wantMax ? fine.v > coarse.v : fine.v < coarse.v)) ? fine : coarse;
+
+    var claimed = claimedValue(md);
+    if(claimed === null || !isFinite(claimed)) return [];
+
+    var r6 = function(n){ return Math.round(n * 1e6) / 1e6; };
+    var tol = Math.max(Math.abs(best.v), 1) * 2e-3;
+    var ok = Math.abs(claimed - best.v) <= tol;
+    var where = best.t.map(function(n){ return r6(n); }).join(', ');
+    return [{kind:'extremum', ok:ok,
+      text: ok
+        ? 'swept the whole feasible set of x+y+z=' + c.s + ', xy+yz+zx=' + r6(c.q) +
+          ': the ' + (wantMax ? 'largest' : 'smallest') + ' value of ' + obj.src +
+          ' is ' + r6(best.v) + ' at (' + where + '), which is what the answer gives'
+        : 'the answer gives ' + r6(claimed) + ', but sweeping the whole feasible set of x+y+z=' +
+          c.s + ', xy+yz+zx=' + r6(c.q) + ' the ' + (wantMax ? 'largest' : 'smallest') +
+          ' value of ' + obj.src + ' is ' + r6(best.v) + ' at (' + where + ')'}];
+  }
+
+  /* ---------- optimisation: feasible is not optimal ----------------------
+     For a maximum or minimum, checking that the claimed point satisfies the
+     constraints establishes only that it is a CANDIDATE. It says nothing about
+     whether something else does better, which is the entire question. Marking
+     such an answer "✓ Verified" on the strength of a substitution would be
+     precisely the false confidence this module exists to remove.
+
+     No extremum proof is attempted here — doing that properly needs symbolic
+     optimisation this engine does not have. So the honest move is to say what
+     was and was not established, and let the badge fall to "partially
+     verified". It sits in the hint tier deliberately: it is a statement about
+     the LIMITS of our checking, not a claim that the answer is wrong. */
+  var OPTIMISE_RE = /\b(maximi[sz]e|minimi[sz]e|maximum|minimum|largest|smallest|greatest|least|optimal|optimi[sz]e|max\b|min\b|as (?:large|small|big) as possible)\b/i;
+  function optimality(question, md){
+    if(!OPTIMISE_RE.test(String(question || ''))) return [];
+    /* only worth saying when something else DID verify — otherwise the badge
+       is already "unable to verify" and this adds nothing */
+    return [{kind:'optimum', ok:false,
+      text:'the value shown was checked against the question’s conditions, but that ' +
+           'no other point does better was NOT checked — feasible is not the same as optimal'}];
+  }
+
   /* ---------- quantifier collapse (§11) ---------------------------------
      A universal statement followed by a single-value conclusion about the
      same variable. This is a reading of the prose, not a proof, so it lands
@@ -13367,6 +13608,11 @@ var Verify = (function(){
     try { checks = checks.concat(checkDivisibility(text)); } catch(e){}
     try { checks = checks.concat(conditionCheck(question, text)); } catch(e){}
     try { checks = checks.concat(uniqueness(question, text)); } catch(e){}
+    var extremum = [];
+    try { extremum = extremumCheck(question, text); } catch(e){}
+    checks = checks.concat(extremum);
+    /* the honest-limits note is only needed when no real extremum check ran */
+    try { if(!extremum.length) checks = checks.concat(optimality(question, text)); } catch(e){}
     try { checks = checks.concat(quantifier(text)); } catch(e){}
     try { checks = checks.concat(exampleAsProof(text)); } catch(e){}
     try { checks = checks.concat(consistency(text)); } catch(e){}
@@ -13399,7 +13645,7 @@ var Verify = (function(){
        the answer SAYS, and a misread must never be able to fail a correct
        answer on its own. */
     var PROOF = {subst:1, transform:1, arith:1, chem:1, identity:1, bound:1,
-                 divis:1, unique:1, condition:1};
+                 divis:1, unique:1, condition:1, extremum:1};
     var failed = checks.filter(function(c){ return !c.ok; });
     var passed = checks.filter(function(c){ return c.ok; });
     var failedProofs = failed.filter(function(c){ return PROOF[c.kind]; });
@@ -13407,10 +13653,25 @@ var Verify = (function(){
     var hasSteps = /##\s*📖|Step-by-Step|चरण|దశ/i.test(text);
     var numeric  = /[=×÷√]|\d+\s*[+\-*/]\s*\d+/.test(text);
 
+    /* A failed step is not a failed answer, and saying so matters. An olympiad
+       answer arrived with the right final value — 4, at the right three points
+       — and one wrong line in the middle (an AM-GM factorisation out by a
+       factor of two). Reporting that as "✗ Verification failed" tells the
+       student their correct answer is wrong, which is the same disservice as
+       missing the error entirely.
+
+       So the proofs are split by WHAT THEY BEAR ON. An ANSWER check tests the
+       claimed result against the original question — substitute it, sweep for
+       the true optimum, count the atoms. A WORKING check tests a line of the
+       derivation. Only the first kind can condemn the answer. */
+    var ANSWER_LEVEL = {subst:1, extremum:1, condition:1, unique:1, chem:1, bound:1, transform:1};
+    var failedAnswer  = failed.filter(function(c){ return ANSWER_LEVEL[c.kind]; });
+    var failedWorking = failedProofs.filter(function(c){ return !ANSWER_LEVEL[c.kind]; });
+
     var state;
-    if(failedProofs.length)        state = 'disputed';       // ✗ something provably does not hold
-    else if(failed.length && passedProofs.length) state = 'partial';  // ⚠ proofs held, a hint did not
-    else if(failed.length)         state = 'partial';
+    if(failedAnswer.length)        state = 'disputed';       // ✗ the ANSWER does not hold
+    else if(failedWorking.length)  state = 'stepfail';       // ⚠ a line of the working is wrong
+    else if(failed.length)         state = 'partial';        // ⚠ only a hint did not line up
     else if(passedProofs.length)   state = 'checked';        // ✓ independently verified
     else if(passed.length)         state = 'partial';        // only hints agreed — not a verification
     else if(hasSteps && numeric)   state = 'worked';
@@ -13419,6 +13680,7 @@ var Verify = (function(){
 
     return { state:state, checks:checks, passed:passed, failed:failed,
              failedProofs:failedProofs, passedProofs:passedProofs,
+             failedAnswer:failedAnswer, failedWorking:failedWorking,
              hasSteps:hasSteps, numeric:numeric };
   }
 
@@ -13430,7 +13692,8 @@ var Verify = (function(){
            findEquation:findEquation, integerSolutions:integerSolutions,
            checkDivisibility:checkDivisibility, uniqueness:uniqueness, section:section,
            conditionCheck:conditionCheck,
-           quantifier:quantifier, exampleAsProof:exampleAsProof,
+           quantifier:quantifier, exampleAsProof:exampleAsProof, optimality:optimality,
+           extremumCheck:extremumCheck, feasibleTriple:feasibleTriple, claimedValue:claimedValue,
            Algebra:Algebra };
 })();
 W.Verify = Verify;
@@ -13453,6 +13716,10 @@ function paintVerif(md){
     label = '✗ Verification failed'; cls = 'verif disputed';
     title = '7Solve checked this answer against the question independently and it did not hold. ' +
             'Do not use the result — read what failed below.';
+  } else if(r.state === 'stepfail'){
+    label = '⚠ A step does not hold'; cls = 'verif unchecked';
+    title = 'The final answer was not contradicted, but a line of the working is wrong — ' +
+            'see below. Copy the result if you must, but do not copy the derivation.';
   } else if(r.state === 'checked'){
     label = '✓ Verified'; cls = 'verif';
     title = 'Checked independently on your device: ' + r.passed.length + ' check' +
@@ -13489,6 +13756,7 @@ function paintVerif(md){
     if(stamp){
       var s = {checked:  ['Verified ✓',           'ok'],
                disputed: ['Verification failed',  'no'],
+               stepfail: ['A step is wrong',      'warn'],
                partial:  ['Partly verified',      'warn']}[r.state];
       if(s){ stamp.textContent = s[0]; stamp.className = 'nb-stamp ' + s[1]; stamp.hidden = false; }
       else { stamp.textContent = ''; stamp.hidden = true; }
@@ -13506,11 +13774,17 @@ function paintVerif(md){
                 transform:'Transformation tested', identity:'Identity tested',
                 divis:'Divisibility tested', unique:'Completeness tested',
                 condition:'Checked against the question',
-                quant:'Quantifier', method:'Method' };
-  note.className = 'verif-note' + (r.failed.length ? ' bad' : '');
+                quant:'Quantifier', method:'Method', optimum:'Optimality',
+                extremum:'Global optimum' };
+  note.className = 'verif-note' + (r.failedAnswer && r.failedAnswer.length ? ' bad' : '');
+  /* Failures first. The list is capped at ten, and with eleven checks the one
+     that failed fell off the end — so the receipt was headed "what did not add
+     up" above ten ticks, which reads as the checker contradicting itself. What
+     went wrong must never be the thing that gets truncated. */
+  var ordered = r.failed.concat(r.passed);
   note.innerHTML =
-    '<b>' + (r.failed.length ? '⚠️ What did not add up' : '✓ What 7Solve checked itself') + '</b>' +
-    '<ul>' + r.checks.slice(0, 10).map(function(c){
+    '<b>' + (r.failed.length ? (r.state === 'stepfail' ? '⚠️ The answer stands, but a step does not' : '⚠️ What did not add up') : '✓ What 7Solve checked itself') + '</b>' +
+    '<ul>' + ordered.slice(0, 10).map(function(c){
       var detail = c.kind === 'arith'
         ? '<code>' + esc(c.text) + '</code>' + (c.ok ? '' : ' — comes to ' + (Math.round(c.got * 1e6) / 1e6))
         : esc(c.text);
@@ -19867,6 +20141,17 @@ var SelfTest = (function(){
       var r = W.Verify.exampleAsProof(
         'Factorising gives (n+1)(n+2). Check n = 1, n = 2, n = 3. Therefore all n work by the identity above.');
       return r.length === 0; }],
+    ['logic', 'a wrong STEP does not condemn a right ANSWER', function(){
+      /* live olympiad answer: max = 4 at the three cyclic points (correct), with
+         one wrong AM-GM line in the middle (out by a factor of two). "✗
+         Verification failed" told the student their correct answer was wrong. */
+      var r = W.Verify.run('Let x+y+z = 3 with x, y, z >= 0. Find the maximum value of x²y + y²z + z²x',
+        '## ✅ 4\n\n## 📖 Step\n10. y(x + z)(x + y) = 4 * (y/2) * ((x + z)/2) * ((x + y)/2)\n' +
+        '11. 4 + 0 + 0 = 4\n\n## 🎯 Final Result\n4 at (2, 1, 0), (0, 2, 1), (1, 0, 2).');
+      return r.state === 'stepfail' && r.failedAnswer.length === 0 && r.failedWorking.length === 1; }],
+    ['logic', 'a wrong ANSWER is still condemned', function(){
+      var r = W.Verify.run('For x+y+z=12 and xy+yz+zx=45, find the maximum value of xyz', '## ✅ 50');
+      return r.state === 'disputed' && r.failedAnswer.length >= 1; }],
     ['logic', 'a right answer with a wrong step is not called fully verified', function(){
       /* §29 Test 5: final answer correct, an intermediate line false */
       var md = '## ✅ <Answer>\nx = 2\n\n## 📖 Step\n1. (x+1)^2 = x^2 + 1\n2. So x = 2.\n';
@@ -19962,6 +20247,41 @@ var SelfTest = (function(){
       var r = W.Verify.run('Balance the equation: Fe + O2 -> Fe2O3', md);
       return r.state !== 'disputed' &&
              r.checks.some(function(c){ return c.kind === 'chem' && c.ok; }); }],
+    ['logic', 'will not call an optimisation answer verified on feasibility alone', function(){
+      /* an optimisation the sweep cannot handle (not the symmetric two-constraint
+         form) must fall to "partially verified" with the limit stated */
+      var r = W.Verify.run('A farmer has 100 m of fencing. Find the maximum area of the rectangular pen.',
+        '## ✅ 625 m²\n\n## 📖 Step\n1. 25 × 25 = 625.');
+      return r.state === 'partial' && r.checks.some(function(c){ return c.kind === 'optimum'; }); }],
+    ['logic', 'sweeps the feasible set for a symmetric constrained optimum', function(){
+      /* x+y+z=12, xy+yz+zx=45 → max xyz is 54 at (3,3,6); the double root is a
+         RESULT of the sweep, not an assumption */
+      var ok = W.Verify.extremumCheck('For x+y+z=12 and xy+yz+zx=45, find the maximum value of xyz', '## ✅ 54');
+      var no = W.Verify.extremumCheck('For x+y+z=12 and xy+yz+zx=45, find the maximum value of xyz', '## ✅ 50');
+      return ok.length === 1 && ok[0].ok === true && /at \(3, 3, 6\)/.test(ok[0].text) &&
+             no.length === 1 && no[0].ok === false; }],
+    ['logic', 'handles the sum-of-squares form of the second constraint', function(){
+      /* x+y+z=6, x²+y²+z²=14 ⟹ xy+yz+zx=11; max of xyz(xy+yz+zx) is (594+22√3)/9 */
+      var Q = 'Given x+y+z=6 and x²+y²+z²=14, find the maximum value of xyz(xy+yz+zx)';
+      var ok = W.Verify.extremumCheck(Q, '## ✅ (594 + 22√3)/9');
+      var no = W.Verify.extremumCheck(Q, '## ✅ (66 + 22√3)/9');
+      return ok.length === 1 && ok[0].ok === true &&
+             no.length === 1 && no[0].ok === false; }],
+    ['logic', 'reads an exact claimed value as one number, not its first digit', function(){
+      /* "(594 + 22√3)/9" was being read as 594 */
+      var v = W.Verify.claimedValue('## ✅ (594 + 22√3)/9');
+      return Math.abs(v - (594 + 22 * Math.sqrt(3)) / 9) < 1e-9; }],
+    ['logic', 'leaves non-optimisation questions alone', function(){
+      var r = W.Verify.run('Solve x² − 5x + 6 = 0', '## ✅ x = 2 and x = 3\n\n## 📖 Step\n1. 2 + 3 = 5, 2 × 3 = 6.');
+      return r.state === 'checked' && !r.checks.some(function(c){ return c.kind === 'optimum'; }); }],
+    ['exact form', 'does not read the tail of a surd as arithmetic', function(){
+      /* reported live: a correct optimisation answer came back "✗ Verification
+         failed" because "2√3/3 + 1/3 = 13/3" was read as "3/3 + 1/3 = 13/3" */
+      return W.Verify.arithmetic('2√3/3 + 1/3 = 13/3').length === 0 &&
+             W.Verify.arithmetic('2 - √3/3 = 2 - 0.577').length === 0 &&
+             W.Verify.arithmetic('2√3/9 + 4/3 = 30/3').length === 0 &&
+             W.Verify.arithmetic('t = 2 + 2√3/3 = 6').length === 0 &&
+             W.Verify.arithmetic('1+4+9 = 14').length === 1; }],
     ['exact form', 'evaluates a fraction on both sides of a check', function(){
       /* live test: a correct probability answer failed because "4/36 = 1/9"
          was read as "4/36 = 1" */

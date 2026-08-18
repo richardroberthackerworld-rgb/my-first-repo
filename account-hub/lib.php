@@ -103,6 +103,22 @@ function db() {
 		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 		UNIQUE KEY uq_user_tool (user_id, tool)
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+	// Daily credit bonuses (Ultra's 20/day, 7Marks Infinity's 20/day). The
+	// UNIQUE key is the whole idempotency mechanism: api.php 'bonus' INSERTs
+	// here first and only adds credits if that insert wins, so a double-tap or
+	// two devices claiming at once cannot both be granted. Without this table
+	// the claim throws and no daily bonus is ever paid.
+	$pdo->exec("CREATE TABLE IF NOT EXISTS credit_bonus_log (
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		user_id INT NOT NULL,
+		tool VARCHAR(24) NOT NULL,
+		bonus_key VARCHAR(24) NOT NULL DEFAULT 'daily',
+		grant_date DATE NOT NULL,
+		credits INT NOT NULL DEFAULT 0,
+		plan_at_grant VARCHAR(20) NULL,
+		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		UNIQUE KEY uq_bonus_day (user_id, tool, bonus_key, grant_date)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 	$pdo->exec("CREATE TABLE IF NOT EXISTS otps (
 		id INT AUTO_INCREMENT PRIMARY KEY,
 		email VARCHAR(190) NOT NULL,
@@ -586,6 +602,16 @@ function tool_wallet(int $userId, string $tool): array {
 	$tool = tool_key($tool);
 	if ($tool === '') return array('credits' => 0, 'plan' => 'none', 'plan_expires' => null);
 
+	/* Owner / staff / test accounts never run out. Reported as the top tier so
+	   every entitlement check downstream passes, and NOT written to the DB —
+	   nothing is stored, so removing the address from the list takes the
+	   access away again immediately, with no leftover balance to clean up. */
+	if (is_unlimited_user($userId)) {
+		return array('id' => 0, 'user_id' => $userId, 'tool' => $tool,
+		             'credits' => UNLIMITED_CREDITS, 'plan' => 'ultra',
+		             'plan_expires' => null, 'daily_at' => null, 'unlimited' => true);
+	}
+
 	$st = db()->prepare('SELECT * FROM tool_credits WHERE user_id = ? AND tool = ?');
 	$st->execute(array($userId, $tool));
 	$w = $st->fetch();
@@ -621,6 +647,8 @@ function tool_wallet(int $userId, string $tool): array {
 function tool_spend(int $userId, string $tool, int $count): array {
 	$tool = tool_key($tool);
 	if ($tool === '' || $count < 1) return array(false, 0);
+	// Unlimited accounts are allowed the action and nothing is deducted.
+	if (is_unlimited_user($userId)) return array(true, UNLIMITED_CREDITS);
 	$w = tool_wallet($userId, $tool);
 	$have = (int)$w['credits'];
 	if ($have < $count) return array(false, $have);
@@ -640,13 +668,79 @@ function tool_grant(int $userId, string $tool, int $credits, string $plan = 'mon
 	if ($credits <= 0) $credits = (int)($plans['plans'][$plan]['credits'] ?? 0);
 	tool_wallet($userId, $tool);   // make sure the row exists
 	$expires = date('Y-m-d H:i:s', time() + $days * 86400);
+	// Record the TIER, not the purchased key: a yearly buyer must come back as
+	// 'solve', because that is the name every entitlement check knows. Storing
+	// 'solve_yearly' would read as an unknown plan and silently demote them.
+	$tier = plan_tier($plan);
 	db()->prepare('UPDATE tool_credits SET credits = credits + ?, plan = ?, plan_expires = ? WHERE user_id = ? AND tool = ?')
-		->execute(array($credits, $plan, $expires, $userId, $tool));
+		->execute(array($credits, $tier, $expires, $userId, $tool));
 }
 
 /* ---------------- Pricing / currency / products ---------------- */
 function hub_pricing()  { static $p = null; if ($p === null) $p = require __DIR__ . '/pricing.php';  return $p; }
 function hub_products() { static $x = null; if ($x === null) $x = require __DIR__ . '/products.php'; return $x; }
+
+/* ---- plan entitlements -------------------------------------------------
+   These read pricing.php and are the single source of truth for "what does
+   this plan allow". They accept either a purchased key ('solve_yearly') or a
+   tier already stored on a wallet ('solve'), so callers never have to know
+   which one they are holding. An unknown plan gets the safe answer: it is its
+   own tier, it may use AI (that is how the pre-existing shared plans behave),
+   and it earns no daily bonus. */
+function plan_row($plan) {
+	$P = hub_pricing();
+	return $P['plans'][(string)$plan] ?? null;
+}
+/** Base tier for a plan key. 'solve_yearly' -> 'solve'. */
+function plan_tier($plan) {
+	$r = plan_row($plan);
+	return $r ? (string)($r['tier'] ?? $plan) : (string)$plan;
+}
+/** May this plan spend credits on AI? Spark cannot. */
+function plan_is_ai($plan) {
+	$r = plan_row($plan);
+	if (!$r) return true;                       // unknown/legacy plans keep working
+	return !isset($r['ai']) || (bool)$r['ai'];
+}
+/** Bonus credits this plan may claim once per UTC day (0 = none). */
+function plan_daily($plan) {
+	$r = plan_row($plan);
+	return $r ? (int)($r['daily'] ?? 0) : 0;
+}
+/* ---- unlimited (owner / staff / tester) accounts ------------------------
+   Addresses listed in config.php's 'unlimited_emails' get every paid feature,
+   with nothing deducted. Matched on the account's verified email rather than a
+   column in the database, deliberately: access is then granted and revoked in
+   exactly ONE place, and there is no stored balance that can be left switched
+   on by a row somebody forgot about. Removing the address takes it away on the
+   next request. */
+const UNLIMITED_CREDITS = 1000000;
+
+function is_unlimited_user(int $userId): bool {
+	global $CFG;
+	static $cache = array();
+	if ($userId <= 0) return false;
+	if (array_key_exists($userId, $cache)) return $cache[$userId];
+	$list = $CFG['unlimited_emails'] ?? array();
+	if (!$list) return $cache[$userId] = false;
+	$list = array_map(function ($e) { return strtolower(trim((string)$e)); }, (array)$list);
+	try {
+		$st = db()->prepare('SELECT email FROM users WHERE id = ?');
+		$st->execute(array($userId));
+		$email = strtolower(trim((string)$st->fetchColumn()));
+	} catch (Throwable $e) { return $cache[$userId] = false; }
+	return $cache[$userId] = ($email !== '' && in_array($email, $list, true));
+}
+
+/** Has today's bonus already been taken? Read-only — the INSERT is the real guard. */
+function bonus_claimed_today(int $userId, string $tool, string $key = 'daily'): bool {
+	try {
+		$st = db()->prepare('SELECT 1 FROM credit_bonus_log
+		                      WHERE user_id = ? AND tool = ? AND bonus_key = ? AND grant_date = UTC_DATE()');
+		$st->execute(array($userId, $tool, $key));
+		return (bool)$st->fetchColumn();
+	} catch (Throwable $e) { return false; }
+}
 
 /**
  * Which currency this visitor pays in. India -> INR, everywhere else -> USD.
@@ -700,6 +794,11 @@ function plan_details($planKey, $productKey = '') {
 	$price = $c[$planKey];
 	return array(
 		'plan' => $planKey, 'label' => $plan['label'], 'days' => (int)$plan['days'],
+		// The tier is the entitlement. Monthly and yearly of one tier differ
+		// only in price and length, so everything downstream compares tiers.
+		'tier' => (string)($plan['tier'] ?? $planKey),
+		'ai' => !isset($plan['ai']) || (bool)$plan['ai'],
+		'daily' => (int)($plan['daily'] ?? 0),
 		'credits' => (int)$credits, 'note' => $note,
 		'currency' => $cur, 'symbol' => $c['symbol'], 'price' => $price,
 		'price_text' => $c['symbol'] . (($price == (int)$price) ? (string)(int)$price : rtrim(number_format($price, 2, '.', ''), '0')),
