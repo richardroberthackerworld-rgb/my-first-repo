@@ -474,6 +474,33 @@ final class Checks
             $want  = $exact ? self::evalFlat($m[2][0]) : self::toNum($m[2][0]);
             if (!is_finite($got) || !is_finite($want)) continue;
 
+            /* INTEGER DIVISION IS NOT A MISTAKE.
+               "59 ÷ 3 = 19 remainder 2" is correct arithmetic, but the match
+               stops at the 19 and the checker judged it as 59/3 = 19 exactly —
+               so a page of perfectly good remainder working came back as five
+               failed checks. Worse, the ±0.5 tolerance for an integer let
+               "59 ÷ 2 = 29" PASS while its four siblings failed, which is the
+               checker contradicting itself in public.
+
+               A quotient written as the floor of the true value is integer
+               division, and this engine has no way to know whether the student
+               meant that or an exact result — so it says nothing. A quotient
+               that is not the floor either ("59 ÷ 3 = 20") is still wrong on
+               both readings and is still reported. */
+            $intDivision = false;
+            if (preg_match('/^\s*-?[\d,]+(?:\.\d+)?\s*[÷\/]\s*-?[\d,]+(?:\.\d+)?\s*$/u', $m[1][0])
+                && !$exact && abs($want - round($want)) < 1e-9 && abs($got - round($got)) > 1e-9) {
+                if (abs($want - floor($got)) < 1e-9) continue;          // integer division → no verdict
+                /* Not the floor either, so it is wrong on BOTH readings. It
+                   must also be compared EXACTLY: the ±0.5 tolerance that an
+                   integer earns from "no decimals written" was forgiving
+                   "59 ÷ 3 = 20" and "7 ÷ 2 = 4", because a wrong quotient is
+                   usually wrong by less than half. */
+                $intDivision = true;
+            }
+            /* An explicit remainder in the same breath settles it outright. */
+            if (preg_match('/^[^\n]{0,24}\b(r|rem|remainder|शेष|శేషం)\b/iu', substr($md, $at + strlen($whole)))) continue;
+
             $key = preg_replace('/\s+/u', '', $whole);
             if (isset($seen[$key])) continue;
             $seen[$key] = 1;
@@ -481,7 +508,7 @@ final class Checks
             /* A fraction carries no decimals, so the written-decimals rule gave
                it a tolerance of 0.5 and passed 4/36 = 1/8. Exact forms compare
                exactly. */
-            $agree = $exact
+            $agree = ($exact || $intDivision)
                 ? abs($got - $want) <= max(1.0, abs($got)) * 1e-9
                 : self::near($got, $want, $m[2][0]);
 
@@ -518,7 +545,13 @@ final class Checks
             $n = count($words);
             for ($a = 0; $a < $n && $a < 10; $a++) {
                 for ($b = $n; $b > $a; $b--) {
-                    $cand = trim(implode(' ', array_slice($words, $a, $b - $a)));
+                    /* Trailing sentence punctuation must come off before the
+                       parser sees it. "2(x+3) = 11." tokenised "11." and
+                       refused, so an equation ending a sentence — which is
+                       most of them in prose — was invisible to every check
+                       built on this function. A decimal is unaffected: 1.5
+                       does not END in a dot. */
+                    $cand = rtrim(trim(implode(' ', array_slice($words, $a, $b - $a))), '.,;:');
                     if (strpos($cand, '=') === false) continue;
                     if (!self::looksAlgebraic($cand)) continue;
                     $eq = Algebra::parseEquation($cand);
@@ -599,7 +632,13 @@ final class Checks
                 '5' => '⁵', '6' => '⁶', '7' => '⁷', '8' => '⁸', '9' => '⁹'];
         $s = preg_replace_callback('/\^\s*\{\s*(-?\d)\s*\}/u',
             static fn($m) => $sup[$m[1]] ?? ('^' . $m[1]), $s);
-        $s = preg_replace('/\^\s*\{([^{}]+)\}/u', '^$1', $s);
+        /* A compound exponent keeps its grouping. Stripping the braces turned
+           3^{x+y} into 3^x+y — which is (3^x)+y, a different expression — so
+           a pure formatting difference silently became a mathematical one.
+           That is the precise failure the integrity check exists to catch, and
+           deLatex was manufacturing it. Single digits are already handled
+           above and become ² ³ ⁴. */
+        $s = preg_replace('/\^\s*\{([^{}]+)\}/u', '^($1)', $s);
         $s = preg_replace_callback('/\^(\d)(?![\d.])/u',
             static fn($m) => $sup[$m[1]] ?? ('^' . $m[1]), $s);
         $s = preg_replace('/_\s*\{([^{}]+)\}/u', '$1', $s);
@@ -615,6 +654,15 @@ final class Checks
             'subset' => '⊂', 'cup' => '∪', 'cap' => '∩', 'forall' => '∀', 'exists' => '∃',
             'sum' => '∑', 'int' => '∫', 'prod' => '∏', 'ldots' => '…', 'dots' => '…',
             'cdots' => '…', 'quad' => ' ', 'qquad' => '  ', ',' => ' ', ';' => ' ', '!' => '',
+            /* Presentation wrappers carry no mathematics. \boxed is the one
+               that mattered: a model boxes its restatement, the command and
+               its braces survived, EQ_CHARS has no braces, and the correct
+               restatement became unreadable — so the integrity check fell
+               through to a later derivation step and flagged a faithful
+               answer. Nested content ("3^{x+y+1}") is why this is stripped as
+               a bare command with the braces cleaned up afterwards rather than
+               matched as \boxed{...}. */
+            'boxed' => '', 'displaystyle' => '', 'textstyle' => '', 'limits' => '',
         ];
         $s = preg_replace_callback('/\\\\([A-Za-z]+|[,;!])/u',
             static fn($m) => array_key_exists($m[1], $sym) ? $sym[$m[1]] : $m[0], $s);
@@ -627,6 +675,12 @@ final class Checks
         $s = preg_replace_callback('/\$\$([\s\S]*?)\$\$/u',
             static fn($m) => "\n" . trim($m[1]) . "\n", $s);
         $s = preg_replace('/\$([^$\n]+)\$/u', '$1', $s);
+
+        /* Any braces still standing are the empty shells of stripped wrappers.
+           Every rule that needed braces — \frac, \sqrt, ^{}, _{} — has already
+           run, so what is left is presentation, and leaving it in makes the
+           expression unparseable. */
+        $s = str_replace(['{', '}'], '', $s);
 
         return preg_replace_callback('/ G(\d+) /u',
             static fn($m) => $guards[(int)$m[1]] ?? $m[0], $s);
@@ -677,7 +731,14 @@ final class Checks
         $zone = self::claimZone($md);
 
         if (count($eq['vars']) >= 2) {
-            $tuples = self::claimedTuples($zone, count($eq['vars']));
+            /* Read tuples from the WHOLE answer, not only the claim zone.
+               An answer that lists its solutions in the working — "the
+               solutions are (1,1,1), (1,1,2), (1,2,5), (1,5,13) and (5,1,1)" —
+               is asserting every one of them, and the claim-zone-only reader
+               checked the first and declared the answer fully verified while
+               (5,1,1) gives 27 ≠ 15. Every tuple an answer puts forward as a
+               solution is a claim, wherever on the page it is written. */
+            $tuples = self::claimedTuples($md, count($eq['vars']));
             if (!count($tuples)) return [];
             $out = [];
             foreach (array_slice($tuples, 0, 10) as $tp) {
@@ -805,6 +866,272 @@ final class Checks
         return $roots;
     }
 
+    /* ---------- QUESTION INTEGRITY ----------
+       Every other check in this file asks "is the answer right?". This one
+       asks the prior question: "is this the problem the student actually
+       set?" — and it is the more important of the two for a paid tool,
+       because a flawless solution to a misread question is indistinguishable
+       from a correct answer unless somebody checks the reading.
+
+       The failure that prompted it: a question containing 3x+y was solved as
+       3(x+y). Every downstream check passed, because the answer really was
+       correct — for a different problem.
+
+       HOW IT AVOIDS CRYING WOLF
+       -------------------------
+       An answer legitimately contains many equations that differ from the
+       question: x²=4, then x=±2. Those are derived steps, not misreadings,
+       and flagging them would make this check worthless within a day.
+
+       So it only reads the RESTATEMENT — the opening of the answer, where a
+       model repeats the problem before starting — and only compares an
+       equation carrying exactly the question's variables. Equivalence allows
+       a constant factor, so 3x+y=7 and 6x+2y=14 agree; it is the shape that
+       must match, not the writing. */
+    private const RESTATE_CHARS = 600;
+
+    /* Are two residual trees the same relation, up to a constant multiple?
+       Sampled at several points: a wrong reading disagrees almost everywhere,
+       and agreeing at eight scattered reals is as close to proof as numeric
+       comparison gets. */
+    private static function sameRelation(array $a, array $b, array $vars): ?bool
+    {
+        $ratio = null;
+        $seen  = 0;
+        for ($i = 0; $i < 8; $i++) {
+            $env = [];
+            foreach ($vars as $k => $v) {
+                /* Spread the points and keep them off small integers, where
+                   different expressions coincide by accident. */
+                $env[$v] = 1.37 + $i * 1.61 + $k * 0.73;
+            }
+            $x = Algebra::evalAt($a, $env);
+            $y = Algebra::evalAt($b, $env);
+            if (!is_finite($x) || !is_finite($y)) continue;
+            $seen++;
+            $small = 1e-9 * max(1.0, abs($x), abs($y));
+            if (abs($x) <= $small && abs($y) <= $small) continue;   // both zero, no information
+            if (abs($y) <= $small) return false;                    // one vanishes, the other not
+            $r = $x / $y;
+            if ($ratio === null) { $ratio = $r; continue; }
+            if (abs($r - $ratio) > max(1e-7, abs($ratio) * 1e-7)) return false;
+        }
+        if ($seen < 3) return null;                                 // too little evidence to speak
+        return true;
+    }
+
+    public static function integrity(string $question, string $answer): array
+    {
+        /* deLatex both sides HERE rather than trusting the caller. run() does
+           it too, but a question reaching this function raw — as it does from
+           any direct call — has braces the equation reader cannot cross, and
+           the check would then silently compare the wrong thing. */
+        $question = self::deLatex($question);
+        $answer   = self::deLatex($answer);
+
+        $asked = self::findEquation($question);
+        if ($asked === null) return [];
+        $qVars = $asked['eq']['vars'];
+        sort($qVars);
+
+        $zone = mb_substr(ltrim($answer), 0, self::RESTATE_CHARS);
+        $re = '/' . self::EQ_CHARS . '{1,80}=' . self::EQ_CHARS . '{1,80}/u';
+
+        /* Scan LINE BY LINE. EQ_CHARS contains \s, which includes newlines, so
+           a zone-wide scan joined "3x = 6" to the "2." beginning the next line
+           and read the restatement as "3x = 6 2" — then flagged a perfectly
+           faithful answer as a misreading. A restatement is one line. */
+        $hits = [];
+        foreach (preg_split('/\R/u', $zone) ?: [] as $line) {
+            if (preg_match_all($re, $line, $lm)) {
+                foreach ($lm[0] as $h) $hits[] = $h;
+            }
+        }
+        if (!count($hits)) return [];
+
+        foreach ($hits as $hit) {
+            $words = preg_split('/\s+/u', trim($hit), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+            $n = count($words);
+            for ($a = 0; $a < $n; $a++) {
+                for ($b = $n; $b > $a; $b--) {
+                    /* Trailing sentence punctuation must come off before the
+                       parser sees it. "2(x+3) = 11." tokenised "11." and
+                       refused, so an equation ending a sentence — which is
+                       most of them in prose — was invisible to every check
+                       built on this function. A decimal is unaffected: 1.5
+                       does not END in a dot. */
+                    $cand = rtrim(trim(implode(' ', array_slice($words, $a, $b - $a))), '.,;:');
+                    if (strpos($cand, '=') === false) continue;
+                    if (!self::looksAlgebraic($cand)) continue;
+                    $eq = Algebra::parseEquation($cand);
+                    if ($eq === null) continue;
+
+                    $vs = $eq['vars'];
+                    sort($vs);
+                    /* Only an equation over exactly the question's variables
+                       can be a restatement of it. A derived step has usually
+                       lost one, and a different relation entirely is not our
+                       business. */
+                    if ($vs !== $qVars) continue;
+
+                    /* "x = 2" is the ANSWER, not a restatement of the
+                       question, and comparing it to x²−4=0 flagged a correct
+                       reply as a misreading — the exact false positive this
+                       check must never produce. A side that is a bare variable
+                       opposite a side with no variables is a solution
+                       statement; skip it. */
+                    $bare = static function (array $t): bool { return $t['t'] === 'v'; };
+                    $constSide = static function (array $t): bool { return !count(Algebra::varsOf($t)); };
+                    if (($bare($eq['L']) && $constSide($eq['R']))
+                        || ($bare($eq['R']) && $constSide($eq['L']))) continue;
+
+                    /* An IDENTITY is a rewrite, not a restatement. Working
+                       "x² + xy + y² = (x+y)² − xy" is true for every x and y —
+                       it is the algebra step, not a claim about the problem —
+                       and comparing it to the question flagged a completely
+                       faithful answer as solving something else. Anything that
+                       holds everywhere is skipped. */
+                    $everywhere = true;
+                    for ($t = 0; $t < 6; $t++) {
+                        $env = [];
+                        foreach ($vs as $k => $vn) $env[$vn] = 1.29 + $t * 0.83 + $k * 0.57;
+                        if (Algebra::holdsAt($eq, $env) !== true) { $everywhere = false; break; }
+                    }
+                    if ($everywhere) continue;
+
+                    $resQ = ['t' => 'b', 'op' => '-', 'a' => $asked['eq']['L'], 'b' => $asked['eq']['R']];
+                    $resA = ['t' => 'b', 'op' => '-', 'a' => $eq['L'], 'b' => $eq['R']];
+                    $same = self::sameRelation($resQ, $resA, $qVars);
+                    if ($same === null) return [];                 // no verdict
+                    return [[
+                        'kind' => 'integrity',
+                        'ok'   => $same,
+                        'text' => $same
+                            ? 'the answer restates the question as ' . $cand
+                              . ', which is the same relation as ' . trim($asked['src'])
+                            : 'the question is ' . trim($asked['src']) . ' but the answer solves '
+                              . $cand . ', which is a different equation — the answer may be correct '
+                              . 'for a problem that was not asked',
+                    ]];
+                }
+            }
+        }
+        return [];
+    }
+
+    /* ---------- SOLUTION-TO-FINAL TRACE ----------
+       Does the stated answer actually follow from the working that was shown?
+
+       A model can derive x = 2 across four careful lines and then print
+       x = 4 at the bottom — a transcription slip, or a switch to a different
+       train of thought — and every other check here would be satisfied,
+       because x = 4 might well satisfy some equation somewhere.
+
+       The rule is deliberately weak, because a strong one would cry wolf: a
+       final value must APPEAR somewhere in the working. It does not have to be
+       the last line, or reached in any particular way. An answer that states a
+       value the working never mentions did not come from that working, and
+       that is all this claims. */
+    public static function trace(string $question, string $answer): array
+    {
+        $found = self::findEquation($question);
+        if ($found === null || count($found['eq']['vars']) !== 1) return [];
+        $v = $found['eq']['vars'][0];
+
+        $zone = self::claimZone($answer);
+        /* The working is the Steps section, read by heading.
+           An earlier version tried str_replace($zone, ' ', $answer) — but
+           claimZone BUILDS its string by concatenating two sections, so it is
+           not a substring of the answer, the replace silently did nothing, and
+           "working" became the entire reply including the final answer. Every
+           value then trivially appeared in its own working and the check could
+           never fail. */
+        $working = self::withHead($answer, '📝');
+        if (trim($working) === '') return [];               // no working shown → no verdict
+
+        $final   = self::claimedRoots($zone, $v);
+        $derived = self::claimedRoots($working, $v);
+        if (!count($final) || !count($derived)) return [];   // nothing to compare → silence
+
+        /* Numbers written loose in the working count too: "so we get 2 and -2"
+           is a derivation even without an "x =" in front of it. */
+        foreach (self::values($working) as $n) $derived[] = $n;
+
+        $near = static function (float $a, float $b): bool {
+            return abs($a - $b) <= max(1.0, abs($a), abs($b)) * 1e-6;
+        };
+
+        $orphans = [];
+        foreach ($final as $f) {
+            $seen = false;
+            foreach ($derived as $d) if ($near($f, $d)) { $seen = true; break; }
+            if (!$seen) $orphans[] = Algebra::round6($f);
+        }
+
+        if (!count($orphans)) {
+            return [['kind' => 'trace', 'ok' => true,
+                'text' => 'every value in the final answer appears in the working above it']];
+        }
+        return [['kind' => 'trace', 'ok' => false,
+            'text' => $v . ' = ' . implode(', ', $orphans)
+                    . ' is stated as the answer but never appears in the working shown, '
+                    . 'so the final answer does not follow from the steps given']];
+    }
+
+    /* Every number written in a stretch of text. Used by trace() to notice a
+       value that was derived without an "x =" in front of it. */
+    private static function values(string $text): array
+    {
+        $out = [];
+        if (!preg_match_all('/-?\d+(?:\.\d+)?/', $text, $m)) return $out;
+        foreach ($m[0] as $n) $out[] = (float)$n;
+        return $out;
+    }
+
+    /* ---------- PRESENTATION: self-correction leakage ----------
+       "Wait, let me re-check that" is not a mathematical error, and it must
+       never make an answer read as wrong. It is a PRODUCT error: a student
+       revising for an exam sees the solver arguing with itself and stops
+       trusting the answer, even when the final value is right.
+
+       The system prompt already forbids it. That is exactly why a detector is
+       needed — an instruction a model can ignore is not a guarantee, and every
+       other rule in this engine is enforced rather than requested.
+
+       Reported as ADVISORY. The mathematics is untouched by it, so it appears
+       in the receipt and never in the failure count. */
+    private const LEAK_RE =
+        '/(?:^|[.!?]\s+|\n)\s*(wait|hold on|hmm+|actually|oh(?:\s|,)|let me (?:re-?check|recalculate|reconsider|try again|redo|verify that)|'
+      . 'on second thought|i made a mistake|that(?:\'s| is) (?:wrong|not right)|scratch that|'
+      . 'let me start over|is that right\??|no,? wait)\b/iu';
+
+    public static function leaks(string $answer): array
+    {
+        $s = self::deLatex($answer);
+        /* Code may legitimately contain any of these words in a string or a
+           comment, and a programming answer must not be penalised for them. */
+        $s = preg_replace('/```[\s\S]*?```|`[^`\n]*`/u', ' ', $s);
+        if (!preg_match_all(self::LEAK_RE, $s, $ms, PREG_SET_ORDER)) return [];
+        $found = [];
+        foreach ($ms as $m) {
+            $w = strtolower(trim($m[1]));
+            if (!isset($found[$w])) $found[$w] = 1;
+        }
+        return array_keys($found);
+    }
+
+    public static function presentation(string $answer): array
+    {
+        $found = self::leaks($answer);
+        if (!count($found)) return [];
+        $shown = array_slice($found, 0, 4);
+        return [['kind' => 'presentation', 'ok' => false, 'soft' => true,
+            'text' => 'the answer thinks out loud (' . implode('", "', array_map(
+                        static fn($w) => '"' . $w . '"', $shown)) . ') — the mathematics is '
+                    . 'unaffected, but a solution that visibly argues with itself reads as one '
+                    . 'that cannot be trusted']];
+    }
+
     /* ---------- the verdict ----------
        Answer-level failures dispute the ANSWER. Working-level failures dispute
        a STEP, which is a different and lesser claim, and flattening the two
@@ -817,30 +1144,127 @@ final class Checks
         $question = self::deLatex($question);
         $answer   = self::deLatex($answer);
 
+        /* The "Understood as" block echoes the QUESTION back; it is not a claim
+           about the answer. Only integrity should read it — every other check
+           must see the answer without it, or the question's own numbers get
+           mistaken for competing claims. That is not hypothetical: adding the
+           heading made the consistency check report "the Answer says 2, the
+           Summary says 4" on a flawless reply, and one spurious failure was
+           enough to drop every answer to "Partially verified". */
+        $body = trim(preg_replace('/##\s*📌[^\n]*\n[\s\S]*?(?=\n##\s|$)/u', '', $answer));
+        if ($body === '') $body = $answer;
+
         $checks = array_merge(
-            self::substitution($question, $answer),
-            self::arithmetic($answer)
+            /* Integrity first, deliberately. If the question was misread,
+               every other verdict below is about a different problem, and the
+               receipt should say so before it says anything else. */
+            /* Question validity comes before everything, because if the
+               problem has no answer then "is the answer right" is not the
+               question to be asking. */
+            QuestionCheck::check($question, $body),
+            self::integrity($question, $answer),
+            self::substitution($question, $body),
+            self::arithmetic($body),
+            Units::check($question, $body),
+            self::trace($question, $body),
+            self::presentation($body)
         );
 
-        $failed = array_values(array_filter($checks, static fn($c) => !$c['ok']));
-        $passed = array_values(array_filter($checks, static fn($c) => $c['ok']));
+        /* A soft check is advisory: it reports something worth telling the
+           student that is NOT a mathematical fault — presentation, or a limit
+           on what could be tested. It belongs in the receipt and nowhere near
+           the failure count, because a caveat must never decide the verdict.
+           The JS engine already did this; leaving it out here made a correct
+           answer with untidy prose report as "a step does not hold". */
+        $failed   = array_values(array_filter($checks, static fn($c) => !$c['ok'] && empty($c['soft'])));
+        $passed   = array_values(array_filter($checks, static fn($c) => $c['ok']));
+        $advisory = array_values(array_filter($checks, static fn($c) => !$c['ok'] && !empty($c['soft'])));
 
-        $answerLevel = ['subst' => true];
+        /* A wrong DIMENSION disputes the answer, not a step in the working:
+           "find the acceleration" answered in newtons is wrong whatever the
+           arithmetic did, so it belongs here beside substitution rather than
+           in the milder step-level bucket. */
+        /* integrity is answer-level and then some: a misread question makes
+           the answer wrong no matter how clean the working is. */
+        $answerLevel = ['subst' => true, 'units' => true, 'integrity' => true, 'question' => true];
+
+        /* A question with no answer is its own outcome, and flattening it into
+           "the answer is wrong" tells a student to try again at something
+           impossible. It is reported whether the reply got it right or not:
+           the reply saying "no solution exists" is CORRECT, and the question
+           is still the thing that is broken. */
+        $invalidQuestion = false;
+        foreach ($checks as $c) if (!empty($c['invalid_question'])) $invalidQuestion = true;
         $failedAnswer = array_filter($failed, static fn($c) => isset($answerLevel[$c['kind']]));
 
-        if (count($failedAnswer))     $state = 'disputed';
+        if ($invalidQuestion)         $state = 'invalid_question';
+        elseif (count($failedAnswer)) $state = 'disputed';
         elseif (count($failed))       $state = 'stepfail';
         elseif (count($passed))       $state = 'checked';
         else                          $state = 'unverified';
 
+        /* ---------- three trust layers, reported separately ----------
+           They answer different questions and must not be averaged into one
+           number. "Arithmetic verified" is true and useless when the question
+           was misread — the sum really does add up, for the wrong problem —
+           so each layer carries its own status and the overall verdict is a
+           conjunction, never a majority. */
+        $layer = static function (array $checks, array $kinds): string {
+            $seen = false;
+            foreach ($checks as $c) {
+                if (!isset($kinds[$c['kind']])) continue;
+                $seen = true;
+                if (!$c['ok']) return 'MISMATCH';
+            }
+            return $seen ? 'VERIFIED' : 'NOT_CHECKED';
+        };
+        $question   = $layer($checks, ['integrity' => 1]);
+        $arithmetic = $layer($checks, ['arith' => 1, 'subst' => 1, 'units' => 1, 'question' => 1]);
+        $traceState = $layer($checks, ['trace' => 1]);
+
+        /* NOT_CHECKED is not a failure. Requiring all three layers to have RUN
+           meant a two-variable question — where the trace layer cannot apply —
+           could never be more than PARTIALLY_VERIFIED, so almost every correct
+           answer carried a warning badge and the label stopped meaning
+           anything.
+
+           What FULLY_VERIFIED must actually assert: nothing contradicted the
+           answer, AND the substantive layer really ran. A trace alone is not
+           enough to claim it — that only says the final value appears in the
+           working, which is true of plenty of wrong answers. */
+        if ($invalidQuestion)                  $overall = 'QUESTION_INVALID';
+        elseif ($question === 'MISMATCH')      $overall = 'QUESTION_MISMATCH';
+        elseif ($arithmetic === 'MISMATCH')    $overall = 'ARITHMETIC_MISMATCH';
+        elseif ($traceState === 'MISMATCH')    $overall = 'TRACE_MISMATCH';
+        elseif ($arithmetic === 'VERIFIED')    $overall = 'FULLY_VERIFIED';
+        elseif ($question === 'VERIFIED'
+                || $traceState === 'VERIFIED') $overall = 'PARTIALLY_VERIFIED';
+        else                                   $overall = 'NOT_VERIFIED';
+
         return [
             'state'   => $state,
+            'trust'   => [
+                'question'   => 'QUESTION_' . $question,
+                'arithmetic' => 'ARITHMETIC_' . $arithmetic,
+                'trace'      => 'TRACE_' . $traceState,
+                'overall'    => $overall,
+            ],
+            'advisory' => $advisory,
             'checked' => count($checks),
             'passed'  => count($passed),
             'failed'  => count($failed),
             /* Failures first: a receipt that buries the failure under ten ticks
                contradicts its own heading. */
-            'checks'  => array_merge($failed, $passed),
+            /* Advisory notes last: they are context, not verdicts — but they must
+               still REACH the receipt. Building this from failed+passed alone
+               dropped them entirely, so the API counted a presentation note in
+               'checked' and then never showed it. */
+            'checks'  => array_merge($failed, $passed, $advisory),
         ];
     }
 }
+
+/* Loaded last: Units uses Checks::claimZone and Checks::deLatex, and Checks::run
+   uses Units::check. Requiring it from the top of this file would be a cycle. */
+require_once __DIR__ . '/units.php';
+require_once __DIR__ . '/question.php';

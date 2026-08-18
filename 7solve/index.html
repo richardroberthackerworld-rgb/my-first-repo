@@ -8,7 +8,7 @@
 <!-- Build stamp. Bump this whenever the site is rebuilt: it is the one place
      to look to answer "is the new version actually live?" — Settings shows it,
      the console logs it, and you can read it straight out of view-source. -->
-<meta name="7solve-build" content="2026-08-18.13">
+<meta name="7solve-build" content="2026-08-18.24">
 <link rel="icon" href="favicon.ico?v=7by4" sizes="any">
 <link rel="icon" href="assets/logo.svg?v=7by4" type="image/svg+xml">
 <link rel="icon" href="favicon.png?v=7by4" type="image/png" sizes="96x96">
@@ -1821,7 +1821,9 @@ footer{
 
 /* The receipt: what ran, in one line per check. Written only when something
    actually ran, so an empty list means the row is not on the page at all. */
-.verif-note{
+.verif-note li.note .m{color:var(--muted,#8a8f98)}.verif-note li.note{opacity:.85}
+    .verif-note .verif-sub{margin:2px 0 8px;opacity:.75;font-size:.92em}
+    .verif-note{
   margin:-2px 0 14px;padding:11px 14px;border-radius:var(--r);
   background:var(--surface-2);border:1px solid var(--line);
   font-size:12.6px;color:var(--ink-2);line-height:1.6;
@@ -8456,7 +8458,11 @@ function deLatex(md){
   /* superscripts: ^{2} → ², ^{n} → ^n */
   var SUP = {'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
   s = s.replace(/\^\s*\{\s*(-?\d)\s*\}/g, function(_, d){ return SUP[d] || ('^' + d); });
-  s = s.replace(/\^\s*\{([^{}]+)\}/g, '^$1');
+  /* A compound exponent keeps its grouping. Stripping the braces turned
+     3^{x+y} into 3^x+y — which is (3^x)+y, a different expression — so a pure
+     formatting difference silently became a mathematical one. Single digits
+     are handled above and become ² ³ ⁴. */
+  s = s.replace(/\^\s*\{([^{}]+)\}/g, '^($1)');
   s = s.replace(/\^(\d)(?![\d.])/g, function(_, d){ return SUP[d] || ('^' + d); });
   /* subscripts: a_{1} → a1 */
   s = s.replace(/_\s*\{([^{}]+)\}/g, '$1');
@@ -8468,7 +8474,14 @@ function deLatex(md){
     Rightarrow:'⇒', rightarrow:'→', to:'→', implies:'⇒', iff:'⇔', therefore:'∴',
     because:'∵', in:'∈', notin:'∉', subset:'⊂', cup:'∪', cap:'∩', forall:'∀',
     exists:'∃', sum:'∑', int:'∫', prod:'∏', ldots:'…', dots:'…', cdots:'…',
-    quad:' ', qquad:'  ', ',':' ', ';':' ', '!':''
+    quad:' ', qquad:'  ', ',':' ', ';':' ', '!':'',
+    /* Presentation wrappers carry no mathematics. \boxed is the one that
+       mattered: a model boxes its restatement, the command and its braces
+       survived, EQ_CHARS has no braces, and the correct restatement became
+       unreadable — so the integrity check fell through to a later derivation
+       step and flagged a faithful answer. Nested content ("3^{x+y+1}") is why
+       it is stripped as a bare command with the braces cleaned up after. */
+    boxed:'', displaystyle:'', textstyle:'', limits:''
   };
   s = s.replace(/\\([A-Za-z]+|[,;!])/g, function(m, name){
     return Object.prototype.hasOwnProperty.call(SYM, name) ? SYM[name] : m;
@@ -8483,6 +8496,11 @@ function deLatex(md){
   /* finally the delimiters. $$…$$ becomes its own line; $…$ goes inline. */
   s = s.replace(/\$\$([\s\S]*?)\$\$/g, function(_, a){ return '\n' + a.trim() + '\n'; })
        .replace(/\$([^$\n]+)\$/g, '$1');
+
+  /* Any braces still standing are the empty shells of stripped wrappers.
+     Every rule that needed braces has already run, so what is left is
+     presentation, and leaving it in makes the expression unparseable. */
+  s = s.replace(/[{}]/g, '');
 
   s = s.replace(/ G(\d+) /g, function(_, i){ return guards[+i]; });
   return s;
@@ -12169,6 +12187,30 @@ var Verify = (function(){
       var exact = /\//.test(m[2]);                      // the result is a fraction
       var want = exact ? evalFlat(m[2]) : toNum(m[2]);
       if(!isFinite(got) || !isFinite(want)) continue;
+
+      /* INTEGER DIVISION IS NOT A MISTAKE.
+         "59 ÷ 3 = 19 remainder 2" is correct arithmetic, but the match stops
+         at the 19 and this judged it as 59/3 = 19 exactly — so a page of good
+         remainder working came back as five failed checks. Worse, the ±0.5
+         tolerance an integer earns from "no decimals written" let
+         "59 ÷ 2 = 29" PASS while its four siblings failed: the checker
+         contradicting itself in public.
+
+         A quotient equal to the floor is integer division, and this engine
+         cannot know whether the student meant that or an exact result — so it
+         says nothing. A quotient that is not the floor is wrong on BOTH
+         readings and is still reported, compared exactly, because a wrong
+         quotient is usually wrong by less than the half unit the old
+         tolerance forgave. */
+      var intDivision = false;
+      if(/^\s*-?[\d,]+(?:\.\d+)?\s*[÷\/]\s*-?[\d,]+(?:\.\d+)?\s*$/.test(m[1]) && !exact &&
+         Math.abs(want - Math.round(want)) < 1e-9 && Math.abs(got - Math.round(got)) > 1e-9){
+        if(Math.abs(want - Math.floor(got)) < 1e-9) continue;      // integer division → no verdict
+        intDivision = true;
+      }
+      /* An explicit remainder in the same breath settles it outright. */
+      if(/^[^\n]{0,24}\b(r|rem|remainder|शेष|శేషం)\b/i.test(md.slice(m.index + m[0].length))) continue;
+
       var key = m[0].replace(/\s+/g, '');
       if(seen[key]) continue;
       seen[key] = 1;
@@ -12176,7 +12218,7 @@ var Verify = (function(){
          correct to two places. A FRACTION carries no decimals, so that rule
          handed it a tolerance of 0.5 and passed 4/36 = 1/8. An exact form is
          compared exactly. */
-      var agree = exact
+      var agree = (exact || intDivision)
         ? Math.abs(got - want) <= Math.max(1, Math.abs(got)) * 1e-9
         : near(got, want, m[2]);
       out.push({ kind:'arith', text:m[0].replace(/\s+/g, ' ').trim(),
@@ -12445,7 +12487,12 @@ var Verify = (function(){
          the chemistry reader uses, for the same reason. */
       for(var a = 0; a < words.length && a < 10; a++){
         for(var b = words.length; b > a; b--){
-          var cand = words.slice(a, b).join(' ').trim();
+          /* Trailing sentence punctuation must come off before the parser
+             sees it. "2(x+3) = 11." tokenised "11." and refused, so an
+             equation ending a sentence — which is most of them in prose —
+             was invisible to every check built on this function. A decimal
+             is unaffected: 1.5 does not END in a dot. */
+          var cand = words.slice(a, b).join(' ').trim().replace(/[.,;:]+$/, '');
           if(cand.indexOf('=') < 0) continue;
           if(!looksAlgebraic(cand)) continue;
           var eq = parseEquation(cand);
@@ -12597,6 +12644,98 @@ var Verify = (function(){
     return String(md).slice(0, 400);
   }
 
+  /* Every value the text claims the variable takes.
+     Lifted out of substitution() so the TRACE check reads a working with the
+     same reader that reads an answer. Two readers would drift, and the two
+     halves of a trace comparison must be parsed identically or the check is
+     comparing its own inconsistency. Mirrors Checks::claimedRoots in
+     verify.php. */
+  function claimedRootsOf(md, v0){
+      var NUM = '-?\\d+(?:\\.\\d+)?(?:\\s*\\/\\s*-?\\d+(?:\\.\\d+)?)?';
+      var SEP = '\\s*(?:,|or|and|;|या|మరియు)\\s*';
+      var one = function(r){
+        var f = String(r).match(/^\s*(-?\d+(?:\.\d+)?)\s*\/\s*(-?\d+(?:\.\d+)?)\s*$/);
+        return f ? parseFloat(f[1]) / parseFloat(f[2]) : parseFloat(r);
+      };
+      /* Read the WHOLE expression a root is written as, not just a leading
+         integer. "x = 82 − 30√7" used to be read as x = 82, which then failed
+         substitution and reported a perfectly correct exact answer as wrong —
+         and exact form is precisely what a maths answer should be in. The
+         algebra parser already understands √, ², fractions and brackets, so the
+         right-hand side is parsed and evaluated rather than pattern-matched.
+  
+         The variable must not be preceded by another alphanumeric character, or
+         "2n = 6" inside correct working is read as the root n = 6. */
+      var roots = [], seen = {};
+      /* The tail stops at the next '=' as well as the line end, so "x = 2 and
+         x = 3" yields two matches instead of swallowing the second statement
+         into the first and losing a root. */
+      /* A value the answer itself calls extraneous is not a claim — "x = 82 −
+         30√7 (x = 82 + 30√7 is extraneous)" is correct mathematics and must not
+         be marked wrong for naming what it rejected. */
+      var REJECTED = /\b(extraneous|rejected?|discard(ed)?|invalid|not a solution|does not satisfy|fails)\b/i;
+      var rre = new RegExp('(?:^|[^0-9a-zA-Z])' + v0 + '\\s*=\\s*([^\\n=]{1,60})', 'gi'), rm;
+      while((rm = rre.exec(md)) !== null && roots.length <= 6){
+        /* Resume scanning just after this '=' rather than after the whole tail.
+           "x = 2 and x = 3" otherwise consumed the second statement into the
+           first tail and the second root was silently never checked. */
+        rre.lastIndex = rm.index + rm[0].length - rm[1].length;
+        /* A qualifier applies to its OWN line and no further. Searching a
+           character window instead reached onto the next line and skipped the
+           real answer too, which left the answer with no verification at all —
+           worse than the false positive it was meant to fix. */
+        var ls = md.lastIndexOf('\n', rm.index) + 1;
+        var le = md.indexOf('\n', rm.index); if(le < 0) le = md.length;
+        if(REJECTED.test(md.slice(ls, le))) continue;
+        /* Candidate expressions: the whole tail, then progressively shorter
+           prefixes, so "82 − 30√7, so the answer is…" still yields 82 − 30√7.
+           Splitting on a comma is tried FIRST for the "x = 2, 3" list form, but
+           only accepted when every part evaluates on its own. */
+        var tail = rm[1].replace(/[.;]+\s*$/, '').trim();
+        var got = [];
+  
+        var parts = tail.split(new RegExp(SEP, 'i'));
+        if(parts.length > 1 && parts.length <= 4){
+          var allOk = parts.every(function(p){
+            var n = constOf(p.trim());
+            if(n === null) return false;
+            got.push(n); return true;
+          });
+          if(!allOk) got = [];
+        }
+        /* "x = 82 ± 30√7" is TWO values, not the number 82. Without this the
+           word-eating fallback below stopped at "82" — an intermediate quantity
+           that satisfies nothing — and reported the answer as wrong. */
+        if(!got.length && /[±∓]/.test(tail)){
+          var plus  = constOf(tail.replace(/[±∓]/g, '+'));
+          var minus = constOf(tail.replace(/[±∓]/g, '-'));
+          if(plus !== null && minus !== null) got = [plus, minus];
+        }
+        /* A ± family that will not resolve to two REAL numbers is a value this
+           engine cannot represent — "x = -2 ± i√2" is the ordinary case, and it
+           is CORRECT. Falling through to the word-eater below harvests the "-2",
+           substitutes a fragment of the answer into the equation and fails a
+           right answer, which is the one outcome this checker must never
+           produce. Rule 1: no verdict beats a wrong verdict. */
+        if(!got.length && /[±∓]/.test(tail)) continue;
+        if(!got.length){
+          /* one value: eat words off the end until what is left is a constant */
+          var words = tail.split(/\s+/);
+          for(var w = words.length; w > 0; w--){
+            var cand2 = words.slice(0, w).join(' ');
+            if(/[±∓]/.test(cand2)) continue;            // never reduce a ± family to one side
+            var n2 = constOf(cand2);
+            if(n2 !== null){ got = [n2]; break; }
+          }
+        }
+        got.forEach(function(n){
+          var k = Math.round(n * 1e9) / 1e9;
+          if(!seen[k]){ seen[k] = 1; roots.push({v:n, src:null}); }
+        });
+      }
+    return roots.map(function(r){ return r.v; });
+  }
+
   function substitution(question, md){
     /* Strip LaTeX from the QUESTION before looking for an equation in it.
 
@@ -12615,6 +12754,11 @@ var Verify = (function(){
     if(!found) return [];
     var eq = found.eq;
     if(hasTrig(eq.L) || hasTrig(eq.R)) return [];       // convention ambiguity → no verdict
+    /* Keep the WHOLE answer for tuple reading. Every tuple an answer puts
+       forward is a claim, wherever on the page it is written — an answer that
+       lists its solutions in the working had only the first one checked, and
+       reported verified while (5,1,1) gives 27 != 15. */
+    var fullAnswer = md;
     md = claimZone(md);
 
     /* ---- several variables: check every claimed tuple ----
@@ -12622,7 +12766,7 @@ var Verify = (function(){
        claimed (5,3) now evaluates 35 against 45 and fails, instead of being
        silently skipped because the old regex could not see a y. */
     if(eq.vars.length >= 2){
-      var tuples = claimedTuples(md, eq.vars.length);
+      var tuples = claimedTuples(fullAnswer, eq.vars.length);
       if(!tuples.length) return [];
       var out = [];
       tuples.slice(0, 10).forEach(function(tp){
@@ -12645,88 +12789,8 @@ var Verify = (function(){
        whose second root is wrong. Unlike the old version this evaluates the
        real parsed equation, so it is no longer limited to cubics. */
     var v0 = eq.vars[0];
-    var NUM = '-?\\d+(?:\\.\\d+)?(?:\\s*\\/\\s*-?\\d+(?:\\.\\d+)?)?';
-    var SEP = '\\s*(?:,|or|and|;|या|మరియు)\\s*';
-    var one = function(r){
-      var f = String(r).match(/^\s*(-?\d+(?:\.\d+)?)\s*\/\s*(-?\d+(?:\.\d+)?)\s*$/);
-      return f ? parseFloat(f[1]) / parseFloat(f[2]) : parseFloat(r);
-    };
-    /* Read the WHOLE expression a root is written as, not just a leading
-       integer. "x = 82 − 30√7" used to be read as x = 82, which then failed
-       substitution and reported a perfectly correct exact answer as wrong —
-       and exact form is precisely what a maths answer should be in. The
-       algebra parser already understands √, ², fractions and brackets, so the
-       right-hand side is parsed and evaluated rather than pattern-matched.
-
-       The variable must not be preceded by another alphanumeric character, or
-       "2n = 6" inside correct working is read as the root n = 6. */
-    var roots = [], seen = {};
-    /* The tail stops at the next '=' as well as the line end, so "x = 2 and
-       x = 3" yields two matches instead of swallowing the second statement
-       into the first and losing a root. */
-    /* A value the answer itself calls extraneous is not a claim — "x = 82 −
-       30√7 (x = 82 + 30√7 is extraneous)" is correct mathematics and must not
-       be marked wrong for naming what it rejected. */
-    var REJECTED = /\b(extraneous|rejected?|discard(ed)?|invalid|not a solution|does not satisfy|fails)\b/i;
-    var rre = new RegExp('(?:^|[^0-9a-zA-Z])' + v0 + '\\s*=\\s*([^\\n=]{1,60})', 'gi'), rm;
-    while((rm = rre.exec(md)) !== null && roots.length <= 6){
-      /* Resume scanning just after this '=' rather than after the whole tail.
-         "x = 2 and x = 3" otherwise consumed the second statement into the
-         first tail and the second root was silently never checked. */
-      rre.lastIndex = rm.index + rm[0].length - rm[1].length;
-      /* A qualifier applies to its OWN line and no further. Searching a
-         character window instead reached onto the next line and skipped the
-         real answer too, which left the answer with no verification at all —
-         worse than the false positive it was meant to fix. */
-      var ls = md.lastIndexOf('\n', rm.index) + 1;
-      var le = md.indexOf('\n', rm.index); if(le < 0) le = md.length;
-      if(REJECTED.test(md.slice(ls, le))) continue;
-      /* Candidate expressions: the whole tail, then progressively shorter
-         prefixes, so "82 − 30√7, so the answer is…" still yields 82 − 30√7.
-         Splitting on a comma is tried FIRST for the "x = 2, 3" list form, but
-         only accepted when every part evaluates on its own. */
-      var tail = rm[1].replace(/[.;]+\s*$/, '').trim();
-      var got = [];
-
-      var parts = tail.split(new RegExp(SEP, 'i'));
-      if(parts.length > 1 && parts.length <= 4){
-        var allOk = parts.every(function(p){
-          var n = constOf(p.trim());
-          if(n === null) return false;
-          got.push(n); return true;
-        });
-        if(!allOk) got = [];
-      }
-      /* "x = 82 ± 30√7" is TWO values, not the number 82. Without this the
-         word-eating fallback below stopped at "82" — an intermediate quantity
-         that satisfies nothing — and reported the answer as wrong. */
-      if(!got.length && /[±∓]/.test(tail)){
-        var plus  = constOf(tail.replace(/[±∓]/g, '+'));
-        var minus = constOf(tail.replace(/[±∓]/g, '-'));
-        if(plus !== null && minus !== null) got = [plus, minus];
-      }
-      /* A ± family that will not resolve to two REAL numbers is a value this
-         engine cannot represent — "x = -2 ± i√2" is the ordinary case, and it
-         is CORRECT. Falling through to the word-eater below harvests the "-2",
-         substitutes a fragment of the answer into the equation and fails a
-         right answer, which is the one outcome this checker must never
-         produce. Rule 1: no verdict beats a wrong verdict. */
-      if(!got.length && /[±∓]/.test(tail)) continue;
-      if(!got.length){
-        /* one value: eat words off the end until what is left is a constant */
-        var words = tail.split(/\s+/);
-        for(var w = words.length; w > 0; w--){
-          var cand2 = words.slice(0, w).join(' ');
-          if(/[±∓]/.test(cand2)) continue;            // never reduce a ± family to one side
-          var n2 = constOf(cand2);
-          if(n2 !== null){ got = [n2]; break; }
-        }
-      }
-      got.forEach(function(n){
-        var k = Math.round(n * 1e9) / 1e9;
-        if(!seen[k]){ seen[k] = 1; roots.push({v:n, src:null}); }
-      });
-    }
+    var rootVals = claimedRootsOf(md, v0);
+    var roots = rootVals.map(function(n){ return {v:n, src:null}; });
     /* remember how each was written, for the receipt */
     var srcs = [];
     var sre = new RegExp('(?:^|[^0-9a-zA-Z])' + v0 + '\\s*=\\s*([^\\n,;.]{1,40})', 'gi'), sm;
@@ -13287,7 +13351,16 @@ var Verify = (function(){
     if(!OPTIMISE_RE.test(String(question || ''))) return [];
     /* only worth saying when something else DID verify — otherwise the badge
        is already "unable to verify" and this adds nothing */
-    return [{kind:'optimum', ok:false,
+    /* ADVISORY, not a failure. This does not say the answer is wrong; it says
+       one thing about it could not be tested. Marked ok:false it painted a ✕
+       beside a correct answer and — once the arithmetic checks correctly went
+       silent — was the only "failure" left, which dropped the whole reply to
+       "⚠ Partially verified" on the strength of a caveat.
+
+       soft:true keeps it in the receipt, where the caveat is worth reading,
+       and out of the failure count, which decides the badge. A checker must
+       distinguish "I found a problem" from "I could not look". */
+    return [{kind:'optimum', ok:false, soft:true,
       text:'the value shown was checked against the question’s conditions, but that ' +
            'no other point does better was NOT checked — feasible is not the same as optimal'}];
   }
@@ -13616,12 +13689,514 @@ var Verify = (function(){
                : 'a probability of ' + (f ? f[0] : p) + ' is impossible — it must be between 0 and 1' }];
   }
 
+  /* ---------- SOLUTION-TO-FINAL TRACE ----------
+     Does the stated answer follow from the working that was shown? A model can
+     derive x = 2 across four careful lines and print x = 4 at the bottom, and
+     every other check here would be satisfied.
+
+     Deliberately weak, because a strong rule would cry wolf: a final value must
+     APPEAR somewhere in the working. Not as the last line, not reached in any
+     particular way. An answer stating a value the working never mentions did
+     not come from that working, and that is all this claims.
+
+     PORT of Checks::trace in verify.php. Change one, change both. */
+  function trace(question, md){
+    var found = findEquation(deLatexSafe(question));
+    if(!found || found.eq.vars.length !== 1) return [];
+    var v = found.eq.vars[0];
+
+    var zone = claimZone(md);
+    /* Read the working by HEADING. An earlier version subtracted the claim
+       zone by string replacement, but claimZone BUILDS its value from two
+       sections and is not a substring, so the replace did nothing and the
+       "working" became the whole reply — every value then trivially appeared
+       in its own working and the check could never fail. */
+    var working = withHead(String(md || ''), '📝');
+    if(!working.trim()) return [];
+
+    var final_ = claimedRootsOf(zone, v);
+    var derived = claimedRootsOf(working, v);
+    if(!final_.length || !derived.length) return [];
+
+    var loose = String(working).match(/-?\d+(?:\.\d+)?/g) || [];
+    for(var i = 0; i < loose.length; i++) derived.push(parseFloat(loose[i]));
+
+    var near = function(a, b){ return Math.abs(a - b) <= Math.max(1, Math.abs(a), Math.abs(b)) * 1e-6; };
+    var orphans = [];
+    for(var f = 0; f < final_.length; f++){
+      var seen = false;
+      for(var d = 0; d < derived.length; d++) if(near(final_[f], derived[d])){ seen = true; break; }
+      if(!seen) orphans.push(round6(final_[f]));
+    }
+    if(!orphans.length) return [{ kind:'trace', ok:true,
+      text:'every value in the final answer appears in the working above it' }];
+    return [{ kind:'trace', ok:false,
+      text: v + ' = ' + orphans.join(', ') + ' is stated as the answer but never appears in the ' +
+            'working shown, so the final answer does not follow from the steps given' }];
+  }
+
+  /* ---------- PRESENTATION: self-correction leakage ----------
+     "Wait, let me re-check that" is not a mathematical error, and it must never
+     make an answer read as wrong. It is a PRODUCT error: a student revising for
+     an exam watches the solver argue with itself and stops trusting it, even
+     when the final value is right.
+
+     The system prompt already forbids this. That is precisely why a detector is
+     needed — an instruction a model can ignore is not a guarantee, and every
+     other rule in this engine is enforced rather than requested.
+
+     ADVISORY: the mathematics is untouched, so it appears in the receipt and
+     never in the failure count. PORT of Checks::presentation in verify.php. */
+  var LEAK_RE = /(?:^|[.!?]\s+|\n)\s*(wait|hold on|hmm+|actually|oh(?:\s|,)|let me (?:re-?check|recalculate|reconsider|try again|redo|verify that)|on second thought|i made a mistake|that(?:'s| is) (?:wrong|not right)|scratch that|let me start over|is that right\??|no,? wait)\b/gi;
+
+  function leaks(md){
+    /* Code may legitimately contain any of these words, and a programming
+       answer must not be penalised for a comment. */
+    var s = deLatexSafe(md).replace(/```[\s\S]*?```|`[^`\n]*`/g, ' ');
+    var found = {}, out = [], m;
+    LEAK_RE.lastIndex = 0;
+    while((m = LEAK_RE.exec(s)) !== null){
+      var w = String(m[1]).trim().toLowerCase();
+      if(!found[w]){ found[w] = 1; out.push(w); }
+    }
+    return out;
+  }
+
+  function presentation(md){
+    var found = leaks(md);
+    if(!found.length) return [];
+    var shown = found.slice(0, 4).map(function(w){ return '"' + w + '"'; }).join(', ');
+    return [{kind:'presentation', ok:false, soft:true,
+      text:'the answer thinks out loud (' + shown + ') — the mathematics is unaffected, ' +
+           'but a solution that visibly argues with itself reads as one that cannot be trusted'}];
+  }
+
+  /* ---------- QUESTION VALIDITY ----------
+     Every other checker here asks "is the ANSWER right?". This asks what comes
+     before it: DOES THIS PROBLEM HAVE AN ANSWER AT ALL?
+
+     Its absence produced a real failure. For N < 1000 with N ≡ 1 (mod 2),
+     2 (mod 3), 4 (mod 5), 6 (mod 7), 10 (mod 11), three different replies —
+     the correct "no such N exists", an out-of-range 2309, and a fabricated
+     209 — all received the SAME verdict, because nothing in the engine had an
+     opinion about the problem itself.
+
+     Decided by bounded enumeration rather than CRT: no coprimality
+     assumption, it finds EVERY solution in range rather than one, and it
+     cannot be wrong about a question it can read. Everything it cannot read,
+     it says nothing about — "this question is impossible" is a far heavier
+     claim than "this answer looks wrong".
+
+     PORT of QuestionCheck in question.php. Change one, change both. */
+  var Q_MAX_SCAN = 2000000;
+
+  function qCongruences(q){
+    var s = deLatexSafe(q), seen = {}, out = [];
+    var pats = [
+      [/remainder\s+(\d+)\s+(?:when|on|upon)?\s*(?:it\s+is\s+)?divided\s+by\s+(\d+)/gi, 1, 2],
+      [/remainder\s+(\d+)\s+on\s+division\s+by\s+(\d+)/gi, 1, 2],
+      [/≡\s*(-?\d+)\s*\(?\s*mod\s*(\d+)\s*\)?/gi, 1, 2],
+      [/\bmod\s*(\d+)\s*(?:=|is)\s*(\d+)/gi, 2, 1],
+      /* The reverse phrasing must not cross a clause. Allowing commas let
+         "divided by 2, remainder 2 when divided by 3" match as (mod 2, rem 2),
+         inventing constraints never written — which on a SOLVABLE question
+         would manufacture a false "no solution". */
+      [/divided\s+by\s+(\d+)\s+(?:it\s+)?(?:leaves|gives|has)\s+(?:a\s+)?remainder(?:\s+of)?\s+(\d+)/gi, 2, 1]
+    ];
+    pats.forEach(function(p){
+      var re = p[0], m;
+      re.lastIndex = 0;
+      while((m = re.exec(s)) !== null){
+        var mod = parseInt(m[p[2]], 10), rem = parseInt(m[p[1]], 10);
+        if(!(mod > 1) || !isFinite(rem)) continue;
+        rem = ((rem % mod) + mod) % mod;         // "≡ -1 (mod 5)" is "remainder 4"
+        var k = mod + ':' + rem;
+        if(!seen[k]){ seen[k] = 1; out.push({mod:mod, rem:rem}); }
+      }
+    });
+    return out;
+  }
+
+  function qBounds(q){
+    var s = deLatexSafe(q), lo = 1, hi = null, m;
+    var num = function(t){ return parseInt(String(t).replace(/,/g, ''), 10); };
+    if((m = s.match(/\b[A-Za-z]\s*<\s*(\d[\d,]*)/)))                 hi = num(m[1]) - 1;
+    if((m = s.match(/\b[A-Za-z]\s*(?:≤|<=)\s*(\d[\d,]*)/)))          hi = num(m[1]);
+    if((m = s.match(/less\s+than\s+(\d[\d,]*)/i)))                    hi = num(m[1]) - 1;
+    if((m = s.match(/(?:at\s+most|no\s+more\s+than|up\s+to)\s+(\d[\d,]*)/i))) hi = num(m[1]);
+    if((m = s.match(/\b[A-Za-z]\s*>\s*(\d[\d,]*)/)))                 lo = Math.max(lo, num(m[1]) + 1);
+    if((m = s.match(/(?:at\s+least|no\s+less\s+than)\s+(\d[\d,]*)/i))) lo = Math.max(lo, num(m[1]));
+    if((m = s.match(/between\s+(\d[\d,]*)\s+and\s+(\d[\d,]*)/i))){ lo = Math.max(lo, num(m[1])); hi = num(m[2]); }
+    if(/\bthree[-\s]digit\b/i.test(s)){ lo = Math.max(lo, 100); if(hi === null) hi = 999; }
+    if(/\btwo[-\s]digit\b/i.test(s)){   lo = Math.max(lo, 10);  if(hi === null) hi = 99; }
+    return [lo, hi];
+  }
+
+  function qLcm(a, b){
+    if(!a || !b) return 0;
+    var x = a, y = b, t;
+    while(y !== 0){ t = x % y; x = y; y = t; }
+    return (a / x) * b;
+  }
+
+  function qSolve(q){
+    var cons = qCongruences(q);
+    if(cons.length < 2) return null;
+
+    /* Two remainders for one modulus is either a contradictory question or —
+       far more likely — a misparse. Declaring a question impossible on the
+       strength of our own bad reading is the worst outcome available, so we
+       decline. Silence costs a check; a false "this question has no answer"
+       costs the student their trust in every verdict we give. */
+    var byMod = {};
+    for(var i = 0; i < cons.length; i++){
+      var c = cons[i];
+      if(byMod[c.mod] !== undefined && byMod[c.mod] !== c.rem) return null;
+      byMod[c.mod] = c.rem;
+    }
+
+    var b = qBounds(q), lo = b[0], hi = b[1];
+    if(hi === null || lo < 1 || hi < lo) return null;
+    if(hi - lo > Q_MAX_SCAN) return null;          // decline rather than stop early
+
+    var sols = [], n, j, ok;
+    for(n = lo; n <= hi; n++){
+      ok = true;
+      for(j = 0; j < cons.length; j++) if(n % cons[j].mod !== cons[j].rem){ ok = false; break; }
+      if(ok){ sols.push(n); if(sols.length > 64) break; }
+    }
+
+    /* The smallest solution ignoring the ceiling, so the receipt can say WHY
+       none fit rather than only that none do. */
+    var firstAbove = null;
+    if(!sols.length){
+      var step = 1;
+      for(j = 0; j < cons.length; j++) step = qLcm(step, cons[j].mod);
+      if(step > 0 && step <= Q_MAX_SCAN){
+        for(n = lo; n <= lo + step; n++){
+          ok = true;
+          for(j = 0; j < cons.length; j++) if(n % cons[j].mod !== cons[j].rem){ ok = false; break; }
+          if(ok){ firstAbove = n; break; }
+        }
+      }
+    }
+    return {constraints:cons, lo:lo, hi:hi, solutions:sols, first_above:firstAbove};
+  }
+
+  /* A correct reply to an impossible question says so in words, not numbers.
+     An engine that only understands numbers marks the one right answer wrong. */
+  function qClaimsNone(md){
+    var zone = claimZone(deLatexSafe(md));
+    return /\b(no\s+(?:such|positive\s+integer|integer|solution|value|number)|does\s+not\s+exist|there\s+is\s+no\b|none\s+exist|impossible|no\s+valid\b|cannot\s+be\s+satisfied)\b/i.test(zone);
+  }
+
+  function questionCheck(question, md){
+    var r = qSolve(question);
+    if(!r) return [];
+    var span = 'in ' + r.lo + '–' + r.hi;
+    var condText = r.constraints.map(function(c){ return 'mod ' + c.mod + ' → ' + c.rem; }).join(', ');
+
+    if(!r.solutions.length){
+      var why = 'no integer ' + span + ' satisfies ' + condText;
+      if(r.first_above !== null)
+        why += '; the smallest that does is ' + r.first_above +
+               ', which is outside the range the question allows';
+      if(qClaimsNone(md))
+        return [{kind:'question', ok:true, invalidQuestion:true,
+                 text:'the question has no solution — ' + why + ' — and the answer says so, which is correct'}];
+      return [{kind:'question', ok:false, invalidQuestion:true,
+               text:'this question has no answer: ' + why + ', so any number given as the answer cannot be right'}];
+    }
+
+    if(qClaimsNone(md))
+      return [{kind:'question', ok:false,
+               text:'the answer says no solution exists, but ' + r.solutions[0] +
+                    ' satisfies ' + condText + ' ' + span}];
+
+    var zone = claimZone(deLatexSafe(md));
+    var nums = zone.match(/-?\d[\d,]*/g);
+    if(!nums) return [];
+    var claimed = null;
+    for(var i = 0; i < nums.length; i++){
+      var v = parseInt(nums[i].replace(/,/g, ''), 10);
+      if(v >= r.lo - 1 || r.solutions.indexOf(v) >= 0){ claimed = v; break; }
+    }
+    if(claimed === null) return [];
+
+    var wantsLargest  = /\b(largest|greatest|maximum|biggest)\b/i.test(question);
+    var wantsSmallest = /\b(smallest|least|minimum)\b/i.test(question);
+    var target = wantsLargest ? Math.max.apply(null, r.solutions)
+               : (wantsSmallest ? Math.min.apply(null, r.solutions) : null);
+
+    if(r.solutions.indexOf(claimed) < 0){
+      var out = claimed + ' does not satisfy ' + condText;
+      if(claimed > r.hi || claimed < r.lo)
+        out = claimed + ' is outside the range the question allows (' + span + ')';
+      return [{kind:'question', ok:false, text:out}];
+    }
+    if(target !== null && claimed !== target)
+      return [{kind:'question', ok:false,
+               text:claimed + ' satisfies every condition, but the question asks for the ' +
+                    (wantsLargest ? 'largest' : 'smallest') + ' and that is ' + target}];
+    return [{kind:'question', ok:true,
+             text:claimed + ' satisfies ' + condText + ' ' + span +
+                  (target !== null ? ' and is the ' + (wantsLargest ? 'largest' : 'smallest') + ' such value' : '')}];
+  }
+
+  /* ---------- QUESTION INTEGRITY ----------
+     Every other check here asks "is the answer right?". This asks the prior
+     question: "is this the problem the student actually set?" — and for a paid
+     tool it is the more important of the two, because a flawless solution to a
+     misread question is indistinguishable from a correct answer unless
+     somebody checks the reading.
+
+     The failure that prompted it: a question containing 3x+y was solved as
+     3(x+y). Every downstream check passed, because the answer really was
+     correct — for a different problem.
+
+     It only reads the RESTATEMENT — the opening of the reply, where a model
+     repeats the problem before starting — and only compares an equation
+     carrying exactly the question's variables, skipping "x = 2" style solution
+     statements. Equivalence allows a constant factor, so 3x+y=7 and 6x+2y=14
+     agree: it is the shape that must match, not the writing.
+
+     PORT of Checks::integrity in verify.php. Change one, change both. */
+  var RESTATE_CHARS = 600;
+
+  function sameRelation(a, b, vars){
+    var ratio = null, seen = 0;
+    for(var i = 0; i < 8; i++){
+      var env = {};
+      for(var k = 0; k < vars.length; k++) env[vars[k]] = 1.37 + i * 1.61 + k * 0.73;
+      var x = evalAt(a, env), y = evalAt(b, env);
+      if(!isFinite(x) || !isFinite(y)) continue;
+      seen++;
+      var small = 1e-9 * Math.max(1, Math.abs(x), Math.abs(y));
+      if(Math.abs(x) <= small && Math.abs(y) <= small) continue;   // both zero, no information
+      if(Math.abs(y) <= small) return false;
+      var r = x / y;
+      if(ratio === null){ ratio = r; continue; }
+      if(Math.abs(r - ratio) > Math.max(1e-7, Math.abs(ratio) * 1e-7)) return false;
+    }
+    return seen < 3 ? null : true;                                  // too little evidence to speak
+  }
+
+  function integrity(question, md){
+    var asked = findEquation(deLatexSafe(question));
+    if(!asked) return [];
+    var qVars = asked.eq.vars.slice().sort();
+
+    /* The ANSWER must be deLatexed here too. PHP strips LaTeX in run() before
+       calling this, so leaving the raw text on this side meant the JS engine
+       saw "x² = 3^{x+y}" — braces are not in EQ_CHARS, the match broke, and it
+       stayed silent while PHP spoke. Same input, two verdicts. */
+    var zone = deLatexSafe(md).replace(/^\s+/, '').slice(0, RESTATE_CHARS);
+    var re = new RegExp(EQ_CHARS + '{1,80}=' + EQ_CHARS + '{1,80}', 'g');
+    /* Scan LINE BY LINE. EQ_CHARS contains \s, which includes newlines, so a
+       zone-wide scan joined "3x = 6" to the "2." starting the next line and
+       read the restatement as "3x = 6 2" — then flagged a perfectly faithful
+       answer as a misreading. A restatement is one line. */
+    var hits = [], lm;
+    zone.split(/\r?\n/).forEach(function(line){
+      re.lastIndex = 0;
+      while((lm = re.exec(line)) !== null) hits.push(lm[0]);
+    });
+    for(var hI = 0; hI < hits.length; hI++){
+      var words = hits[hI].trim().split(/\s+/);
+      for(var a = 0; a < words.length; a++){
+        for(var b = words.length; b > a; b--){
+          var cand = words.slice(a, b).join(' ').trim().replace(/[.,;:]+$/, '');
+          if(cand.indexOf('=') < 0) continue;
+          if(!looksAlgebraic(cand)) continue;
+          var eq = parseEquation(cand);
+          if(!eq) continue;
+
+          var vs = eq.vars.slice().sort();
+          if(vs.join(',') !== qVars.join(',')) continue;
+
+          /* "x = 2" is the ANSWER, not a restatement, and comparing it to the
+             question flagged a correct reply as a misreading. */
+          var bare = function(t){ return t && t.t === 'v'; };
+          var constSide = function(t){ return !Object.keys(varsOf(t)).length; };
+          if((bare(eq.L) && constSide(eq.R)) || (bare(eq.R) && constSide(eq.L))) continue;
+
+          /* An IDENTITY is a rewrite, not a restatement. Working
+             "x² + xy + y² = (x+y)² − xy" is true for every x and y — it is the
+             algebra step, not a claim about the problem — and comparing it to
+             the question flagged a completely faithful answer as solving
+             something else. Anything holding everywhere is skipped. */
+          var everywhere = true;
+          for(var tI = 0; tI < 6; tI++){
+            var envI = {};
+            for(var kI = 0; kI < vs.length; kI++) envI[vs[kI]] = 1.29 + tI * 0.83 + kI * 0.57;
+            if(holdsAt(eq, envI) !== true){ everywhere = false; break; }
+          }
+          if(everywhere) continue;
+
+          var resQ = {t:'b', op:'-', a:asked.eq.L, b:asked.eq.R};
+          var resA = {t:'b', op:'-', a:eq.L,       b:eq.R};
+          var same = sameRelation(resQ, resA, qVars);
+          if(same === null) return [];
+          return [{ kind:'integrity', ok:same,
+            text: same
+              ? 'the answer restates the question as ' + cand +
+                ', which is the same relation as ' + String(asked.src).trim()
+              : 'the question is ' + String(asked.src).trim() + ' but the answer solves ' +
+                cand + ', which is a different equation — the answer may be correct ' +
+                'for a problem that was not asked' }];
+        }
+      }
+    }
+    return [];
+  }
+
+  /* ---------- dimensional analysis ----------
+     The verifier could read algebra and arithmetic and nothing else, so a
+     physics question returned "unverified" almost every time. This closes the
+     most catchable physics error there is: an answer in the wrong KIND of
+     unit. "Find the acceleration" answered with "25 N" is wrong before any
+     arithmetic is checked, and that is provable from dimensions alone without
+     knowing the right number.
+
+     It says nothing about magnitude — 9.8 m/s² and 980 m/s² are dimensionally
+     identical. It is a sieve for one error class, not a physics engine.
+
+     This is a PORT. units.php holds the same table and the same rules, and
+     parity.js compares the two on physics cases. If you change one, change
+     both, or the API will disagree with the site about the same answer. */
+  var U_DIM = {
+    kg:[1,0,0,0,0], g:[1,0,0,0,0], mg:[1,0,0,0,0], tonne:[1,0,0,0,0],
+    m:[0,1,0,0,0], cm:[0,1,0,0,0], mm:[0,1,0,0,0], km:[0,1,0,0,0],
+    s:[0,0,1,0,0], ms:[0,0,1,0,0], min:[0,0,1,0,0], h:[0,0,1,0,0], hr:[0,0,1,0,0],
+    a:[0,0,0,1,0], k:[0,0,0,0,1],
+    n:[1,1,-2,0,0], j:[1,2,-2,0,0], w:[1,2,-3,0,0], pa:[1,-1,-2,0,0],
+    hz:[0,0,-1,0,0], c:[0,0,1,1,0], v:[1,2,-3,-1,0], ohm:[1,2,-3,-2,0],
+    f:[-1,-2,4,2,0], t:[1,0,-2,-1,0]
+  };
+  var U_QTY = {
+    'kinetic energy':[1,2,-2,0,0], 'potential energy':[1,2,-2,0,0], 'work done':[1,2,-2,0,0],
+    'moment of inertia':[1,2,0,0,0], 'angular momentum':[1,2,-1,0,0],
+    'surface tension':[1,0,-2,0,0], 'electric field':[1,1,-3,-1,0],
+    'magnetic field':[1,0,-2,-1,0], 'specific heat':[0,2,-2,0,-1],
+    acceleration:[0,1,-2,0,0], displacement:[0,1,0,0,0], wavelength:[0,1,0,0,0],
+    resistance:[1,2,-3,-2,0], capacitance:[-1,-2,4,2,0], frequency:[0,0,-1,0,0],
+    momentum:[1,1,-1,0,0], impulse:[1,1,-1,0,0], pressure:[1,-1,-2,0,0],
+    velocity:[0,1,-1,0,0], density:[1,-3,0,0,0], current:[0,0,0,1,0],
+    voltage:[1,2,-3,-1,0], charge:[0,0,1,1,0], energy:[1,2,-2,0,0],
+    weight:[1,1,-2,0,0], tension:[1,1,-2,0,0], thrust:[1,1,-2,0,0],
+    power:[1,2,-3,0,0], period:[0,0,1,0,0], volume:[0,3,0,0,0],
+    speed:[0,1,-1,0,0], force:[1,1,-2,0,0], work:[1,2,-2,0,0], heat:[1,2,-2,0,0],
+    area:[0,2,0,0,0], mass:[1,0,0,0,0], emf:[1,2,-3,-1,0]
+  };
+  var U_NAMES = ['M','L','T','I','K'];
+
+  function uRender(d){
+    var sup = {'-':'⁻','0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
+    var parts = [];
+    for(var i = 0; i < d.length; i++){
+      if(!d[i]) continue;
+      var s = U_NAMES[i];
+      if(d[i] !== 1) s += String(d[i]).split('').map(function(c){ return sup[c] || c; }).join('');
+      parts.push(s);
+    }
+    return parts.length ? '[' + parts.join(' ') + ']' : '[dimensionless]';
+  }
+  function uParse(u){
+    var s = String(u || '').trim();
+    if(!s) return null;
+    s = s.replace(/[·×⋅]/g, ' ').replace(/Ω|ohms|Ohm/g, 'ohm')
+         .replace(/[⁻]/g, '-').replace(/⁰/g,'0').replace(/¹/g,'1').replace(/²/g,'2')
+         .replace(/³/g,'3').replace(/⁴/g,'4').replace(/⁵/g,'5').replace(/⁶/g,'6')
+         .replace(/\^/g, '');
+    var halves = s.split('/');
+    if(halves.length > 2) return null;                 // ambiguous without brackets
+    var dim = [0,0,0,0,0], any = false;
+    for(var hi = 0; hi < halves.length; hi++){
+      var sign = hi === 0 ? 1 : -1;
+      var toks = halves[hi].trim().split(/\s+/).filter(Boolean);
+      for(var t = 0; t < toks.length; t++){
+        var m = toks[t].match(/^([a-zA-Zµ]+)(-?\d+)?$/);
+        if(!m) return null;
+        var base = U_DIM[m[1].toLowerCase()];
+        if(!base) return null;                          // unknown token → refuse, never guess
+        var exp = m[2] ? parseInt(m[2], 10) : 1;
+        for(var i = 0; i < 5; i++) dim[i] += sign * exp * base[i];
+        any = true;
+      }
+    }
+    if(!any) return null;
+    return dim.some(function(x){ return x !== 0; }) ? dim : null;
+  }
+  /* Merely appearing is not enough: "calculate the force on the mass" names
+     two table words, and only one of them is being asked for. */
+  function uAsked(question){
+    var q = ' ' + String(question || '').toLowerCase().replace(/\s+/g, ' ') + ' ';
+    var words = Object.keys(U_QTY).sort(function(a, b){ return b.length - a.length; });
+    var alt = words.map(function(w){ return w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }).join('|');
+    var re = new RegExp('\\b(?:find|calculate|determine|compute|obtain|evaluate|what\\s+is|what\\s+are|how\\s+much\\s+is|and|also)\\s+(?:the\\s+|its\\s+|a\\s+)?(' + alt + ')s?\\b', 'g');
+    var hits = {}, m, n = 0;
+    while((m = re.exec(q)) !== null){
+      var dim = U_QTY[m[1]];
+      if(!dim) continue;
+      var key = uRender(dim);
+      if(!hits[key]){ hits[key] = {word:m[1], dim:dim}; n++; }
+    }
+    return n === 1 ? hits[Object.keys(hits)[0]] : null;
+  }
+  function uAnswerUnit(md){
+    var zone = claimZone(deLatexSafe(md));
+    var re = /(-?\d[\d,]*(?:\.\d+)?)\s*([a-zA-ZΩµ][a-zA-ZΩµ\s\/\^\-\d²³⁻¹·]{0,14})/g, m;
+    while((m = re.exec(zone)) !== null){
+      var words = m[2].trim().split(/\s+/).filter(Boolean);
+      for(var n = words.length; n > 0; n--){
+        var cand = words.slice(0, n).join(' ');
+        var d = uParse(cand);
+        if(d) return {unit:cand, dim:d, value:m[1]};
+      }
+    }
+    return null;
+  }
+  function deLatexSafe(x){
+    var dl = (typeof window !== 'undefined' && window.deLatex7) || function(v){ return v; };
+    return dl(String(x == null ? '' : x));
+  }
+  function units(question, md){
+    var asked = uAsked(deLatexSafe(question));
+    if(!asked) return [];
+    var given = uAnswerUnit(md);
+    if(!given) return [];
+    var ok = asked.dim.every(function(v, i){ return v === given.dim[i]; });
+    return [{ kind:'units', ok:ok,
+      text: ok
+        ? 'the question asks for ' + asked.word + ' ' + uRender(asked.dim) +
+          ' and the answer is in ' + given.unit + ' ' + uRender(given.dim)
+        : 'the question asks for ' + asked.word + ' ' + uRender(asked.dim) +
+          ' but the answer is given in ' + given.unit + ' ' + uRender(given.dim) +
+          ', which is a different quantity' }];
+  }
+
   /* ---------- the report ---------- */
   function run(question, md){
-    var text = String(md || '');
+    var full = String(md || '');
+    /* The "Understood as" block echoes the QUESTION back; it is not a claim
+       about the answer. Only integrity should read it — every other check must
+       see the answer without it, or the question's own numbers get mistaken
+       for competing claims. Not hypothetical: adding that heading made the
+       consistency check report "the Answer says 2, the Summary says 4" on a
+       flawless reply, and one spurious failure was enough to drop EVERY answer
+       to "⚠ Partially verified". */
+    var text = full.replace(/##\s*📌[^\n]*\n[\s\S]*?(?=\n##\s|$)/, '').trim();
+    if(!text) text = full;
     var checks = [];
     try { checks = checks.concat(arithmetic(text)); } catch(e){}
     try { checks = checks.concat(substitution(question, text)); } catch(e){}
+    try { checks = checks.concat(units(question, text)); } catch(e){}
+    /* first in the receipt: if the question was misread, every verdict below is about a different problem */
+    try { checks = checks.concat(trace(question, text)); } catch(e){}
+    try { checks = checks.concat(presentation(text)); } catch(e){}
+    try { checks = integrity(question, full).concat(checks); } catch(e){}
+    /* validity comes before everything: an impossible question makes every other verdict moot */
+    try { checks = questionCheck(question, text).concat(checks); } catch(e){}
     try { checks = checks.concat(transformCheck(question, text)); } catch(e){}
     try { checks = checks.concat(identityCheck(text)); } catch(e){}
     try { checks = checks.concat(checkDivisibility(text)); } catch(e){}
@@ -13663,13 +14238,30 @@ var Verify = (function(){
        not by reading prose. quant and method stay hints — they interpret what
        the answer SAYS, and a misread must never be able to fail a correct
        answer on its own. */
+    /* integrity, units and trace are decided by COMPUTATION — comparing two
+       parsed relations, comparing dimension vectors, comparing value sets —
+       not by reading prose, so they belong in the proof tier with the rest.
+
+       Leaving them out had two effects, both wrong: a physics answer whose
+       only check was its units never reached 'checked', and a FAILED trace
+       landed in no bucket at all — not answer-level, not a proof — which
+       dropped it into 'partial' and labelled a correct answer
+       "⚠ Partially verified". Every answer looked half-checked. */
     var PROOF = {subst:1, transform:1, arith:1, chem:1, identity:1, bound:1,
-                 divis:1, unique:1, condition:1, extremum:1};
-    var failed = checks.filter(function(c){ return !c.ok; });
+                 divis:1, unique:1, condition:1, extremum:1,
+                 integrity:1, units:1, trace:1, question:1};
+    /* A soft check is advisory: it reports what could NOT be tested, not a
+       problem found. It belongs in the receipt and nowhere near the failure
+       count, because a caveat must never decide the badge. */
+    var failed = checks.filter(function(c){ return !c.ok && !c.soft; });
     var passed = checks.filter(function(c){ return c.ok; });
+    var advisory = checks.filter(function(c){ return !c.ok && c.soft; });
     var failedProofs = failed.filter(function(c){ return PROOF[c.kind]; });
     var passedProofs = passed.filter(function(c){ return PROOF[c.kind]; });
-    var hasSteps = /##\s*📖|Step-by-Step|चरण|దశ/i.test(text);
+    /* 📝 was missing. The answer format now emits "## 📝 Steps", so a reply
+       WITH working was being read as having none and fell through to the
+       bottom of the state machine. Both markers are accepted. */
+    var hasSteps = /##\s*(📖|📝)|Step-by-Step|\bSteps\b|चरण|దశ/i.test(text);
     var numeric  = /[=×÷√]|\d+\s*[+\-*/]\s*\d+/.test(text);
 
     /* A failed step is not a failed answer, and saying so matters. An olympiad
@@ -13683,27 +14275,48 @@ var Verify = (function(){
        claimed result against the original question — substitute it, sweep for
        the true optimum, count the atoms. A WORKING check tests a line of the
        derivation. Only the first kind can condemn the answer. */
-    var ANSWER_LEVEL = {subst:1, extremum:1, condition:1, unique:1, chem:1, bound:1, transform:1};
+    /* units belongs here, not in the milder step-level bucket: an answer to
+       "find the acceleration" given in newtons is wrong whatever the
+       arithmetic did. */
+    var ANSWER_LEVEL = {subst:1, extremum:1, condition:1, unique:1, chem:1, bound:1, transform:1, units:1, integrity:1, question:1};
     var failedAnswer  = failed.filter(function(c){ return ANSWER_LEVEL[c.kind]; });
     var failedWorking = failedProofs.filter(function(c){ return !ANSWER_LEVEL[c.kind]; });
 
     var state;
-    if(failedAnswer.length)        state = 'disputed';       // ✗ the ANSWER does not hold
+    /* Order matters, and it was wrong. 'partial' was tested BEFORE 'checked',
+       so a single hint-tier miss outranked every proof that passed — and the
+       hint tier exists precisely because those checks interpret prose and must
+       never fail a correct answer on their own. The result: an answer with
+       four passing proofs and one hint that read "x² = 4" as a rival claim
+       showed "⚠ Partially verified". Nearly every answer did.
+
+       Proofs decide the badge. A hint that did not line up is still listed in
+       the receipt, where a curious student can see it, but it no longer
+       withholds a verdict the mathematics earned. */
+    var invalidQuestion = checks.some(function(c){ return c.invalidQuestion; });
+    /* A question with no answer is its own outcome. Flattening it into "the
+       answer is wrong" tells a student to try again at something impossible. */
+    if(invalidQuestion)            state = 'invalid_question';
+    else if(failedAnswer.length)   state = 'disputed';       // ✗ the ANSWER does not hold
     else if(failedWorking.length)  state = 'stepfail';       // ⚠ a line of the working is wrong
-    else if(failed.length)         state = 'partial';        // ⚠ only a hint did not line up
-    else if(passedProofs.length)   state = 'checked';        // ✓ independently verified
-    else if(passed.length)         state = 'partial';        // only hints agreed — not a verification
+    else if(passedProofs.length)   state = 'checked';        // ✓ proofs passed; hints do not veto
+    else if(failed.length)         state = 'partial';        // ⚠ only hints ran, and one missed
+    /* A hint AGREEING is not partial verification — nothing was proved, and
+       "partially verified" claims that something was. With the arithmetic
+       correctly silent on integer division, this branch was the last thing
+       still putting a warning badge on a sound answer. It now falls through
+       to the honest state: working was shown, none of it was checkable. */
     else if(hasSteps && numeric)   state = 'worked';
     else if(hasSteps)              state = 'explained';
     else                           state = 'plain';
 
     return { state:state, checks:checks, passed:passed, failed:failed,
              failedProofs:failedProofs, passedProofs:passedProofs,
-             failedAnswer:failedAnswer, failedWorking:failedWorking,
+             failedAnswer:failedAnswer, failedWorking:failedWorking, advisory:advisory,
              hasSteps:hasSteps, numeric:numeric };
   }
 
-  return { run:run, evalFlat:evalFlat, arithmetic:arithmetic,
+  return { run:run, evalFlat:evalFlat, arithmetic:arithmetic, units:units, integrity:integrity, trace:trace, questionCheck:questionCheck, presentation:presentation, leaks:leaks,
            substitution:substitution, consistency:consistency,
            chemistry:chemistry, parseFormula:parseFormula, parseSide:parseSide,
            units:units, unitPresence:unitPresence, bounds:bounds,
@@ -13739,6 +14352,14 @@ function paintVerif(md){
     label = '⚠ A step does not hold'; cls = 'verif unchecked';
     title = 'The final answer was not contradicted, but a line of the working is wrong — ' +
             'see below. Copy the result if you must, but do not copy the derivation.';
+  } else if(r.state === 'invalid_question'){
+    /* Not "your answer is wrong" — the PROBLEM is. Telling a student to try
+       again at something impossible is the cruellest thing this panel can do,
+       so it says which condition cannot be met and stops. */
+    label = '⚠ This question has no answer'; cls = 'verif unchecked';
+    title = 'The conditions in this question cannot all be satisfied at once, so no ' +
+            'answer exists. The receipt below shows which condition fails. This is a ' +
+            'problem with the question, not with your working.';
   } else if(r.state === 'checked'){
     label = '✓ Verified'; cls = 'verif';
     title = 'Checked independently on your device: ' + r.passed.length + ' check' +
@@ -13752,9 +14373,13 @@ function paintVerif(md){
       : 'Only weak consistency checks could run here, and one did not line up. ' +
         'Nothing was independently proved either way.';
   } else if(r.state === 'worked'){
-    label = '⚠ Partially verified'; cls = 'verif unchecked';
+    /* "Partially verified" claimed a verification that did not happen. Nothing
+       here was checked, and saying so plainly is both more honest and less
+       alarming than a warning that implies something went wrong. */
+    label = '⚠ Not checked'; cls = 'verif unchecked';
     title = 'The solution shows numeric working, but nothing in it could be independently ' +
-            'checked — no equation to substitute into and no arithmetic line to recompute.';
+            'checked — no equation to substitute into and no arithmetic line to recompute. ' +
+            'That is not a sign the answer is wrong; it means this engine had nothing to test.';
   } else if(r.state === 'explained'){
     label = '⚠ Unable to verify'; cls = 'verif unchecked';
     title = 'A structured explanation with nothing machine-checkable in it. Read it critically.';
@@ -13788,7 +14413,10 @@ function paintVerif(md){
   if(!note) return;
   if(!r.checks.length){ note.hidden = true; note.innerHTML = ''; return; }
   var LABEL = { arith:'Recomputed', subst:'Substituted back', agree:'Cross-checked',
+                integrity:'Question read correctly', units:'Units',
+                trace:'Final answer follows the working',
                 reaches:'Traced to the working', unit:'Unit', bound:'Range',
+                question:'The question itself', presentation:'Presentation',
                 chem:'Atoms counted', unitmiss:'Unit',
                 transform:'Transformation tested', identity:'Identity tested',
                 divis:'Divisibility tested', unique:'Completeness tested',
@@ -13800,14 +14428,35 @@ function paintVerif(md){
      that failed fell off the end — so the receipt was headed "what did not add
      up" above ten ticks, which reads as the checker contradicting itself. What
      went wrong must never be the thing that gets truncated. */
-  var ordered = r.failed.concat(r.passed);
+  /* advisory notes last and neutral: they are context, not verdicts */
+  var ordered = r.failed.concat(r.passed, r.advisory || []);
+  /* A student sees a plain sentence; the itemised checks sit underneath for
+     anyone who wants them. "Traced to the working: the working arrives at 4"
+     is diagnostics, not a message — it belongs under the details, not as the
+     first thing a fifteen-year-old reads.
+
+     The heading also has to be honest about WHICH layer failed, because the
+     three mean different things: a misread question invalidates everything
+     below it, while a step that does not hold usually leaves the answer
+     standing. */
+  var misread = r.failed.some(function(c){ return c.kind === 'integrity'; });
+  var head = misread
+    ? '⚠️ This may be answering a different question'
+    : (r.failed.length
+        ? (r.state === 'stepfail' ? '⚠️ The answer stands, but a step does not' : '⚠️ What did not add up')
+        : '✓ Solution verified');
+  var sub = misread
+    ? 'The equation solved is not the one that was asked. Solve again before using this.'
+    : (r.failed.length ? '' : 'The calculations and the final answer are consistent with your question.');
   note.innerHTML =
-    '<b>' + (r.failed.length ? (r.state === 'stepfail' ? '⚠️ The answer stands, but a step does not' : '⚠️ What did not add up') : '✓ What 7Solve checked itself') + '</b>' +
+    '<b>' + head + '</b>' + (sub ? '<div class="verif-sub">' + sub + '</div>' : '') +
     '<ul>' + ordered.slice(0, 10).map(function(c){
       var detail = c.kind === 'arith'
         ? '<code>' + esc(c.text) + '</code>' + (c.ok ? '' : ' — comes to ' + (Math.round(c.got * 1e6) / 1e6))
         : esc(c.text);
-      return '<li class="' + (c.ok ? 'ok' : 'no') + '"><span class="m">' + (c.ok ? '✓' : '✕') + '</span>' +
+      var mark = c.ok ? '✓' : (c.soft ? 'ℹ' : '✕');
+      var cls  = c.ok ? 'ok' : (c.soft ? 'note' : 'no');
+      return '<li class="' + cls + '"><span class="m">' + mark + '</span>' +
              '<span>' + (LABEL[c.kind] ? LABEL[c.kind] + ': ' : '') + detail + '</span></li>';
     }).join('') + '</ul>' +
     '<div class="foot">' + (r.failed.length
@@ -19536,6 +20185,46 @@ function codeTool(){
    DecompressionStream and their text operators read directly —
    no upload, no server, no external library.
    ============================================================ */
+/* Does this look like language, or like a font file read as if it were one?
+
+   The reader used to decode every unfiltered stream as latin1 and keep
+   whatever came back, guarded only by whether the bytes happened to contain
+   "Tj" — which binary does by chance. Embedded fonts, ICC profiles and image
+   data all sailed through, and the reader displayed a wall of mojibake to a
+   student who had uploaded a chapter. Showing nothing is bad; showing
+   confident nonsense is worse, because it looks like the file was understood. */
+function readableRatio(s){
+  if(!s) return 0;
+  var good = 0;
+  for(var i = 0; i < s.length; i++){
+    var c = s.charCodeAt(i);
+    /* printable ASCII, plus newlines and the accented ranges real text uses */
+    if(c === 9 || c === 10 || c === 13 || (c >= 32 && c <= 126) ||
+       (c >= 0x00C0 && c <= 0x024F) || (c >= 0x0900 && c <= 0x0DFF)) good++;
+  }
+  return good / s.length;
+}
+function looksLikeProse(s){
+  if(!s || s.length < 8) return false;
+  if(readableRatio(s) < 0.85) return false;
+  var letters = (s.match(/[A-Za-zÀ-ɏऀ-෿]/g) || []).length;
+  return letters / s.length > 0.35;          // symbols alone are not prose
+}
+
+async function inflate(raw){
+  if(!W.DecompressionStream) return null;
+  /* PDF FlateDecode is zlib-wrapped, but a surprising number of writers emit
+     raw deflate. Trying both costs nothing and recovers those files. */
+  for(var i = 0; i < 2; i++){
+    try {
+      var ds = new DecompressionStream(i === 0 ? 'deflate' : 'deflate-raw');
+      var stream = new Blob([raw]).stream().pipeThrough(ds);
+      return new TextDecoder('latin1').decode(await new Response(stream).arrayBuffer());
+    } catch(e){ /* try the other framing */ }
+  }
+  return null;
+}
+
 async function pdfText(buf){
   var bytes = new Uint8Array(buf), out = [];
   var head = new TextDecoder('latin1').decode(bytes);
@@ -19545,31 +20234,45 @@ async function pdfText(buf){
     var end = head.indexOf('endstream', start);
     if(end < 0) continue;
     var dict = head.slice(Math.max(0, m.index - 400), m.index);
+
+    /* Only page content streams hold readable text. Everything else in a PDF
+       — the fonts, the colour profiles, the images, the XML metadata — is
+       binary that must never reach the page. This is the check that was
+       missing. */
+    if(/\/(Font|FontFile\d?|Image|ICCBased|Metadata|XML|EmbeddedFile|CIDFontType\d?)\b/.test(dict)) continue;
+    if(/\/Subtype\s*\/(Image|Type1C|TrueType|CIDFontType0C|OpenType)\b/.test(dict)) continue;
+
     var raw = bytes.subarray(start, end);
     var text = '';
     if(/FlateDecode/.test(dict)){
-      if(!W.DecompressionStream) continue;
-      try {
-        var ds = new DecompressionStream('deflate');
-        var stream = new Blob([raw]).stream().pipeThrough(ds);
-        text = new TextDecoder('latin1').decode(await new Response(stream).arrayBuffer());
-      } catch(e){ continue; }
+      text = await inflate(raw);
+      if(text === null) continue;
     } else if(!/\/(DCT|JPX|CCITT|RunLength|LZW)Decode/.test(dict)){
       text = new TextDecoder('latin1').decode(raw);
     } else continue;
-    /* pull the show-text operators out of the content stream */
+
+    /* A content stream is made of operators. If it does not read as one, it is
+       not one, whatever bytes it happens to contain. */
     if(text.indexOf('Tj') < 0 && text.indexOf('TJ') < 0) continue;
+    if(!/\b(BT|Td|TD|Tf|Tm|TJ|Tj)\b/.test(text)) continue;
+
     text.replace(/\((?:\\.|[^\\()])*\)/g, function(s){
       var t = s.slice(1, -1)
         .replace(/\\([nrtbf])/g, function(_, c){ return {n:'\n', r:'', t:'\t', b:'', f:''}[c]; })
         .replace(/\\(\d{1,3})/g, function(_, o){ return String.fromCharCode(parseInt(o, 8)); })
         .replace(/\\(.)/g, '$1');
-      if(t.trim()) out.push(t);
+      /* Per-string gate. Identity-H encoded PDFs put UTF-16 glyph indices in
+         here, which are not text in any encoding we can recover without the
+         font's ToUnicode map — so they are dropped rather than shown. */
+      if(t.trim() && readableRatio(t) >= 0.85) out.push(t);
       return s;
     });
     out.push('\n');
   }
-  return out.join(' ').replace(/[ \t]+/g, ' ').replace(/\n\s*\n+/g, '\n\n').trim();
+  var joined = out.join(' ').replace(/[ \t]+/g, ' ').replace(/\n\s*\n+/g, '\n\n').trim();
+  /* Final gate: if what came out does not read as prose, we did not extract
+     text — we extracted noise, and saying so is the honest answer. */
+  return looksLikeProse(joined) ? joined : '';
 }
 
 async function readFile(f){
@@ -19578,7 +20281,13 @@ async function readFile(f){
   if(/\.pdf$/.test(name) || f.type === 'application/pdf'){
     var t = await pdfText(await f.arrayBuffer());
     if(t && t.length > 120) return t;
-    throw new Error('This PDF stores its pages as images (a scan), so there is no text to pull out. ' +
+    /* Two different causes, and the old message named only one. A scan has no
+       text at all; a PDF using Identity-H encoding has text that cannot be
+       recovered without the font's own character map. The student cannot tell
+       these apart and does not need to — but claiming it is definitely a scan
+       when it may not be is a small lie, and the fix is the same either way. */
+    throw new Error('The text in this PDF cannot be read — it is either a scan (pages stored as ' +
+      'images) or it uses embedded fonts with no recoverable character map. ' +
       'Photograph a page and use Snap & Solve instead, or paste the text below.');
   }
   if(f.type.indexOf('image/') === 0) return '__IMAGE__';

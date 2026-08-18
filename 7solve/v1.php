@@ -365,7 +365,10 @@ if ($route === 'verify') {
     bump_usage($CFG, $key['id'], 'verify', true);
     ok_out([
         'status'       => strtoupper($r['state']),
-        'verified'     => $r['state'] === 'checked',
+        /* FULLY_VERIFIED requires all three layers. A mathematically correct
+           solution to the wrong question is not a verified answer. */
+        'verified'     => ($r['trust']['overall'] ?? '') === 'FULLY_VERIFIED',
+        'trust'        => $r['trust'],
         'means'        => $meaning[$r['state']] ?? '',
         'checks_run'   => $r['checked'],
         'checks_passed'=> $r['passed'],
@@ -481,7 +484,16 @@ if ($route === 'solve') {
         . "If a line turns out wrong while working, fix it silently and write only the corrected version.\n"
         . "Do not assert a mathematical claim you have not justified. For a maximum or minimum, "
         . "showing a candidate is feasible is NOT showing it is optimal — say why nothing else does better.\n"
+        /* The student must be able to catch a misreading in one glance,
+           before reading a word of the working. A flawless solution to the
+           wrong problem is indistinguishable from a correct answer unless the
+           reading is shown. */
+        . "FIRST, restate the exact equation you are solving, copied faithfully from the "
+        . "question — every bracket, exponent, sign and operator as written. 3x+y is NOT "
+        . "3(x+y); ab+c is NOT a(b+c). If your restatement differs from the question in any "
+        . "way, you have misread it: stop and re-read before solving.\n"
         . "Structure the reply with these markdown headings, in this order:\n"
+        . "## 📌 Understood as\n(the equation exactly as given, one line)\n"
         . "## ✅ Answer\n(the answer itself, in exact form, and nothing else)\n"
         . "## 📝 Steps\n(numbered, no repetition)\n"
         . "## 🎯 Final Result\n(one line)\n";
