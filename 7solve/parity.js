@@ -82,9 +82,51 @@ const EQUATIONS = [
   ['x*y=1', [{ x: 3, y: 0.3333333333333333 }, { x: 3, y: 0.333333 }, { x: 3, y: 0.333 }]],
 ];
 
+/* End-to-end verdicts, not just arithmetic. This second corpus exists because
+   the first one did not save us: Algebra agreed perfectly in both engines
+   while `substitution` disagreed completely, because only the PHP side
+   deLatexed the question. "x^{2}+y^{2}+1=3xy" then had its squares dropped by
+   findEquation — EQ_CHARS has no braces — and a CORRECT answer was reported
+   as disputed on production.
+
+   A harness that only checks the layer underneath the bug is a harness that
+   passes while the product is broken. Every case here is a full
+   question-and-answer pair judged the way a student's answer is judged. */
+const VERDICTS = [
+  ['x^2+y^2+1=3xy',        '## ✅ Answer\nThe smallest solution is (5,3).'],
+  ['x^2+y^2+1=3xy',        '## ✅ Answer\nThe smallest solution is (1,1).'],
+  ['x^{2}+y^{2}+1=3xy',    '## ✅ Answer\nThe smallest solution is (5,3).'],
+  ['x^{2}+y^{2}+1=3xy',    '## ✅ Answer\nThe smallest solution is (1,1).'],
+  ['\\[ x^{2} - 4 = 0 \\]', '## ✅ Answer\nx = 2 and x = -2'],
+  ['Solve x^2-4=0',        '## ✅ Answer\nx = 2 and x = -2'],
+  ['Solve x^2-4=0',        '## ✅ Answer\nx = 2 and x = 3'],
+  ['Solve x^2-4=0',        '## ✅ Answer\nx = 2, -2'],
+  ['Solve x^2+4x+6=0',     '## ✅ Answer\nx = -2'],
+  ['Solve x^2+4x+6=0',     '## ✅ Answer\nx = -2 ± i√2'],
+  ['Solve x^2-164x+424=0', '## ✅ Answer\nx = 82 ± 30√7'],
+  ['Solve x^2-164x+424=0', '## ✅ Answer\nx = 88 - 30√7'],
+  ['Solve x^2-164x+424=0', '## ✅ Answer\nx = 82 - 30√7 (x = 82 + 30√7 is extraneous)'],
+  ['What is photosynthesis?', '## ✅ Answer\nIt converts light into sugar.'],
+  ['Simplify 2/3 + 1/3',   '## ✅ Answer\n2/3 + 1/3 = 1'],
+  ['Simplify 2/3 + 1/3',   '## ✅ Answer\n2/3 + 1/3 = 2'],
+  ['Find P',               '## ✅ Answer\nP = 4/36 = 1/9'],
+  ['Find P',               '## ✅ Answer\nP = 4/36 = 1/8'],
+  ['Simplify',             '## ✅ Answer\n2√3/3 + 1/3 = 13/3'],
+];
+
 /* ---------- side A: the JavaScript that actually ships ---------- */
-function loadJsAlgebra() {
+function loadJs() {
   const html = fs.readFileSync(path.join(HERE, 'index.html'), 'utf8');
+
+  /* deLatex lives in an earlier script block than Verify and is reached
+     through window.deLatex7 at runtime. Pull it in the same way, or the
+     sandbox silently tests a build that cannot strip LaTeX — which is exactly
+     the divergence this corpus is here to catch. */
+  const dlStart = html.indexOf('function deLatex(md){');
+  const dlEnd = html.indexOf('\nwindow.deLatex7 = deLatex;', dlStart);
+  if (dlStart < 0 || dlEnd < 0) throw new Error('could not find deLatex in index.html');
+  const dlSrc = html.slice(dlStart, dlEnd);
+
   const start = html.indexOf('var Verify = (function(){');
   if (start < 0) throw new Error('could not find the Verify module in index.html');
   const endMark = '\n})();';
@@ -92,18 +134,31 @@ function loadJsAlgebra() {
   if (end < 0) throw new Error('could not find the end of the Verify module');
   const src = html.slice(start, end + endMark.length);
 
-  /* The module closes over a few page-level helpers it does not use from the
-     Algebra path. Supplying them as no-ops keeps evaluation honest without
-     pulling in the DOM. */
   const sandbox = {
     window: {}, document: undefined, console,
-    W: {}, deLatex: (s) => s, $: () => null, state: {},
+    W: {}, $: () => null, state: {},
     Math, parseFloat, parseInt, isFinite, isNaN, String, Number, Object, Array, RegExp, JSON,
   };
   vm.createContext(sandbox);
-  vm.runInContext(src + '\nthis.__A = Verify.Algebra;', sandbox, { timeout: 5000 });
+  vm.runInContext(
+    dlSrc + '\nwindow.deLatex7 = deLatex;\n' + src +
+    '\nthis.__A = Verify.Algebra; this.__V = Verify;',
+    sandbox, { timeout: 5000 });
   if (!sandbox.__A) throw new Error('Verify.Algebra was not exported');
-  return sandbox.__A;
+  if (typeof sandbox.window.deLatex7 !== 'function') throw new Error('deLatex7 did not attach');
+  return { A: sandbox.__A, V: sandbox.__V };
+}
+
+/* The same collapse from checks to a state that Checks::run performs. Kept
+   here rather than read off the page so the two sides are compared on the
+   rule, not on one side's implementation of it. */
+function verdictOf(checks) {
+  const failed = checks.filter((c) => !c.ok);
+  const passed = checks.filter((c) => c.ok);
+  if (failed.some((c) => c.kind === 'subst')) return 'disputed';
+  if (failed.length) return 'stepfail';
+  if (passed.length) return 'checked';
+  return 'unverified';
 }
 
 /* ---------- side B: the PHP that /v1/solve will run ---------- */
@@ -113,7 +168,7 @@ function runPhp(payload) {
   const script = `
     require ${JSON.stringify(path.join(HERE, 'verify.php'))};
     $in = json_decode(file_get_contents(${JSON.stringify(inFile)}), true);
-    $out = ['eval' => [], 'holds' => [], 'vars' => []];
+    $out = ['eval' => [], 'holds' => [], 'vars' => [], 'verdicts' => []];
     foreach ($in['eval'] as $c) {
         $ast = Algebra::parse($c['src']);
         if ($ast === null) { $out['eval'][] = null; continue; }
@@ -129,6 +184,10 @@ function runPhp(payload) {
     foreach ($in['vars'] as $src) {
         $eq = Algebra::parseEquation($src);
         $out['vars'][] = $eq === null ? null : $eq['vars'];
+    }
+    foreach ($in['verdicts'] as $c) {
+        $r = Checks::run($c['q'], $c['a']);
+        $out['verdicts'][] = ['state' => $r['state'], 'n' => $r['checked']];
     }
     echo json_encode($out);
   `;
@@ -150,7 +209,7 @@ function norm(v) {
 }
 
 (function main() {
-  const A = loadJsAlgebra();
+  const { A, V } = loadJs();
 
   const evalCases = [];
   for (const src of EXPRS) for (const env of ENVS) evalCases.push({ src, env });
@@ -160,7 +219,9 @@ function norm(v) {
 
   const varCases = EQUATIONS.map(([src]) => src);
 
-  const php = runPhp({ eval: evalCases, holds: holdCases, vars: varCases });
+  const verdictCases = VERDICTS.map(([q, a]) => ({ q, a }));
+
+  const php = runPhp({ eval: evalCases, holds: holdCases, vars: varCases, verdicts: verdictCases });
 
   const bad = [];
 
@@ -192,7 +253,20 @@ function norm(v) {
     }
   });
 
-  const total = evalCases.length + holdCases.length + varCases.length;
+  /* The layer the first corpus could not see. */
+  verdictCases.forEach((c, i) => {
+    const checks = [].concat(V.substitution(c.q, c.a) || [], V.arithmetic(c.a) || []);
+    const js = { state: verdictOf(checks), n: checks.length };
+    const ph = php.verdicts[i];
+    if (js.state !== ph.state || js.n !== ph.n) {
+      bad.push('verdict ' + JSON.stringify(c.q) +
+               '\n            answer ' + JSON.stringify(c.a.replace(/\n/g, ' ')) +
+               '\n            js=' + js.state + '(' + js.n + ' checks)' +
+               '  php=' + ph.state + '(' + ph.n + ' checks)');
+    }
+  });
+
+  const total = evalCases.length + holdCases.length + varCases.length + verdictCases.length;
   if (bad.length) {
     console.log(`\nPARITY FAILED — ${bad.length} of ${total} cases disagree\n`);
     bad.slice(0, 40).forEach((b) => console.log('  ' + b));
