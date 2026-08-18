@@ -483,7 +483,7 @@
       <table>
         <tr><th>Field</th><th>Notes</th></tr>
         <tr><td><code>verified</code></td><td>Boolean. <code>true</code> only for <code>CHECKED</code>. This is the field to branch on.</td></tr>
-        <tr><td><code>checks[].kind</code></td><td><code>subst</code> disputes the answer; <code>arith</code> disputes a step in the working.</td></tr>
+        <tr><td><code>checks[].kind</code></td><td><code>integrity</code>, <code>subst</code> and <code>units</code> dispute the answer; <code>arith</code> disputes a step in the working.</td></tr>
         <tr><td><code>checks[].text</code></td><td>Human-readable and safe to show a student verbatim.</td></tr>
         <tr><td><code>checks</code> order</td><td>Failures first. A receipt that buries the failure under ten ticks contradicts its own heading.</td></tr>
       </table>
@@ -493,9 +493,37 @@
     <p>
       Substituting claimed roots and tuples back into the question’s equation;
       arithmetic written in the working; exact surd forms such as
-      <code>82 ± 30√7</code>; fraction equalities. It deliberately declines
-      trigonometric equations, because degrees-or-radians is a convention your
-      question may not share and a wrong verdict is worse than none.
+      <code>82 ± 30√7</code>; fraction equalities; and the dimensions of a
+      physics answer, so “find the acceleration” answered in newtons is caught
+      before any arithmetic is examined. It deliberately declines trigonometric
+      equations, because degrees-or-radians is a convention your question may
+      not share and a wrong verdict is worse than none.
+    </p>
+
+    <h3>Question integrity</h3>
+    <p>
+      One check runs before all the others and asks a different question:
+      <strong>is this the problem that was actually set?</strong> A model that
+      reads <code>3x+y</code> as <code>3(x+y)</code> will produce a flawless
+      solution, pass every other check, and be wrong — because the answer is
+      correct for a problem nobody asked.
+    </p>
+    <pre><code>{
+  "status": "DISPUTED",
+  "checks": [{
+    "kind": "integrity",
+    "ok": false,
+    "text": "the question is 3x+y = 7 but the answer solves 3(x+y) = 7, which is a
+             different equation — the answer may be correct for a problem that
+             was not asked"
+  }]
+}</code></pre>
+    <p>
+      It reads only the restatement at the top of a reply, skips
+      <code>x = 2</code> style solution lines, and treats a constant multiple as
+      the same relation — so <code>6x+2y=14</code> agrees with
+      <code>3x+y=7</code>. Derived steps are not misreadings and are never
+      flagged as such.
     </p>
 
     <h2 id="check">Mark a student's answer</h2>
