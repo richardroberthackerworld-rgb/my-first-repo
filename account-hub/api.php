@@ -32,10 +32,17 @@ switch ($action) {
 			$d = plan_details($k);
 			if ($d) $plans[$k] = array(
 				'amount'  => $d['amount_minor'],   // minor units (paise/cents) — client shows amount/100
+				'price'   => $d['price'],          // same figure in major units, so the client need not divide
 				'credits' => $d['credits'],
 				'label'   => $d['label'],
 				'days'    => $d['days'],
 				'symbol'  => $d['symbol'],
+				'currency'=> $d['currency'],
+				// Entitlements, so a pricing page can show what a tier actually
+				// includes instead of hard-coding it in two places.
+				'tier'    => $d['tier'],
+				'ai'      => $d['ai'],
+				'daily'   => $d['daily'],
 			);
 		}
 		json_out(array('ok' => true, 'google_client_id' => $gid, 'plans' => $plans, 'gateway' => ($CFG['gateway'] ?? 'razorpay')));
@@ -55,6 +62,13 @@ switch ($action) {
 			$pu['plan']    = (string)$w['plan'];
 			$pu['expires'] = $w['plan_expires'];
 			$pu['tool']    = $tool;
+			// What this plan is actually allowed to do. The tool asks us rather
+			// than deciding in the browser, where a plan name can be edited.
+			$pu['ai']    = plan_is_ai($pu['plan']);
+			$pu['daily'] = plan_daily($pu['plan']);
+			if (!empty($w['unlimited'])) $pu['unlimited'] = true;
+			$pu['daily_left'] = ($pu['daily'] > 0 && !bonus_claimed_today((int)$u['id'], $tool))
+				? $pu['daily'] : 0;
 		}
 		json_out(array('ok' => true, 'authed' => (bool)$u, 'user' => $pu,
 			'tools' => $u ? user_tools($u['id']) : array()));
@@ -356,7 +370,10 @@ switch ($action) {
 		$allow = $CFG['daily_bonus'] ?? array('7marks' => array('infinity' => 20));
 		$wallet = tool_wallet((int)$u['id'], $tool);        // also creates the row
 		$plan   = strtolower((string)($wallet['plan'] ?? 'none'));
-		$amount = (int)($allow[$tool][$plan] ?? 0);
+		// Config wins when it names this tool+plan; otherwise the plan's own
+		// 'daily' from pricing.php decides, so Solve Ultra pays out without
+		// anyone having to remember a second place to edit.
+		$amount = isset($allow[$tool][$plan]) ? (int)$allow[$tool][$plan] : plan_daily($plan);
 
 		if ($amount < 1) {
 			json_out(array('ok' => false, 'error' => 'not_eligible',

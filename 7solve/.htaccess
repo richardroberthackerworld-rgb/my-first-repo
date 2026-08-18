@@ -70,6 +70,21 @@ ServerSignature Off
     RewriteCond %{THE_REQUEST} \s/+(.*)\.html[\s?] [NC]
     RewriteRule ^ /%1 [R=301,L]
 
+    # ---- public API ----
+    # /v1/<route> -> v1.php?route=<route>. This sits ABOVE the clean-URL and
+    # app-route rules on purpose: those end in [L] and would otherwise claim
+    # the path first. The route is passed as a query parameter rather than
+    # parsed from REQUEST_URI so that a rewrite that is switched off fails as
+    # a plain 404 instead of silently serving an unrouted page.
+    #
+    # Authorization is forwarded explicitly: CGI/FastCGI strips that header,
+    # which would leave every authenticated call looking like an anonymous one.
+    # The Authorization capture MUST come first: the routing rule below ends in
+    # [L], so anything placed after it would never execute at all.
+    RewriteCond %{HTTP:Authorization} ^(.+)$
+    RewriteRule ^v1/ - [E=HTTP_AUTHORIZATION:%1]
+    RewriteRule ^v1/([a-z]+(?:/[A-Za-z0-9_]+)?)/?$ v1.php?route=$1 [QSA,L]
+
     # serve the real .html file for a clean URL (address bar keeps the clean form)
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d

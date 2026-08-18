@@ -76,7 +76,12 @@ $ENDPOINTS = [
 /* model names must match these — stops anyone injecting a URL or calling a paid model */
 $MODEL_OK = [
     'gemini'     => '/^gemini-[a-z0-9.\-]+$/i',
-    'groq'       => '/^[a-z0-9.\-]+$/i',
+    /* Groq serves vendor-prefixed names too — openai/gpt-oss-120b, qwen/…, and
+       groq/compound. The bare-name-only form here silently rejected every one
+       of them with "Model not allowed" BEFORE the request left this server, so
+       the provider looked dead when the key was fine. One optional path
+       segment, still no scheme, no host, no traversal. */
+    'groq'       => '/^[a-z0-9.\-]+(\/[a-z0-9.\-]+)?$/i',
     'cerebras'   => '/^[a-z0-9.\-]+$/i',
     'openrouter' => '/^[a-z0-9.\-]+\/[a-z0-9.\-]+(:free)?$/i',
     'mistral'    => '/^[a-z0-9.\-]+$/i',
@@ -720,7 +725,63 @@ if (!$keys) out(503, ['error' => ['message' => 'No key configured for ' . $provi
 /* ---------- cache key (has this same question been answered before?) ---------- */
 $cacheHours = (int)($CFG['cache_hours'] ?? 168);              // 168h = 7 days; 0 disables
 $cDir  = cache_dir($CFG);
-$cKey  = hash('sha256', $provider . '|' . $model . '|' . json_encode($payload));
+/* ---------- the cache key ----------
+   This used to be sha256(provider | model | whole payload), and it was the
+   reason the hit rate sat at 3%:
+
+     · the PROVIDER was in the key, so the same question routed to Groq could
+       not reuse the answer Cerebras had already produced — and the router
+       changes provider constantly by design;
+     · the MODEL was in the key, for the same reason;
+     · the WHOLE PAYLOAD was in the key, system prompt included, so every edit
+       to the prompt silently emptied the entire cache. Changing the routing
+       order earlier today wiped it completely.
+
+   What actually decides whether two requests deserve the same answer is the
+   QUESTION and the way the answer should be shaped — the student's level,
+   language and subject. Not which engine happened to be up at the time.
+
+   The browser sends that shaping context as cacheTag. When it doesn't (an old
+   cached page, or a direct API caller), we fall back to hashing the system
+   prompt, which is exactly the old conservative behaviour — a poor hit rate,
+   never a wrong answer. */
+function cache_text_of(array $payload): array {
+    $convo = '';
+    $system = '';
+    if (isset($payload['contents']) && is_array($payload['contents'])) {   // Gemini
+        foreach ($payload['contents'] as $c) {
+            foreach (($c['parts'] ?? []) as $p) $convo .= (string)($p['text'] ?? '') . "\n";
+        }
+        foreach (($payload['systemInstruction']['parts'] ?? []) as $p) {
+            $system .= (string)($p['text'] ?? '');
+        }
+    } elseif (isset($payload['messages']) && is_array($payload['messages'])) {  // OpenAI-compatible
+        foreach ($payload['messages'] as $m) {
+            $role = (string)($m['role'] ?? '');
+            $txt  = $m['content'] ?? '';
+            /* A multimodal turn is an array of parts; only the text of it can
+               contribute to a key, and has_image() has already excluded any
+               request carrying a picture from being cached at all. */
+            if (is_array($txt)) {
+                $flat = '';
+                foreach ($txt as $part) $flat .= (string)($part['text'] ?? '');
+                $txt = $flat;
+            }
+            if ($role === 'system') $system .= (string)$txt;
+            else                    $convo  .= (string)$txt . "\n";
+        }
+    }
+    return [$convo, $system];
+}
+
+list($cConvo, $cSystem) = cache_text_of($payload);
+/* Conservative normalisation only: case and whitespace. Digits, operators and
+   punctuation are left alone, because in this product "x^2-4" and "x^2+4" are
+   different questions and anything cleverer risks serving one as the other. */
+$cNorm = trim(preg_replace('/\s+/u', ' ', mb_strtolower($cConvo)));
+$cTag  = (string)($req['cacheTag'] ?? '');
+$cVariant = $cTag !== '' ? $cTag : 'sys:' . hash('sha256', $cSystem);
+$cKey  = hash('sha256', ($CFG['app'] ?? '7solve') . '|' . $cVariant . '|' . $cNorm);
 $cacheable = $cDir && !has_image($payload);                    // never cache photo questions
 
 /* ---------- billing gate: EVERY answer costs credits (fresh OR cached) --------

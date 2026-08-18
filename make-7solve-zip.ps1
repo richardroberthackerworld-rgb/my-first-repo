@@ -92,6 +92,29 @@ foreach ($js in @('config.js','sw.js')) {
 }
 
 # --- what ships --------------------------------------------------------------
+# ---- bump the build stamp -------------------------------------------------
+# The stamp is the only way to tell "the upload landed" from "the upload
+# silently didn't", so it must not depend on remembering to edit it by hand.
+# Read/write via UTF8Encoding($false): PowerShell 5.1's own cmdlets would
+# either add a BOM or transcode the file's UTF-8 to the ANSI codepage, and
+# index.html is full of Devanagari, Telugu and emoji.
+$indexPath = Join-Path $src 'index.html'
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+$html = [System.IO.File]::ReadAllText($indexPath, $utf8NoBom)
+$stampRe = '(<meta name="7solve-build" content=")(\d{4}-\d{2}-\d{2})\.(\d+)(">)'
+$m = [regex]::Match($html, $stampRe)
+if ($m.Success) {
+  $today = Get-Date -Format 'yyyy-MM-dd'
+  # same day → next revision; new day → start again at .1
+  $rev = if ($m.Groups[2].Value -eq $today) { [int]$m.Groups[3].Value + 1 } else { 1 }
+  $stamp = "$today.$rev"
+  $html = [regex]::Replace($html, $stampRe, "`${1}$stamp`${4}")
+  [System.IO.File]::WriteAllText($indexPath, $html, $utf8NoBom)
+  Write-Output ("build stamp -> {0}" -f $stamp)
+} else {
+  Write-Warning 'no build stamp found in index.html - add <meta name="7solve-build">'
+}
+
 # Root files, minus every .js (staged above) and minus keys.php (live secrets).
 $roots = Get-ChildItem -LiteralPath $src -File -Force |
   Where-Object { $_.Extension -ne '.js' -and $_.Name -ne 'keys.php' } |
@@ -106,7 +129,9 @@ foreach ($sub in @('.well-known','blog','assets')) {
   if (Test-Path -LiteralPath $p) { $roots += $p }
 }
 
-$n = New-Zip -Zip $zip -Roots $roots -ExcludeExt @('.js') -ExcludeNames @('keys.php')
+# deploy-check.php is a throwaway diagnostic that lists the folder it sits in —
+# it ships as a separate single-file upload, never inside the site archive.
+$n = New-Zip -Zip $zip -Roots $roots -ExcludeExt @('.js') -ExcludeNames @('keys.php', 'deploy-check.php')
 
 $kb = [math]::Round((Get-Item -LiteralPath $zip).Length / 1KB)
 Write-Output ""

@@ -92,7 +92,7 @@ $quality = array_values(array_filter(read_jsonl(log_path($CFG, 'quality.jsonl'))
 /* ---------- aggregate ---------- */
 $total   = count($ops);
 $hits    = 0; $ok = 0; $fail = 0; $premium = 0; $signed = 0;
-$lat = []; $byModel = []; $byErr = []; $byDay = [];
+$lat = []; $byModel = []; $tryModel = []; $byErr = []; $byDay = [];
 foreach ($ops as $r) {
     if (($r['cache'] ?? '') === 'hit') { $hits++; }
     $good = ($r['cache'] ?? '') === 'hit' || !empty($r['ok']);
@@ -100,8 +100,13 @@ foreach ($ops as $r) {
     if (!empty($r['premium'])) $premium++;
     if (!empty($r['signed']))  $signed++;
     if (isset($r['ms'])) $lat[] = (int)$r['ms'];
+    /* Count ATTEMPTS and ANSWERS separately. Counting every row here read as
+       "gpt-4o answered 11 times" while gpt-4o was in fact 410-ing 11 times —
+       the panel said "which engine actually answered" and was showing the
+       opposite. A dashboard used to pick a model must not do that. */
     $m = (string)($r['model'] ?? '?');
-    $byModel[$m] = ($byModel[$m] ?? 0) + 1;
+    $tryModel[$m] = ($tryModel[$m] ?? 0) + 1;
+    if ($good) $byModel[$m] = ($byModel[$m] ?? 0) + 1;
     if (!$good) {
         $e = trim((string)($r['err'] ?? '')) ?: ('HTTP ' . (int)($r['code'] ?? 0));
         $byErr[$e] = ($byErr[$e] ?? 0) + 1;
@@ -115,7 +120,7 @@ $pct = function (array $a, float $p) {
     $i = (int)floor(($p / 100) * (count($a) - 1));
     return (int)$a[max(0, min(count($a) - 1, $i))];
 };
-arsort($byModel); arsort($byErr); ksort($byDay);
+arsort($byModel); arsort($tryModel); arsort($byErr); ksort($byDay);
 
 $up = $down = $reports = 0;
 $disputedAndUp = []; $passedAndDown = []; $reported = []; $verifyMix = [];
@@ -265,11 +270,16 @@ $tok = rawurlencode($got);
 
   <div class="panel">
     <h2>Models</h2>
-    <p class="n">Which engine actually answered. A sudden shift usually means a provider started refusing.</p>
-    <?php if (!$byModel): ?><div class="empty">No requests yet.</div><?php else: ?>
-      <table><tr><th>Model</th><th>Requests</th><th style="width:40%"></th></tr>
-      <?php $mm = max($byModel); foreach (array_slice($byModel, 0, 12, true) as $m => $n): ?>
-        <tr><td><code><?= h($m) ?></code></td><td class="num"><?= $n ?></td>
+    <p class="n">Which engine actually answered, against how often it was asked to.
+       A model with many tries and few answers is costing you seconds of the request
+       budget and giving nothing back — move it later in the chain or drop it.</p>
+    <?php if (!$tryModel): ?><div class="empty">No requests yet.</div><?php else: ?>
+      <table><tr><th>Model</th><th>Answered</th><th>Tried</th><th style="width:35%"></th></tr>
+      <?php $mm = max(1, max($tryModel)); foreach (array_slice($tryModel, 0, 12, true) as $m => $t):
+              $n = $byModel[$m] ?? 0; ?>
+        <tr><td><code><?= h($m) ?></code></td>
+            <td class="num"><?= $n ?></td>
+            <td class="num"><?= $t ?></td>
             <td><div class="bar"><i style="width:<?= (int)round($n / $mm * 100) ?>%"></i></div></td></tr>
       <?php endforeach; ?></table>
     <?php endif; ?>
