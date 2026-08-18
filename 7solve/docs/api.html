@@ -333,6 +333,7 @@
 
     <h4>Endpoints</h4>
     <a href="#verify"><code>POST /verify</code></a>
+    <a href="#check"><code>POST /answer/check</code></a>
     <a href="#math"><code>POST /math/solve</code></a>
     <a href="#solve"><code>POST /solve</code></a>
     <a href="#health"><code>GET /health</code></a>
@@ -496,6 +497,85 @@
       trigonometric equations, because degrees-or-radians is a convention your
       question may not share and a wrong verdict is worse than none.
     </p>
+
+    <h2 id="check">Mark a student's answer</h2>
+    <div class="endpoint">
+      <span class="method">POST</span>
+      <span class="path">/v1/answer/check</span>
+      <span class="auth">key required</span>
+    </div>
+    <p>
+      A different question from <code>/verify</code>, and a different buyer.
+      That endpoint asks whether an AI got it right; this one asks whether a
+      <strong>student</strong> did — and returns marks, the mistakes, and
+      feedback you can show them.
+    </p>
+    <p>
+      Deterministic throughout. The true roots come from the solver, the
+      student's come from the same reader the verifier uses, and the mark is set
+      comparison — so it arrives with a proof rather than an opinion, and costs
+      nothing per call.
+    </p>
+
+    <pre><code>curl https://7solve.7by.in/v1/answer/check \
+  -H "Authorization: Bearer $SEVENSOLVE_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question":       "Solve x^2 - 4 = 0",
+    "student_answer": "x = 2",
+    "max_marks":      2
+  }'</code></pre>
+
+    <pre><code>{
+  "success": true,
+  "status": "INCOMPLETE",
+  "marks": 1,
+  "out_of": 2,
+  "variable": "x",
+  "equation": "x^2 - 4 = 0",
+  "expected": [-2, 2],
+  "given": [2],
+  "mistakes": [
+    { "type": "missing_root", "text": "x = -2 is also a solution and was not given" }
+  ],
+  "feedback": "Every value given is right, but 1 more solution was missed. …",
+  "deterministic": true
+}</code></pre>
+
+    <div class="scroll">
+      <table>
+        <tr><th>Status</th><th>Means</th></tr>
+        <tr><td><code>CORRECT</code></td><td>Every solution given, none wrong.</td></tr>
+        <tr><td><code>INCOMPLETE</code></td><td>Everything given is right, but a solution was missed.</td></tr>
+        <tr><td><code>PARTIAL</code></td><td>Some values right, some wrong.</td></tr>
+        <tr><td><code>INCORRECT</code></td><td>Nothing given satisfies the equation.</td></tr>
+        <tr><td><code>UNMARKABLE</code></td><td>Could not be marked. <code>marks</code> is <code>null</code>, not zero.</td></tr>
+      </table>
+    </div>
+
+    <div class="note">
+      <p>
+        <strong><code>UNMARKABLE</code> is never a zero.</strong> A student must
+        not lose marks because the grader could not read the question — a complex
+        root, an unfamiliar phrasing, an equation the solver declines. Route those
+        to a human; <code>marks</code> comes back <code>null</code> so they cannot
+        be summed into a total by accident.
+      </p>
+    </div>
+
+    <h3>Marking scheme</h3>
+    <p>
+      <code>penalty_per_wrong</code> sets what each wrong value costs, as a
+      fraction of one root's worth. It defaults to <code>0</code> — credit for
+      what is right, no deduction — because that is the common school scheme.
+      Set it to <code>1</code> for negative marking.
+    </p>
+    <div class="scroll">
+      <table>
+        <tr><th>Answer to <code>x² − 4 = 0</code></th><th class="num">penalty 0</th><th class="num">penalty 0.5</th><th class="num">penalty 1</th></tr>
+        <tr><td><code>x = 2 and x = 3</code></td><td class="num">1 / 2</td><td class="num">0.5 / 2</td><td class="num">0 / 2</td></tr>
+      </table>
+    </div>
 
     <h2 id="math">Solve, deterministically</h2>
     <div class="endpoint">

@@ -374,6 +374,48 @@ if ($route === 'verify') {
     ]);
 }
 
+/* ---- POST /v1/answer/check — mark a STUDENT's answer ----
+   A different question from /v1/verify, and a different buyer. That endpoint
+   asks whether an AI got it right; this one asks whether a student did.
+   Deterministic throughout: the true roots come from the solver, the claimed
+   ones from the same reader the verifier uses, and the mark is set comparison
+   with a proof attached. */
+if ($route === 'answer/check') {
+    if ($method !== 'POST') err_out('FAILED', 'Use POST for /v1/answer/check.', 405);
+    require_once __DIR__ . '/grader.php';
+
+    $in       = body_json();
+    $question = trim((string)($in['question'] ?? ''));
+    $answer   = trim((string)($in['student_answer'] ?? $in['answer'] ?? ''));
+    if ($question === '' || $answer === '') {
+        bump_usage($CFG, $key['id'], 'answer/check', false);
+        err_out('NEEDS_CLARIFICATION',
+                'Send both "question" and "student_answer".', 400);
+    }
+    if (mb_strlen($question) > 4000 || mb_strlen($answer) > 4000) {
+        bump_usage($CFG, $key['id'], 'answer/check', false);
+        err_out('FAILED', 'Question and answer are limited to 4000 characters each.', 413);
+    }
+
+    $marks = (float)($in['max_marks'] ?? 1);
+    if (!is_finite($marks) || $marks <= 0 || $marks > 1000) $marks = 1.0;
+    /* Clamped rather than rejected: a nonsensical penalty should not fail a
+       whole batch of marking, and 0 is the safe reading of "not specified". */
+    $penalty = (float)($in['penalty_per_wrong'] ?? 0);
+    if (!is_finite($penalty) || $penalty < 0) $penalty = 0.0;
+    if ($penalty > 1) $penalty = 1.0;
+
+    try {
+        $r = Grader::check($question, $answer, $marks, $penalty);
+    } catch (Throwable $e) {
+        bump_usage($CFG, $key['id'], 'answer/check', false);
+        err_out('FAILED', 'The grader could not process that input.', 500);
+    }
+
+    bump_usage($CFG, $key['id'], 'answer/check', true);
+    ok_out($r);
+}
+
 /* ---- POST /v1/math/solve — deterministic, no model involved ----
    Same economics as /v1/verify: no provider, no quota, no per-call cost. It
    answers what it can prove it can answer and returns UNSUPPORTED for the
