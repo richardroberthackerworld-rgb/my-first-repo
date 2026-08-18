@@ -477,6 +477,53 @@ function sameVerdict(jsState, phpState) {
   return !!(NOT_VERIFIED[jsState] && NOT_VERIFIED[phpState]);
 }
 
+/* ---------- THE STATE CONTRACT ----------
+   See VERIFICATION-CONTRACT.md. Every state either engine can produce maps to
+   exactly one of three canonical outcomes, and the invariant is:
+
+     no answer is ever `verified` in one engine and `disputed` or
+     `unverified` in the other.
+
+   The engines may disagree about how to DESCRIBE a not-verified answer — the
+   browser splits it four ways so the badge can say what it looked at, PHP
+   collapses it to one public `unverified`. They may never disagree about
+   whether the mathematics was proved. That is the difference between a
+   wording difference and telling a student their correct answer is wrong
+   while telling an API customer it is right.
+
+   A state missing from this table is a HARD failure, not a default: a state
+   nobody has classified is a state nobody can reason about, and silently
+   treating it as unverified is how a new `verified` synonym would slip
+   through this test unnoticed. */
+const CANONICAL = {
+  checked: 'verified',
+  disputed: 'disputed',
+  stepfail: 'disputed',
+  invalid_question: 'disputed',
+  unverified: 'unverified',
+  worked: 'unverified',
+  explained: 'unverified',
+  plain: 'unverified',
+  partial: 'unverified',
+};
+
+function stateContract(pairs) {
+  const bad = [];
+  for (const p of pairs) {
+    const j = CANONICAL[p.js], h = CANONICAL[p.php];
+    if (!j) { bad.push(`contract: JS produced the unclassified state "${p.js}" — add it to ` +
+                       'CANONICAL in parity.js and to VERIFICATION-CONTRACT.md'); continue; }
+    if (!h) { bad.push(`contract: PHP produced the unclassified state "${p.php}" — add it to ` +
+                       'CANONICAL in parity.js and to VERIFICATION-CONTRACT.md'); continue; }
+    if (j === h) continue;
+    bad.push('contract VIOLATION — ' + JSON.stringify(p.q.slice(0, 60)) +
+             '\n            answer ' + JSON.stringify(p.a.replace(/\n/g, ' ').slice(0, 60)) +
+             `\n            site says ${j} (${p.js}), api says ${h} (${p.php})` +
+             '\n            an answer may never be verified on one surface and not the other');
+  }
+  return bad;
+}
+
 let REGISTRY = null, JS_ONLY = {};
 /* the shipped answer-level list, parsed from index.html so there is one copy */
 let ANSWER_LEVEL = null;
@@ -887,6 +934,7 @@ function norm(v) {
 
   const verdictCases = VERDICTS.map(([q, a]) => ({ q, a }));
   JS_ONLY = jsOnlyKinds(V, REGISTRY, verdictCases);
+  const contractPairs = [];
 
   const php = runPhp({ eval: evalCases, holds: holdCases, vars: varCases, verdicts: verdictCases });
 
@@ -936,6 +984,7 @@ function norm(v) {
     const sig = checks.map((x) => x.kind + (x.ok ? '+' : '-')).sort().join(',');
     const js = { state: r.state, n: checks.length, sig };
     const ph = php.verdicts[i];
+    contractPairs.push({ q: c.q, a: c.a, js: js.state, php: ph.state });
     if (!sameVerdict(js.state, ph.state) || js.n !== ph.n || js.sig !== ph.sig) {
       bad.push('verdict ' + JSON.stringify(c.q.slice(0, 70)) +
                '\n            answer ' + JSON.stringify(c.a.replace(/\n/g, ' ').slice(0, 70)) +
@@ -943,6 +992,9 @@ function norm(v) {
                '\n            php=' + ph.state + '(' + ph.n + ') [' + ph.sig + ']');
     }
   });
+
+  /* the JS/PHP state contract: never verified here and not-verified there */
+  bad.push(...stateContract(contractPairs));
 
   /* load order: a top-level W.* before W exists kills the rest of its block */
   bad.push(...checkLoadOrder(fs.readFileSync(path.join(HERE, 'index.html'), 'utf8')));
@@ -963,7 +1015,8 @@ function norm(v) {
 
   const total = evalCases.length + holdCases.length + varCases.length +
                 verdictCases.length + DERIVATIVES.length + ABSOLUTE.length +
-                SYNDIV.length + (process.env.PARITY_NO_REGISTRY === '1' ? 0 : REGISTRY.checks.length);
+                SYNDIV.length + contractPairs.length +
+                (process.env.PARITY_NO_REGISTRY === '1' ? 0 : REGISTRY.checks.length);
   if (bad.length) {
     console.log(`\nPARITY FAILED — ${bad.length} of ${total} cases disagree\n`);
     bad.slice(0, 40).forEach((b) => console.log('  ' + b));
