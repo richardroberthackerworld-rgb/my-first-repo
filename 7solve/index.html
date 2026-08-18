@@ -8,7 +8,7 @@
 <!-- Build stamp. Bump this whenever the site is rebuilt: it is the one place
      to look to answer "is the new version actually live?" — Settings shows it,
      the console logs it, and you can read it straight out of view-source. -->
-<meta name="7solve-build" content="2026-08-18.10">
+<meta name="7solve-build" content="2026-08-18.11">
 <link rel="icon" href="favicon.ico?v=7by4" sizes="any">
 <link rel="icon" href="assets/logo.svg?v=7by4" type="image/svg+xml">
 <link rel="icon" href="favicon.png?v=7by4" type="image/png" sizes="96x96">
@@ -12598,6 +12598,19 @@ var Verify = (function(){
   }
 
   function substitution(question, md){
+    /* Strip LaTeX from the QUESTION before looking for an equation in it.
+
+       Without this, "x^{2}+y^{2}+1=3xy" was catastrophic rather than merely
+       unverified: EQ_CHARS has no braces, so findEquation could not span the
+       {2} and settled on the longest run it could read — "+1=3xy". It then
+       substituted the student's perfectly correct (1,1) into that fragment,
+       got 1 ≠ 3, and reported a RIGHT answer as disputed.
+
+       deLatex lives in an earlier script block, so it is reached through the
+       window export rather than directly; the fallback keeps this a no-op
+       instead of a crash if that export ever moves. */
+    var dl = (typeof window !== 'undefined' && window.deLatex7) || function(x){ return x; };
+    question = dl(String(question == null ? '' : question));
     var found = findEquation(question);
     if(!found) return [];
     var eq = found.eq;
