@@ -374,6 +374,37 @@ if ($route === 'verify') {
     ]);
 }
 
+/* ---- POST /v1/math/solve — deterministic, no model involved ----
+   Same economics as /v1/verify: no provider, no quota, no per-call cost. It
+   answers what it can prove it can answer and returns UNSUPPORTED for the
+   rest, because a solver that guesses is indistinguishable from one that
+   knows, and the caller has no way to tell which they got. */
+if ($route === 'math/solve') {
+    if ($method !== 'POST') err_out('FAILED', 'Use POST for /v1/math/solve.', 405);
+    require_once __DIR__ . '/solver.php';
+
+    $in = body_json();
+    $q  = trim((string)($in['expression'] ?? $in['equation'] ?? $in['question'] ?? ''));
+    if ($q === '') {
+        bump_usage($CFG, $key['id'], 'math/solve', false);
+        err_out('NEEDS_CLARIFICATION', 'Send an "equation" (or "expression").', 400);
+    }
+    if (mb_strlen($q) > 2000) {
+        bump_usage($CFG, $key['id'], 'math/solve', false);
+        err_out('FAILED', 'Expression is longer than 2000 characters.', 413);
+    }
+
+    try {
+        $r = Solver::solve($q);
+    } catch (Throwable $e) {
+        bump_usage($CFG, $key['id'], 'math/solve', false);
+        err_out('FAILED', 'The solver could not process that input.', 500);
+    }
+
+    bump_usage($CFG, $key['id'], 'math/solve', true);
+    ok_out(['input' => $q, 'deterministic' => true] + $r);
+}
+
 /* ---- POST /v1/solve — solve, then verify, then retry if the verdict is bad ----
    The retry is the whole point. A plain proxy returns the first thing a model
    says; this returns the first thing a model says THAT SURVIVES CHECKING, and

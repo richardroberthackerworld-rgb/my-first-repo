@@ -8,7 +8,7 @@
 <!-- Build stamp. Bump this whenever the site is rebuilt: it is the one place
      to look to answer "is the new version actually live?" — Settings shows it,
      the console logs it, and you can read it straight out of view-source. -->
-<meta name="7solve-build" content="2026-08-18.9">
+<meta name="7solve-build" content="2026-08-18.10">
 <link rel="icon" href="favicon.ico?v=7by4" sizes="any">
 <link rel="icon" href="assets/logo.svg?v=7by4" type="image/svg+xml">
 <link rel="icon" href="favicon.png?v=7by4" type="image/png" sizes="96x96">
@@ -8420,7 +8420,13 @@ window.needsLive7 = needsLive;
    ============================================================ */
 function deLatex(md){
   var s = String(md == null ? '' : md);
-  if(s.indexOf('\\') < 0 && s.indexOf('$') < 0) return s;   // nothing to do, the common case
+  /* Braced superscripts must get through this gate too. Checking only for a
+     backslash or a dollar meant "x^{2} - 164x + 424 = 0" — no delimiters,
+     exactly how a model writes it inline in markdown — was returned
+     untouched, and the tokeniser cannot read "^{2}". A perfectly ordinary
+     equation then looked unparseable and produced no checks at all. */
+  if(s.indexOf('\\') < 0 && s.indexOf('$') < 0 &&
+     s.indexOf('^{') < 0 && s.indexOf('_{') < 0) return s;   // nothing to do, the common case
 
   /* Fenced code and inline code are left alone — a programming answer may
      legitimately contain backslashes and dollar signs. */

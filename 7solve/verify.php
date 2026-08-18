@@ -558,7 +558,14 @@ final class Checks
     public static function deLatex(string $md): string
     {
         $s = $md;
-        if (strpos($s, '\\') === false && strpos($s, '$') === false) return $s;
+        /* The fast path must also let braced superscripts through. Checking
+           only for a backslash or a dollar meant "x^{2} - 164x + 424 = 0" —
+           no delimiters, exactly how a model writes it inline in markdown —
+           returned untouched, and the tokeniser cannot read "^{2}". The result
+           was an equation that looked unparseable while being perfectly
+           ordinary. */
+        if (strpos($s, '\\') === false && strpos($s, '$') === false
+            && strpos($s, '^{') === false && strpos($s, '_{') === false) return $s;
 
         /* Code is left alone — a programming answer may legitimately contain
            backslashes and dollar signs. */
