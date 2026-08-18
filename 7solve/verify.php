@@ -1132,6 +1132,239 @@ final class Checks
                     . 'that cannot be trusted']];
     }
 
+    /* ---------- UNPROVED CLAIMS ----------
+       Every check above this one asks whether a NUMBER is right. None of them
+       reads the sentence that carries the actual mathematical claim, so an
+       answer could substitute four correct tuples, pass every check, and
+       conclude "there are infinitely many prime sums" on the strength of
+       "observing the density of primes" — and be reported FULLY_VERIFIED.
+
+       Four correct substitutions are evidence. They are not a proof of
+       infinitude, and the gap between those two things is the entire failure.
+
+       WHY A THEOREM NAME IS NOT A PROOF
+       ---------------------------------
+       Citing Dirichlet does not make a sequence an arithmetic progression.
+       The named theorem is treated as an unsupported citation unless the
+       answer also establishes the hypotheses that theorem actually needs —
+       which this engine cannot check — so a bare citation FAILS rather than
+       passes. A checker that accepts a theorem name accepts any theorem name.
+
+       This never asserts the claim is false. It asserts the answer has not
+       shown it to be true, which is a different and much safer statement. */
+    private const CLAIM_RE = [
+        'infinitude' => '/\b(infinitely\s+many|there\s+are\s+infinite|unbounded(?:ly)?\s+many|arbitrarily\s+(?:large|many))\b/iu',
+        'universal'  => '/\b(for\s+all\s+|for\s+every\s+|always\s+(?:holds|true)|in\s+every\s+case)\b/iu',
+        'exclusive'  => '/\b(only\s+(?:solutions?|values?|these|\(|the\s+pair)|the\s+unique\s+solution|no\s+other\s+(?:solutions?|values?)|these\s+are\s+all\s+the)\b/iu',
+        'never'      => '/\b(never\s+(?:happens|holds|occurs|prime)|is\s+never\b|cannot\s+ever\b)\b/iu',
+    ];
+
+    /* Language that would carry a real argument. Deliberately generous: the
+       point is to catch answers with NO argument at all, not to grade the
+       quality of one that is present. */
+    private const PROOF_RE =
+        '/\b(induction|inductive\s+step|base\s+case|contradiction|suppose\s+not|assume\s+for\s+contradiction|'
+      . 'vieta|descent|infinite\s+descent|pigeonhole|well[-\s]ordering|minimal\s+counterexample|'
+      . 'bijection|construct(?:ion|ed)?\s+(?:a|an|the)\s+|therefore\s+by\s+induction|'
+      . 'q\.?e\.?d|∎|hence\s+every|for\s+each\s+k\b|recurrence\s+gives)\b/iu';
+
+    /* Hand-waving that LOOKS like justification. Each of these is a phrase
+       that concedes it is not proving anything. */
+    private const HANDWAVE_RE =
+        '/\b(observing\s+the\s+density|density\s+of\s+primes|it\s+is\s+(?:clear|obvious|well[-\s]known)\s+that|'
+      . 'grows?\s+(?:without\s+bound|exponentially|rapidly)[^.]{0,40}(?:therefore|so|hence|thus)|'
+      . 'no\s+(?:obvious\s+)?(?:modular\s+)?obstruction|heuristic|numerical\s+evidence\s+suggests|'
+      . 'seems?\s+to\s+(?:be|suggest)|appears?\s+to\s+(?:be|hold)|one\s+can\s+conclude|we\s+can\s+conclude)\b/iu';
+
+    /* A theorem cited by name, which is a citation and not an argument. */
+    private const THEOREM_RE =
+        '/\b(dirichlet|green[-\s]tao|bertrand|chebyshev|fermat\'?s?\s+little|euler\'?s?\s+theorem|'
+      . 'wilson\'?s?\s+theorem|chinese\s+remainder|mordell|siegel|roth\'?s?\s+theorem)\b/iu';
+
+    public static function unproved(string $answer): array
+    {
+        $s = self::deLatex($answer);
+        $s = preg_replace('/```[\s\S]*?```/u', ' ', $s);          // code is not prose
+
+        $kind = null;
+        foreach (self::CLAIM_RE as $name => $re) {
+            if (!preg_match($re, $s, $m, PREG_OFFSET_CAPTURE)) continue;
+            /* An answer that DECLINES the claim must never be punished for it.
+               "the argument does not establish that infinitely many exist" is
+               the correct, honest reply — and flagging it would teach the
+               solver that hedging is as costly as overclaiming, which is
+               precisely backwards. Look behind the phrase for a denial. */
+            $before = mb_substr($s, max(0, $m[0][1] - 90), min(90, $m[0][1]));
+            if (preg_match('/\b(do(?:es)?\s+not\s+(?:establish|prove|show|follow|imply)|'
+                         . 'not\s+(?:established|proved|proven|shown)|cannot\s+(?:be\s+)?(?:prove|establish|conclude)|'
+                         . 'no\s+proof\s+that|without\s+(?:proving|establishing)|'
+                         . 'fails?\s+to\s+(?:establish|prove|show)|is\s+not\s+enough\s+to)\b/iu', $before)) {
+                continue;                                          // a denial, not a claim
+            }
+            $kind = $name;
+            break;
+        }
+        if ($kind === null) return [];                            // no strong claim → nothing to say
+
+        $hasProof    = (bool)preg_match(self::PROOF_RE, $s);
+        $handwave    = preg_match(self::HANDWAVE_RE, $s, $hm) ? trim($hm[0]) : null;
+        $theoremOnly = preg_match(self::THEOREM_RE, $s, $tm) ? trim($tm[0]) : null;
+
+        $label = [
+            'infinitude' => 'that infinitely many exist',
+            'universal'  => 'that it holds in every case',
+            'exclusive'  => 'that these are the only solutions',
+            'never'      => 'that it never happens',
+        ][$kind];
+
+        if ($handwave !== null) {
+            return [['kind' => 'claim', 'ok' => false, 'claimType' => $kind,
+                'text' => 'the answer claims ' . $label . ', but supports it with "' . $handwave
+                        . '" — which concedes it is not a proof; examples and density arguments are '
+                        . 'evidence, not a demonstration']];
+        }
+        if (!$hasProof && $theoremOnly !== null) {
+            return [['kind' => 'claim', 'ok' => false, 'claimType' => $kind,
+                'text' => 'the answer claims ' . $label . ' by citing ' . $theoremOnly
+                        . ', but does not establish that this problem satisfies that theorem\'s '
+                        . 'hypotheses — naming a theorem is a citation, not an argument']];
+        }
+        if (!$hasProof) {
+            return [['kind' => 'claim', 'ok' => false, 'claimType' => $kind,
+                'text' => 'the answer claims ' . $label . ' without an argument that establishes it '
+                        . '— no induction, descent, contradiction or construction appears in the working']];
+        }
+        return [['kind' => 'claim', 'ok' => true, 'claimType' => $kind,
+            'text' => 'the answer claims ' . $label . ' and gives an argument for it '
+                    . '(this engine checks that reasoning is PRESENT, not that it is correct)']];
+    }
+
+    /* ---------- PRIMALITY, computed not believed ----------
+       "It seems 5779 is prime" is not a mathematical statement, it is a guess
+       wearing one. Primality is decidable in microseconds; letting a language
+       model estimate it is the clearest possible case of trusting an LLM with
+       something a computer can settle. */
+    public static function isPrime(int $n): bool
+    {
+        if ($n < 2) return false;
+        foreach ([2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37] as $p) {
+            if ($n === $p) return true;
+            if ($n % $p === 0) return false;
+        }
+        /* Deterministic Miller-Rabin: this witness set is proven correct for
+           every n below 3.3 · 10^24, which is far past anything a school
+           question produces. No probabilistic answer is returned. */
+        $d = $n - 1; $r = 0;
+        while ($d % 2 === 0) { $d = intdiv($d, 2); $r++; }
+        foreach ([2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37] as $a) {
+            $x = self::powmod($a, $d, $n);
+            if ($x === 1 || $x === $n - 1) continue;
+            $ok = false;
+            for ($i = 1; $i < $r; $i++) {
+                $x = self::powmod($x, 2, $n);
+                if ($x === $n - 1) { $ok = true; break; }
+            }
+            if (!$ok) return false;
+        }
+        return true;
+    }
+
+    private static function powmod(int $b, int $e, int $m): int
+    {
+        $r = 1; $b %= $m;
+        while ($e > 0) {
+            if ($e & 1) $r = (int)((float)$r * $b % $m) === 0 && $r * $b > PHP_INT_MAX
+                              ? self::mulmod($r, $b, $m) : self::mulmod($r, $b, $m);
+            $b = self::mulmod($b, $b, $m);
+            $e >>= 1;
+        }
+        return $r;
+    }
+    /* Multiplication that cannot overflow for the sizes a question produces. */
+    private static function mulmod(int $a, int $b, int $m): int
+    {
+        return (int)bcmod(bcmul((string)$a, (string)$b), (string)$m);
+    }
+
+    /* Claims of the form "N is prime" / "N is composite" / "N is not prime". */
+    public static function primality(string $answer): array
+    {
+        $s = self::deLatex($answer);
+        $out = [];
+        $seen = [];
+        $re = '/(-?\d{1,15})\s*(?:is|seems\s+to\s+be|appears\s+to\s+be|looks)\s+'
+            . '(not\s+prime|composite|prime)\b/iu';
+        if (!preg_match_all($re, $s, $ms, PREG_SET_ORDER)) return $out;
+        foreach ($ms as $m) {
+            if (count($out) >= 8) break;
+            $n = (int)$m[1];
+            if ($n < 0 || $n > 999999999999) continue;
+            if (isset($seen[$n])) continue;
+            $seen[$n] = 1;
+            $claimPrime = stripos($m[2], 'prime') !== false && stripos($m[2], 'not') === false
+                          && stripos($m[2], 'composite') === false;
+            $really = self::isPrime($n);
+            $out[] = ['kind' => 'primality', 'ok' => ($claimPrime === $really),
+                'text' => $claimPrime
+                    ? ($really ? $n . ' is prime — confirmed by exact test'
+                               : $n . ' is NOT prime: ' . $n . ' = ' . self::firstFactor($n)
+                                 . ' × ' . intdiv($n, self::firstFactor($n)))
+                    : ($really ? $n . ' IS prime, but the answer calls it composite'
+                               : $n . ' is composite — confirmed by exact test')];
+        }
+        return $out;
+    }
+
+    private static function firstFactor(int $n): int
+    {
+        for ($i = 2; $i * $i <= $n; $i++) if ($n % $i === 0) return $i;
+        return $n;
+    }
+
+    /* ---------- COMPLETENESS: a truncated answer is not an answer ----------
+       "If a, b, c are all odd: a² + b² + c² is ..." was shown to a student as a
+       finished solution. Presenting half a proof as a whole one is worse than
+       showing an error, because nothing on the page says it stopped. */
+    public static function completeness(string $answer): array
+    {
+        $s = rtrim(self::deLatex($answer));
+        if ($s === '') return [];
+        $why = null;
+
+        $tail = mb_substr($s, -160);
+        /* A short mathematical result is not a truncated sentence. An earlier
+           rule flagged any last line lacking a full stop, which fires on
+           "x = 2 and x = -2" — most correct answers. Only a line left hanging
+           on a word that CANNOT end a statement is unfinished: a copula, an
+           article, a connective, or a bare operator. That is what
+           "a² + b² + c² is" has and a finished answer does not. */
+        $lastLine = '';
+        foreach (array_reverse(preg_split('/\R/u', $s) ?: []) as $ln) {
+            if (trim($ln) !== '') { $lastLine = trim($ln); break; }
+        }
+        if ($lastLine !== '' && preg_match(
+            '/(?:^|\s)(is|are|was|were|be|the|a|an|of|and|or|to|for|with|if|then|so|we|it|that|which|by|from|as|but|since|because|where|when|gives?|equals?|becomes?|[=+\-*\/^<>,])\s*$/iu',
+            $lastLine)) {
+            $why = 'the last line stops mid-sentence: "…' . mb_substr($lastLine, -60) . '"';
+        }
+        if ($why === null && preg_match('/\b(therefore|hence|thus|so we get|which gives)\s*[:,]?\s*$/iu', $tail)) {
+            $why = 'the answer ends on "therefore" with no conclusion after it';
+        }
+        /* Unbalanced delimiters mean a formula was cut in half. */
+        $dollars = substr_count($s, '$') - 2 * substr_count($s, '$$');
+        if ($why === null && substr_count($s, '$$') % 2 !== 0) $why = 'an unclosed $$…$$ block';
+        if ($why === null && $dollars % 2 !== 0)               $why = 'an unclosed $…$ formula';
+        if ($why === null && substr_count($s, '\\[') !== substr_count($s, '\\]')) $why = 'an unclosed \\[…\\] block';
+        if ($why === null && substr_count($s, '\\(') !== substr_count($s, '\\)')) $why = 'an unclosed \\(…\\) formula';
+        $open = substr_count($s, '(') - substr_count($s, ')');
+        if ($why === null && $open > 1) $why = $open . ' unclosed brackets';
+
+        if ($why === null) return [];
+        return [['kind' => 'truncated', 'ok' => false,
+            'text' => 'this solution is not finished — ' . $why
+                    . '. It must not be shown as a completed answer']];
+    }
+
     /* ---------- the verdict ----------
        Answer-level failures dispute the ANSWER. Working-level failures dispute
        a STEP, which is a different and lesser claim, and flattening the two
@@ -1167,7 +1400,8 @@ final class Checks
             self::arithmetic($body),
             Units::check($question, $body),
             self::trace($question, $body),
-            self::presentation($body)
+            self::presentation($body),
+            self::unproved($body)
         );
 
         /* A soft check is advisory: it reports something worth telling the
@@ -1186,7 +1420,7 @@ final class Checks
            in the milder step-level bucket. */
         /* integrity is answer-level and then some: a misread question makes
            the answer wrong no matter how clean the working is. */
-        $answerLevel = ['subst' => true, 'units' => true, 'integrity' => true, 'question' => true];
+        $answerLevel = ['subst' => true, 'units' => true, 'integrity' => true, 'question' => true, 'claim' => true, 'primality' => true, 'truncated' => true];
 
         /* A question with no answer is its own outcome, and flattening it into
            "the answer is wrong" tells a student to try again at something
@@ -1219,7 +1453,7 @@ final class Checks
             return $seen ? 'VERIFIED' : 'NOT_CHECKED';
         };
         $question   = $layer($checks, ['integrity' => 1]);
-        $arithmetic = $layer($checks, ['arith' => 1, 'subst' => 1, 'units' => 1, 'question' => 1]);
+        $arithmetic = $layer($checks, ['arith' => 1, 'subst' => 1, 'units' => 1, 'question' => 1, 'claim' => 1, 'primality' => 1, 'truncated' => 1]);
         $traceState = $layer($checks, ['trace' => 1]);
 
         /* NOT_CHECKED is not a failure. Requiring all three layers to have RUN

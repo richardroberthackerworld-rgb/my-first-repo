@@ -228,6 +228,28 @@ const VERDICTS = [
   ['Find all positive integers a,b,c with a^2+b^2+c^2=3abc.',
    '## ✅ Answer\nThe solutions include (5,1,1).'],
 
+  /* UNPROVED CLAIMS. Four correct substitutions are evidence, not a proof of
+     infinitude, and the engine used to call the gap FULLY_VERIFIED. A theorem
+     NAME is a citation, not an argument — a checker that accepts one accepts
+     any. The honest refusal must NOT be penalised: flagging it would teach the
+     solver that hedging costs as much as overclaiming, exactly backwards. */
+  ['Find all positive integers a,b,c with a^2+b^2+c^2=3abc. For which is a+b+c prime?',
+   '## ✅ Answer\nThere are infinitely many solutions for which a+b+c is prime.\n\n## 📝 Steps\n1. Solutions: (1,1,1), (1,1,2), (1,2,5), (1,5,13).\n2. By Dirichlet\'s Theorem or by observing the density of primes, we can conclude there are infinitely many n such that S_n is prime.'],
+  ['Find all positive integers a,b,c with a^2+b^2+c^2=3abc. For which is a+b+c prime?',
+   '## ✅ Answer\nThere are infinitely many prime values because the sequence grows exponentially.'],
+  ['Find all positive integers a,b,c with a^2+b^2+c^2=3abc. For which is a+b+c prime?',
+   '## ✅ Answer\nInfinitely many prime sums, by Dirichlet.'],
+  ['Find all positive integers a,b,c with a^2+b^2+c^2=3abc. For which is a+b+c prime?',
+   '## ✅ Answer\nOnly (1,1,1) has a prime sum.'],
+  /* the honest refusal — must stay unpenalised */
+  ['Find all positive integers a,b,c with a^2+b^2+c^2=3abc. For which is a+b+c prime?',
+   '## ✅ Answer\nExamples such as 3 and 19 show that prime sums occur, but the argument provided does not establish that infinitely many such prime sums exist.'],
+  ['Find all positive integers a,b,c with a^2+b^2+c^2=3abc. For which is a+b+c prime?',
+   '## ✅ Answer\nPrime sums occur, but we cannot prove that infinitely many exist.'],
+  /* a real argument passes */
+  ['Find all positive integers a,b,c with a^2+b^2+c^2=3abc.',
+   '## ✅ Answer\nAll solutions arise from (1,1,1).\n\n## 📝 Steps\n1. By Vieta jumping and infinite descent every solution reduces to (1,1,1).'],
+
   /* QUESTION VALIDITY — the newest layer, and the one that lived in PHP alone
      for a while. Three replies to an impossible question used to receive
      identical verdicts; these pin the distinction in BOTH engines. */
@@ -295,7 +317,7 @@ function verdictOf(checks) {
   const passed = checks.filter((c) => c.ok);
   /* Answer-level kinds, matching $answerLevel in Checks::run. A wrong
      dimension condemns the answer, not merely a step. */
-  const ANSWER = { subst: 1, units: 1, integrity: 1, question: 1 };
+  const ANSWER = { subst: 1, units: 1, integrity: 1, question: 1, claim: 1, primality: 1, truncated: 1 };
   if (failed.some((c) => ANSWER[c.kind])) return 'disputed';
   if (failed.length) return 'stepfail';
   if (passed.length) return 'checked';
@@ -415,7 +437,10 @@ function norm(v) {
       V.integrity(c.q, c.a) || [],
       V.trace(c.q, c.a) || [],
       V.questionCheck(c.q, c.a) || [],
-      V.presentation(c.a) || []);
+      V.presentation(c.a) || [],
+      V.unproved(c.a) || [],
+      V.primality(c.a) || [],
+      V.completeness(c.a) || []);
     const sig = checks.map((x) => x.kind + (x.ok ? '+' : '-')).sort().join(',');
     const js = { state: verdictOf(checks), n: checks.length, sig };
     const ph = php.verdicts[i];
