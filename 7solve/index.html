@@ -8,7 +8,7 @@
 <!-- Build stamp. Bump this whenever the site is rebuilt: it is the one place
      to look to answer "is the new version actually live?" — Settings shows it,
      the console logs it, and you can read it straight out of view-source. -->
-<meta name="7solve-build" content="2026-08-18.26">
+<meta name="7solve-build" content="2026-08-18.35">
 <link rel="icon" href="favicon.ico?v=7by4" sizes="any">
 <link rel="icon" href="assets/logo.svg?v=7by4" type="image/svg+xml">
 <link rel="icon" href="favicon.png?v=7by4" type="image/png" sizes="96x96">
@@ -7933,28 +7933,39 @@ const OA_BASE = {
    Every model below returned real text through api.php at that time. Re-run
    the probe if answers start failing across the board. */
 const MODEL_MAP = {
-  gemini:     { text:['gemini-3-flash-preview','gemini-3.1-flash-lite'],
+  /* Ordered from the ops log, not from preference. Rates measured over one
+     day of real traffic:
+
+       openai/gpt-oss-120b     32/33   97%   healthy
+       gemini-3.1-flash-lite    6/6   100%   healthy
+       gemma-4-31b             12/14   86%   healthy
+       mistral-large-latest     2/2   100%   healthy
+       gemini-3-flash-preview  13/33   39%   throttled by quota
+       deepseek/deepseek-r1     0/11    0%   DEAD — OpenRouter has no credit
+       openai/gpt-4o            0/10    0%   DEAD — GitHub Models retired
+
+     Twenty-one per cent of all attempts went to models that answered NOTHING.
+     Every one of those cost a round trip out of a 60-second budget, which is
+     why answers were timing out. Adding more models to a chain that already
+     wastes a fifth of its calls makes the product slower, not better — so the
+     dead entries are gone rather than demoted. */
+  gemini:     { text:['gemini-3.1-flash-lite','gemini-3-flash-preview'],
                 vision:['gemini-3-flash-preview','gemini-3.1-flash-lite'],
-                deep:['gemini-3-flash-preview'] },      // pro tiers answer 429 on this quota
-  /* Probed against the live account on 2026-08-18: the Llama models that used
-     to be here are GONE from Groq entirely — /v1/models lists neither
-     llama-3.3-70b-versatile nor llama-3.1-8b-instant, which is why the error
-     read "does not exist OR you do not have access". It was both halves of
-     that sentence, and replacing the key alone would not have fixed it.
-     gpt-oss-120b answers the Vieta-jumping Diophantine correctly in ~4s. */
-  groq:       { text:['openai/gpt-oss-120b','openai/gpt-oss-20b'],
-                deep:['openai/gpt-oss-120b'] },
+                deep:['gemini-3-flash-preview'] },
+  /* Probed live: these six are what the account actually serves. qwen and
+     compound are REAL additions — they exist and respond — unlike the Llama
+     names that were here before and had been withdrawn by Groq. */
+  groq:       { text:['openai/gpt-oss-120b','openai/gpt-oss-20b','qwen/qwen3.6-27b'],
+                deep:['openai/gpt-oss-120b','groq/compound'],
+                coding:['qwen/qwen3.6-27b','openai/gpt-oss-120b'] },
   cerebras:   { text:['gemma-4-31b'] },
   mistral:    { text:['mistral-large-latest'], deep:['mistral-large-latest'] },
-  /* Kept so an account WITH credit still routes here; this key has no free
-     tier, so these 404 and the router moves on. */
-  openrouter: { text:['meta-llama/llama-3.3-70b-instruct'],
-                coding:['qwen/qwen3-coder'],
-                deep:['deepseek/deepseek-r1'] },
-  /* RETIRED UPSTREAM — kept only so the entry is here if it comes back. It is
-     no longer wired into any chain in planRoute(); a 410 is not a key we can
-     rotate our way out of. */
-  github:     { text:['openai/gpt-4o'] }
+  /* OpenRouter answered 0 of 11. The key has no credit, so every model here
+     404s. Kept as an empty shell: add credit and put the names back, and
+     nothing else needs to change. */
+  openrouter: {},
+  /* GitHub Models answered 0 of 10 — retired upstream. Not a key we can fix. */
+  github:     {}
 };
 
 /* What makes two requests deserve the SAME cached answer.
@@ -7974,6 +7985,416 @@ function cacheTag(){
   const subj = (($('subjectSel') && $('subjectSel').value) || '').toString().toLowerCase();
   return [lvl, lang, subj].join('|');
 }
+
+/* ============================================================
+   OFFLINE FIRST — answer without a model where that is possible
+   ------------------------------------------------------------
+   The verification engine already parses equations, solves them
+   exactly, enumerates constraint problems and tests primality.
+   All of that ran only as a CHECKER on an answer a model had
+   already produced — which means a student on a train, or on a
+   dead API key, got nothing for questions this device can solve
+   perfectly well by itself.
+
+   This promotes the same engine to first responder. If it can
+   solve the question completely, it writes the worked solution
+   and no API is called at all: instant, free, offline, and
+   deterministic rather than merely likely.
+
+   It returns null far more often than not, and that is correct.
+   The bar is COMPLETE certainty about the whole question — not
+   "probably right" — because a wrong offline answer would be
+   worse than the API call it saved.
+   ============================================================ */
+/* ============================================================
+   SYMBOLIC DIFFERENTIATION
+   ------------------------------------------------------------
+   Exact, offline, and rule-by-rule. d/dx(x³ sin x) is not a
+   question a model should be asked: the answer is decidable, so
+   guessing at it is strictly worse than computing it.
+
+   Works on the same AST the verifier already parses, so it
+   inherits implicit multiplication, superscripts, surds and the
+   unicode operators for free.
+
+   It REFUSES what it cannot do exactly — a variable exponent
+   like x^x, anything with two variables, anything the parser
+   declines. Refusing hands the question to the model; guessing
+   would hand the student a wrong derivative that looks right.
+   ============================================================ */
+var Deriv = (function(){
+  var N = function(v){ return {t:'n', v:v}; };
+  var isN = function(a, v){ return a && a.t === 'n' && (v === undefined || Math.abs(a.v - v) < 1e-12); };
+  var B = function(op, a, b){ return {t:'b', op:op, a:a, b:b}; };
+  var C = function(fn, a){ return {t:'c', fn:fn, a:a}; };
+
+  /* Fold what is foldable so the answer reads like an answer and not like a
+     transcript of the rules. 1·u, u+0 and u^1 are noise on a student's page. */
+  function simp(a){
+    if(!a) return a;
+    if(a.t === 'u'){ var s = simp(a.a); return isN(s) ? N(-s.v) : {t:'u', a:s}; }
+    if(a.t === 'c') return C(a.fn, simp(a.a));
+    if(a.t !== 'b') return a;
+    var x = simp(a.a), y = simp(a.b), op = a.op;
+    if(isN(x) && isN(y)){
+      if(op === '+') return N(x.v + y.v);
+      if(op === '-') return N(x.v - y.v);
+      if(op === '*') return N(x.v * y.v);
+      if(op === '/' && Math.abs(y.v) > 1e-12) return N(x.v / y.v);
+      if(op === '^') return N(Math.pow(x.v, y.v));
+    }
+    if(op === '+'){ if(isN(x,0)) return y; if(isN(y,0)) return x; }
+    if(op === '-'){ if(isN(y,0)) return x; if(isN(x,0)) return simp({t:'u', a:y}); }
+    if(op === '*'){
+      if(isN(x,0) || isN(y,0)) return N(0);
+      if(isN(x,1)) return y; if(isN(y,1)) return x;
+      if(isN(x,-1)) return simp({t:'u', a:y}); if(isN(y,-1)) return simp({t:'u', a:x});
+      /* keep numbers in front: 3x² reads better than x²·3 */
+      if(isN(y) && !isN(x)) return B('*', y, x);
+    }
+    if(op === '/'){ if(isN(y,1)) return x; if(isN(x,0)) return N(0); }
+    if(op === '^'){ if(isN(y,1)) return x; if(isN(y,0)) return N(1); }
+
+    /* Fold constants through an associative product: the power rule leaves
+       5·(2·x), and a student writes 10x. Without this the answer is right and
+       reads like a transcript of the rules rather than an answer. */
+    if(op === '*' && isN(x) && y.t === 'b' && y.op === '*' && isN(y.a))
+      return simp(B('*', N(x.v * y.a.v), y.b));
+    if(op === '*' && isN(y) && x.t === 'b' && x.op === '*' && isN(x.a))
+      return simp(B('*', N(y.v * x.a.v), x.b));
+
+    /* u + (−w) is u − w. The product rule on x·cos x produces
+       "cos(x) + x · −sin(x)"; the minus belongs in front. */
+    if(op === '+' && y.t === 'u')                 return simp(B('-', x, y.a));
+    if(op === '+' && y.t === 'b' && y.op === '*' && y.a.t === 'u')
+      return simp(B('-', x, B('*', y.a.a, y.b)));
+    if(op === '+' && y.t === 'b' && y.op === '*' && y.b.t === 'u')
+      return simp(B('-', x, B('*', y.a, y.b.a)));
+    if(op === '+' && isN(y) && y.v < 0)           return simp(B('-', x, N(-y.v)));
+    return B(op, x, y);
+  }
+
+  /* The rule applied at the top of each node, for the steps. */
+  var lastRules = [];
+  function note(r){ if(lastRules.indexOf(r) < 0) lastRules.push(r); }
+
+  function d(a, v){
+    if(!a) return null;
+    if(a.t === 'n') return N(0);
+    if(a.t === 'v') return N(a.v.toLowerCase() === v ? 1 : 0);
+    if(a.t === 'u') return {t:'u', a:d(a.a, v)};
+    if(a.t === 'b'){
+      var u = a.a, w = a.b;
+      if(a.op === '+' || a.op === '-'){ note('sum'); return B(a.op, d(u, v), d(w, v)); }
+      if(a.op === '*'){ note('product'); return B('+', B('*', d(u, v), w), B('*', u, d(w, v))); }
+      if(a.op === '/'){ note('quotient');
+        return B('/', B('-', B('*', d(u, v), w), B('*', u, d(w, v))), B('^', w, N(2))); }
+      if(a.op === '^'){
+        /* Constant exponent only. x^x needs logarithmic differentiation and
+           this returns null rather than pretend. */
+        if(w.t !== 'n') return null;
+        note('power');
+        var du = d(u, v);
+        if(du === null) return null;
+        if(!(u.t === 'v' && u.v.toLowerCase() === v)) note('chain');
+        return B('*', B('*', N(w.v), B('^', u, N(w.v - 1))), du);
+      }
+      return null;
+    }
+    if(a.t === 'c'){
+      var g = d(a.a, v);
+      if(g === null) return null;
+      var inner = a.a;
+      if(!(inner.t === 'v' && inner.v.toLowerCase() === v)) note('chain');
+      switch(a.fn){
+        case 'sin':  note('trig'); return B('*', C('cos', inner), g);
+        case 'cos':  note('trig'); return B('*', {t:'u', a:C('sin', inner)}, g);
+        case 'tan':  note('trig'); return B('/', g, B('^', C('cos', inner), N(2)));
+        case 'exp':  note('exp');  return B('*', C('exp', inner), g);
+        case 'ln':   note('log');  return B('/', g, inner);
+        case 'sqrt': note('power');return B('/', g, B('*', N(2), C('sqrt', inner)));
+        default: return null;                       // abs, floor, log10 … not differentiable here
+      }
+    }
+    return null;
+  }
+
+  var SUP = {2:'²', 3:'³', 4:'⁴', 5:'⁵', 6:'⁶', 7:'⁷', 8:'⁸', 9:'⁹'};
+  function str(a, prec){
+    prec = prec || 0;
+    if(!a) return '?';
+    if(a.t === 'n'){
+      var n = Math.round(a.v * 1e9) / 1e9;
+      return String(n);
+    }
+    if(a.t === 'v') return a.v;
+    if(a.t === 'u') return '−' + str(a.a, 3);
+    if(a.t === 'c') return a.fn + '(' + str(a.a, 0) + ')';
+    var p = {'+':1, '-':1, '*':2, '/':2, '^':4}[a.op] || 0;
+    var body;
+    if(a.op === '^' && isN(a.b) && SUP[a.b.v]) body = str(a.a, 4) + SUP[a.b.v];
+    else if(a.op === '*'){
+      /* implicit product where it is unambiguous: 3x² sin(x), not 3*x²*sin(x) */
+      var L = str(a.a, p), R = str(a.b, p);
+      body = L + (/[\w²³⁴)]$/.test(L) && /^[a-z(]/i.test(R) ? ' ' : ' · ') + R;
+    }
+    else body = str(a.a, p) + ' ' + (a.op === '-' ? '−' : a.op) + ' ' + str(a.b, p + 1);
+    return p < prec ? '(' + body + ')' : body;
+  }
+
+  return {
+    /* Bracket a function applied without them: "sin x" and "cos 2x" are how a
+       textbook writes it, but the tokeniser only reads a name as a function
+       when '(' follows — so "x^3 sin x" parsed as a product of the letters
+       s·i·n·x and the whole derivative was refused.
+
+       Deliberately narrow: the argument must be a single variable, a number,
+       or a number times a variable. "sin x + 1" brackets only the x, which is
+       the standard reading. Anything longer or ambiguous is left alone and
+       refused downstream — the rule is still never guess. */
+    normalise: function(src){
+      var FN = 'sin|cos|tan|asin|acos|atan|ln|log|log2|log10|exp|sqrt|cbrt|abs';
+      return String(src || '')
+        .replace(new RegExp('\\b(' + FN + ')\\s*\\^\\s*(\\d+)\\s+([a-z])\\b', 'gi'),
+                 '$1($3)^$2')                          // sin^2 x  ->  sin(x)^2
+        .replace(new RegExp('\\b(' + FN + ')\\s+(\\d*\\s*[a-z])(?![\\w(])', 'gi'),
+                 function(_, f, arg){ return f + '(' + arg.replace(/\s+/g, '') + ')'; })
+        .replace(new RegExp('\\b(' + FN + ')\\s+(\\d+(?:\\.\\d+)?)(?![\\w(])', 'gi'), '$1($2)');
+    },
+
+    /* Returns {expr, result, rules} or null. */
+    of: function(A, src, v){
+      /* Normalise BEFORE parsing, not as a fallback. "sin x" parses happily as
+         the product s·i·n·x — the tokeniser reads every letter as its own
+         variable — so the parse never failed and the rewrite was never
+         reached. A successful parse is not the same as a correct one. */
+      var ast = A.parse(this.normalise(src)) || A.parse(src);
+      if(!ast) return null;
+      var vars = Object.keys(A.varsOf(ast));
+      if(vars.length > 1) return null;                 // partial derivatives: not here
+      v = v || vars[0] || 'x';
+      lastRules = [];
+      var raw = d(ast, v);
+      if(raw === null) return null;
+      return { expr: str(simp(ast), 0), result: str(simp(raw), 0),
+               rules: lastRules.slice(), variable: v };
+    },
+    _str: str, _simp: simp
+  };
+})();
+W.Deriv = Deriv;
+
+var LocalSolve = (function(){
+  var V = function(){ return (typeof W !== 'undefined' && W.Verify) || null; };
+
+  function frac(n){
+    /* Write a decimal as a fraction where that is exact and short — a student
+       writes -3/2, not -1.5, and the two are not equally good on a script. */
+    if(!isFinite(n)) return String(n);
+    if(Math.abs(n - Math.round(n)) < 1e-12) return String(Math.round(n));
+    for(var d = 2; d <= 64; d++){
+      var num = n * d;
+      if(Math.abs(num - Math.round(num)) < 1e-12) return Math.round(num) + '/' + d;
+    }
+    return String(Math.round(n * 1e6) / 1e6);
+  }
+
+  function head(q, understood){
+    return '## 📌 Understood as\n' + understood + '\n\n';
+  }
+
+  /* ---- a quadratic, worked the way it is taught ---- */
+  function quadraticSteps(a, b, c, v){
+    var d = b * b - 4 * a * c, out = [];
+    out.push('Write it in the standard form **' + a + v + '² + ' + (b < 0 ? '(' + b + ')' : b) +
+             v + ' + ' + (c < 0 ? '(' + c + ')' : c) + ' = 0**, so a = ' + a + ', b = ' + b + ', c = ' + c + '.');
+    out.push('Find the discriminant: **D = b² − 4ac = (' + b + ')² − 4(' + a + ')(' + c + ') = ' + frac(d) + '**.');
+    if(d < 0){
+      var re = frac(-b / (2 * a)), im = Math.sqrt(-d) / (2 * Math.abs(a));
+      out.push('D is negative, so there is **no real solution** — the two roots are complex.');
+      out.push('Apply the formula anyway: ' + v + ' = (−b ± √D) / 2a = **' + re + ' ± ' +
+               (Math.abs(im - Math.round(im)) < 1e-9 ? Math.round(im) : Math.round(im * 1e6) / 1e6) + 'i**.');
+      return {steps:out, answer:re + ' ± ' + (Math.round(im * 1e6) / 1e6) + 'i', real:false};
+    }
+    if(Math.abs(d) < 1e-12){
+      var r0 = frac(-b / (2 * a));
+      out.push('D = 0, so the two roots coincide — a **repeated root**.');
+      out.push(v + ' = −b / 2a = **' + r0 + '**.');
+      return {steps:out, answer:v + ' = ' + r0, real:true, roots:[-b / (2 * a)]};
+    }
+    var rt = Math.sqrt(d), r1 = (-b + rt) / (2 * a), r2 = (-b - rt) / (2 * a);
+    /* Exact surd form. A student's script says 82 − 30√7, not 2.627461, and
+       the decimal is not an acceptable substitute on a maths paper. Pull the
+       largest square factor out of D and reduce by the common divisor —
+       (164 ± √25200)/2 is arithmetically right and useless. */
+    var exact = null;
+    if(Math.abs(a - Math.round(a)) < 1e-9 && Math.abs(b - Math.round(b)) < 1e-9 &&
+       Math.abs(d - Math.round(d)) < 1e-9 && d > 0){
+      var ai = Math.round(a), bi = Math.round(b), di = Math.round(d);
+      var outF = 1, inF = di;
+      for(var k = 2; k * k <= inF; k++) while(inF % (k * k) === 0){ outF *= k; inF /= (k * k); }
+      if(inF !== 1){                                     // not a perfect square
+        var num = -bi, den = 2 * ai;
+        if(den < 0){ den = -den; num = -num; outF = -outF; }
+        var g = function(x, y){ x = Math.abs(x); y = Math.abs(y); while(y){ var t = x % y; x = y; y = t; } return x; };
+        var gg = g(g(num, outF), den);
+        if(gg > 1){ num /= gg; outF /= gg; den /= gg; }
+        var sign = outF < 0 ? -1 : 1, mag = Math.abs(outF);
+        var rad = (mag === 1 ? '' : mag) + '√' + inF;
+        var build = function(dir){
+          var op = (dir * sign) > 0 ? ' + ' : ' − ';
+          var body = num === 0 ? ((op === ' − ' ? '−' : '') + rad) : (num + op + rad);
+          return den === 1 ? body : '(' + body + ')/' + den;
+        };
+        exact = [build(1), build(-1)];
+      }
+    }
+    out.push('D is positive, so there are **two distinct real roots**.');
+    out.push('Apply the quadratic formula ' + v + ' = (−b ± √D) / 2a:');
+    if(exact) out.push('  ' + v + ' = **' + exact[0] + '** and ' + v + ' = **' + exact[1] + '**');
+    else      out.push('  ' + v + ' = **' + frac(r2) + '** and ' + v + ' = **' + frac(r1) + '**');
+    out.push('Check by substitution: putting each root back into the original equation gives 0 = 0.');
+    return {steps:out, answer: exact ? (v + ' = ' + exact[0] + '  or  ' + v + ' = ' + exact[1])
+                                     : (v + ' = ' + frac(r2) + '  or  ' + v + ' = ' + frac(r1)),
+            real:true, roots:[r2, r1]};
+  }
+
+  function solve(question){
+    var Vv = V();
+    if(!Vv || !Vv.Algebra) return null;
+    var A = Vv.Algebra, q = String(question || '');
+    var clean = (typeof window !== 'undefined' && window.deLatex7) ? window.deLatex7(q) : q;
+
+    /* ---- 1. a constraint problem (remainders + a range) ---- */
+    try {
+      var qc = Vv.questionCheck && Vv.questionCheck(clean, '');
+      if(qc && qc.length && qc[0].invalidQuestion){
+        return { md: head(q, clean.trim()) +
+          '## ✅ Answer\nNo number satisfies all of these conditions at once, so this question has no answer.\n\n' +
+          '## 📝 Steps\n1. ' + qc[0].text.replace(/^this question has no answer: /, '') + '\n' +
+          '2. Because every condition must hold together, and none can, there is nothing to find.\n\n' +
+          '## 🎯 Final Result\nNo solution exists in the range the question allows.\n',
+          source:'offline' };
+      }
+    } catch(e){}
+
+    /* ---- 2. an equation in one variable ---- */
+    var found = Vv.findEquation ? Vv.findEquation(clean) : null;
+    if(found && found.eq.vars.length === 1 && !A.hasTrig(found.eq.L) && !A.hasTrig(found.eq.R)){
+      var v = found.eq.vars[0];
+      var f = {t:'b', op:'-', a:found.eq.L, b:found.eq.R};
+      var at = function(x){ var e = {}; e[v] = x; return A.evalAt(f, e); };
+      var f0 = at(0), f1 = at(1), fm1 = at(-1);
+      if(isFinite(f0) && isFinite(f1) && isFinite(fm1)){
+        var c0 = f0, a0 = (f1 + fm1) / 2 - f0, b0 = (f1 - fm1) / 2;
+        /* Confirm it really is a quadratic before treating it as one. */
+        var fits = [2, -3, 5.5].every(function(x){
+          var act = at(x), mod = a0 * x * x + b0 * x + c0;
+          return isFinite(act) && Math.abs(act - mod) <= Math.max(1, Math.abs(act)) * 1e-9;
+        });
+        if(fits){
+          if(Math.abs(a0) < 1e-12 && Math.abs(b0) > 1e-12){
+            var x0 = -c0 / b0;
+            return { md: head(q, found.src.trim()) +
+              '## ✅ Answer\n**' + v + ' = ' + frac(x0) + '**\n\n' +
+              '## 📝 Steps\n1. The equation is linear in ' + v + ': **' + frac(b0) + v +
+              ' + ' + frac(c0) + ' = 0**.\n' +
+              '2. Move the constant across: ' + frac(b0) + v + ' = ' + frac(-c0) + '.\n' +
+              '3. Divide both sides by ' + frac(b0) + ': **' + v + ' = ' + frac(x0) + '**.\n' +
+              '4. Check: substituting back gives 0 = 0.\n\n' +
+              '## 🎯 Final Result\n' + v + ' = ' + frac(x0) + '\n', source:'offline' };
+          }
+          if(Math.abs(a0) >= 1e-12){
+            var r = quadraticSteps(a0, b0, c0, v);
+            return { md: head(q, found.src.trim()) +
+              '## ✅ Answer\n**' + r.answer + '**\n\n' +
+              '## 📝 Steps\n' + r.steps.map(function(s, i){ return (i + 1) + '. ' + s; }).join('\n') + '\n\n' +
+              '## 🎯 Final Result\n' + r.answer + '\n', source:'offline' };
+          }
+        }
+      }
+    }
+
+    /* ---- 2b. differentiate ---- */
+    /* No optional \)? at the end: it ate the closing bracket of sin(x) and left
+       "x^3*sin(x", which cannot parse. Take the whole tail and strip a wrapping
+       pair only when it genuinely balances. */
+    var dm = clean.match(/(?:d\s*\/\s*d([a-z])|differentiate|derivative\s+of|find\s+dy\s*\/\s*d([a-z]))\s*[:\s]*(.+)$/i);
+    if(dm && typeof Deriv !== 'undefined'){
+      var dv = (dm[1] || dm[2] || '').toLowerCase() || null;
+      var body = String(dm[3] || '').trim()
+        .replace(/[?.]+$/, '')
+        .replace(/\s+with\s+respect\s+to\s+[a-z]\s*$/i, '')
+        .trim();
+      if(/^\(.*\)$/.test(body)){
+        var inner = body.slice(1, -1), depth = 0, ok = true;
+        for(var ci = 0; ci < inner.length; ci++){
+          if(inner[ci] === '(') depth++;
+          else if(inner[ci] === ')' && --depth < 0){ ok = false; break; }
+        }
+        if(ok && depth === 0) body = inner;          // the pair really wrapped it
+      }
+      var res = Deriv.of(A, body, dv);
+      if(res){
+        var RULE = {
+          sum:'the **sum rule** — differentiate each term separately',
+          product:'the **product rule**: (uv)′ = u′v + uv′',
+          quotient:'the **quotient rule**: (u/v)′ = (u′v − uv′) / v²',
+          power:'the **power rule**: (uⁿ)′ = n·uⁿ⁻¹',
+          chain:'the **chain rule** — multiply by the derivative of the inside',
+          trig:'the **trigonometric derivatives**: (sin u)′ = cos u · u′, (cos u)′ = −sin u · u′',
+          exp:'the **exponential rule**: (eᵘ)′ = eᵘ · u′',
+          log:'the **logarithm rule**: (ln u)′ = u′ / u'
+        };
+        var steps = ['Identify the expression to differentiate: **' + res.expr +
+                     '**, with respect to ' + res.variable + '.'];
+        res.rules.forEach(function(r){ if(RULE[r]) steps.push('Apply ' + RULE[r] + '.'); });
+        steps.push('Carrying that through and simplifying gives **d/d' + res.variable +
+                   ' = ' + res.result + '**.');
+        return { md: head(q, 'd/d' + res.variable + ' ( ' + res.expr + ' )') +
+          '## ✅ Answer\n**' + res.result + '**\n\n' +
+          '## 📝 Steps\n' + steps.map(function(s, i){ return (i + 1) + '. ' + s; }).join('\n') + '\n\n' +
+          '## 🎯 Final Result\nd/d' + res.variable + ' ( ' + res.expr + ' ) = ' + res.result + '\n',
+          source:'offline' };
+      }
+    }
+
+    /* ---- 3. "is N prime" ---- */
+    var pm = clean.match(/\bis\s+(\d{1,15})\s+(?:a\s+)?prime\b/i);
+    if(pm && Vv.isPrime){
+      var n = parseInt(pm[1], 10), p = Vv.isPrime(n), fac = null;
+      if(!p){ for(var i = 2; i * i <= n; i++) if(n % i === 0){ fac = i; break; } }
+      return { md: head(q, 'Is ' + n + ' prime?') +
+        '## ✅ Answer\n**' + n + ' is ' + (p ? 'prime' : 'not prime') + '.**\n\n' +
+        '## 📝 Steps\n1. A prime has exactly two divisors: 1 and itself.\n' +
+        (p ? '2. Testing every possible divisor up to √' + n + ' finds none that divides ' + n + ' exactly.\n'
+           : '2. ' + n + ' divides exactly by ' + fac + ': **' + n + ' = ' + fac + ' × ' + (n / fac) + '**.\n') +
+        '3. ' + (p ? 'So ' + n + ' has no factors other than 1 and ' + n + '.' : 'A third divisor exists, so it is composite.') + '\n\n' +
+        '## 🎯 Final Result\n' + n + ' is ' + (p ? 'prime' : 'composite') + '.\n', source:'offline' };
+    }
+
+    /* ---- 4. a plain arithmetic expression ---- */
+    if(clean.indexOf('=') < 0){
+      var ast = A.parse(clean.replace(/^[^0-9(+\-]*/, '').replace(/[?.\s]+$/, ''));
+      if(ast && !Object.keys(A.varsOf(ast)).length){
+        var val = A.evalAt(ast, {});
+        if(isFinite(val)){
+          var expr = clean.replace(/^[^0-9(+\-]*/, '').replace(/[?.\s]+$/, '');
+          return { md: head(q, expr) +
+            '## ✅ Answer\n**' + frac(val) + '**\n\n' +
+            '## 📝 Steps\n1. Work through **' + expr + '** using the usual order of operations ' +
+            '(brackets, then powers, then × and ÷, then + and −).\n' +
+            '2. This gives **' + frac(val) + '**.\n\n' +
+            '## 🎯 Final Result\n' + frac(val) + '\n', source:'offline' };
+        }
+      }
+    }
+    return null;                       // not certain → let the model answer
+  }
+
+  return { solve: solve };
+})();
+W.LocalSolve = LocalSolve;
 
 /* ---- automatic complexity detection: quick / normal / deep ---- */
 const DEEP_WORDS = /calculate|compute|prove|derive|evaluate|solve for|find the (value|area|volume|roots)|show that|journal entr|ledger|balance sheet|trial balance|depreciat|amorti[sz]|variance|marginal cost|contribution|break.?even|\bnpv\b|\birr\b|cash flow|ratio analysis|taxable|\bgst\b|consolidat|equilibrium|projectile|thermodynam|stoichiometr|mole concept|quadratic|polynomial|trigonometr|logarithm|matrix|determinant|probability|permutation|combination|integrat|differenti|derivative|vector|theorem|step by step|working note|हल करें|सिद्ध|गणना|साधించండి|లెక్కించండి|నిరూపించండి/i;
@@ -8218,6 +8639,49 @@ async function runAttempt(a, sys, userText, img){
 async function getAnswer(userText, img, opts){
   const sysText  = (opts && opts.sysText)  || sys();
   const validate = (opts && opts.validate) || looksLikeAnswer;
+
+  /* ---------- OFFLINE FIRST ----------
+     The device already carries a parser, an exact solver, an enumerator and a
+     primality test. Running them only as a CHECKER meant a student on a train,
+     or on a spent quota, got nothing for a question this phone can answer
+     perfectly by itself.
+
+     Guarded narrowly on purpose:
+       · no image — LocalSolve reads text, not pictures;
+       · no custom system prompt — Tutor Mode and the quiz builder expect a
+         model's JSON, not a worked solution;
+       · LocalSolve returns null unless it is CERTAIN of the whole question.
+
+     Nothing is charged and no idempotency key is minted, because no quota was
+     spent. A wrong offline answer would be worse than the call it saved, which
+     is why the bar is certainty rather than confidence. */
+  /* Is an offline answer fit to show? The caller's own `validate` decides
+     whether text looks like an answer at all; on top of that the offline reply
+     must carry the headings a student reads and survive the same completeness
+     check applied to anything a model writes. The on-device solver gets no
+     special trust for having been right about the arithmetic. */
+  const offlineOk = (md) => {
+    if(!md || typeof md !== 'string') return false;
+    if(md.indexOf('## ✅') < 0 || md.indexOf('## 📝') < 0) return false;
+    try {
+      if(W.Verify && W.Verify.completeness && W.Verify.completeness(md).length) return false;
+    } catch(e){ return false; }        // cannot check it → do not ship it
+    return validate(md);
+  };
+
+  if(!img && !(opts && opts.sysText) && W.LocalSolve){
+    try {
+      const local = W.LocalSolve.solve(userText);
+      if(local && local.md && offlineOk(local.md)){
+        /* Same shape every caller already reads: {text, via}. `via` normally
+           carries {id, model} for the engine that answered, so the offline
+           path fills it the same way — anything downstream that logs or
+           displays the engine keeps working without a special case. */
+        return { text: local.md, via: {id:'offline', model:'on-device solver'}, offline: true };
+      }
+    } catch(e){ /* fall through to the model — never let this block an answer */ }
+  }
+
   const attempts = planRoute(!!img, userText);
   if(!attempts.length) throw new Error(img ? 'NO_VISION' : 'NO_ENGINE');
   let lastErr = null, fallback = null;
@@ -9070,7 +9534,89 @@ function nbSections(root){
   });
   return out;
 }
+/* ============================================================
+   RENDER GATE
+   ------------------------------------------------------------
+   Everything downstream of here becomes pixels, so this is the
+   last place a malformed answer can be stopped. It used to be
+   the case that the answer was rendered and THEN checked, which
+   meant a broken delimiter or a half-written table reached the
+   student before anything looked at it.
+
+   Three outcomes, in this order of preference:
+
+     pass     — structurally sound, render it
+     repaired — one unambiguous fix applied, render that
+     raw      — cannot be repaired, so show the TEXT rather than
+                risk a mangled or blank page
+
+   The third is the important one. A renderer failure must never
+   turn a complete solution into an empty box: the mathematics
+   is still there, and a student can read it unstyled far more
+   easily than they can read nothing.
+   ============================================================ */
+function renderGate(md){
+  const src = String(md == null ? '' : md);
+  if(!src.trim()) return { ok:false, mode:'empty', md:'' };
+
+  let out = src, repairs = [];
+  const count = (h, n) => h.split(n).length - 1;
+
+  /* Unclosed display maths. Appending the closer is unambiguous: the block
+     was opened, so it was meant to close. */
+  if(count(out, '$$') % 2 !== 0){ out += '\n$$'; repairs.push('closed a $$ block'); }
+  const dollars = count(out, '$') - 2 * count(out, '$$');
+  if(dollars % 2 !== 0){ out += '$'; repairs.push('closed a $ formula'); }
+  if(count(out, '\\[') > count(out, '\\]')){ out += '\\]'; repairs.push('closed a \\[ block'); }
+  if(count(out, '\\(') > count(out, '\\)')){ out += '\\)'; repairs.push('closed a \\( formula'); }
+  /* An unterminated fence swallows the rest of the answer into a code block. */
+  if(count(out, '```') % 2 !== 0){ out += '\n```'; repairs.push('closed a code fence'); }
+
+  /* A table needs its separator row, or the header renders as a body row.
+     Only added when a header line is immediately followed by another row. */
+  const isSep = (line) => /^\s*\|?[\s:|-]+\|?\s*$/.test(line);
+  out = out.replace(/^(\|[^\n]*\|)\n(?!\s*\|?[\s:|-]+\|?\s*$)(\s*\|)/gm, (m, h, nxt) => {
+    /* The HEADER must not itself be a separator. Without this the rule fired
+       on a well-formed table: it read "| --- | --- |" as a header, saw the
+       data row after it was not a separator, and inserted a second one —
+       breaking a table that was already correct. */
+    if(isSep(h)) return m;
+    const cols = h.split('|').length - 2;
+    if(cols < 1) return m;
+    repairs.push('added a missing table separator');
+    return h + '\n|' + Array(cols + 1).join(' --- |') + '\n' + nxt;
+  });
+
+  /* Would it actually render to something? A parser that throws, or produces
+     nothing from non-empty input, must not be allowed to blank the page. */
+  let html = '';
+  try { html = mdToHtml(out); } catch(e){ return { ok:false, mode:'raw', md:src, why:'renderer threw' }; }
+  if(!String(html).replace(/<[^>]*>/g, '').trim())
+    return { ok:false, mode:'raw', md:src, why:'rendered to nothing' };
+
+  return { ok:true, mode: repairs.length ? 'repaired' : 'pass', md: out, repairs: repairs };
+}
+W.renderGate = renderGate;
+
 function nbRender(mount, md){
+  /* THE GATE. Validate before a single pixel, not after. */
+  const gate = renderGate(md);
+  if(gate.mode === 'empty'){
+    mount.innerHTML = '<div class="nb-card"><div class="hd">Nothing to show</div>' +
+      '<p>The solution came back empty. Ask again, or rephrase the question.</p></div>';
+    return;
+  }
+  if(gate.mode === 'raw'){
+    /* Unrenderable — show the text itself. Never a blank page. */
+    mount.innerHTML = '<div class="nb-card"><div class="hd">Shown as plain text</div>' +
+      '<p class="muted">The formatting in this answer could not be displayed, so it is ' +
+      'shown exactly as written. The working is all here.</p><pre style="white-space:pre-wrap">' +
+      esc(gate.md) + '</pre></div>';
+    return;
+  }
+  md = gate.md;
+  if(gate.repairs && gate.repairs.length) W.lastRenderRepairs = gate.repairs;
+
   try {
     const tmp = document.createElement('div');
     tmp.innerHTML = mdToHtml(md);
@@ -13735,6 +14281,90 @@ var Verify = (function(){
             'working shown, so the final answer does not follow from the steps given' }];
   }
 
+  /* ---------- CONTRADICTION ----------
+     The working derives one value and the final answer states another:
+
+       2x + 4 = 14  →  2x = 10  →  x = 5   …then   "Therefore x = 7"
+
+     Neither trace nor substitution catches this alone. trace only asks whether
+     the final value APPEARS in the working; substitution tests the final value
+     against the question and reports "7 is wrong" — true, but it never notices
+     the answer's own working already said 5.
+
+     That difference matters to a student: "your answer is wrong" and "your
+     answer contradicts your line 3" are different information, and the second
+     points at where it went wrong.
+     PORT of Checks::contradiction in verify.php. */
+  function contradiction(question, md){
+    var found = findEquation(deLatexSafe(question));
+    if(!found || found.eq.vars.length !== 1) return [];
+    var v = found.eq.vars[0];
+    var text = deLatexSafe(md);
+    var working = withHead(text, '📝');
+    if(!working.trim()) return [];
+    var zone = claimZone(text);
+
+    var derived = claimedRootsOf(working, v), final_ = claimedRootsOf(zone, v);
+    if(!derived.length || !final_.length) return [];
+
+    var last = derived[derived.length - 1];
+    var near = function(a, b){ return Math.abs(a - b) <= Math.max(1, Math.abs(a), Math.abs(b)) * 1e-6; };
+    for(var i = 0; i < final_.length; i++) if(near(final_[i], last)) return [];
+
+    var holds = function(x){ var e = {}; e[v] = x; return holdsAt(found.eq, e); };
+    var lastOk = holds(last), finalOk = holds(final_[0]);
+    var t = 'the working concludes ' + v + ' = ' + round6(last) +
+            ' but the answer states ' + v + ' = ' + round6(final_[0]) +
+            ' — a solution cannot disagree with its own steps';
+    if(lastOk === true && finalOk === false)
+      t += '. Substituting both into ' + String(found.src).trim() +
+           ' shows the WORKING is right and the final line is the mistake';
+    else if(lastOk === false && finalOk === true)
+      t += '. Substituting both shows the final answer is right and a step above it is wrong';
+    return [{kind:'contradiction', ok:false, text:t}];
+  }
+
+  /* ---------- CLAIM TAXONOMY ----------
+     The other checks ask whether the answer's NUMBERS are right. This asks what
+     KIND of statement each assertion is, because two of them are things no
+     solver is entitled to assert and no engine here can confirm.
+
+     STATUS CLAIMS. "It is currently an open conjecture" promotes the solver's
+     own failure into a theorem about the state of mathematics. "I cannot prove
+     this" and "nobody can prove this" are different claims, and only the first
+     was established.
+
+     DENSITY CLAIMS. "exactly one-third of all Markov triples have an odd sum"
+     was false — the real figure is about 26% — but the fault is not the number.
+     It is the word EXACTLY on a proportion of an infinite family with no
+     argument behind it. A wrong proportion and a lucky one are the same
+     failure.
+
+     Neither is ever called FALSE: both are reported as claims the system could
+     not establish. Advisory, so one over-confident sentence does not condemn a
+     sound solution — but never silent.
+     PORT of Checks::taxonomy in verify.php. */
+  var STATUS_RE = /\b(open\s+(?:conjecture|problem|question)|unsolved\s+(?:problem|question)|remains?\s+(?:unproven|unsolved|open)|no\s+known\s+proof|it\s+is\s+conjectured|long[-\s]standing\s+conjecture|deep\s+unsolved|famous\s+conjecture|has\s+never\s+been\s+proved|nobody\s+has\s+proved)\b/i;
+  /* No trailing \b on the percentage forms: "%" is not a word character, so
+     \b after it demands a following letter and "exactly 25% of" never matched. */
+  var DENSITY_RE = /\b(exactly\s+(?:one|a|two|three)[-\s](?:third|half|quarter|fifth)s?|exactly\s+\d+(?:\.\d+)?\s*(?:%|percent)|precisely\s+\d+(?:\.\d+)?\s*(?:%|percent)|(?:one|two|three)[-\s](?:third|half|quarter)s?\s+of\s+all|exactly\s+half\s+of\s+all)/i;
+
+  function taxonomy(md){
+    var s = deLatexSafe(md).replace(/```[\s\S]*?```/g, ' ');
+    var out = [], m;
+    if((m = s.match(STATUS_RE))) out.push({kind:'taxonomy', ok:false, soft:true,
+      claimStatus:'STATUS_UNESTABLISHED',
+      text:'the answer states that this is "' + String(m[0]).trim() + '" — a claim about what ' +
+           'mathematics currently knows, not about this problem. The system could not establish ' +
+           'that claim: being unable to prove something is not evidence that nobody has'});
+    if((m = s.match(DENSITY_RE))) out.push({kind:'taxonomy', ok:false, soft:true,
+      claimStatus:'PROPORTION_UNESTABLISHED',
+      text:'the answer asserts a precise proportion ("' + String(m[0]).trim() + '") of an infinite ' +
+           'family. The system could not establish it — and a proportion that happens to be right ' +
+           'without an argument is the same failure as one that is wrong'});
+    return out;
+  }
+
   /* ---------- PRIMALITY, computed not believed ----------
      "It seems 5779 is prime" is a guess wearing the clothes of a statement.
      Primality is decidable in microseconds; letting a model estimate it is the
@@ -14365,6 +14995,10 @@ var Verify = (function(){
     try { checks = checks.concat(unproved(text)); } catch(e){}
     try { checks = checks.concat(primality(text)); } catch(e){}
     try { checks = checks.concat(completeness(full)); } catch(e){}
+    try { checks = checks.concat(taxonomy(text)); } catch(e){}
+    /* A solution that disagrees with its own working: answer-level, and it
+       points at WHERE it went wrong rather than only that it did. */
+    try { checks = checks.concat(contradiction(question, text)); } catch(e){}
     try { checks = integrity(question, full).concat(checks); } catch(e){}
     /* validity comes before everything: an impossible question makes every other verdict moot */
     try { checks = questionCheck(question, text).concat(checks); } catch(e){}
@@ -14420,7 +15054,7 @@ var Verify = (function(){
        "⚠ Partially verified". Every answer looked half-checked. */
     var PROOF = {subst:1, transform:1, arith:1, chem:1, identity:1, bound:1,
                  divis:1, unique:1, condition:1, extremum:1,
-                 integrity:1, units:1, trace:1, question:1, claim:1, primality:1, truncated:1};
+                 integrity:1, units:1, trace:1, question:1, claim:1, primality:1, truncated:1, contradiction:1};
     /* A soft check is advisory: it reports what could NOT be tested, not a
        problem found. It belongs in the receipt and nowhere near the failure
        count, because a caveat must never decide the badge. */
@@ -14449,7 +15083,7 @@ var Verify = (function(){
     /* units belongs here, not in the milder step-level bucket: an answer to
        "find the acceleration" given in newtons is wrong whatever the
        arithmetic did. */
-    var ANSWER_LEVEL = {subst:1, extremum:1, condition:1, unique:1, chem:1, bound:1, transform:1, units:1, integrity:1, question:1, claim:1, primality:1, truncated:1};
+    var ANSWER_LEVEL = {subst:1, extremum:1, condition:1, unique:1, chem:1, bound:1, transform:1, units:1, integrity:1, question:1, claim:1, primality:1, truncated:1, contradiction:1};
     var failedAnswer  = failed.filter(function(c){ return ANSWER_LEVEL[c.kind]; });
     var failedWorking = failedProofs.filter(function(c){ return !ANSWER_LEVEL[c.kind]; });
 
@@ -14487,7 +15121,7 @@ var Verify = (function(){
              hasSteps:hasSteps, numeric:numeric };
   }
 
-  return { run:run, evalFlat:evalFlat, arithmetic:arithmetic, units:units, integrity:integrity, trace:trace, questionCheck:questionCheck, presentation:presentation, leaks:leaks, unproved:unproved, primality:primality, isPrime:isPrime, completeness:completeness,
+  return { run:run, evalFlat:evalFlat, arithmetic:arithmetic, units:units, integrity:integrity, trace:trace, questionCheck:questionCheck, presentation:presentation, leaks:leaks, unproved:unproved, primality:primality, isPrime:isPrime, completeness:completeness, taxonomy:taxonomy, contradiction:contradiction,
            substitution:substitution, consistency:consistency,
            chemistry:chemistry, parseFormula:parseFormula, parseSide:parseSide,
            units:units, unitPresence:unitPresence, bounds:bounds,
@@ -14587,7 +15221,7 @@ function paintVerif(md){
                 integrity:'Question read correctly', units:'Units',
                 trace:'Final answer follows the working',
                 reaches:'Traced to the working', unit:'Unit', bound:'Range',
-                question:'The question itself', presentation:'Presentation', claim:'Claim not proved', primality:'Primality', truncated:'Incomplete',
+                question:'The question itself', presentation:'Presentation', claim:'Claim not proved', primality:'Primality', truncated:'Incomplete', taxonomy:'Claim status',
                 chem:'Atoms counted', unitmiss:'Unit',
                 transform:'Transformation tested', identity:'Identity tested',
                 divis:'Divisibility tested', unique:'Completeness tested',

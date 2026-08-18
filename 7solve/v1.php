@@ -496,6 +496,19 @@ if ($route === 'solve') {
         . "## 📌 Understood as\n(the equation exactly as given, one line)\n"
         . "## ✅ Answer\n(the answer itself, in exact form, and nothing else)\n"
         . "## 📝 Steps\n(numbered, no repetition)\n"
+        /* A student revising from a script needs to SEE the pattern, not read a
+           paragraph describing one. Markdown tables already render here, and a
+           tree drawn in plain characters renders anywhere — neither needs a
+           library, and both turn a wall of prose into something checkable at a
+           glance. Asked for only when the content is genuinely tabular or
+           structural, because a table of one row is worse than a sentence. */
+        . "Use a MARKDOWN TABLE whenever you list three or more cases, values, "
+        . "trials or comparisons — one row each, with a column for the result and "
+        . "a column for whether it satisfies the condition. Never write such a list "
+        . "as prose.\n"
+        . "Draw a DIAGRAM in plain characters when the structure matters: a tree of "
+        . "generated cases, a number line, a labelled triangle, a force diagram, a "
+        . "flow of steps. Put it in a fenced code block so the spacing survives.\n"
         . "## 🎯 Final Result\n(one line)\n";
     if ($lang !== '' && strcasecmp($lang, 'English') !== 0) $system .= "Reply in {$lang}.\n";
     if ($level !== '')   $system .= "Pitch the explanation at this level: {$level}.\n";

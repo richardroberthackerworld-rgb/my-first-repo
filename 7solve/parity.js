@@ -147,6 +147,16 @@ const VERDICTS = [
   /* must not cry wolf */
   ['Solve x^2-4=0',    '## ✅ Answer\nx² - 4 = 0, so x² = 4, so x = ±2.'],
   ['Solve 2x+3 = 11',  '## ✅ Answer\nx = 4'],
+  /* CONTRADICTION — a solution that disagrees with its own working. Neither
+     trace nor substitution catches this alone: trace only asks whether the
+     final value appears, and substitution reports "7 is wrong" without ever
+     noticing the working already said 5. */
+  ['Solve 2x + 4 = 14', '## ✅ Answer\nx = 7\n\n## 📝 Steps\n1. 2x + 4 = 14\n2. 2x = 10\n3. x = 5'],
+  ['Solve 2x + 4 = 14', '## ✅ Answer\nx = 5\n\n## 📝 Steps\n1. 2x + 4 = 14\n2. 2x = 10\n3. x = 5'],
+  ['Solve 2x + 4 = 14', '## ✅ Answer\nx = 5\n\n## 📝 Steps\n1. 2x = 10\n2. so x = 9'],
+  ['Solve 2x + 4 = 14', '## ✅ Answer\nx = 5'],
+  ['Solve x + y = 10',  '## ✅ Answer\n(4,6)\n\n## 📝 Steps\n1. x = 4'],
+
   /* the trailing full stop that used to hide an equation from every check */
   ['Solve x^2-4 = 0.', '## ✅ Answer\nx = 2 and x = -2'],
   ['Solve x^2-4 = 0.', '## ✅ Answer\nx = 2 and x = 3'],
@@ -250,6 +260,22 @@ const VERDICTS = [
   ['Find all positive integers a,b,c with a^2+b^2+c^2=3abc.',
    '## ✅ Answer\nAll solutions arise from (1,1,1).\n\n## 📝 Steps\n1. By Vieta jumping and infinite descent every solution reduces to (1,1,1).'],
 
+  /* CLAIM TAXONOMY (§5). Two statements no solver is entitled to make and no
+     engine here can confirm: what mathematics currently knows, and a precise
+     proportion of an infinite family. Neither is called false — both are
+     "the system could not establish this". */
+  ['a^2+b^2+c^2=3abc: are infinitely many a+b+c prime?',
+   '## ✅ It is currently an open conjecture.\nProving infinitely many are prime is a deep unsolved problem.\n\n## 📖 Steps\n2. If all are even, the equation holds. Thus, exactly one-third of all Markov triples have an odd sum.\n3. (1, 1, 1) → Sum 3 (Prime)\n   (1, 5, 13) → Sum 19 (Prime)\n   (1, 13, 34) → Sum 48'],
+  ['Markov', '## ✅ Answer\nExactly 25% of solutions are odd.'],
+  ['Markov', '## ✅ Answer\nPrecisely 40 percent are prime.'],
+  /* must stay silent — naming an equation is not a status claim */
+  ['Markov', '## ✅ Answer\nThis is the famous Markov Equation.'],
+  ['Cake',   '## ✅ Answer\nOne third of the cake is 120 g.'],
+  /* primality claims, computed */
+  ['Primes', '## ✅ Answer\nIt seems 5779 is prime, 36 is prime, and 467 is prime.'],
+  /* truncation */
+  ['Markov', '## ✅ Answer\nSolutions found.\n\n## 📝 Steps\n1. If a, b, c are all odd: a² + b² + c² is'],
+
   /* QUESTION VALIDITY — the newest layer, and the one that lived in PHP alone
      for a while. Three replies to an impossible question used to receive
      identical verdicts; these pin the distinction in BOTH engines. */
@@ -296,13 +322,20 @@ function loadJs() {
     Math, parseFloat, parseInt, isFinite, isNaN, String, Number, Object, Array, RegExp, JSON,
   };
   vm.createContext(sandbox);
+  /* Deriv too: LocalSolve answers derivatives with no model at all, so its
+     output is checked against known results rather than engine-to-engine. */
+  const dvS = html.indexOf('var Deriv = (function(){');
+  const dvE = html.indexOf('\nW.Deriv = Deriv;', dvS);
+  const dvSrc = (dvS >= 0 && dvE > dvS) ? html.slice(dvS, dvE) : 'var Deriv = null;';
+
   vm.runInContext(
     dlSrc + '\nwindow.deLatex7 = deLatex;\n' + src +
-    '\nthis.__A = Verify.Algebra; this.__V = Verify;',
+    '\nW.Verify = Verify;\n' + dvSrc +
+    '\nthis.__A = Verify.Algebra; this.__V = Verify; this.__D = Deriv;',
     sandbox, { timeout: 5000 });
   if (!sandbox.__A) throw new Error('Verify.Algebra was not exported');
   if (typeof sandbox.window.deLatex7 !== 'function') throw new Error('deLatex7 did not attach');
-  return { A: sandbox.__A, V: sandbox.__V };
+  return { A: sandbox.__A, V: sandbox.__V, D: sandbox.__D };
 }
 
 /* The same collapse from checks to a state that Checks::run performs. Kept
@@ -317,7 +350,7 @@ function verdictOf(checks) {
   const passed = checks.filter((c) => c.ok);
   /* Answer-level kinds, matching $answerLevel in Checks::run. A wrong
      dimension condemns the answer, not merely a step. */
-  const ANSWER = { subst: 1, units: 1, integrity: 1, question: 1, claim: 1, primality: 1, truncated: 1 };
+  const ANSWER = { subst: 1, units: 1, integrity: 1, question: 1, claim: 1, primality: 1, truncated: 1, contradiction: 1 };
   if (failed.some((c) => ANSWER[c.kind])) return 'disputed';
   if (failed.length) return 'stepfail';
   if (passed.length) return 'checked';
@@ -373,6 +406,53 @@ function runPhp(payload) {
   }
 }
 
+/* ---------- symbolic differentiation ----------
+   LocalSolve answers these with no model, so its output is not compared
+   between engines — it is compared against KNOWN RESULTS. A deterministic
+   solver that is quietly wrong is more dangerous than an AI that hedges,
+   because nothing downstream doubts it.
+
+   Every bug found while building this lives here permanently. The bracket
+   case is the one that matters most: a trailing \)? in the trigger regex
+   turned sin(x) into "sin(x", the parse failed, and the whole path returned
+   null in silence. It must never come back. */
+const DERIVATIVES = [
+  // core rules
+  ['x^2',            '2 x'],
+  ['x^3',            '3 x²'],
+  ['x^4',            '4 x³'],
+  ['5x^2 + 3x + 7',  '10 x + 3'],
+  ['3x^5 - 2x^2',    '15 x⁴ − 4 x'],
+  ['sin(x)',         'cos(x)'],
+  ['cos(x)',         '−sin(x)'],
+  ['ln(x)',          '1 / x'],
+  // product, quotient, chain
+  ['x*sin(x)',       'sin(x) + x cos(x)'],
+  ['x*cos(x)',       'cos(x) − x sin(x)'],
+  ['x^3*sin(x)',     '3 x² sin(x) + x³ cos(x)'],
+  ['sin(x^2)',       'cos(x²) · 2 x'],
+  ['exp(x^2)',       'exp(x²) · 2 x'],
+  // REGRESSION: the trigger regex ate the closing bracket of sin(x)
+  ['x^3 sin x',      '3 x² sin(x) + x³ cos(x)'],
+  ['sin x',          'cos(x)'],
+  // refusals — a wrong derivative that looks right is the worst outcome here
+  ['x^x',            null],
+  ['x*y',            null],
+  ['floor(x)',       null],
+];
+
+function checkDerivatives(D, A) {
+  const bad = [];
+  for (const [src, want] of DERIVATIVES) {
+    let got = null;
+    try { const r = D.of(A, src, null); got = r ? r.result : null; } catch (e) { got = 'THREW: ' + e.message; }
+    if (got !== want) {
+      bad.push(`deriv  d/dx ${JSON.stringify(src)}\n            got  ${JSON.stringify(got)}\n            want ${JSON.stringify(want)}`);
+    }
+  }
+  return bad;
+}
+
 /* ---------- compare ---------- */
 function norm(v) {
   if (v === null || v === undefined) return null;
@@ -381,7 +461,7 @@ function norm(v) {
 }
 
 (function main() {
-  const { A, V } = loadJs();
+  const { A, V, D } = loadJs();
 
   const evalCases = [];
   for (const src of EXPRS) for (const env of ENVS) evalCases.push({ src, env });
@@ -440,7 +520,9 @@ function norm(v) {
       V.presentation(c.a) || [],
       V.unproved(c.a) || [],
       V.primality(c.a) || [],
-      V.completeness(c.a) || []);
+      V.completeness(c.a) || [],
+      V.taxonomy(c.a) || [],
+      V.contradiction(c.q, c.a) || []);
     const sig = checks.map((x) => x.kind + (x.ok ? '+' : '-')).sort().join(',');
     const js = { state: verdictOf(checks), n: checks.length, sig };
     const ph = php.verdicts[i];
@@ -452,7 +534,10 @@ function norm(v) {
     }
   });
 
-  const total = evalCases.length + holdCases.length + varCases.length + verdictCases.length;
+  /* derivatives: checked against known results, not engine-to-engine */
+  if (D) bad.push(...checkDerivatives(D, A));
+
+  const total = evalCases.length + holdCases.length + varCases.length + verdictCases.length + DERIVATIVES.length;
   if (bad.length) {
     console.log(`\nPARITY FAILED — ${bad.length} of ${total} cases disagree\n`);
     bad.slice(0, 40).forEach((b) => console.log('  ' + b));
