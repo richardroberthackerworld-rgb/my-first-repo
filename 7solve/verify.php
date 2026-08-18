@@ -697,6 +697,30 @@ final class Checks
         /* One variable: substitute EVERY claimed root. Checking only the first
            reports a clean pass on an answer whose second root is wrong. */
         $v0 = $eq['vars'][0];
+        $roots = self::claimedRoots($zone, $v0);
+        if (!count($roots) || count($roots) > 6) return [];
+
+        $out = [];
+        foreach ($roots as $rv) {
+            $env = [$v0 => $rv];
+            $ok = Algebra::holdsAt($eq, $env);
+            if ($ok === null) continue;                   // undefined there → no verdict
+            $l = Algebra::round6(Algebra::evalAt($eq['L'], $env));
+            $r = Algebra::round6(Algebra::evalAt($eq['R'], $env));
+            $out[] = ['kind' => 'subst', 'ok' => $ok,
+                'text' => $v0 . ' = ' . Algebra::round6($rv) . ' put back into '
+                        . trim($found['src']) . ' gives ' . $l . ($ok ? ' = ' : ' ≠ ') . $r];
+        }
+        return $out;
+    }
+
+    /* Every value the text claims the variable takes.
+       Pulled out of substitution() so the grader can read a STUDENT's roots
+       with exactly the same reader that reads a model's — otherwise the two
+       would drift, and a student would be marked against a different parse of
+       their own answer than the one the verifier uses. */
+    public static function claimedRoots(string $zone, string $v0): array
+    {
         $roots = [];
         $seen = [];
         $rejected = '/\b(extraneous|rejected?|discard(ed)?|invalid|not a solution|does not satisfy|fails)\b/i';
@@ -778,21 +802,7 @@ final class Checks
                 $roots[] = $n;
             }
         }
-
-        if (!count($roots) || count($roots) > 6) return [];
-
-        $out = [];
-        foreach ($roots as $rv) {
-            $env = [$v0 => $rv];
-            $ok = Algebra::holdsAt($eq, $env);
-            if ($ok === null) continue;                   // undefined there → no verdict
-            $l = Algebra::round6(Algebra::evalAt($eq['L'], $env));
-            $r = Algebra::round6(Algebra::evalAt($eq['R'], $env));
-            $out[] = ['kind' => 'subst', 'ok' => $ok,
-                'text' => $v0 . ' = ' . Algebra::round6($rv) . ' put back into '
-                        . trim($found['src']) . ' gives ' . $l . ($ok ? ' = ' : ' ≠ ') . $r];
-        }
-        return $out;
+        return $roots;
     }
 
     /* ---------- the verdict ----------
