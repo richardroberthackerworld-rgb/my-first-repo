@@ -690,6 +690,40 @@ const ABSOLUTE = [
   ['d-', 'differentiate x^3 sin x', '## ✅ Answer\n**x³ cos(x)**',  'disputed'],
   ['d-', 'd/dx sin x',              '## ✅ Answer\n**-cos(x)**',    'disputed'],
 
+  /* --- P0: the fixed-sample-grid forgery ---
+     Equivalence is decided by agreeing at sample points. While that set was a
+     fixed public grid — 0.83 + k·1.19 — it was forgeable: a claim of
+
+         2x + (x−0.83)(x−2.02)…(x−9.16)
+
+     equals 2x at every sampled point and is wrong by −1849 at x = 1.5, and it
+     earned a green "Verified by 7Solve". WRONG became checked, which is the one
+     thing this architecture exists to prevent.
+
+     The grid is now hashed from the question AND the claim, so building a
+     polynomial that vanishes on it requires knowing the grid, which requires
+     already having written the polynomial. These rows pin the old public grid
+     forever: whatever the sampling becomes, a claim crafted against 0.83+k·1.19
+     must never verify again. The scaled variant is here because multiplying the
+     forgery by a constant is the cheapest way to dodge a literal-string fix. */
+  ['grid forgery', 'differentiate x^2',
+   '## ✅ Answer\n**2x + (x - 0.83)*(x - 2.02)*(x - 3.21)*(x - 4.40)*(x - 5.59)*(x - 6.78)*(x - 7.97)*(x - 9.16)**', 'disputed'],
+  ['grid forgery', 'differentiate x^2',
+   '## ✅ Answer\n**2x + 0.5*(x - 0.83)*(x - 2.02)*(x - 3.21)*(x - 4.40)*(x - 5.59)*(x - 6.78)*(x - 7.97)*(x - 9.16)**', 'disputed'],
+  /* a second, independently built forgery on the same grid */
+  ['grid forgery', 'differentiate x^3',
+   '## ✅ Answer\n**3x² + (x - 0.83)*(x - 2.02)*(x - 3.21)*(x - 4.40)*(x - 5.59)*(x - 6.78)*(x - 7.97)*(x - 9.16)**', 'disputed'],
+  ['grid forgery', 'differentiate sin(x)',
+   '## ✅ Answer\n**cos(x) + (x - 0.83)*(x - 2.02)*(x - 3.21)*(x - 4.40)*(x - 5.59)*(x - 6.78)*(x - 7.97)*(x - 9.16)**', 'disputed'],
+  /* the integral checker samples a different public grid; pin that one too */
+  ['grid forgery', 'integrate x^2',
+   '## ✅ Answer\n**x³/3 + (x - 0.70)*(x - 1.23)*(x - 1.76)*(x - 2.29)*(x - 2.82)*(x - 3.35)*(x - 3.88)*(x - 4.41) + C**', 'disputed'],
+  /* the hardening must not cost a single correct answer — these are the forms
+     most likely to break if sampling moved into a bad domain */
+  ['grid ok',      'differentiate sqrt(x)', '## ✅ Answer\n**1/(2 sqrt(x))**', 'checked'],
+  ['grid ok',      'differentiate ln(x)',   '## ✅ Answer\n**1/x**',          'checked'],
+  ['grid ok',      'integrate 1/x^2',       '## ✅ Answer\n**-1/x + C**',     'checked'],
+
   /* --- P0: 3x² sin x, reported from production ---
      The site returned 9x sin x + 3x² cos x. Its own steps computed u' = 6x and
      applied the product rule correctly; a later "simplification" turned 6x into
@@ -857,6 +891,72 @@ const ABSOLUTE = [
   /* AI prose asserting verification must not move the verdict */
   ['sys ai-prose',   'Solve x + y = 10 and x - y = 2',
    '## ✅ Answer\n**x = 5, y = 5**\n\n## 🔍 Verification\n✓ Verified. Both equations are satisfied. Correct.', 'disputed'],
+
+  /* --- P0: forged IDENTITY (the fourth fixed-grid exploit) ---
+     identityCheck sampled a published grid, (k%2?1:-1)*(0.7 + k*0.61 + vi*1.37),
+     so a false factorisation could be made to agree at all twelve points:
+
+         (x-3)(x-4) = x^2 - 7x + 12 + PROD(x - p_i)
+
+     is wrong at every other value of x and took a green "Verified by 7Solve".
+     Its points now come from samplePoints keyed on the claim line. These rows
+     pin the old grid forever, at several targets, because a fix that only
+     recognises one forgery is a special case. */
+  ['forged identity', 'Factorise x^2 - 7x + 12',
+   '## ✅ Answer\n(x - 3)(x - 4) = x^2 - 7x + 12 + (x - (-0.7))*(x - 1.31)*(x - (-1.92))*(x - 2.53)*(x - (-3.14))*(x - 3.75)*(x - (-4.36))*(x - 4.97)*(x - (-5.58))*(x - 6.19)*(x - (-6.8))*(x - 7.41)', 'stepfail'],
+  ['forged identity', 'Expand (x + 1)^2',
+   '## ✅ Answer\n(x + 1)^2 = x^2 + 2x + 1 + (x - (-0.7))*(x - 1.31)*(x - (-1.92))*(x - 2.53)*(x - (-3.14))*(x - 3.75)*(x - (-4.36))*(x - 4.97)*(x - (-5.58))*(x - 6.19)*(x - (-6.8))*(x - 7.41)', 'stepfail'],
+  /* true identities must still certify, in several shapes */
+  ['identity ok',  'Factorise x^2 - 7x + 12', '## ✅ Answer\n(x - 3)(x - 4) = x^2 - 7x + 12', 'checked'],
+  ['identity ok',  'Expand (x + 1)^2',        '## ✅ Answer\n(x + 1)^2 = x^2 + 2x + 1',      'checked'],
+  ['identity ok',  'Factorise x^2 + 5x + 6',  '## ✅ Answer\n(x+2)(x+3) = x^2 + 5x + 6',     'checked'],
+  ['identity ok',  'Factorise x^2 - 9',       '## ✅ Answer\n(x - 3)(x + 3) = x^2 - 9',       'checked'],
+  /* false identities must still be caught */
+  ['identity bad', 'Factorise x^2 - 7x + 12', '## ✅ Answer\n(x - 3)(x - 4) = x^2 - 7x + 99', 'stepfail'],
+  ['identity bad', 'Expand (x + 1)^2',        '## ✅ Answer\n(x + 1)^2 = x^2 + 2x + 5',       'stepfail'],
+  ['identity bad', 'Factorise x^2 - 9',       '## ✅ Answer\n(x - 3)(x + 3) = x^2 + 9',       'stepfail'],
+  /* multivariable identity: each variable must get a DIFFERENT value, or
+     a = b collapses a false claim into 0 = 0 and it passes */
+  ['identity multi', 'Factorise a^3 - b^3',
+   '## ✅ Answer\n(a - b)(a^2 + a*b + b^2) = a^3 - b^3', 'checked'],
+  ['identity multi', 'Factorise a^3 - b^3',
+   '## ✅ Answer\n(a - b)(a^2 - a*b + b^2) = a^3 - b^3', 'stepfail'],
+  /* AI prose claiming verification must not move an identity verdict */
+  ['identity prose', 'Factorise x^2 - 7x + 12',
+   '## ✅ Answer\n(x - 3)(x - 4) = x^2 - 7x + 99\n\n## 🔍 Verification\n✓ Verified. This factorisation is correct.', 'stepfail'],
+
+  /* --- P0: forged linearity ---
+     systemShape probed linearity at the fixed points 0, 1 and 2, and that was
+     forgeable exactly as the derivative grid was. x·(x−1)·(x−2)·(x−k) is zero
+     at all three probes AND at the claimed x = k, so the system below probed
+     as the linear x + y = 10, was declared to have a unique solution, and took
+     a green "Verified by 7Solve" — while being genuinely non-linear with other
+     solutions. Certifying uniqueness there is simply wrong.
+
+     The probes are now hashed from the equations and the variables, and the
+     test compares SLOPES so it does not depend on their spacing. These rows
+     pin the old probe positions forever: whatever the probing becomes, a term
+     built to vanish at 0, 1, 2 must never certify again. Several k values,
+     because a fix that only recognises one of them is a special case. */
+  ['forged linearity', 'Solve x + y + x*(x-1)*(x-2)*(x-6) = 10 and x - y = 2',
+   '## ✅ Answer\n**x = 6, y = 4**', 'plain'],
+  ['forged linearity', 'Solve x + y + x*(x-1)*(x-2)*(x-5) = 8 and x - y = 2',
+   '## ✅ Answer\n**x = 5, y = 3**', 'plain'],
+  ['forged linearity', 'Solve x + y + 2*x*(x-1)*(x-2)*(x-4) = 6 and x - y = 2',
+   '## ✅ Answer\n**x = 4, y = 2**', 'plain'],
+  ['forged linearity', 'Solve x + y + x*(x-1)*(x-2)*(x-7)*(x+1) = 12 and x - y = 2',
+   '## ✅ Answer\n**x = 7, y = 5**', 'plain'],
+  /* a forged-linear system whose claimed point does NOT satisfy it is still
+     decidably wrong, and must stay disputed rather than falling silent */
+  ['forged linearity-', 'Solve x + y + x*(x-1)*(x-2)*(x-6) = 10 and x - y = 2',
+   '## ✅ Answer\n**x = 5, y = 3**', 'disputed'],
+  /* higher-degree ordinary nonlinear systems, valid points, must not certify */
+  ['nonlinear deg3', 'Solve x^3 + y = 9 and x + y = 3',  '## ✅ Answer\n**x = 2, y = 1**', 'plain'],
+  ['nonlinear deg3', 'Solve x^2*y = 12 and x + y = 5',   '## ✅ Answer\n**x = 2, y = 3**', 'plain'],
+  ['nonlinear deg3', 'Solve x*y^2 = 12 and x + y = 5',   '## ✅ Answer\n**x = 3, y = 2**', 'plain'],
+  /* the probe change must not cost a linear system its badge */
+  ['probe ok', 'Solve 0.5x + y = 4 and x - y = 2', '## ✅ Answer\n**x = 4, y = 2**', 'checked'],
+  ['probe ok', 'Solve x/2 + y = 4 and x - y = 2',  '## ✅ Answer\n**x = 4, y = 2**', 'checked'],
 
   /* --- extraction traps found by the adversarial review ---
      "xy" is a product of two variables and an English word by shape. The
@@ -1242,6 +1342,173 @@ function checkVerificationAuthority(html) {
   return bad;
 }
 
+/* ---------- SAMPLING MECHANISM ----------
+   The corpus pins the one historical forgery — a claim built against the old
+   public grid 0.83 + k·1.19. That is necessary but not sufficient, and
+   sabotage proved it: pinning the seed to a constant, or dropping the claim
+   out of the hash, left every corpus case passing. Those changes reintroduce
+   exactly the vulnerability that was just fixed — a fixed, discoverable grid —
+   without breaking a single verdict.
+
+   So the mechanism is asserted directly. What makes the forgery hard is not
+   which points are chosen but that the choice DEPENDS ON THE CLAIM: to build a
+   polynomial vanishing on the grid you must know the grid, and the grid is a
+   hash of the polynomial you have not written yet. If that property ever
+   silently disappears, this fails rather than the maths. */
+function checkSampling(V) {
+  const bad = [];
+  const P = V.samplePoints;
+  if (typeof P !== 'function') return ['sampling: samplePoints is not exported — guard is stale'];
+
+  const a = P('d|x^2|2x');
+  const b = P('d|x^2|2x + 0');          // same maths, different text
+  const c = P('d|x^3|2x');              // different question
+  const again = P('d|x^2|2x');
+
+  if (!Array.isArray(a) || a.length < 12) {
+    bad.push(`sampling: only ${a && a.length} points — a forgery needs one factor per point, ` +
+             'so too few points makes the polynomial cheap to build');
+  }
+  if (JSON.stringify(a) === JSON.stringify(b)) {
+    bad.push('sampling: the grid does not depend on the CLAIM — that is what makes a forgery ' +
+             'hard, because the attacker would have to know the points before writing the ' +
+             'expression whose text chooses them');
+  }
+  if (JSON.stringify(a) === JSON.stringify(c)) {
+    bad.push('sampling: the grid does not depend on the QUESTION');
+  }
+  if (JSON.stringify(a) !== JSON.stringify(again)) {
+    bad.push('sampling: not deterministic — the same question and claim must always give the ' +
+             'same points, or a failing verdict cannot be reproduced');
+  }
+  /* the legacy public grid must never come back */
+  const legacy = []; for (let k = 0; k < 8; k++) legacy.push(0.83 + k * 1.19);
+  if (legacy.every((p, i) => Math.abs((a[i] || 0) - p) < 1e-9)) {
+    bad.push('sampling: the old fixed public grid 0.83 + k*1.19 is back');
+  }
+  /* every point must be strictly positive, or sqrt and ln lose all their
+     samples and the check falls silent on correct work */
+  for (const p of a.concat(b)) {
+    if (!(p > 0) || !isFinite(p)) { bad.push(`sampling: non-positive or non-finite point ${p}`); break; }
+  }
+
+  /* ---- no certification checker may roll its own grid ----
+     This is the architectural half, and it is the point of the whole exercise.
+     Four checkers were exploited in turn — derivative, integral, systemShape,
+     identity — and a fifth (polyOf) was found by inspection. They were not four
+     unrelated bugs. They were one vulnerability written four times, because
+     every checker chose its own evaluation points.
+
+     So a checker that samples must take its points from samplePoints. This
+     scans each PROOF-capable function for an assignment into an environment
+     whose value contains a numeric literal, and fails if that function is not
+     drawing from the central sampler. Sampling at the STUDENT'S OWN claimed
+     values — substitution, transformCheck, uniqueness — is a different thing
+     and is exempt: those points are not a grid an attacker can aim at, they
+     are the answer being tested. */
+  {
+    const idx = fs.readFileSync(path.join(HERE, 'index.html'), 'utf8');
+    const vS = idx.indexOf('var Verify = (function(){');
+    const vE = idx.indexOf('\n})();', vS);
+    const lines = idx.slice(vS, vE).split('\n');
+    /* points taken from the claim, not from a grid — nothing to forge */
+    const CLAIM_DRIVEN = { substitution: 1, transformCheck: 1, uniqueness: 1,
+      conditionCheck: 1, checkDivisibility: 1, systemCheck: 1, chemistry: 1 };
+    let fn = '(top)';
+    const offenders = {};
+    for (const L of lines) {
+      const m = L.match(/^\s*function ([A-Za-z_$][\w$]*)\s*\(/);
+      if (m) fn = m[1];
+      if (CLAIM_DRIVEN[fn]) continue;
+      const asn = L.match(/\benv\d*\[[^\]]*\]\s*=\s*(.+?);/);
+      if (!asn) continue;
+      const rhs = asn[1];
+      const via = rhs.match(/\b(PTS|PB|IPTS|VP)\b/);
+      if (via) {
+        /* Naming an array PTS does not make it central. It must actually be
+           assigned from samplePoints, or a checker can bypass the sampler by
+           declaring `var IPTS = [1,2,3,…]` and keep this guard happy. */
+        const decl = new RegExp('\\b' + via[1] + '\\s*=\\s*([^;]+);');
+        const d = (idx.slice(idx.indexOf('function ' + fn + '('), idx.indexOf('function ' + fn + '(') + 8000)).match(decl);
+        if (d && /samplePoints/.test(d[1])) continue;                          // genuinely central
+        (offenders[fn] = offenders[fn] || []).push(
+          via[1] + ' is not assigned from samplePoints: ' + (d ? d[1].trim().slice(0, 50) : '(not found)'));
+        continue;
+      }
+      if (/samplePoints/.test(rhs)) continue;
+      if (!/\d/.test(rhs)) continue;                                            // no literal
+      if (/^\s*(i|k|n|q)\s*$/.test(rhs)) continue;                              // plain loop index
+      (offenders[fn] = offenders[fn] || []).push(L.trim().slice(0, 70));
+    }
+    for (const f of Object.keys(offenders)) {
+      bad.push(`sampling: ${f} builds its own evaluation grid instead of using ` +
+               `samplePoints — a fixed grid is discoverable and therefore forgeable, ` +
+               `which is exactly how derivative, integral, systemShape and identity ` +
+               `were each exploited in turn\n            ${offenders[f][0]}`);
+    }
+  }
+
+  /* The CALL SITES must pass the claim too. Testing samplePoints alone is not
+     enough and sabotage showed why: changing the call to hash only the
+     question left this guard perfectly happy while restoring a grid an
+     attacker can compute in advance. A property of a helper is not a property
+     of the code that uses it. */
+  const html = fs.readFileSync(path.join(HERE, 'index.html'), 'utf8');
+  for (const [name, fn, claimVar] of [['derivativeCheck', 'derivativeCheck', 'line'],
+    ['integralCheck', 'integralCheck', 'line'],
+    ['identityCheck', 'identityCheck', 'line'],
+    ['polyOf', 'polyOf', 'ints']]) {
+    const at = html.indexOf('function ' + fn + '(');
+    if (at < 0) { bad.push(`sampling: ${name} not found — guard is stale`); continue; }
+    const body = html.slice(at, at + 6000);
+    const call = body.match(/samplePoints\(([^)]*)\)/);
+    if (!call) { bad.push(`sampling: ${name} does not call samplePoints`); continue; }
+    if (!new RegExp('\\b' + claimVar + '\\b').test(call[1])) {
+      bad.push(`sampling: ${name} derives its grid from ${call[1].trim()} — the CLAIM (${claimVar}) ` +
+               'is not in the key, so the points can be computed before the answer is written');
+    }
+  }
+  return bad;
+}
+
+/* ---------- NO FALSE CERTIFICATION ----------
+   Some failures cannot be seen in the final state. polyOf recovers a
+   polynomial from finite differences at the integers 0…7, and adding
+   x(x-1)…(x-7) to a cubic is invisible there — so a degree-11 equation was
+   read as the cubic and its root set certified COMPLETE, while the real
+   equation has further roots off the integers. The overall verdict stayed
+   `checked` either way, because the three claimed roots really are roots; what
+   was false was the CLAIM OF COMPLETENESS.
+
+   Finite differences need equal spacing, so unlike the other checkers this one
+   cannot simply move to random points — the recovery maths depends on the
+   spacing. It keeps the grid and verifies its own answer instead: the
+   recovered polynomial is compared against the original expression at
+   claim-derived points, and anything that is not really that polynomial gets
+   no verdict. These cases assert the KIND is absent, which is the only place
+   the difference shows. */
+const NO_CERT = [
+  ['polyOf forgery', 'Solve x^3-6x^2+11x-6 + x*(x-1)*(x-2)*(x-3)*(x-4)*(x-5)*(x-6)*(x-7) = 0',
+   '## ✅ Answer\n**x = 1, x = 2, x = 3**', 'roots'],
+  ['polyOf forgery', 'Solve x^2-5x+6 + x*(x-1)*(x-2)*(x-3)*(x-4)*(x-5)*(x-6)*(x-7) = 0',
+   '## ✅ Answer\n**x = 2, x = 3**', 'roots'],
+];
+
+function checkNoFalseCertification(V) {
+  const bad = [];
+  for (const [name, q, a, kind] of NO_CERT) {
+    let r;
+    try { r = V.run(q, a); } catch (e) { bad.push(`${name} THREW ${e.message}`); continue; }
+    const hit = (r.checks || []).filter((c) => c.kind === kind && c.ok === true);
+    if (hit.length) {
+      bad.push(`no-cert [${name}]: "${kind}" certified this as complete, but the equation is ` +
+               `not the polynomial it was read as — the extra term vanishes on the sampling ` +
+               `grid and the real root set is larger\n            ${hit[0].text}`);
+    }
+  }
+  return bad;
+}
+
 function checkSynDiv(mdToHtml) {
   const bad = [];
   for (const [name, src, wantTable] of SYNDIV) {
@@ -1408,6 +1675,12 @@ function norm(v) {
     }
   });
 
+  /* no checker may certify a claim it cannot actually establish */
+  bad.push(...checkNoFalseCertification(V));
+
+  /* the sampling mechanism itself: claim-dependent, deterministic, enough points */
+  bad.push(...checkSampling(V));
+
   /* only the engine may certify: model prose must not be titled as the verdict */
   bad.push(...checkVerificationAuthority(fs.readFileSync(path.join(HERE, 'index.html'), 'utf8')));
 
@@ -1436,7 +1709,7 @@ function norm(v) {
 
   const total = evalCases.length + holdCases.length + varCases.length +
                 verdictCases.length + DERIVATIVES.length + ABSOLUTE.length +
-                SYNDIV.length + SYNDIV_EQUIV.length + AUTHORITY_HEADINGS.length + contractPairs.length +
+                SYNDIV.length + SYNDIV_EQUIV.length + AUTHORITY_HEADINGS.length + 6 + NO_CERT.length + contractPairs.length +
                 (process.env.PARITY_NO_REGISTRY === '1' ? 0 : REGISTRY.checks.length);
   if (bad.length) {
     console.log(`\nPARITY FAILED — ${bad.length} of ${total} cases disagree\n`);
