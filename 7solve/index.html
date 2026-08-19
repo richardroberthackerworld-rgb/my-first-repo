@@ -13838,7 +13838,12 @@ var Verify = (function(){
          in brackets — "x = 82 − 30√7 (≈ 2.62746)" is what the student wrote. */
       var shown = (srcs[i] && constOf(srcs[i]) !== null && !/^-?[\d.]+$/.test(srcs[i]))
         ? srcs[i] + ' (≈ ' + round6(r.v) + ')' : String(round6(r.v));
-      return { kind:'subst', ok: ok === true,
+      /* A root that checks out is EVIDENCE, not a complete answer. Putting
+         x = 1, 2, 3 back into a degree-8 equation proves those three genuine
+         and says nothing about the other five. Flagged so the state machine
+         can tell "these values are right" from "this is the whole solution
+         set" — only the second earns the green badge. */
+      return { kind:'subst', ok: ok === true, needsComplete: true,
                text: v0 + ' = ' + shown + ' put back into ' + found.src.trim() +
                      ' gives ' + l + (ok === true ? ' = ' : ' ≠ ') + rr };
     }).filter(Boolean);
@@ -16123,10 +16128,30 @@ var Verify = (function(){
     var invalidQuestion = checks.some(function(c){ return c.invalidQuestion; });
     /* A question with no answer is its own outcome. Flattening it into "the
        answer is wrong" tells a student to try again at something impossible. */
+    /* VERIFIED VALUES ARE NOT A VERIFIED SOLUTION SET.
+       Substitution proves each claimed root satisfies the equation. For a
+       "solve this" question that is evidence, not an answer: x = 1, 2, 3 put
+       back into a degree-8 equation all check out while five roots go
+       unmentioned — and the badge still read "Verified by 7Solve".
+
+       So when the only thing proved is substitution of claimed roots, and
+       nothing established that the solution set is COMPLETE, the honest
+       outcome is "unable to verify" rather than green. The substitution
+       results stay in the receipt — the student still learns their values are
+       genuine — they simply no longer carry the authority of a whole answer.
+
+       Deliberately narrow: only checks that asked for completeness carry the
+       flag (the single-variable root branch). A claimed tuple for "find the
+       smallest solution" is not a completeness claim, and derivatives,
+       integrals, systems, identities and units are untouched. */
+    var completeProved = passed.some(function(c){ return c.kind === 'roots'; });
+    var evidenceOnly = passedProofs.length > 0 && !completeProved &&
+                       passedProofs.every(function(c){ return c.needsComplete === true; });
+
     if(invalidQuestion)            state = 'invalid_question';
     else if(failedAnswer.length)   state = 'disputed';       // ✗ the ANSWER does not hold
     else if(failedWorking.length)  state = 'stepfail';       // ⚠ a line of the working is wrong
-    else if(passedProofs.length)   state = 'checked';        // ✓ proofs passed; hints do not veto
+    else if(passedProofs.length && !evidenceOnly) state = 'checked';        // ✓ proofs passed; hints do not veto
     else if(failed.length)         state = 'partial';        // ⚠ only hints ran, and one missed
     /* A hint AGREEING is not partial verification — nothing was proved, and
        "partially verified" claims that something was. With the arithmetic

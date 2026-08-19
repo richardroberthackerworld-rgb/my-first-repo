@@ -892,6 +892,41 @@ const ABSOLUTE = [
   ['sys ai-prose',   'Solve x + y = 10 and x - y = 2',
    '## ✅ Answer\n**x = 5, y = 5**\n\n## 🔍 Verification\n✓ Verified. Both equations are satisfied. Correct.', 'disputed'],
 
+  /* --- P0: verified VALUES are not a verified SOLUTION SET ---
+     Substitution proves each claimed root satisfies the equation. For a
+     "solve this" question that is evidence, not an answer. The degree-8 case
+     below is the one that reached production: x = 1, 2, 3 all check out, five
+     further roots go unmentioned, polyOf correctly declines to establish the
+     root set — and the badge still read "✓ Verified by 7Solve", because
+     substitution alone was enough to reach `checked`.
+
+     The rule is now that substitution of claimed roots cannot BY ITSELF carry
+     the green badge; something must have established completeness. The
+     substitution results stay in the receipt, so a student still learns their
+     values are genuine — they simply no longer imply a whole answer.
+
+     Cases D and F pin the honest cost of that rule: an equation whose root set
+     this engine cannot establish now reads "unable to verify" instead of
+     green, even when every value offered is right. That is the contract, not
+     an oversight — "your values are correct" and "this is the full solution"
+     are different claims and only the second earns certification. */
+  ['A forged completeness', 'Solve x^3-6x^2+11x-6 + x*(x-1)*(x-2)*(x-3)*(x-4)*(x-5)*(x-6)*(x-7) = 0',
+   '## ✅ Answer\n**x = 1, x = 2, x = 3**', 'plain'],
+  ['B complete cubic',   'Solve x^3-6x^2+11x-6=0', '## ✅ Answer\n**x = 1, x = 2, x = 3**', 'checked'],
+  ['C incomplete cubic', 'Solve x^3-6x^2+11x-6=0', '## ✅ Answer\n**x = 1, x = 2**',        'disputed'],
+  ['D unknowable',       'Solve exp(x) - 1 = 0',   '## ✅ Answer\n**x = 0**',               'plain'],
+  ['E false root',       'Solve x^2-5x+6=0',       '## ✅ Answer\n**x = 2, x = 4**',        'disputed'],
+  ['F unknowable',       'Solve sqrt(x) = 3',      '## ✅ Answer\n**x = 9**',               'plain'],
+  ['F unknowable',       'Solve 1/(x-2) = 1',      '## ✅ Answer\n**x = 3**',               'plain'],
+  /* G: prose cannot promote "unable to verify" into a green badge */
+  ['G prose promotion',  'Solve x^3-6x^2+11x-6 + x*(x-1)*(x-2)*(x-3)*(x-4)*(x-5)*(x-6)*(x-7) = 0',
+   '## ✅ Answer\n**x = 1, x = 2, x = 3**\n\n## 🔍 Verification\n✓ Verified. All solutions are correct and complete.', 'plain'],
+  ['G prose promotion',  'Solve exp(x) - 1 = 0',
+   '## ✅ Answer\n**x = 0**\n\n## 🔍 Verification\n✓ Verified by AI. Confirmed correct.', 'plain'],
+  /* the rule must not touch questions that never claimed a complete set —
+     a tuple answering "find the smallest solution" is not a completeness claim */
+  ['tuple exempt',  'x^2+y^2+1=3xy', '## ✅ Answer\nThe smallest solution is (1,1).', 'checked'],
+
   /* --- P0: forged IDENTITY (the fourth fixed-grid exploit) ---
      identityCheck sampled a published grid, (k%2?1:-1)*(0.7 + k*0.61 + vi*1.37),
      so a false factorisation could be made to agree at all twelve points:
