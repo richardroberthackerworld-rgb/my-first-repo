@@ -31,6 +31,13 @@
    ============================================================ */
 declare(strict_types=1);
 
+/* Phase 1: checkers that used to exist only in the browser, ported so that
+   /v1 gives the same verdict as the website. See VERIFICATION-CONTRACT.md. */
+require_once __DIR__ . '/sampling.php';
+require_once __DIR__ . '/deriv.php';
+require_once __DIR__ . '/checkers-phase1.php';
+require_once __DIR__ . '/calculus-phase1.php';
+
 final class Algebra
 {
     /* Named functions. A run of letters is only one of these when a bracket
@@ -1737,7 +1744,13 @@ final class Checks
 
             /* A solution that disagrees with its own working. Answer-level,
                and it points at WHERE it went wrong, not only that it did. */
-            self::contradiction($question, $answer)
+            self::contradiction($question, $answer),
+            /* Phase 1 — parity with the site. Ported, not reinvented: each of
+               these reproduces the safety property its JS twin earned. */
+            Phase1::systemCheck($question, $body),
+            Phase1::identityCheck($body),
+            Phase1Calculus::derivativeCheck($question, $body),
+            Phase1Calculus::integralCheck($question, $body)
         );
 
         /* A soft check is advisory: it reports something worth telling the
@@ -1756,7 +1769,7 @@ final class Checks
            in the milder step-level bucket. */
         /* integrity is answer-level and then some: a misread question makes
            the answer wrong no matter how clean the working is. */
-        $answerLevel = ['subst' => true, 'units' => true, 'integrity' => true, 'question' => true, 'claim' => true, 'primality' => true, 'truncated' => true, 'contradiction' => true, 'roots' => true];
+        $answerLevel = ['subst' => true, 'units' => true, 'integrity' => true, 'question' => true, 'claim' => true, 'primality' => true, 'truncated' => true, 'contradiction' => true, 'roots' => true, 'system' => true, 'deriv' => true, 'integral' => true];
 
         /* A question with no answer is its own outcome, and flattening it into
            "the answer is wrong" tells a student to try again at something

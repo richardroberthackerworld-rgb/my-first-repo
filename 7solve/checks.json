@@ -69,19 +69,20 @@
     {
       "name": "derivativeCheck",
       "js": "function derivativeCheck(question, md){",
-      "php": null
+      "php": "Phase1Calculus::derivativeCheck($question, $body),",
+      "note": "Phase 1: ported to PHP so /v1 matches the site. Sample points come from sample_points(), byte-identical to JS by golden vector."
     },
     {
       "name": "integralCheck",
       "js": "try { checks = checks.concat(integralCheck(question, text)); } catch(e){}",
-      "php": null,
-      "note": "JS only — verify.php has no symbolic differentiator, and an integral is checked by differentiating the claim"
+      "php": "Phase1Calculus::integralCheck($question, $body)",
+      "note": "Phase 1: ported to PHP so /v1 matches the site. Sample points come from sample_points(), byte-identical to JS by golden vector."
     },
     {
       "name": "systemCheck",
       "js": "try { checks = checks.concat(systemCheck(question, text)); } catch(e){}",
-      "php": null,
-      "note": "JS only — substitutes the claimed assignment into EVERY equation of a system, and will not certify uniqueness for a dependent system"
+      "php": "Phase1::systemCheck($question, $body),",
+      "note": "Phase 1: ported to PHP so /v1 matches the site. Sample points come from sample_points(), byte-identical to JS by golden vector."
     },
     {
       "name": "transformCheck",
@@ -91,7 +92,8 @@
     {
       "name": "identityCheck",
       "js": "try { checks = checks.concat(identityCheck(text)); } catch(e){}",
-      "php": null
+      "php": "Phase1::identityCheck($body),",
+      "note": "Phase 1: ported to PHP so /v1 matches the site. Sample points come from sample_points(), byte-identical to JS by golden vector."
     },
     {
       "name": "checkDivisibility",
