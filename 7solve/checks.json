@@ -72,6 +72,18 @@
       "php": null
     },
     {
+      "name": "integralCheck",
+      "js": "try { checks = checks.concat(integralCheck(question, text)); } catch(e){}",
+      "php": null,
+      "note": "JS only — verify.php has no symbolic differentiator, and an integral is checked by differentiating the claim"
+    },
+    {
+      "name": "systemCheck",
+      "js": "try { checks = checks.concat(systemCheck(question, text)); } catch(e){}",
+      "php": null,
+      "note": "JS only — substitutes the claimed assignment into EVERY equation of a system, and will not certify uniqueness for a dependent system"
+    },
+    {
       "name": "transformCheck",
       "js": "try { checks = checks.concat(transformCheck(question, text)); } catch(e){}",
       "php": null

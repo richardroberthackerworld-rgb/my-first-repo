@@ -730,6 +730,185 @@ const ABSOLUTE = [
   ['P0 equiv', 'differentiate 3x² sin x',        '## ✅ Answer\n**3x(2 sin(x) + x cos(x))**', 'checked'],
   ['P0 equiv', 'differentiate 3x² sin x',        '## ✅ Answer\n**3x²cos(x) + 6x sin(x)**', 'checked'],
 
+  /* --- INDEFINITE INTEGRALS ---
+     Before integralCheck existed, EVERY integral answer came back `plain` —
+     correct and wrong alike ran zero checks, so a wrong antiderivative was
+     never disputed and a right one never verified. There is still no
+     integrator: an antiderivative is checked by differentiating it and
+     comparing with the integrand, which is why none of these is special-cased.
+
+     Two properties fall out of that and are pinned here rather than assumed.
+     The constant is free — d/dx of C is 0, so "+ C", "+ 91" and no constant at
+     all verify identically. And the FORM is free: the 9x integrand's
+     antiderivative looks nothing like the tidy one, and needs no technique to
+     confirm. */
+  ['∫ correct', 'integrate 6x sin x + 3x^2 cos x',  '## ✅ Answer\n**3x² sin x + C**', 'checked'],
+  ['∫ correct', 'Integrate 9x sin x + 3x^2 cos x',
+   '## ✅ Answer\n**3x² sin x - 3x cos x + 3 sin x + C**', 'checked'],
+  ['∫ const',   'integrate 2x',                     '## ✅ Answer\n**x² + C**',       'checked'],
+  ['∫ const',   'integrate 2x',                     '## ✅ Answer\n**x² + 91**',      'checked'],
+  ['∫ const',   'integrate 2x',                     '## ✅ Answer\n**x²**',           'checked'],
+  ['∫ correct', '∫ x^2 dx',                         '## ✅ Answer\n**x³/3 + C**',     'checked'],
+  ['∫ correct', '∫ cos x dx',                       '## ✅ Answer\n**sin x + C**',    'checked'],
+  ['∫ correct', '∫ 1/x dx',                         '## ✅ Answer\n**ln(x) + C**',    'checked'],
+  ['∫ correct', 'integrate exp(x)',                 '## ✅ Answer\n**exp(x) + C**',   'checked'],
+  /* wrong antiderivatives must be disputed, not merely unverified */
+  ['∫ wrong',   'integrate 6x sin x + 3x^2 cos x',  '## ✅ Answer\n**5x² sin x + C**', 'disputed'],
+  ['∫ wrong',   '∫ x^2 dx',                         '## ✅ Answer\n**x³ + C**',       'disputed'],
+  ['∫ wrong',   '∫ cos x dx',                       '## ✅ Answer\n**-sin x + C**',   'disputed'],
+  ['∫ wrong',   'integrate 2x',                     '## ✅ Answer\n**x³ + C**',       'disputed'],
+  /* the antiderivative of a DIFFERENT integrand must not be accepted */
+  ['∫ wrong',   'Integrate 9x sin x + 3x^2 cos x',  '## ✅ Answer\n**3x² sin x + C**', 'disputed'],
+  ['∫ wrong',   '∫ x^2 dx',                         '## ✅ Answer\n**x²/3 + C**',     'disputed'],
+  ['∫ wrong',   '∫ sin x dx',                       '## ✅ Answer\n**cos x + C**',    'disputed'],
+  ['∫ wrong',   'integrate 2x',                     '## ✅ Answer\n**2x² + C**',      'disputed'],
+  ['∫ wrong',   '∫ 1/x dx',                         '## ✅ Answer\n**x + C**',        'disputed'],
+  /* more correct forms: constant integrand, chain rule, reordered, factored */
+  ['∫ correct', 'integrate 5',                      '## ✅ Answer\n**5x + C**',       'checked'],
+  ['∫ correct', '∫ x^3 dx',                         '## ✅ Answer\n**x⁴/4 + C**',     'checked'],
+  ['∫ correct', '∫ (2x + 3) dx',                    '## ✅ Answer\n**x² + 3x + C**',  'checked'],
+  ['∫ correct', '∫ (2x + 3) dx',                    '## ✅ Answer\n**3x + x² + C**',  'checked'],
+  ['∫ correct', 'integrate 2 cos(2x)',              '## ✅ Answer\n**sin(2x) + C**',  'checked'],
+  ['∫ correct', 'integrate 2*exp(2x)',              '## ✅ Answer\n**exp(2x) + C**',  'checked'],
+  ['∫ correct', '∫ 1/x^2 dx',                       '## ✅ Answer\n**-1/x + C**',     'checked'],
+  ['∫ correct', 'integrate 6x sin x + 3x^2 cos x',  '## ✅ Answer\n**3x(x sin x) + C**', 'checked'],
+  ['∫ const',   'integrate 2x',                     '## ✅ Answer\n**x² - 7**',       'checked'],
+  ['∫ const',   'integrate 2x',                     '## ✅ Answer\n**x² + K**',       'checked'],
+
+  /* SAFETY: an answer the engine cannot READ must never be disputed. A checker
+     that treats "cannot parse" as "wrong" marks correct work incorrect, and a
+     student who is failed once for writing prose stops trusting every badge
+     after it. Rule 1: no verdict beats a wrong verdict. */
+  ['∫ silent',  '∫ x^2 dx', '## ✅ Answer\nthe integral is x cubed over three plus a constant', 'plain'],
+  ['∫ silent',  '∫ x^2 dx', '## ✅ Answer\nSee the working above.',        'plain'],
+  ['∫ silent',  'integrate tan(x)',   '## ✅ Answer\n**-ln|cos x| + C**',  'plain'],
+  ['∫ silent',  'integrate sec(x)^2', '## ✅ Answer\n**tan(x) + C**',      'plain'],
+  /* several variables is a partial-derivative question in disguise — no verdict */
+  ['∫ silent',  'integrate x*y',      '## ✅ Answer\n**x²y/2 + C**',       'plain'],
+  ['∫ silent',  '∫ (x + y) dx',       '## ✅ Answer\n**x²/2 + xy + C**',   'plain'],
+
+  /* DEFINITE integrals are NOT covered by this checker and must not be
+     verified by it. A number is not an antiderivative, so nothing fires — the
+     failure mode to prevent is a definite answer inheriting a green badge from
+     the indefinite machinery. The wrong value is pinned too: it must not be
+     verified, and it is honest for it to be unverified rather than disputed,
+     because this engine did not evaluate it. */
+  ['∫ definite','∫ from 0 to 1 x^2 dx',   '## ✅ Answer\n**1/3**', 'plain'],
+  ['∫ definite','Evaluate ∫_0^1 x^2 dx',  '## ✅ Answer\n**1/3**', 'plain'],
+  ['∫ definite','integrate x^2 from 0 to 1','## ✅ Answer\n**1/3**', 'plain'],
+  ['∫ definite','∫_0^1 x^2 dx',           '## ✅ Answer\n**1/2**', 'plain'],
+
+  /* KNOWN LIMITS, pinned deliberately — these assert what the code DOES, not
+     what it should. Both are correct answers going unverified, which is the
+     safe direction, and both are one Deriv capability away:
+       ln|x|      absolute-value bars do not parse
+       x^(3/2)    a fractional exponent returns null, and 2*x^(3/2)/3 throws
+     When Deriv learns either, these rows fail and get promoted to 'checked'
+     rather than the gap sitting unnoticed. Do not read them as approval. */
+  ['∫ limit',   '∫ 1/x dx',       '## ✅ Answer\n**ln|x| + C**',            'plain'],
+  ['∫ limit',   '∫ sqrt(x) dx',   '## ✅ Answer\n**2*x^(3/2)/3 + C**',      'plain'],
+
+  /* ---- SYSTEMS OF EQUATIONS ----
+     Checking one equation of a system does not merely under-verify, it
+     CONFIRMS a wrong answer: x = 5, y = 5 satisfies x + y = 10 perfectly and
+     fails x − y = 2. findEquation is singular by design and never saw the
+     second equation, so every one of these came back plain before systemCheck.
+
+     The row that matters most is 'sys only-first'. If anyone ever changes the
+     checker to stop at the first equation, that case flips to checked and the
+     suite fails — which is the whole reason the check exists. */
+  ['sys correct',    'Solve x + y = 10 and x - y = 2', '## ✅ Answer\n**x = 6, y = 4**', 'checked'],
+  ['sys only-first', 'Solve x + y = 10 and x - y = 2', '## ✅ Answer\n**x = 5, y = 5**', 'disputed'],
+  ['sys both-wrong', 'Solve x + y = 10 and x - y = 2', '## ✅ Answer\n**x = 1, y = 2**', 'disputed'],
+  ['sys reordered',  'Solve x + y = 10 and x - y = 2', '## ✅ Answer\n**y = 4, x = 6**', 'checked'],
+  ['sys "and"',      'Solve x + y = 10 and x - y = 2', '## ✅ Answer\n**x = 6 and y = 4**', 'checked'],
+  ['sys 3x3',        'Solve x + y + z = 6, x - y + z = 2, x + y - z = 0', '## ✅ Answer\n**x = 1, y = 2, z = 3**', 'checked'],
+  ['sys 3x3 wrong',  'Solve x + y + z = 6, x - y + z = 2, x + y - z = 0', '## ✅ Answer\n**x = 2, y = 2, z = 2**', 'disputed'],
+  /* first two equations hold, the third does not — the multi-equation analogue
+     of the only-first trap */
+  ['sys third-fails','Solve x + y = 5, x - y = 1, x + 2y = 8', '## ✅ Answer\n**x = 3, y = 2**', 'disputed'],
+  /* an inconsistent system has no solution: nothing may verify against it */
+  ['sys inconsistent','Solve x + y = 10 and x + y = 12', '## ✅ Answer\n**x = 6, y = 4**', 'disputed'],
+  /* a dependent system has infinitely many: satisfying every equation is TRUE
+     but is not "the solution", so it must not go green */
+  ['sys dependent',  'Solve x + y = 10 and 2x + 2y = 20', '## ✅ Answer\n**x = 6, y = 4**', 'plain'],
+  /* safety: a partial assignment must never be certified */
+  ['sys partial',    'Solve x + y = 10 and x - y = 2', '## ✅ Answer\n**x = 6**', 'plain'],
+  ['sys malformed',  'Solve x + = 10 and x - y = 2',   '## ✅ Answer\n**x = 6, y = 4**', 'plain'],
+  ['sys prose',      'Solve x + y = 10 and x - y = 2', '## ✅ Answer\nThe values are six and four.', 'plain'],
+  /* textbook wording — the lead-in words are prose, not variables */
+  ['sys wording',    'Solve the simultaneous equations x + y = 10 and x - y = 2', '## ✅ Answer\n**x = 6, y = 4**', 'checked'],
+  ['sys wording',    'Find x and y: 2x + y = 7, x - y = 2', '## ✅ Answer\n**x = 3, y = 1**', 'checked'],
+  ['sys wording',    'Determine x and y where x + 2y = 8 and 3x - y = 3', '## ✅ Answer\n**x = 2, y = 3**', 'checked'],
+  ['sys wording',    'Find the values of x and y satisfying x + y = 7 and x - y = 1', '## ✅ Answer\n**x = 4, y = 3**', 'checked'],
+  ['sys wording-',   'Find x and y: 2x + y = 7, x - y = 2', '## ✅ Answer\n**x = 3, y = 2**', 'disputed'],
+  /* formatting variants of the same system */
+  ['sys tight',      'Solve 2x+y=7 and x-y=2',          '## ✅ Answer\n**x = 3, y = 1**', 'checked'],
+  ['sys zero-form',  'Solve 2x + y - 7 = 0 and x - y - 2 = 0', '## ✅ Answer\n**x = 3, y = 1**', 'checked'],
+  ['sys newlines',   'Solve\nx + y = 10\nx - y = 2',    '## ✅ Answer\n**x = 6, y = 4**', 'checked'],
+  /* a leading minus is part of the equation, not punctuation to be stripped */
+  ['sys negatives',  'Solve -x + y = 1 and x + y = 5',  '## ✅ Answer\n**x = 2, y = 3**', 'checked'],
+  ['sys negatives-', 'Solve -x + y = 1 and x + y = 5',  '## ✅ Answer\n**x = 3, y = 2**', 'disputed'],
+  ['sys decimals',   'Solve 0.5x + y = 4 and x - y = 2','## ✅ Answer\n**x = 4, y = 2**', 'checked'],
+  ['sys fractions',  'Solve x/2 + y = 4 and x - y = 2', '## ✅ Answer\n**x = 4, y = 2**', 'checked'],
+  /* a repeated equation is one equation, and must not mask a failing one */
+  ['sys duplicate',  'Solve x + y = 10, x + y = 10, x - y = 2', '## ✅ Answer\n**x = 6, y = 4**', 'checked'],
+  ['sys duplicate-', 'Solve x + y = 10, x + y = 10, x - y = 2', '## ✅ Answer\n**x = 5, y = 5**', 'disputed'],
+  /* AI prose asserting verification must not move the verdict */
+  ['sys ai-prose',   'Solve x + y = 10 and x - y = 2',
+   '## ✅ Answer\n**x = 5, y = 5**\n\n## 🔍 Verification\n✓ Verified. Both equations are satisfied. Correct.', 'disputed'],
+
+  /* --- extraction traps found by the adversarial review ---
+     "xy" is a product of two variables and an English word by shape. The
+     lead-in stripper ate it, left "= 6", failed to parse, and dropped the
+     equation from the system — the check then went quiet on a question it
+     could answer. Keeping the DEEPEST strip that still parses is what tells
+     "Solve" from "xy", and stripping one token at a time is what lets the
+     good candidate be seen at all. */
+  /* NONLINEAR: satisfaction is not uniqueness, and only uniqueness earns green.
+     (2,3) does satisfy xy = 6 and x + y = 5 — and so, for xy = 6 alone, does
+     every other pair on the hyperbola. This engine has no uniqueness proof for
+     a non-linear system, so it does not certify one. The answer may well be
+     right; it is simply not verified, and saying so is the honest outcome.
+     A false green is worse than no badge, because the badge is the thing
+     students are being taught to rely on.
+
+     The failure path is deliberately untouched: a point that demonstrably does
+     NOT satisfy an equation is still disputed, because that much is decidable
+     without knowing anything about uniqueness. */
+  ['sys nonlinear',  'Solve xy = 6 and x + y = 5',      '## ✅ Answer\n**x = 2, y = 3**', 'plain'],
+  ['sys nonlinear-', 'Solve xy = 6 and x + y = 5',      '## ✅ Answer\n**x = 2, y = 4**', 'disputed'],
+  ['sys nonlinear',  'Solve x^2 + y^2 = 25 and x + y = 7', '## ✅ Answer\n**x = 3, y = 4**', 'plain'],
+  ['sys nonlinear-', 'Solve x^2 + y^2 = 25 and x + y = 7', '## ✅ Answer\n**x = 3, y = 5**', 'disputed'],
+  ['sys nonlinear',  'Solve xy + x = 6 and x + y = 4',  '## ✅ Answer\n**x = 2, y = 2**', 'plain'],
+  ['sys nonlinear-', 'Solve xy + x = 6 and x + y = 4',  '## ✅ Answer\n**x = 1, y = 3**', 'disputed'],
+  ['sys nonlinear',  'Solve x^2 + y^2 = 10 and x - y = 2', '## ✅ Answer\n**x = 3, y = 1**', 'plain'],
+  ['sys nonlinear-', 'Solve x^2 + y^2 = 10 and x - y = 2', '## ✅ Answer\n**x = 3, y = 2**', 'disputed'],
+  /* the extraction traps these nonlinear cases exposed, pinned so they stay fixed:
+     "xy" must not be eaten as an English word, and "xy + x = 6" must not be
+     stripped to "+ x = 6" — which parses as x = 6 and disputed correct work */
+  ['sys xy-term',    'Solve xy + x = 6 and x + y = 4',  '## ✅ Answer\n**x = 2, y = 2**', 'plain'],
+  ['sys unary-minus','Solve -x - y = -5 and x - y = 1', '## ✅ Answer\n**x = 3, y = 2**', 'checked'],
+  /* other single-letter variable names must work the same as x and y */
+  ['sys ab',         'Solve a + b = 7 and a - b = 1',   '## ✅ Answer\n**a = 4, b = 3**', 'checked'],
+  ['sys ab-',        'Solve a + b = 7 and a - b = 1',   '## ✅ Answer\n**a = 5, b = 2**', 'disputed'],
+  ['sys ab wording', 'Determine a and b where 2a + b = 8 and a - b = 1', '## ✅ Answer\n**a = 3, b = 2**', 'checked'],
+  /* more wordings, each with a wrong twin so the wording cannot verify by itself */
+  ['sys wording',    'Given x + y = 10 and x - y = 2, solve', '## ✅ Answer\n**x = 6, y = 4**', 'checked'],
+  ['sys wording-',   'Given x + y = 10 and x - y = 2, solve', '## ✅ Answer\n**x = 5, y = 5**', 'disputed'],
+  ['sys wording',    'Find the values of x and y for which x + y = 10 and x - y = 2', '## ✅ Answer\n**x = 6, y = 4**', 'checked'],
+  ['sys wording-',   'Find the values of x and y for which x + y = 10 and x - y = 2', '## ✅ Answer\n**x = 5, y = 5**', 'disputed'],
+  ['sys semicolon',  'Solve x+y=10; x-y=2',             '## ✅ Answer\n**x = 6, y = 4**', 'checked'],
+  ['sys parens-neg', 'Solve x + (-y) = 3 and x + y = 7','## ✅ Answer\n**x = 5, y = 2**', 'checked'],
+  ['sys neg-both',   'Solve -x - y = -5 and x - y = 1', '## ✅ Answer\n**x = 3, y = 2**', 'checked'],
+  ['sys neg-both-',  'Solve -x - y = -5 and x - y = 1', '## ✅ Answer\n**x = 2, y = 3**', 'disputed'],
+
+  /* FALSE POSITIVES: the checker must not invent a system out of prose that
+     merely contains "=" or numbers. Each must reach no system verdict. */
+  ['sys not-a-system', 'Explain why E = mc^2 matters', '## ✅ Answer\nEnergy and mass are equivalent.', 'plain'],
+  ['sys not-a-system', 'In 2020 profit = 100 and in 2021 profit = 120. Find the growth.', '## ✅ Answer\nGrowth is 20%.', 'plain'],
+  ['sys not-a-system', 'A train travels at 60 km/h. How far in 2 hours?', '## ✅ Answer\nDistance = 120 km', 'plain'],
+
   /* --- the cubic, with all three roots verified individually ---
      x³ − 6x² + 11x − 6 factors as (x−1)(x−2)(x−3). Each root is pinned on its
      own as well as together, so a substitution regression that only breaks one
@@ -953,7 +1132,12 @@ function checkBadgeContract(html) {
   }
 
   /* 2. green is reachable only from `checked` */
-  const branches = [...body.matchAll(/r\.state === '([a-z_]+)'\)\{\s*\n?\s*label = '([^']*)'; cls = '([^']*)'/g)]
+  /* Tolerate a comment between the branch and its label — the guard used to
+     require them adjacent, so adding a comment above `label =` made it report
+     "no branch maps checked to the green badge" when the mapping was intact.
+     A guard that fails on a comment gets deleted by the next person; keep it
+     matching the code, not the whitespace. */
+  const branches = [...body.matchAll(/r\.state === '([a-z_]+)'\)\{[\s\S]{0,400}?label = '([^']*)'; cls = '([^']*)'/g)]
     .map((m) => ({ state: m[1], label: m[2], cls: m[3] }));
   if (branches.length < 4) {
     bad.push('badge: could not read the state-to-badge branches — guard is stale');
@@ -970,6 +1154,90 @@ function checkBadgeContract(html) {
   }
   if (branches.length && !branches.some((b) => b.state === 'checked' && b.cls.trim() === 'verif')) {
     bad.push('badge: no branch maps `checked` to the green verified badge');
+  }
+  return bad;
+}
+
+/* ---------- WHO MAY SAY "VERIFIED" ----------
+   The model writes its own "🔍 Verification" section, ends it with a tick, and
+   says the answer is correct. That is fine — the substitutions in it are worth
+   reading. What was NOT fine is that the renderer promoted that prose into a
+   card titled "Verification", the same word the engine's badge uses, so a
+   WRONG answer carried an apparently authoritative verification section
+   directly under a red "Verification failed" verdict. The product was dressing
+   the model's claim as certification; the model never asked for that.
+
+   Two rules, both structural:
+     1. no model-authored section may be TITLED with the certification word —
+        "Verification steps" is a description of content, "Verification" is a
+        claim about truth
+     2. the authoritative badge must name its authority, so that the one place
+        entitled to the word is distinguishable from prose that uses it
+
+   Prose still cannot move the verdict: nothing here touches Verify.run, and
+   `agree` — the only check that reads wording at all — is Tier 3 advisory. */
+function loadNbKind(html) {
+  const s = html.indexOf('const NB_KINDS = [');
+  const e = html.indexOf('const nbKind =', s);
+  const eol = html.indexOf('\n', e);
+  if (s < 0 || e < s || eol < e) return null;
+  const box = { console, String, Number, Object, Array, RegExp, JSON };
+  vm.createContext(box);
+  vm.runInContext(html.slice(s, eol) + '\nthis.__k = nbKind;', box, { timeout: 3000 });
+  return box.__k;
+}
+
+const AUTHORITY_HEADINGS = [
+  '🔍 Verification',
+  'Verification',
+  'Verification Result',
+  '✓ Verified',
+  'Verified',
+  'Checking the answer',
+];
+
+function checkVerificationAuthority(html) {
+  const bad = [];
+
+  /* 1. no model section may be titled with the bare certification word */
+  for (const m of html.matchAll(/hd:\s*'([^']*)'/g)) {
+    const t = m[1].trim().toLowerCase();
+    if (t === 'verification' || /\bverified\b/.test(t)) {
+      bad.push(`authority: a model-authored section is titled "${m[1]}" — that is the ` +
+               'engine\'s word. Title it with what the section CONTAINS ' +
+               '("Verification steps"), not with a claim about truth');
+    }
+  }
+
+  /* 2. every heading a model might use routes to the demoted card */
+  const nbKind = loadNbKind(html);
+  if (!nbKind) {
+    bad.push('authority: could not load NB_KINDS from index.html — this guard is stale');
+  } else {
+    for (const head of AUTHORITY_HEADINGS) {
+      const k = nbKind(head);
+      if (!k) {
+        bad.push(`authority: the heading "${head}" is not classified at all, so it renders ` +
+                 'as a bare authoritative heading');
+      } else if (k.cls !== 'nb-verify' || /^verification$|\bverified\b/i.test(k.hd.trim())) {
+        bad.push(`authority: the heading "${head}" renders as "${k.hd}" (${k.cls}) — ` +
+                 'a model section must not present itself as the verification verdict');
+      }
+    }
+  }
+
+  /* 3. the authoritative badge names its authority */
+  const pv = html.indexOf('function paintVerif(md){');
+  if (pv >= 0) {
+    const body = html.slice(pv, pv + 4000);
+    const green = body.match(/r\.state === 'checked'\)\{[\s\S]{0,300}?label = '([^']*)'; cls = '([^']*)'/);
+    if (!green) {
+      bad.push('authority: could not read the checked-state badge label — guard is stale');
+    } else if (!/7solve/i.test(green[1])) {
+      bad.push(`authority: the verified badge reads "${green[1]}" and does not name 7Solve — ` +
+               'an AI answer writes the word "verified" about itself, so the badge must say ' +
+               'who is making the claim');
+    }
   }
   return bad;
 }
@@ -1140,6 +1408,9 @@ function norm(v) {
     }
   });
 
+  /* only the engine may certify: model prose must not be titled as the verdict */
+  bad.push(...checkVerificationAuthority(fs.readFileSync(path.join(HERE, 'index.html'), 'utf8')));
+
   /* the wiring between a verdict and the badge a student actually sees */
   bad.push(...checkBadgeContract(fs.readFileSync(path.join(HERE, 'index.html'), 'utf8')));
 
@@ -1165,7 +1436,7 @@ function norm(v) {
 
   const total = evalCases.length + holdCases.length + varCases.length +
                 verdictCases.length + DERIVATIVES.length + ABSOLUTE.length +
-                SYNDIV.length + SYNDIV_EQUIV.length + contractPairs.length +
+                SYNDIV.length + SYNDIV_EQUIV.length + AUTHORITY_HEADINGS.length + contractPairs.length +
                 (process.env.PARITY_NO_REGISTRY === '1' ? 0 : REGISTRY.checks.length);
   if (bad.length) {
     console.log(`\nPARITY FAILED — ${bad.length} of ${total} cases disagree\n`);

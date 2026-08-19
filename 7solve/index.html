@@ -9529,7 +9529,19 @@ const NB_KINDS = [
   /* "Final Result" must be matched BEFORE Practice Question — they share the
      🎯 pictograph, and whichever rule comes first would claim both. */
   { re:/(final result|🏁)/i,                                 cls:'nb-final',    ic:'🎯',   hd:'Final Result' },
-  { re:/(🔍|verification|verified against|checking the answer)/i, cls:'nb-verify', ic:'🔍', hd:'Verification' },
+  /* "Verification steps", never "Verification". This card holds MODEL prose,
+     and the renderer used to title it with the same word the engine's badge
+     uses — so a wrong answer could carry a section headed "Verification"
+     ending in a tick, directly under a red "Verification failed" verdict. The
+     product was dressing the model's own claim as certification; the model
+     never asked for that.
+
+     The content stays: substitutions and calculations are worth reading even
+     when the conclusion is wrong. Only the title is demoted, and `verified` is
+     matched too so a heading like "✓ Verified" is captured and relabelled
+     here rather than falling through and rendering as a bare authoritative
+     heading. Certification is the badge's word alone. */
+  { re:/(🔍|verification|verified|checking the answer)/i, cls:'nb-verify', ic:'🔍', hd:'Verification steps' },
   { re:/(🧭|^method\b|approach)/i,                           cls:'nb-method',   ic:'🧭',   hd:'Method' },
   { re:/(📘|definition|meaning of)/i,                        cls:'nb-define',   ic:'📘',   hd:'Definition' },
   { re:/(🔄|alternative method|another method|second method)/i,cls:'nb-alt',      ic:'🔄',   hd:'Alternative Method' },
@@ -14838,6 +14850,329 @@ var Verify = (function(){
           ', but the answer states ' + line}];
   }
 
+  /* ---------- INDEFINITE INTEGRAL ----------
+     Integration is checked by running differentiation backwards. There is no
+     integrator here and there does not need to be one: an antiderivative is
+     exactly the function whose derivative is the integrand, so the claim
+     verifies itself under Deriv.
+
+         student says F(x)  →  differentiate F  →  compare with the integrand
+
+     Two things fall out of doing it this way rather than by integrating.
+
+     The constant is free. d/dx of C is 0, so F + C and F + 91 differentiate to
+     the same thing and both verify — "equivalent up to a constant" needs no
+     special handling, which is the usual place an integral checker goes wrong.
+
+     And the FORM is free. ∫(9x sin x + 3x² cos x)dx has an answer nobody would
+     guess is equivalent to a tidier one, but differentiating whatever the
+     student wrote and comparing values settles it without the engine needing
+     to know any integration technique at all. No integral is special-cased,
+     because no integral is recognised — only differentiated.
+
+     What it will not do is claim an answer is wrong when it merely cannot read
+     it: an unparseable claim, more than one variable, or too few finite sample
+     points all yield no verdict. Rule 1 holds — no verdict beats a wrong one. */
+  function integralCheck(question, md){
+    if(typeof Deriv === 'undefined' || !Deriv) return [];
+    var q = deLatexSafe(question);
+    var m = q.match(/(?:∫|integrate|integral\s+of|antiderivative\s+of|find\s+the\s+integral\s+of)\s*[:\s]*(.+)$/i);
+    if(!m) return [];
+    var body = String(m[1] || '').trim().replace(/[?.]+$/, '')
+                 .replace(/\s*d\s*[a-z]\s*$/i, '')                     // trailing "dx"
+                 .replace(/\s+with\s+respect\s+to\s+[a-z]\s*$/i, '')
+                 .replace(/\s+(?:find|determine|calculate|evaluate|compute)\b[\s\S]*$/i, '')
+                 .trim();
+    body = body.replace(/^(?:y|f\s*\(\s*[a-z]\s*\))\s*=\s*/i, '').trim();
+    if(!body) return [];
+    var integrand = Algebra.parse(Deriv.normalise(body));
+    if(!integrand) return [];
+    /* More than one variable is a partial derivative question in disguise, and
+       this engine does not do those — no verdict. NONE is different: ∫5 dx has
+       a constant integrand and is a perfectly ordinary question, so the
+       variable is taken from the antiderivative instead of refusing. Requiring
+       a variable in the integrand rejected "integrate 5 → 5x + C", which is
+       correct work left unverified. */
+    var iv = Object.keys(varsOf(integrand));
+    if(iv.length > 1) return [];
+    var v0 = iv.length === 1 ? iv[0] : null;
+
+    /* The claimed antiderivative, with "+ C" removed — it is notation for the
+       family, not a term, and it does not parse. */
+    var zone = claimZone(deLatexSafe(md)).replace(/\*\*|__/g, '');
+    var line = null, claimed = null;
+    zone.split(/\r?\n/).forEach(function(L){
+      if(line) return;
+      var t = L.replace(/^[\s#>✅🎯*]+/, '').replace(/^∫[^=]*=\s*/, '')
+               .replace(/^[a-z]\s*\(\s*[a-z]\s*\)\s*=\s*/i, '').trim();
+      t = t.replace(/\s*[+\-]\s*(?:C|K|constant)\b\s*$/i, '').trim();
+      if(!t || !/[a-z0-9]/i.test(t)) return;
+      var ast = Algebra.parse(Deriv.normalise(t));
+      if(!ast) return;
+      var vs = Object.keys(varsOf(ast));
+      if(v0 === null){
+        /* constant integrand: the antiderivative names the variable */
+        if(vs.length !== 1) return;
+        line = t; claimed = ast; v0 = vs[0]; return;
+      }
+      if(vs.length && vs.some(function(x){ return x !== v0; })) return;   // prose
+      line = t; claimed = ast;
+    });
+    if(!claimed || v0 === null) return [];
+
+    var back = Deriv.of(Algebra, line, v0);
+    if(!back) return [];                              // cannot differentiate it back
+    var got = Algebra.parse(Deriv.normalise(back.result));
+    if(!got) return [];
+
+    /* Sample every point, never stopping at the first disagreement — a loop
+       that broke early once left too few samples and threw away the very
+       failure it had just found. */
+    var seen = 0, same = true;
+    for(var k = 0; k < 8; k++){
+      var env = {}; env[v0] = 0.7 + k * 0.53;
+      var A1 = evalAt(got, env), A2 = evalAt(integrand, env);
+      if(A1 === null || A2 === null || !isFinite(A1) || !isFinite(A2)) continue;
+      seen++;
+      if(Math.abs(A1 - A2) > Math.max(1, Math.abs(A1), Math.abs(A2)) * 1e-7) same = false;
+    }
+    if(seen < 3) return [];
+
+    return [{kind:'integral', ok:same,
+      text: same
+        ? 'differentiating ' + line + ' gives back ' + body + ', so it is an antiderivative'
+        : 'differentiating ' + line + ' gives ' + back.result +
+          ', not ' + body + ' — so it is not an antiderivative of the integrand'}];
+  }
+
+  /* ---------- SYSTEMS OF EQUATIONS ----------
+     `substitution` verifies a claimed solution against ONE equation, and
+     findEquation is singular by design — it returns the single best match and
+     never sees the second. For a system that is not merely incomplete, it is
+     dangerous:
+
+         x + y = 10        claimed x = 5, y = 5
+         x - y = 2         5 + 5 = 10  ✓   5 - 5 = 0 ≠ 2  ✗
+
+     The wrong answer satisfies the first equation perfectly. A checker that
+     stops there does not fail to verify it — it CONFIRMS it. So every claimed
+     assignment is substituted into every equation, and one failure is enough
+     to dispute.
+
+     Uniqueness is a separate question from satisfaction, and the two are not
+     conflated here. A student answering "x = 3, y = 1" to a dependent system
+     is giving one of infinitely many solutions while presenting it as the
+     solution; the assignment is true and the claim is not. Rather than certify
+     that, the coefficients are recovered numerically and the ranks compared:
+
+         rank(A) < rank(A|b)      no solution exists at all
+         rank(A) = rank(A|b) = n  exactly one — safe to certify
+         rank(A) = rank(A|b) < n  infinitely many — satisfaction is not
+                                  uniqueness, so no green badge
+
+     Everything it cannot read is a bail: fewer than two equations, an
+     unassigned variable, a non-linear system whose shape cannot be analysed,
+     anything unparseable. Rule 1 — no verdict beats a wrong verdict. */
+
+  /* every equation in the question, in order, deduplicated */
+  function equationsOf(q){
+    var parts = String(q || '').split(/\n|[,;]|\band\b/i), out = [], seen = {};
+    parts.forEach(function(p){
+      p = String(p).replace(/[?.]+\s*$/, '').trim();
+      if(p.indexOf('=') < 0) return;
+      /* Strip the lead-in words ("Solve", "the simultaneous equations", "y:").
+         Two wrong ways to do this were tried first and both are instructive.
+         Taking the first candidate that PARSES fails because implicit
+         multiplication reads "Solve x + y = 10" quite happily as s·o·l·v·e·…,
+         giving an equation in seven variables that tripped the variable guard
+         and produced no verdict on every worded question. Taking the candidate
+         with the FEWEST variables then ate the maths itself — "2x + y = 7"
+         became "y = 7", which is a different equation and would have verified
+         a wrong answer.
+
+         The distinction that actually holds: a variable here is a SINGLE
+         letter, so anything alphabetic and longer is English. A word followed
+         by "(" is a function call and is left alone, or "sin(x) = 0" would
+         lose its sine. */
+      /* The separator must not swallow a sign: "Solve -x + y = 1" losing its
+         leading minus turns it into a DIFFERENT equation, and the check then
+         disputed a correct answer. A single letter is prose only when a word
+         follows it ("y satisfying x + y = 7"); in "x + 2y = 8" it is the
+         equation. */
+      /* ONE token per iteration, deliberately — a greedy repeat strips "Solve"
+         and "xy" in a single step, so the candidate that still parses is never
+         seen and the equation is lost. */
+      var lead = /^(?:[A-Za-z](?=\s+[A-Za-z]{2,})[^0-9a-zA-Z(+\-]*|[A-Za-z]{2,}(?!\s*\()[^0-9a-zA-Z(+\-]*)/;
+      /* Strip one lead-in at a time and keep the LAST candidate that still
+         parses. Stripping greedily is wrong because "xy" — a product of two
+         variables — is indistinguishable from an English word by shape, so
+         "Solve xy = 6" was stripped down to "= 6", failed to parse, and the
+         equation was silently dropped from the system. Requiring the result to
+         remain a readable equation is what tells the two apart: eating "Solve"
+         leaves one, eating "xy" does not. */
+      var eq = null, src = null, cand = p, guard = 0;
+      while(guard++ < 9){
+        var trial = cand.replace(/^[A-Za-z]\s*:\s*/, '')   // "Find x and y: 2x + y = 7"
+                        .replace(/^[^0-9a-zA-Z(+\-]+/, '').trim();
+        /* A candidate that begins with a binary operator is the tail of an
+           expression whose first term was just eaten: "xy + x = 6" stripped to
+           "+ x = 6", which parses perfectly happily as x = 6 — a DIFFERENT
+           equation, and one that disputed a correct answer. A leading minus is
+           not in that list, because unary minus is legitimate: "-x - y = -5"
+           is a whole equation and must survive. */
+        if(trial.indexOf('=') >= 0 && !/^[+*\/^]/.test(trial)){
+          var e = Algebra.parseEquation(trial);
+          if(e){ eq = e; src = trial; }                    // remember the deepest strip
+        }
+        if(!lead.test(cand)) break;
+        cand = cand.replace(lead, '');
+      }
+      if(!eq) return;
+      var key = src.replace(/\s+/g, '');
+      if(seen[key]) return;                       // duplicated equation is one equation
+      seen[key] = 1;
+      out.push({src:src, eq:eq});
+    });
+    return out;
+  }
+
+  /* recover linear coefficients numerically and compare ranks.
+     null = cannot analyse; {linear:false} = not a linear system. */
+  function systemShape(eqs, vars){
+    var n = vars.length, rows = [], i, j, k;
+    var base = function(){ var e = {}; vars.forEach(function(v){ e[v] = 0; }); return e; };
+    var f = function(E, env){
+      var a = evalAt(E.L, env), b = evalAt(E.R, env);
+      if(a === null || b === null || !isFinite(a) || !isFinite(b)) return null;
+      return a - b;
+    };
+    for(i = 0; i < eqs.length; i++){
+      var E = eqs[i].eq, f0 = f(E, base());
+      if(f0 === null) return null;
+      var row = [];
+      for(j = 0; j < n; j++){
+        var e1 = base(); e1[vars[j]] = 1;
+        var e2 = base(); e2[vars[j]] = 2;
+        var f1 = f(E, e1), f2 = f(E, e2);
+        if(f1 === null || f2 === null) return null;
+        /* a linear f satisfies f(2) - 2f(1) + f(0) = 0 */
+        if(Math.abs(f2 - 2 * f1 + f0) > 1e-9 * Math.max(1, Math.abs(f2))) return {linear:false};
+        row.push(f1 - f0);
+      }
+      for(j = 0; j < n; j++) for(k = j + 1; k < n; k++){
+        var ej = base(); ej[vars[j]] = 1; ej[vars[k]] = 1;
+        var ea = base(); ea[vars[j]] = 1;
+        var eb = base(); eb[vars[k]] = 1;
+        var fj = f(E, ej), fa = f(E, ea), fb = f(E, eb);
+        if(fj === null || fa === null || fb === null) return null;
+        if(Math.abs(fj - fa - fb + f0) > 1e-9 * Math.max(1, Math.abs(fj))) return {linear:false};
+      }
+      row.push(-f0);                               // augmented column
+      rows.push(row);
+    }
+    /* rank of A and of A|b by elimination */
+    var rank = function(m, cols){
+      var a = m.map(function(r){ return r.slice(0, cols); });
+      var rk = 0;
+      for(var c = 0; c < cols && rk < a.length; c++){
+        var piv = -1, best = 1e-9;
+        for(var r = rk; r < a.length; r++) if(Math.abs(a[r][c]) > best){ best = Math.abs(a[r][c]); piv = r; }
+        if(piv < 0) continue;
+        var t = a[rk]; a[rk] = a[piv]; a[piv] = t;
+        for(var r2 = 0; r2 < a.length; r2++){
+          if(r2 === rk || Math.abs(a[r2][c]) < 1e-12) continue;
+          var fct = a[r2][c] / a[rk][c];
+          for(var c2 = c; c2 < cols; c2++) a[r2][c2] -= fct * a[rk][c2];
+        }
+        rk++;
+      }
+      return rk;
+    };
+    var rA = rank(rows, n), rAb = rank(rows, n + 1);
+    return { linear:true, consistent: rA === rAb, unique: rA === rAb && rA === n };
+  }
+
+  function systemCheck(question, md){
+    var dl = (typeof window !== 'undefined' && window.deLatex7) || function(x){ return x; };
+    var eqs = equationsOf(dl(String(question == null ? '' : question)));
+    if(eqs.length < 2) return [];                  // one equation is substitution's job
+
+    var vars = [], seenV = {};
+    eqs.forEach(function(E){ (E.eq.vars || []).forEach(function(v){
+      if(!seenV[v]){ seenV[v] = 1; vars.push(v); } }); });
+    if(vars.length < 2 || vars.length > 4) return [];
+
+    /* the student's complete assignment, read from the claim zone */
+    var zone = claimZone(String(md == null ? '' : md)).replace(/\*\*|__|(?<![\w*])\*(?!\*)/g, '');
+    var env = {}, missing = [];
+    vars.forEach(function(v){
+      var m = new RegExp('(?:^|[^0-9a-zA-Z])' + v + '\\s*=\\s*([^\\n,;=]{1,40})', 'i').exec(zone);
+      var val = m ? constOf(String(m[1]).replace(/\band\b[\s\S]*$/i, '').replace(/[.]+\s*$/, '').trim()) : null;
+      if(val === null) missing.push(v); else env[v] = val;
+    });
+    /* A partial assignment is never verified. Certifying "x = 6" against a
+       system in x and y would tell a student their half-answer is complete. */
+    if(missing.length) return [];
+
+    var failed = [], holdsAny = false;
+    for(var i = 0; i < eqs.length; i++){
+      var h = Algebra.holdsAt(eqs[i].eq, env);
+      if(h === null) return [];                    // cannot evaluate one of them → no verdict
+      holdsAny = true;
+      if(!h) failed.push(eqs[i].src);
+    }
+    if(!holdsAny) return [];
+
+    var shown = vars.map(function(v){
+      var n = env[v]; var r = Math.round(n * 1e6) / 1e6;
+      return v + ' = ' + String(Math.abs(r - Math.round(r)) < 1e-9 ? Math.round(r) : r).replace(/-/g, '−');
+    }).join(', ');
+
+    if(failed.length){
+      return [{kind:'system', ok:false,
+        text:'with ' + shown + ', ' + failed.length + ' of the ' + eqs.length +
+             ' equations does not hold — ' + failed.join('; ')}];
+    }
+
+    /* Every equation holds. Whether that is THE solution is a second question,
+       and satisfaction is not an answer to it.
+
+       For a NON-LINEAR system this engine has no uniqueness proof at all.
+       xy = 6 is satisfied by (2,3) and by infinitely many other pairs;
+       x² + y² = 25 by (3,4) and by every other point on the circle. Certifying
+       those green would tell a student their answer is THE solution when it is
+       merely one of many — and a false green is worse than no badge, because it
+       is the badge they are being taught to rely on.
+
+       So: no uniqueness proof, no green. The failure path is untouched — a
+       point that demonstrably does NOT satisfy an equation is still disputed
+       above, because that much IS decidable. What is refused here is only the
+       positive claim. */
+    /* ONE positive gate, deliberately. This was first written as two negative
+       bails — "if not linear, refuse" then "if not unique, refuse" — and the
+       first was not load-bearing: deleting it changed nothing, because a
+       non-linear shape has no `unique` property and the SECOND bail caught it
+       by accident. Safety that works by coincidence is safety that a refactor
+       removes without any test noticing.
+
+       So certification now requires an explicit proof of both facts, and
+       anything else is refused with a reason. `=== true` is meant literally:
+       an absent or unknown property must not read as permission. */
+    var shape = systemShape(eqs, vars);
+    var proven = !!shape && shape.linear === true && shape.unique === true;
+    if(!proven){
+      var why = (!shape || shape.linear !== true)
+        ? 'this system is not linear and this engine cannot show that it is the only ' +
+          'solution — the answer may well be correct, it is simply not verified'
+        : 'this system does not have a single solution — the answer is one of ' +
+          'infinitely many, so it is not verified as the solution';
+      return [{kind:'system', ok:false, soft:true,
+        text:'every equation is satisfied by ' + shown + ', but ' + why}];
+    }
+    return [{kind:'system', ok:true,
+      text:'all ' + eqs.length + ' equations hold at ' + shown}];
+  }
+
   /* ---------- CONTRADICTION ----------
      The working derives one value and the final answer states another:
 
@@ -15559,6 +15894,8 @@ var Verify = (function(){
     try { checks = checks.concat(contradiction(question, text)); } catch(e){}
     /* TIER 1 for derivatives — the only mathematical check a derivative can have */
     try { checks = checks.concat(derivativeCheck(question, text)); } catch(e){}
+    try { checks = checks.concat(integralCheck(question, text)); } catch(e){}
+    try { checks = checks.concat(systemCheck(question, text)); } catch(e){}
     try { checks = integrity(question, full).concat(checks); } catch(e){}
     /* validity comes before everything: an impossible question makes every other verdict moot */
     try { checks = questionCheck(question, text).concat(checks); } catch(e){}
@@ -15621,7 +15958,7 @@ var Verify = (function(){
        "⚠ Partially verified". Every answer looked half-checked. */
     var PROOF = {subst:1, transform:1, arith:1, chem:1, identity:1, bound:1,
                  divis:1, unique:1, condition:1, extremum:1,
-                 integrity:1, units:1, trace:1, question:1, claim:1, primality:1, truncated:1, contradiction:1, deriv:1, roots:1};
+                 integrity:1, units:1, trace:1, question:1, claim:1, primality:1, truncated:1, contradiction:1, deriv:1, roots:1, integral:1, system:1};
     /* A soft check is advisory: it reports what could NOT be tested, not a
        problem found. It belongs in the receipt and nowhere near the failure
        count, because a caveat must never decide the badge. */
@@ -15650,7 +15987,7 @@ var Verify = (function(){
     /* units belongs here, not in the milder step-level bucket: an answer to
        "find the acceleration" given in newtons is wrong whatever the
        arithmetic did. */
-    var ANSWER_LEVEL = {subst:1, extremum:1, condition:1, unique:1, chem:1, bound:1, transform:1, units:1, integrity:1, question:1, claim:1, primality:1, truncated:1, contradiction:1, deriv:1, roots:1};
+    var ANSWER_LEVEL = {subst:1, extremum:1, condition:1, unique:1, chem:1, bound:1, transform:1, units:1, integrity:1, question:1, claim:1, primality:1, truncated:1, contradiction:1, deriv:1, roots:1, integral:1, system:1};
     var failedAnswer  = failed.filter(function(c){ return ANSWER_LEVEL[c.kind]; });
     var failedWorking = failedProofs.filter(function(c){ return !ANSWER_LEVEL[c.kind]; });
 
@@ -15689,7 +16026,7 @@ var Verify = (function(){
   }
 
   return { run:run, evalFlat:evalFlat, arithmetic:arithmetic, units:units, integrity:integrity, trace:trace, questionCheck:questionCheck, presentation:presentation, leaks:leaks, unproved:unproved, primality:primality, isPrime:isPrime, completeness:completeness, taxonomy:taxonomy, contradiction:contradiction, derivativeCheck:derivativeCheck,
-           substitution:substitution, solutionCompleteness:solutionCompleteness, consistency:consistency,
+           substitution:substitution, solutionCompleteness:solutionCompleteness, integralCheck:integralCheck, systemCheck:systemCheck, equationsOf:equationsOf, consistency:consistency,
            chemistry:chemistry, parseFormula:parseFormula, parseSide:parseSide,
            units:units, unitPresence:unitPresence, bounds:bounds,
            transformCheck:transformCheck, identityCheck:identityCheck,
@@ -15733,7 +16070,10 @@ function paintVerif(md){
             'answer exists. The receipt below shows which condition fails. This is a ' +
             'problem with the question, not with your working.';
   } else if(r.state === 'checked'){
-    label = '✓ Verified'; cls = 'verif';
+    /* "by 7Solve" is the whole point: an AI answer can and does write the word
+       "verified" about itself, so the authoritative badge names who is making
+       the claim. Only this branch may say it. */
+    label = '✓ Verified by 7Solve'; cls = 'verif';
     title = 'Checked independently on your device: ' + r.passed.length + ' check' +
             (r.passed.length === 1 ? '' : 's') + ' passed, none failed. ' +
             'That covers what can be computed, not whether the method is the one your syllabus wants.';
