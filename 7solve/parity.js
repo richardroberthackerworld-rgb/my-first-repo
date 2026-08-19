@@ -767,6 +767,40 @@ const SYNDIV = [
   ['wrong result',   '2 | 1  -6  11  -6\n  |    2  -8    6\n------------------\n    1  -4   3    5', false],
   ['wrong product',  '2 | 1  -6  11  -6\n  |    2  -9    6\n------------------\n    1  -4   3    0', false],
   ['not a division', '1 | 2\n  | 3', false],
+
+  /* LaTeX array form — the same division, written the other way models write
+     it. This leaked to a student's screen as raw "r|rrrr … \hline" on a
+     flagship cubic answer. deLatex strips the \begin{array}{…} wrapper but
+     leaves the column spec on its own line, and sometimes eats the backslash
+     off \hline too, so all three spellings are pinned here.
+
+     These go through the SAME reconciliation gate as the ASCII form: the LaTeX
+     path converts to the ASCII layout and hands it to synDivParse rather than
+     re-implementing the arithmetic check. A wrong LaTeX block must fall back
+     to preformatted text exactly as a wrong ASCII block does — a polished
+     table is a claim of correctness, and it is never made on unchecked
+     numbers. */
+  ['latex correct',    '\\begin{array}{r|rrrr}\n1 & 1 & -6 & 11 & -6 \\\\\n  &   & 1 & -5 & 6 \\\\\n\\hline\n  & 1 & -5 & 6 & 0\n\\end{array}', true],
+  ['latex remnant',    'r|rrrr\n1 & 1 & -6 & 11 & -6\n& & 1 & -5 & 6\n\\hline\n& 1 & -5 & 6 & 0', true],
+  ['latex no backslash', 'r|rrrr\n1 & 1 & -6 & 11 & -6\n& & 1 & -5 & 6\nhline\n& 1 & -5 & 6 & 0', true],
+  ['latex negative',   'r|rrrr\n-1 & 1 & 1 & -4 & -4\n& & -1 & 0 & 4\n\\hline\n& 1 & 0 & -4 & 0', true],
+  ['latex multi-digit','r|rrrr\n12 & 1 & -20 & 115 & -156\n& & 12 & -96 & 228\n\\hline\n& 1 & -8 & 19 & 72', true],
+  ['latex wrong middle', 'r|rrrr\n1 & 1 & -6 & 11 & -6\n& & 1 & -9 & 6\n\\hline\n& 1 & -5 & 6 & 0', false],
+  ['latex wrong bottom', 'r|rrrr\n1 & 1 & -6 & 11 & -6\n& & 1 & -5 & 6\n\\hline\n& 1 & -5 & 6 & 7', false],
+  /* an ordinary array must stay an ordinary array */
+  ['latex plain matrix', '\\begin{array}{cc}\n1 & 2 \\\\\n3 & 4\n\\end{array}', false],
+  ['latex data table',  '\\begin{array}{r|rr}\nx & y & z \\\\\n\\hline\n1 & 2 & 3\n\\end{array}', false],
+  ['latex too few coeffs', 'r|rr\n1 & 1 & -1\n\\hline\n& 1 & 0', false],
+];
+
+/* The two spellings of one division must render to the same HTML. Without
+   this, the LaTeX path could drift into a second layout that merely looks
+   similar, and the divergence would only show up on a student's screen. */
+const SYNDIV_EQUIV = [
+  ['1 | 1  -6  11  -6\n  |    1  -5    6\n------------------\n    1  -5   6    0',
+   'r|rrrr\n1 & 1 & -6 & 11 & -6\n& & 1 & -5 & 6\n\\hline\n& 1 & -5 & 6 & 0'],
+  ['-1 | 1  1  -4  -4\n   |   -1   0   4\n-----------------\n     1  0  -4   0',
+   'r|rrrr\n-1 & 1 & 1 & -4 & -4\n& & -1 & 0 & 4\n\\hline\n& 1 & 0 & -4 & 0'],
 ];
 
 /* ---------- REGISTRY CONFORMANCE ----------
@@ -846,6 +880,16 @@ function checkSynDiv(mdToHtml) {
     if (got !== wantTable) {
       bad.push(`syndiv ${name}\n            got  ${got ? 'table' : 'fallback'}` +
                `\n            want ${wantTable ? 'table' : 'fallback'}`);
+    }
+  }
+  for (const [ascii, latex] of SYNDIV_EQUIV) {
+    let a, l;
+    try { a = mdToHtml(ascii); l = mdToHtml(latex); }
+    catch (e) { bad.push('syndiv equivalence THREW ' + e.message); continue; }
+    if (a !== l) {
+      bad.push('syndiv equivalence: the ASCII and LaTeX spellings of one division ' +
+               'render differently\n            ascii ' + a.slice(0, 90) +
+               '\n            latex ' + l.slice(0, 90));
     }
   }
   return bad;
@@ -1015,7 +1059,7 @@ function norm(v) {
 
   const total = evalCases.length + holdCases.length + varCases.length +
                 verdictCases.length + DERIVATIVES.length + ABSOLUTE.length +
-                SYNDIV.length + contractPairs.length +
+                SYNDIV.length + SYNDIV_EQUIV.length + contractPairs.length +
                 (process.env.PARITY_NO_REGISTRY === '1' ? 0 : REGISTRY.checks.length);
   if (bad.length) {
     console.log(`\nPARITY FAILED — ${bad.length} of ${total} cases disagree\n`);
