@@ -1,0 +1,143 @@
+{
+  "_": "CANONICAL CHECK REGISTRY. Every checker in the production verification pipeline appears here exactly once, with the exact line that wires it into each engine. parity.js asserts this list and the two shipped pipelines agree in BOTH directions, so a checker added to production and not registered here fails the suite; negative-control.js drives its removals from this list, so registering a checker is what puts it under negative-control coverage. Edit the pipelines and this file together.",
+  "checks": [
+    {
+      "name": "questionCheck",
+      "js": "function questionCheck(question, md){",
+      "php": "QuestionCheck::check($question, $body),"
+    },
+    {
+      "name": "integrity",
+      "js": "function integrity(question, md){",
+      "php": "self::integrity($question, $answer),"
+    },
+    {
+      "name": "substitution",
+      "js": "try { checks = checks.concat(substitution(question, text)); } catch(e){}",
+      "php": "self::substitution($question, $body),"
+    },
+    {
+      "name": "solutionCompleteness",
+      "js": "checks = checks.concat(solutionCompleteness(question, text));",
+      "php": "self::solutionCompleteness($question, $body),"
+    },
+    {
+      "name": "arithmetic",
+      "js": "try { checks = checks.concat(arithmetic(text)); } catch(e){}",
+      "php": "self::arithmetic($body),"
+    },
+    {
+      "name": "units",
+      "js": "function units(question, md){",
+      "php": "Units::check($question, $body),"
+    },
+    {
+      "name": "trace",
+      "js": "function trace(question, md){",
+      "php": "self::trace($question, $body),"
+    },
+    {
+      "name": "presentation",
+      "js": "function presentation(md){",
+      "php": "self::presentation($body),"
+    },
+    {
+      "name": "unproved",
+      "js": "function unproved(md){",
+      "php": "self::unproved($body),"
+    },
+    {
+      "name": "primality",
+      "js": "function primality(md){",
+      "php": "self::primality($body),"
+    },
+    {
+      "name": "completeness",
+      "js": "function completeness(md){",
+      "php": "self::completeness($answer),"
+    },
+    {
+      "name": "taxonomy",
+      "js": "function taxonomy(md){",
+      "php": "self::taxonomy($body),"
+    },
+    {
+      "name": "contradiction",
+      "js": "function contradiction(question, md){",
+      "php": "self::contradiction($question, $answer)"
+    },
+    {
+      "name": "derivativeCheck",
+      "js": "function derivativeCheck(question, md){",
+      "php": null
+    },
+    {
+      "name": "transformCheck",
+      "js": "try { checks = checks.concat(transformCheck(question, text)); } catch(e){}",
+      "php": null
+    },
+    {
+      "name": "identityCheck",
+      "js": "try { checks = checks.concat(identityCheck(text)); } catch(e){}",
+      "php": null
+    },
+    {
+      "name": "checkDivisibility",
+      "js": "try { checks = checks.concat(checkDivisibility(text)); } catch(e){}",
+      "php": null
+    },
+    {
+      "name": "conditionCheck",
+      "js": "try { checks = checks.concat(conditionCheck(question, text)); } catch(e){}",
+      "php": null
+    },
+    {
+      "name": "uniqueness",
+      "js": "try { checks = checks.concat(uniqueness(question, text)); } catch(e){}",
+      "php": null
+    },
+    {
+      "name": "optimality",
+      "js": "try { if(!extremum.length) checks = checks.concat(optimality(question, text)); } catch(e){}",
+      "php": null
+    },
+    {
+      "name": "quantifier",
+      "js": "try { checks = checks.concat(quantifier(text)); } catch(e){}",
+      "php": null
+    },
+    {
+      "name": "exampleAsProof",
+      "js": "try { checks = checks.concat(exampleAsProof(text)); } catch(e){}",
+      "php": null
+    },
+    {
+      "name": "consistency",
+      "js": "try { checks = checks.concat(consistency(text)); } catch(e){}",
+      "php": null
+    },
+    {
+      "name": "unitPresence",
+      "js": "function unitPresence(question, md){",
+      "php": null
+    },
+    {
+      "name": "bounds",
+      "js": "function bounds(question, md){",
+      "php": null
+    },
+    {
+      "name": "extremumCheck",
+      "js": "try { extremum = extremumCheck(question, text); } catch(e){}",
+      "php": null,
+      "note": "result is parked in a local and concatenated on the next line, so the pipeline-to-registry sweep cannot see it — registered by hand"
+    },
+    {
+      "name": "chemistry",
+      "js": "checks = checks.concat(chem.length ? chem : chemistry(text));",
+      "php": null,
+      "note": "invoked inside a ternary, so the pipeline-to-registry sweep cannot see it — registered by hand"
+    }
+  ],
+  "_limits": "The pipeline-to-registry sweep in parity.js recognises the two ordinary wiring shapes (a result concatenated directly, or parked in a local declared with it). Checkers wired unusually — inside a ternary, or assigned to a pre-declared local — are invisible to it and carry a note here. Wire new checks the ordinary way and the sweep will catch a missing registration for you."
+}

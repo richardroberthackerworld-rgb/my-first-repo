@@ -722,6 +722,204 @@ final class Checks
     /* ---------- substitute the claimed answer back in ----------
        The check that did not exist when `x² + y² + 1 = 3xy` with a claimed
        (5,3) went to a student: 35 ≠ 45, and nothing could notice. */
+    /* ============================================================
+       SOLUTION COMPLETENESS  (port of the JS of the same name)
+       ------------------------------------------------------------
+       substitution proves "every root offered is genuine". It does
+       NOT prove "these are all of them", and the difference is a
+       mark: x³ − 6x² + 11x − 6 = 0 answered "x = 1, x = 2" passed
+       every check in the engine, because 1 and 2 really are roots
+       and nothing counted them against the degree.
+
+       This is not a value count — degree is not the number of real
+       roots. (x−2)² = 0 has one distinct root and multiplicity two;
+       x² + 1 = 0 has none over the reals.
+
+       Coefficients come from finite differences of f(x) = L − R and
+       must be integers; rational roots come from the rational-root
+       theorem and are deflated exactly by synthetic division, so
+       the school cases are found exactly rather than by a
+       root-finder that could miss one. What remains must be degree
+       ≤ 2 and closed-form, or there is no verdict. Everything else
+       bails: no verdict beats a wrong verdict.
+
+       Completeness is asserted over the REALS. Where a polynomial
+       also has a complex pair the check refuses to certify the
+       answer complete and says so advisorily, rather than either
+       failing correct real-only work or pretending it is the whole
+       solution set.
+       ============================================================ */
+    public static function polyOf(array $eq, string $v): ?array
+    {
+        $MAXD = 6; $y = [];
+        for ($i = 0; $i <= $MAXD + 1; $i++) {
+            $a = Algebra::evalAt($eq['L'], [$v => (float)$i]);
+            $b = Algebra::evalAt($eq['R'], [$v => (float)$i]);
+            if (is_nan($a) || is_nan($b) || is_infinite($a) || is_infinite($b)) return null;
+            $y[] = $a - $b;
+        }
+        $scale = 1.0;
+        foreach ($y as $t) $scale = max($scale, abs($t));
+
+        $rows = [$y]; $d = -1;
+        for ($k = 1; $k <= $MAXD + 1; $k++) {
+            $prev = $rows[$k - 1]; $cur = [];
+            for ($j = 0; $j + 1 < count($prev); $j++) $cur[] = $prev[$j + 1] - $prev[$j];
+            $rows[] = $cur;
+            if (count($cur)) {
+                $zero = true;
+                foreach ($cur as $t) if (abs($t) > 1e-7 * $scale) { $zero = false; break; }
+                if ($zero) { $d = $k - 1; break; }
+            }
+        }
+        if ($d < 1) return null;
+
+        /* f(x) = Σ Δᵏf(0)/k! · x(x−1)…(x−k+1) */
+        $T = [1.0]; $out = array_fill(0, $d + 1, 0.0); $fact = 1.0;
+        for ($k = 0; $k <= $d; $k++) {
+            if ($k > 0) $fact *= $k;
+            $c = $rows[$k][0] / $fact;
+            for ($j = 0; $j < count($T); $j++) $out[$j] = ($out[$j] ?? 0.0) + $c * $T[$j];
+            $nT = array_fill(0, count($T) + 1, 0.0);
+            for ($j = 0; $j < count($T); $j++) { $nT[$j + 1] += $T[$j]; $nT[$j] += -$k * $T[$j]; }
+            $T = $nT;
+        }
+        $ints = [];
+        foreach ($out as $c) {
+            $r = round($c);
+            if (abs($c - $r) > 1e-6 * max(1.0, abs($c))) return null;
+            $ints[] = (int)$r;
+        }
+        while (count($ints) > 1 && $ints[count($ints) - 1] === 0) array_pop($ints);
+        return count($ints) >= 2 ? $ints : null;
+    }
+
+    public static function realRootsOf(array $eq, string $v): ?array
+    {
+        $a = self::polyOf($eq, $v);
+        if ($a === null) return null;
+        $deg = count($a) - 1; $roots = []; $mult = 0;
+
+        $has = static function (array $rs, float $x): bool {
+            foreach ($rs as $y) if (abs($y - $x) < 1e-9) return true;
+            return false;
+        };
+        while (count($a) > 1 && $a[0] === 0) { array_shift($a); $roots[] = 0.0; $mult++; }
+
+        if (count($a) > 1) {
+            $divs = static function (int $n): array {
+                $n = abs($n); $o = [];
+                for ($q = 1; $q <= $n && $q <= 5000; $q++) if ($n % $q === 0) $o[] = $q;
+                return $o;
+            };
+            $cand = []; $seen = [];
+            foreach ($divs($a[0]) as $p) {
+                foreach ($divs($a[count($a) - 1]) as $q) {
+                    foreach ([$p / $q, -$p / $q] as $x) {
+                        $k = (string)round($x * 1e9);
+                        if (!isset($seen[$k])) { $seen[$k] = 1; $cand[] = (float)$x; }
+                    }
+                }
+            }
+            foreach ($cand as $r) {
+                $guard = 0;
+                while (count($a) > 1 && $guard++ < 8) {
+                    $hi = array_reverse($a); $q2 = [$hi[0]];
+                    for ($j = 1; $j < count($hi); $j++) $q2[] = $hi[$j] + $q2[$j - 1] * $r;
+                    $rem = array_pop($q2);
+                    if (abs($rem) > 1e-9 * max(1.0, abs((float)$a[0]))) break;
+                    $a = array_reverse($q2);
+                    $mult++;
+                    if (!$has($roots, $r)) $roots[] = $r;
+                }
+            }
+        }
+
+        $left = count($a) - 1;
+        if ($left === 2) {
+            $C = (float)$a[0]; $B = (float)$a[1]; $A = (float)$a[2];
+            $disc = $B * $B - 4 * $A * $C;
+            if ($disc > 1e-9) {
+                foreach ([(-$B + sqrt($disc)) / (2 * $A), (-$B - sqrt($disc)) / (2 * $A)] as $x)
+                    if (!$has($roots, $x)) $roots[] = $x;
+                $mult += 2;
+            } elseif ($disc > -1e-9) {
+                $x0 = -$B / (2 * $A);
+                if (!$has($roots, $x0)) $roots[] = $x0;
+                $mult += 2;
+            }
+        } elseif ($left > 2) {
+            return null;
+        }
+
+        sort($roots);
+        return ['real' => $roots, 'degree' => $deg, 'realMult' => $mult, 'complex' => $deg - $mult];
+    }
+
+    public static function solutionCompleteness(string $question, string $md): array
+    {
+        $found = self::findEquation($question);
+        if ($found === null) return [];
+        $eq = $found['eq'];
+        if (count($eq['vars']) !== 1) return [];
+        if (Algebra::hasTrig($eq['L']) || Algebra::hasTrig($eq['R'])) return [];
+        $v = $eq['vars'][0];
+        $info = self::realRootsOf($eq, $v);
+        if ($info === null) return [];
+
+        $zone = self::claimZone($md);
+        $show = static function (float $n): string {
+            $r = round($n, 6);
+            $s = (abs($r - round($r)) < 1e-9) ? (string)(int)round($r) : (string)$r;
+            return str_replace('-', '−', $s);
+        };
+        $NONE = '/\bno\s+(real\s+)?(solutions?|roots?)\b|\b(has|there\s+are)\s+no\s+real\b/i';
+        $CPLX = '/(^|[^a-z])i([^a-z]|$)|\bimaginary\b|\bcomplex\b/i';
+
+        if (!count($info['real'])) {
+            if (preg_match($NONE, $zone))
+                return [['kind' => 'roots', 'ok' => true,
+                         'text' => 'no real solutions exist, and the answer says so']];
+            if (preg_match($CPLX, $zone))
+                return [['kind' => 'roots', 'ok' => false, 'soft' => true,
+                         'text' => 'this equation has no real solutions and the answer gives complex ones — '
+                                 . 'complex roots are outside what this engine can check, so the answer is not verified']];
+            return [];
+        }
+
+        $claimed = self::claimedRoots($zone, $v);
+        if (!count($claimed)) return [];
+        $isRoot = static function (float $x) use ($info): bool {
+            foreach ($info['real'] as $r) if (abs($r - $x) <= 1e-7 * max(1.0, abs($r))) return true;
+            return false;
+        };
+        foreach ($claimed as $x) if (!$isRoot((float)$x)) return [];   // substitution's verdict
+
+        $missing = [];
+        foreach ($info['real'] as $r) {
+            $hit = false;
+            foreach ($claimed as $x) if (abs($r - (float)$x) <= 1e-7 * max(1.0, abs($r))) { $hit = true; break; }
+            if (!$hit) $missing[] = $r;
+        }
+        if (count($missing)) {
+            $names = implode(', ', array_map($show, $missing));
+            $many = count($missing) > 1;
+            return [['kind' => 'roots', 'ok' => false,
+                     'text' => 'the solution is incomplete — ' . $v . ' = ' . $names
+                             . ($many ? ' are also roots' : ' is also a root')
+                             . ' and ' . ($many ? 'are' : 'is') . ' missing from the answer']];
+        }
+        $n = count($info['real']);
+        if ($info['complex'] > 0) {
+            return [['kind' => 'roots', 'ok' => false, 'soft' => true,
+                     'text' => 'all ' . $n . ' real solution' . ($n > 1 ? 's are' : ' is')
+                             . ' accounted for, but this equation also has complex roots that are outside what '
+                             . 'this engine can check']];
+        }
+        return [['kind' => 'roots', 'ok' => true,
+                 'text' => 'all ' . $n . ' solution' . ($n > 1 ? 's are' : ' is') . ' accounted for']];
+    }
+
     public static function substitution(string $question, string $md): array
     {
         $found = self::findEquation($question);
@@ -782,6 +980,13 @@ final class Checks
        their own answer than the one the verifier uses. */
     public static function claimedRoots(string $zone, string $v0): array
     {
+        /* Strip markdown emphasis before reading any value. An answer written
+           as "x = **82 + 30√7**" could not be parsed: the tokeniser turns **
+           into ^, so the whole tail failed and the word-eating fallback
+           harvested the fragment 82 — which satisfies nothing, and reported a
+           CORRECT answer as disputed. Emphasis is presentation, never
+           mathematics. */
+        $zone = preg_replace('/\*\*|__|(?<![\w*])\*(?!\*)/u', '', $zone);
         $roots = [];
         $seen = [];
         $rejected = '/\b(extraneous|rejected?|discard(ed)?|invalid|not a solution|does not satisfy|fails)\b/i';
@@ -1518,6 +1723,7 @@ final class Checks
             QuestionCheck::check($question, $body),
             self::integrity($question, $answer),
             self::substitution($question, $body),
+            self::solutionCompleteness($question, $body),
             self::arithmetic($body),
             Units::check($question, $body),
             self::trace($question, $body),
@@ -1528,6 +1734,7 @@ final class Checks
                reply stops, and the 📌 block is stripped from $body. */
             self::completeness($answer),
             self::taxonomy($body),
+
             /* A solution that disagrees with its own working. Answer-level,
                and it points at WHERE it went wrong, not only that it did. */
             self::contradiction($question, $answer)
@@ -1549,7 +1756,7 @@ final class Checks
            in the milder step-level bucket. */
         /* integrity is answer-level and then some: a misread question makes
            the answer wrong no matter how clean the working is. */
-        $answerLevel = ['subst' => true, 'units' => true, 'integrity' => true, 'question' => true, 'claim' => true, 'primality' => true, 'truncated' => true, 'contradiction' => true];
+        $answerLevel = ['subst' => true, 'units' => true, 'integrity' => true, 'question' => true, 'claim' => true, 'primality' => true, 'truncated' => true, 'contradiction' => true, 'roots' => true];
 
         /* A question with no answer is its own outcome, and flattening it into
            "the answer is wrong" tells a student to try again at something

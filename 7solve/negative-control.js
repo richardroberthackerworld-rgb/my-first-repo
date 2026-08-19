@@ -36,45 +36,31 @@ const PHP = process.env.PHP_BIN || 'php';
 const VERIFY = path.join(HERE, 'verify.php');
 const INDEX = path.join(HERE, 'index.html');
 
-/* Each entry names one check and the exact text that wires it into the
-   pipeline in each engine. Removing that text must break the harness. */
-const WIRED = [
-  { name: 'contradiction',
-    php: 'self::contradiction($question, $answer)',
-    js:  'checks = checks.concat(contradiction(question, text));' },
-  { name: 'substitution',
-    php: 'self::substitution($question, $body),',
-    js:  'checks = checks.concat(substitution(question, text));' },
-  { name: 'units',
-    php: 'Units::check($question, $body),',
-    js:  'checks = checks.concat(units(question, text));' },
-  { name: 'integrity',
-    php: 'self::integrity($question, $answer),',
-    js:  'checks = integrity(question, full).concat(checks);' },
-  { name: 'question validity',
-    php: 'QuestionCheck::check($question, $body),',
-    js:  'checks = questionCheck(question, text).concat(checks);' },
-  { name: 'unproved claims',
-    php: 'self::unproved($body),',
-    js:  'checks = checks.concat(unproved(text));' },
-  { name: 'primality',
-    php: 'self::primality($body),',
-    js:  'checks = checks.concat(primality(text));' },
-  { name: 'truncation',
-    php: 'self::completeness($answer),',
-    js:  'checks = checks.concat(completeness(full));' },
-  { name: 'trace',
-    php: 'self::trace($question, $body),',
-    js:  'checks = checks.concat(trace(question, text));' },
-  { name: 'taxonomy',
-    php: 'self::taxonomy($body),',
-    js:  'checks = checks.concat(taxonomy(text));' },
-];
+/* The checks to remove come from checks.json — the canonical registry, which
+   parity.js also holds to both shipped pipelines. That is what makes coverage
+   automatic rather than remembered: registering a checker is what puts it
+   under negative control, and parity fails until a checker wired into
+   production is registered. This list used to be maintained here by hand, one
+   more place to forget.
+
+   Not every registered check can be PROVEN load-bearing — a checker whose
+   kinds the corpus never exercises will not break anything when removed. Those
+   are reported as uncovered rather than passed, because "removing it changed
+   nothing" is exactly what a dead check looks like. */
+const WIRED = JSON.parse(
+  fs.readFileSync(path.join(__dirname, 'checks.json'), 'utf8')
+).checks.map((c) => ({ name: c.name, js: c.js, php: c.php }));
+
+
 
 function parityPasses() {
   try {
     execFileSync('node', [path.join(HERE, 'parity.js')],
-      { encoding: 'utf8', env: process.env, stdio: 'pipe' });
+      { encoding: 'utf8', stdio: 'pipe',
+        /* registry conformance OFF: we are cutting a wiring line deliberately,
+           and that check would fail for that reason alone, making every check
+           look load-bearing. Caught here must mean the CORPUS noticed. */
+        env: Object.assign({}, process.env, { PARITY_NO_REGISTRY: '1' }) });
     return true;
   } catch (e) { return false; }
 }
@@ -87,6 +73,25 @@ function cut(file, needle) {
 }
 
 (function main() {
+  /* Pre-flight: is every checker still wired BEFORE we start cutting? An
+     interrupted earlier run can leave one removed, and then "parity is
+     failing" is a true but useless message — it does not say that a checker
+     is missing from a shipping file. Name it. */
+  const missing = [];
+  const phpNow = fs.readFileSync(VERIFY, 'utf8');
+  const jsNow = fs.readFileSync(INDEX, 'utf8');
+  for (const c of WIRED) {
+    if (c.php !== null && !phpNow.includes(c.php)) missing.push(c.name + ' (verify.php)');
+    if (!jsNow.includes(c.js)) missing.push(c.name + ' (index.html)');
+  }
+  if (missing.length) {
+    console.log('\nWIRING MISSING — these checks are not in the pipeline right now:\n');
+    missing.forEach((m) => console.log('  - ' + m));
+    console.log('\nMost likely an earlier run of this tool was interrupted mid-cut.' +
+                '\nRestore them (git diff will show the hole) before shipping anything.\n');
+    process.exit(1);
+  }
+
   if (!parityPasses()) {
     console.log('\nparity is already failing — fix that before running the negative control\n');
     process.exit(1);
@@ -98,19 +103,27 @@ function cut(file, needle) {
   for (const c of WIRED) {
     const phpBefore = fs.readFileSync(VERIFY, 'utf8');
     const jsBefore = fs.readFileSync(INDEX, 'utf8');
-    const okPhp = cut(VERIFY, c.php) !== null;
-    const okJs = cut(INDEX, c.js) !== null;
 
+    /* The restore MUST be unconditional. This tool deletes a checker from a
+       production file and puts it back a moment later; when a run died between
+       those two moments it left `self::taxonomy($body),` cut out of verify.php,
+       and the next thing to touch the tree was the release packager. A test
+       that silently disables a safety check is worse than no test. Anything
+       that can throw belongs inside the try, and only the reporting after it. */
     let caught = false, note = '';
-    if (!okPhp || !okJs) {
-      note = 'wiring text not found (' + (!okPhp ? 'php' : 'js') + ') — this control is stale';
-    } else {
-      caught = !parityPasses();
-      if (!caught) note = 'removing it changed nothing — the harness is not testing this';
+    try {
+      const okPhp = c.php === null ? true : cut(VERIFY, c.php) !== null;
+      const okJs = cut(INDEX, c.js) !== null;
+      if (!okPhp || !okJs) {
+        note = 'wiring text not found (' + (!okPhp ? 'php' : 'js') + ') — this control is stale';
+      } else {
+        caught = !parityPasses();
+        if (!caught) note = 'removing it changed nothing — the harness is not testing this';
+      }
+    } finally {
+      fs.writeFileSync(VERIFY, phpBefore, 'utf8');
+      fs.writeFileSync(INDEX, jsBefore, 'utf8');
     }
-
-    fs.writeFileSync(VERIFY, phpBefore, 'utf8');
-    fs.writeFileSync(INDEX, jsBefore, 'utf8');
 
     console.log('  ' + (caught ? 'PASS  caught  ' : 'FAIL  missed  ') +
                 c.name.padEnd(18) + note);

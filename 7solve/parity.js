@@ -71,6 +71,13 @@ const EQUATIONS = [
   ['a=b=c', [{ a: 1, b: 1, c: 1 }]],          // must refuse: two '='
   ['sqrt(x)=3', [{ x: 9 }, { x: 4 }]],
   ['x^3-9x^2+24x=20', [{ x: 2 }, { x: 5 }, { x: 4 }]],
+  /* The P0.5 cubic, each root verified on its own — this is where "is 1 really
+     a root?" is answered, separately from "is {1} the whole solution?". The
+     three non-roots are here for the same reason the near-misses below are:
+     a checker that accepts everything proves nothing. */
+  ['x^3-6x^2+11x-6=0', [{ x: 1 }, { x: 2 }, { x: 3 }, { x: 4 }, { x: 0 }, { x: -1 }]],
+  ['(x-2)^2=0', [{ x: 2 }, { x: 3 }, { x: 0 }]],
+  ['x^2+1=0', [{ x: 1 }, { x: -1 }, { x: 0 }]],
   /* NEAR MISSES — these exist to pin the TOLERANCE, not the algebra.
      holdsAt accepts a relative error of 1e-9. Loosening that constant in one
      file and not the other is a silent, plausible edit, and without a case
@@ -100,6 +107,22 @@ const VERDICTS = [
   ['\\[ x^{2} - 4 = 0 \\]', '## ✅ Answer\nx = 2 and x = -2'],
   ['Solve x^2-4=0',        '## ✅ Answer\nx = 2 and x = -2'],
   ['Solve x^2-4=0',        '## ✅ Answer\nx = 2 and x = 3'],
+  /* SOLUTION COMPLETENESS lives in two files as well, and it is the newest
+     place the engines can drift. Recovering coefficients by finite differences
+     then deflating rational roots is a long enough procedure that a float
+     tolerance edited in one file and not the other would go unnoticed without
+     these — and the disagreement would be the API calling a partial answer
+     verified while the site disputes it. */
+  ['Solve x^3-6x^2+11x-6=0', '## ✅ Answer\nx = 1, x = 2, x = 3'],
+  ['Solve x^3-6x^2+11x-6=0', '## ✅ Answer\nx = 1, x = 2'],
+  ['Solve x^3-6x^2+11x-6=0', '## ✅ Answer\nx = 1'],
+  ['Solve x^3-6x^2+11x-6=0', '## ✅ Answer\nx = 4'],
+  ['Solve (x-2)^2 = 0',      '## ✅ Answer\nx = 2'],
+  ['Solve x^2+1=0',          '## ✅ Answer\nThere are no real solutions.'],
+  ['Solve x^2+1=0',          '## ✅ Answer\nx = i and x = -i'],
+  ['Solve 2x-10=0',          '## ✅ Answer\nx = 5'],
+  ['Solve x^3-x=0',          '## ✅ Answer\nx = 0, x = 1, x = -1'],
+  ['Solve x^3-x=0',          '## ✅ Answer\nx = 0, x = 1'],
   ['Solve x^2-4=0',        '## ✅ Answer\nx = 2, -2'],
   ['Solve x^2+4x+6=0',     '## ✅ Answer\nx = -2'],
   ['Solve x^2+4x+6=0',     '## ✅ Answer\nx = -2 ± i√2'],
@@ -156,6 +179,25 @@ const VERDICTS = [
   ['Solve 2x + 4 = 14', '## ✅ Answer\nx = 5\n\n## 📝 Steps\n1. 2x = 10\n2. so x = 9'],
   ['Solve 2x + 4 = 14', '## ✅ Answer\nx = 5'],
   ['Solve x + y = 10',  '## ✅ Answer\n(4,6)\n\n## 📝 Steps\n1. x = 4'],
+
+  /* MARKDOWN EMPHASIS must never reach the value reader. LocalSolve writes
+     "x = **82 + 30√7**"; the tokeniser turns ** into ^, the tail failed to
+     parse, and the word-eating fallback harvested the fragment 82 — which
+     satisfies nothing. A CORRECT answer was shown to a student as
+     "Verification failed" while its own steps said 0 = 0.
+
+     THE INVARIANT: a solution whose every claimed root substitutes to zero
+     must never be disputed. All three input forms are pinned. */
+  ['Solve x² − 164x + 424 = 0',
+   '## ✅ Answer\n**x = 82 + 30√7  or  x = 82 − 30√7**\n\n## 📝 Steps\n1. **1x² + (-164)x + 424 = 0**, so a = 1, b = -164, c = 424.\n2. **D = 25200**.\n3. x = **82 + 30√7** and x = **82 − 30√7**'],
+  ['Solve x ² − 164x + 424 = 0',
+   '## ✅ Answer\n**x = 82 + 30√7  or  x = 82 − 30√7**\n\n## 📝 Steps\n1. a = 1, b = -164, c = 424.\n2. x = **82 + 30√7** and x = **82 − 30√7**'],
+  ['Solve x^2 - 164x + 424 = 0',
+   '## ✅ Answer\n**x = 82 + 30√7  or  x = 82 − 30√7**\n\n## 📝 Steps\n1. a = 1, b = -164, c = 424.\n2. x = **82 + 30√7** and x = **82 − 30√7**'],
+  /* emphasis on a WRONG answer must still be caught — the fix strips
+     presentation, it does not soften the mathematics */
+  ['Solve x^2 - 4 = 0', '## ✅ Answer\n**x = 5**'],
+  ['Solve x^2 - 4 = 0', '## ✅ Answer\n**x = 2** and **x = 3**'],
 
   /* the trailing full stop that used to hide an equation from every check */
   ['Solve x^2-4 = 0.', '## ✅ Answer\nx = 2 and x = -2'],
@@ -323,24 +365,180 @@ function loadJs() {
   };
   vm.createContext(sandbox);
   /* Deriv too: LocalSolve answers derivatives with no model at all, so its
-     output is checked against known results rather than engine-to-engine. */
-  const dvS = html.indexOf('var Deriv = (function(){');
-  const dvE = html.indexOf('\nW.Deriv = Deriv;', dvS);
-  const dvSrc = (dvS >= 0 && dvE > dvS) ? html.slice(dvS, dvE) : 'var Deriv = null;';
+     output is checked against known results rather than engine-to-engine.
 
+     This used to look for "W.Deriv = Deriv;" and fall back to `var Deriv =
+     null` when it could not find it. Build .38 renamed that export to
+     window.Deriv — so the marker stopped matching, D became null, and
+     `if (D)` quietly skipped all eighteen derivative cases while still
+     counting them in the total. The suite reported a larger number and
+     tested less. Never soft-fail on a missing marker: if the module cannot
+     be located the harness is not testing what it claims to be. */
+  const dvS = html.indexOf('var Deriv = (function(){');
+  const dvE = html.indexOf('\nwindow.Deriv = Deriv;', dvS);
+  if (dvS < 0 || dvE < dvS) throw new Error('could not find the Deriv module in index.html');
+  const dvSrc = html.slice(dvS, dvE);
+
+  /* Deriv FIRST, and on window: derivativeCheck reads window.Deriv at call
+     time, so loading it after Verify leaves the check alive but toothless. */
   vm.runInContext(
+    dvSrc + '\nwindow.Deriv = Deriv;\n' +
     dlSrc + '\nwindow.deLatex7 = deLatex;\n' + src +
-    '\nW.Verify = Verify;\n' + dvSrc +
+    '\nwindow.Verify = Verify;\n' +
     '\nthis.__A = Verify.Algebra; this.__V = Verify; this.__D = Deriv;',
     sandbox, { timeout: 5000 });
   if (!sandbox.__A) throw new Error('Verify.Algebra was not exported');
   if (typeof sandbox.window.deLatex7 !== 'function') throw new Error('deLatex7 did not attach');
-  return { A: sandbox.__A, V: sandbox.__V, D: sandbox.__D };
+
+  /* The markdown renderer, for the synthetic-division layout. It sits in a
+     different script block and leans on a few page helpers, so it gets its own
+     small sandbox with those stubbed rather than being dragged into this one. */
+  const mS = html.indexOf('/* ============================================================\n   SYNTHETIC DIVISION');
+  const mE = html.indexOf('\n/* ================= exports =================');
+  if (mS < 0 || mE < mS) throw new Error('could not find the synthetic-division renderer in index.html');
+  const mdBox = {
+    console, String, Number, Object, Array, RegExp, JSON, Math,
+    parseInt, parseFloat, isNaN, isFinite, window: {},
+    escapeHtml: (x) => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'),
+    unescapeHtml: (x) => String(x).replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&'),
+    sanitizeSvg: () => null,
+  };
+  vm.createContext(mdBox);
+  vm.runInContext(html.slice(mS, mE) + '\nthis.__M = mdToHtml;', mdBox, { timeout: 5000 });
+  if (typeof mdBox.__M !== 'function') throw new Error('mdToHtml did not load');
+
+  return { A: sandbox.__A, V: sandbox.__V, D: sandbox.__D, M: mdBox.__M };
 }
 
 /* The same collapse from checks to a state that Checks::run performs. Kept
    here rather than read off the page so the two sides are compared on the
    rule, not on one side's implementation of it. */
+/* ---------- what the two engines have in common ----------
+   The browser runs 25 checkers; verify.php runs 13 of them. That is not drift,
+   it is the design — a dozen checks (derivatives, divisibility, optimality,
+   quantifiers) exist only where there is a student to show them to. Comparing
+   a superset against a subset can never agree, which is why the old harness
+   quietly recomposed only the thirteen shared checkers and never noticed that
+   `units` was wired twice on the JS side.
+
+   So the comparison is restricted to kinds a SHARED checker can produce, and
+   that set is discovered by running the registry's checkers over the corpus
+   rather than written down. Add a JS-only checker and its kinds are excluded
+   automatically; its behaviour is still pinned by the ABSOLUTE corpus, which
+   asserts real verdicts rather than engine agreement. Nothing here is a list
+   anyone has to remember to update. */
+function kindsOf(V, entries, cases) {
+  const out = {};
+  for (const e of entries) {
+    const fn = V[e.name];
+    if (typeof fn !== 'function') continue;
+    /* Checkers take either (question, answer) or just (answer) — calling the
+       one-argument kind with (q, a) silently analyses the QUESTION and returns
+       nothing, which is how `agree` escaped this sweep and looked like a
+       cross-engine divergence. Both shapes are tried and the kinds unioned;
+       an over-broad sweep here costs nothing, a missed kind costs a false
+       parity failure. */
+    for (const c of cases) {
+      for (const args of [[c.q, c.a], [c.a]]) {
+        let r;
+        try { r = fn.apply(null, args) || []; } catch (err) { continue; }
+        for (const x of r) if (x && x.kind) out[x.kind] = 1;
+      }
+    }
+  }
+  return out;
+}
+function jsOnlyKinds(V, registry, cases) {
+  const shared = kindsOf(V, registry.checks.filter((c) => c.php), cases);
+  const only = kindsOf(V, registry.checks.filter((c) => !c.php), cases);
+  /* a kind BOTH a shared and a JS-only checker can emit still has to match */
+  Object.keys(shared).forEach((k) => { delete only[k]; });
+  return only;
+}
+
+/* ---------- the one place the two engines are allowed to differ ----------
+   Every state that means "a verdict was reached" must match exactly. The
+   engines genuinely disagree on what to CALL the outcome when no verdict was
+   reached: the browser distinguishes worked / explained / plain / partial so
+   the badge can say what it did look at, while verify.php collapses all four
+   into `unverified`. None of them claims verification, so an answer is never
+   verified on one side and not the other — but the site and the API do label
+   the same unverified answer differently, and that is a real API-contract
+   difference a customer could trip over.
+
+   This was invisible while the harness reimplemented the JS state machine
+   with PHP's names. It is surfaced here rather than hidden, and deliberately
+   NOT fixed inside either engine: renaming in the browser changes the badge,
+   renaming in PHP changes a published API field, and that is a product call,
+   not a test-harness one. Anything outside this family is a hard failure. */
+const NOT_VERIFIED = { plain: 1, partial: 1, worked: 1, explained: 1, unverified: 1 };
+function sameVerdict(jsState, phpState) {
+  if (jsState === phpState) return true;
+  return !!(NOT_VERIFIED[jsState] && NOT_VERIFIED[phpState]);
+}
+
+/* ---------- THE STATE CONTRACT ----------
+   See VERIFICATION-CONTRACT.md. Every state either engine can produce maps to
+   exactly one of three canonical outcomes, and the invariant is:
+
+     no answer is ever `verified` in one engine and `disputed` or
+     `unverified` in the other.
+
+   The engines may disagree about how to DESCRIBE a not-verified answer — the
+   browser splits it four ways so the badge can say what it looked at, PHP
+   collapses it to one public `unverified`. They may never disagree about
+   whether the mathematics was proved. That is the difference between a
+   wording difference and telling a student their correct answer is wrong
+   while telling an API customer it is right.
+
+   A state missing from this table is a HARD failure, not a default: a state
+   nobody has classified is a state nobody can reason about, and silently
+   treating it as unverified is how a new `verified` synonym would slip
+   through this test unnoticed. */
+const CANONICAL = {
+  checked: 'verified',
+  disputed: 'disputed',
+  stepfail: 'disputed',
+  invalid_question: 'disputed',
+  unverified: 'unverified',
+  worked: 'unverified',
+  explained: 'unverified',
+  plain: 'unverified',
+  partial: 'unverified',
+};
+
+function stateContract(pairs) {
+  const bad = [];
+  for (const p of pairs) {
+    const j = CANONICAL[p.js], h = CANONICAL[p.php];
+    if (!j) { bad.push(`contract: JS produced the unclassified state "${p.js}" — add it to ` +
+                       'CANONICAL in parity.js and to VERIFICATION-CONTRACT.md'); continue; }
+    if (!h) { bad.push(`contract: PHP produced the unclassified state "${p.php}" — add it to ` +
+                       'CANONICAL in parity.js and to VERIFICATION-CONTRACT.md'); continue; }
+    if (j === h) continue;
+    bad.push('contract VIOLATION — ' + JSON.stringify(p.q.slice(0, 60)) +
+             '\n            answer ' + JSON.stringify(p.a.replace(/\n/g, ' ').slice(0, 60)) +
+             `\n            site says ${j} (${p.js}), api says ${h} (${p.php})` +
+             '\n            an answer may never be verified on one surface and not the other');
+  }
+  return bad;
+}
+
+let REGISTRY = null, JS_ONLY = {};
+/* the shipped answer-level list, parsed from index.html so there is one copy */
+let ANSWER_LEVEL = null;
+function loadAnswerLevel(html) {
+  const m = html.match(/var ANSWER_LEVEL = {([^}]*)}/);
+  if (!m) throw new Error("could not find ANSWER_LEVEL in index.html");
+  const out = {};
+  m[1].split(",").forEach((p) => {
+    const kv = p.split(":");
+    if (kv.length === 2 && kv[1].trim() === "1") out[kv[0].trim()] = 1;
+  });
+  if (!Object.keys(out).length) throw new Error("ANSWER_LEVEL parsed empty");
+  return out;
+}
+
 function verdictOf(checks) {
   /* An impossible question is its own outcome, and it outranks every verdict
      about the answer — if the problem has no solution, "is the answer right"
@@ -348,9 +546,13 @@ function verdictOf(checks) {
   if (checks.some((c) => c.invalidQuestion)) return 'invalid_question';
   const failed = checks.filter((c) => !c.ok && !c.soft);
   const passed = checks.filter((c) => c.ok);
-  /* Answer-level kinds, matching $answerLevel in Checks::run. A wrong
-     dimension condemns the answer, not merely a step. */
-  const ANSWER = { subst: 1, units: 1, integrity: 1, question: 1, claim: 1, primality: 1, truncated: 1, contradiction: 1 };
+  /* Answer-level kinds are READ OUT OF index.html, never listed here. This
+     used to be a hand-kept copy — a third one, after the JS and the PHP — and
+     it drifted the moment a new answer-level check was added: `roots` failed,
+     the shipped engine called it disputed, and this harness called it stepfail
+     and blamed PHP for the difference. A list that must match two other lists
+     is a list that will not. */
+  const ANSWER = ANSWER_LEVEL;
   if (failed.some((c) => ANSWER[c.kind])) return 'disputed';
   if (failed.length) return 'stepfail';
   if (passed.length) return 'checked';
@@ -441,6 +643,227 @@ const DERIVATIVES = [
   ['floor(x)',       null],
 ];
 
+/* ---------- ABSOLUTE VERDICTS (JS only) ----------
+
+   VERDICTS above asks "do the two engines agree?". These cases ask the
+   different question "is the verdict RIGHT?" — and they are JS-only on
+   purpose: verify.php has no symbolic differentiator, so a derivative
+   verdict has no PHP counterpart to be compared against. Running them
+   through the parity corpus would only prove the two engines are equally
+   silent.
+
+   The tier cases are the ones that matter most. `agree` is a Tier 3 prose
+   hint that once outranked mathematics: a correct derivative came back
+   "partially verified" because the summary wording differed from the answer
+   wording. If a refactor ever makes `agree` authoritative again, CASE A
+   fails here rather than on a student's screen. */
+const ABSOLUTE = [
+  /* --- tier architecture --- */
+  // CASE A  Tier 1 PASS + Tier 3 agree FAIL  => still VERIFIED
+  ['tierA', 'Solve x^2-164x+424=0',
+   '## ✅ Answer\n**x = 82 ± 30√7**\n\n## Summary\nThe roots are 82 + 30√7 and 82 − 30√7.',
+   'checked'],
+  // CASE B  Tier 1 FAIL => never verified, whatever else passes
+  ['tierB', 'Solve x^2-164x+424=0', '## ✅ Answer\n**x = 88 - 30√7**', 'disputed'],
+  // CASE C  all three tiers pass
+  ['tierC', 'Solve x^2-4=0', '## ✅ Answer\nx = 2 and x = -2', 'checked'],
+  // CASE D  Tier 1 FAIL + Tier 3 PASS => NOT verified
+  ['tierD', 'Solve x^2-4=0',
+   '## ✅ Answer\nx = 2 and x = 3\n\n## Summary\nx = 2 and x = 3', 'disputed'],
+
+  /* --- derivatives: correct claims must reach VERIFIED --- */
+  ['d+', 'differentiate x^3 sin x',  '## ✅ Answer\n**3x² sin(x) + x³ cos(x)**', 'checked'],
+  ['d+', 'differentiate x^3*sin(x)', '## ✅ Answer\n**3x² sin(x) + x³ cos(x)**', 'checked'],
+  ['d+', 'd/dx sin x',               '## ✅ Answer\n**cos(x)**',                 'checked'],
+  ['d+', 'd/dx cos x',               '## ✅ Answer\n**-sin(x)**',                'checked'],
+  ['d+', 'differentiate x*cos(x)',   '## ✅ Answer\n**cos(x) - x sin(x)**',      'checked'],
+  ['d+', 'differentiate ln(x)',      '## ✅ Answer\n**1/x**',                    'checked'],
+  ['d+', 'differentiate sqrt(x)',    '## ✅ Answer\n**1/(2 sqrt(x))**',          'checked'],
+  ['d+', 'differentiate sin(x^2)',   '## ✅ Answer\n**2x cos(x^2)**',            'checked'],
+
+  /* --- derivatives: wrong claims must be DISPUTED, not merely unverified ---
+     These are hand-written answers in a shape LocalSolve never emits. The
+     verifier must judge the mathematical claim, not recognise its own
+     handwriting — a wrong derivative that merely goes unchecked is a wrong
+     derivative shown to a student without a warning. */
+  ['d-', 'differentiate x^3 sin x', '## ✅ Answer\n**3x² sin(x)**', 'disputed'],
+  ['d-', 'differentiate x^3 sin x', '## ✅ Answer\n**x³ cos(x)**',  'disputed'],
+  ['d-', 'd/dx sin x',              '## ✅ Answer\n**-cos(x)**',    'disputed'],
+
+  /* --- the cubic, with all three roots verified individually ---
+     x³ − 6x² + 11x − 6 factors as (x−1)(x−2)(x−3). Each root is pinned on its
+     own as well as together, so a substitution regression that only breaks one
+     of them cannot hide inside a combined answer. */
+  ['cubic', 'Solve x^3 - 6x^2 + 11x - 6 = 0',
+   '## ✅ Answer\n**x = 1, x = 2, x = 3**\n\n## 📝 Steps\n' +
+   '1. Try x = 1: 1 − 6 + 11 − 6 = 0 ✓\n2. Divide by (x − 1) to get x² − 5x + 6\n' +
+   '3. Factor: (x − 2)(x − 3)\n4. So x = 1, 2, 3', 'checked'],
+  ['cubic', 'Solve x^3-6x^2+11x-6=0', '## ✅ Answer\n**x = 1, x = 2, x = 3**', 'checked'],
+  /* Each root on its own is now INCOMPLETE, not verified — P0.5 changed this
+     deliberately, and these three rows are the record of that change. Their
+     original job, proving each of 1, 2 and 3 is genuinely a root, moved down
+     to the EQUATIONS corpus where it is checked at the algebra layer in both
+     engines; asserting it through a full answer verdict conflated "is this a
+     root" with "is this the whole answer", which is the exact conflation P0.5
+     exists to undo. */
+  ['cubic', 'Solve x^3-6x^2+11x-6=0', '## ✅ Answer\n**x = 1**',               'disputed'],
+  ['cubic', 'Solve x^3-6x^2+11x-6=0', '## ✅ Answer\n**x = 2**',               'disputed'],
+  ['cubic', 'Solve x^3-6x^2+11x-6=0', '## ✅ Answer\n**x = 3**',               'disputed'],
+  /* a root that is not a root must be caught, at each position */
+  ['cubic', 'Solve x^3-6x^2+11x-6=0', '## ✅ Answer\n**x = 1, x = 2, x = 4**', 'disputed'],
+  ['cubic', 'Solve x^3-6x^2+11x-6=0', '## ✅ Answer\n**x = 0, x = 2, x = 3**', 'disputed'],
+  ['cubic', 'Solve x^3-6x^2+11x-6=0', '## ✅ Answer\n**x = -1**',              'disputed'],
+
+  /* KNOWN GAP, pinned deliberately — this asserts what the code DOES, not
+     what it SHOULD do. A cubic answered with only two of its three roots is
+     currently reported verified: every root offered does satisfy the
+     equation, and nothing counts them against the degree. That is wrong for a
+     student, who loses the mark for the missing root. It is pinned so the day
+     someone adds a root-count check this line fails loudly and gets corrected
+     to 'disputed', rather than the gap sitting unnoticed. Do not read this row
+     as approval. */
+  /* --- P0.5 solution completeness ---
+     The gap that used to be pinned here is now closed: "x = 1, x = 2" on the
+     cubic was reported verified, because both roots are genuine and nothing
+     counted them against the degree. substitution answers "is every root
+     offered real?"; this answers "are these all of them?".
+
+     Note what is NOT being tested: a value count. (x−2)² = 0 has ONE distinct
+     root with multiplicity two and must verify from "x = 2" alone, and
+     x² + 1 = 0 has none at all over the reals. */
+  ['complete',   'Solve x^3-6x^2+11x-6=0', '## ✅ Answer\n**x = 1, x = 2, x = 3**', 'checked'],
+  ['incomplete', 'Solve x^3-6x^2+11x-6=0', '## ✅ Answer\n**x = 1, x = 2**',        'disputed'],
+  ['incomplete', 'Solve x^3-6x^2+11x-6=0', '## ✅ Answer\n**x = 1, x = 3**',        'disputed'],
+  ['incomplete', 'Solve x^3-6x^2+11x-6=0', '## ✅ Answer\n**x = 2, x = 3**',        'disputed'],
+  ['incomplete', 'Solve x^3-6x^2+11x-6=0', '## ✅ Answer\n**x = 1**',               'disputed'],
+  ['incomplete', 'Solve x^2-5x+6=0',       '## ✅ Answer\n**x = 2**',               'disputed'],
+  ['incomplete', 'Solve x^2-4=0',          '## ✅ Answer\n**x = 2**',               'disputed'],
+  /* multiplicity: one distinct value, and it must NOT be required twice */
+  ['multiplicity', 'Solve (x-2)^2 = 0',    '## ✅ Answer\n**x = 2**',               'checked'],
+  ['multiplicity', 'Solve x^2-4x+4=0',     '## ✅ Answer\n**x = 2**',               'checked'],
+  /* a single-root equation must still verify from one value */
+  ['one root',   'Solve 2x-10=0',          '## ✅ Answer\n**x = 5**',               'checked'],
+  /* no real solutions is a COMPLETE answer, not an empty one */
+  ['no real',    'Solve x^2+1=0',   '## ✅ Answer\nThere are no real solutions.',   'checked'],
+  ['no real',    'Solve x^2+4=0',   '## ✅ Answer\nThis equation has no real roots.', 'checked'],
+  /* irrational pair, both sides of the ± present: complete */
+  ['irrational', 'Solve x^2-164x+424=0',   '## ✅ Answer\n**x = 82 ± 30√7**',       'checked'],
+];
+
+/* ---------- SYNTHETIC DIVISION RENDERER ----------
+   Alignment is the method here: which product sits under which coefficient is
+   the whole content. Unfenced, these lines used to take the paragraph branch,
+   the runs of spaces collapsed, and the layout was destroyed.
+
+   The last two cases are the important ones. The renderer re-derives the
+   arithmetic from the root and the top row, and anything that does not
+   reconcile stays preformatted — a wrong computation must never be handed the
+   authority of a clean table. */
+const SYNDIV = [
+  ['classic',        '2 | 1  -6  11  -6\n  |    2  -8    6\n------------------\n    1  -4   3    0', true],
+  ['box drawing',    '1 │  1  -6  11  -6\n  │      1  -5   6\n  ├───────────────\n     1  -5   6   0', true],
+  ['no products row','3 | 1  -6  11  -6\n----------------\n  1  -3   2   0', true],
+  ['negative root',  '-1 | 1  1  -4  -4\n   |   -1   0   4\n-----------------\n     1  0  -4   0', true],
+  ['wrong result',   '2 | 1  -6  11  -6\n  |    2  -8    6\n------------------\n    1  -4   3    5', false],
+  ['wrong product',  '2 | 1  -6  11  -6\n  |    2  -9    6\n------------------\n    1  -4   3    0', false],
+  ['not a division', '1 | 2\n  | 3', false],
+];
+
+/* ---------- REGISTRY CONFORMANCE ----------
+   checks.json is the canonical list of production checkers. This asserts it
+   against the two shipped pipelines in BOTH directions:
+
+     registry → pipeline   a registered check must still be wired, or the
+                           registry is describing a checker that no longer runs
+     pipeline → registry   a checker wired into production must be registered,
+                           or it silently escapes negative-control coverage
+
+   The second direction is the one that matters, and it is the whole point of
+   this exercise: before it existed, a new checker could be added to run() in
+   both engines, ship, and never be removal-tested — the exact wiring bug the
+   negative controls are for. Now the suite fails until it is registered.
+
+   This reads the composition block of each run(), not arbitrary source: the
+   registry holds the shared definition, and this only confirms nothing has
+   appeared in production that the registry has not been told about. */
+function checkRegistry(registry, html, php) {
+  const bad = [];
+  const rs = html.indexOf('var checks = [];', html.indexOf('var Verify = (function(){'));
+  const rend = html.indexOf('var PROOF = {', rs);
+  const ps = php.indexOf('$checks = array_merge(');
+  const pend = php.indexOf('\n        );', ps);
+  if (rs < 0 || rend < rs) return ['registry: could not locate Verify.run in index.html'];
+  if (ps < 0 || pend < ps) return ['registry: could not locate Checks::run in verify.php'];
+  const jsBody = html.slice(rs, rend), phpBody = php.slice(ps, pend);
+
+  const names = new Set();
+  for (const c of registry.checks) {
+    if (names.has(c.name)) bad.push(`registry: "${c.name}" is listed twice`);
+    names.add(c.name);
+    if (!jsBody.includes(c.js))
+      bad.push(`registry: "${c.name}" is registered but its JS wiring is not in Verify.run`);
+    if (c.php && !phpBody.includes(c.php))
+      bad.push(`registry: "${c.name}" is registered but its PHP wiring is not in Checks::run`);
+  }
+
+  /* pipeline → registry: every checker invoked in either composition */
+  /* A checker is a call whose RESULT reaches `checks`. Scanning every call in
+     the body instead swept up uParse, uRender and the other local helpers and
+     demanded they be registered as checkers, which would have made the
+     registry a list of everything rather than a list of checks. Two shapes
+     count: a result concatenated directly, and a result parked in a local that
+     is concatenated afterwards (extremumCheck does exactly that). */
+  const jsCalled = [];
+  for (const L of jsBody.split('\n')) {
+    if (!L.includes('checks')) continue;
+    for (const m of L.matchAll(/(?:concat\(|=\s*)([A-Za-z_$][\w$]*)\s*\(/g))
+      if (m[1] !== 'checks' && m[1] !== 'concat') jsCalled.push(m[1]);
+  }
+  for (const m of jsBody.matchAll(/checks\s*=\s*checks\.concat\(\s*([A-Za-z_$][\w$]*)\s*\)/g)) {
+    const via = jsBody.match(new RegExp('\\b(?:var|let|const)\\s+' + m[1] + '\\s*=\\s*([A-Za-z_$][\\w$]*)\\s*\\('));
+    if (via) jsCalled.push(via[1]);
+  }
+  for (const n of new Set(jsCalled)) {
+    if (!names.has(n))
+      bad.push(`registry: Verify.run calls "${n}" but checks.json does not list it — ` +
+               'register it so it gets negative-control coverage');
+  }
+  const phpCalled = [...phpBody.matchAll(/(?:self|[A-Za-z]+)::([A-Za-z_]\w*)\s*\(/g)].map((m) => m[0]);
+  for (const call of new Set(phpCalled)) {
+    if (!registry.checks.some((c) => c.php && c.php.includes(call)))
+      bad.push(`registry: Checks::run calls "${call}" but checks.json does not list it — ` +
+               'register it so it gets negative-control coverage');
+  }
+  return bad;
+}
+
+function checkSynDiv(mdToHtml) {
+  const bad = [];
+  for (const [name, src, wantTable] of SYNDIV) {
+    let got;
+    try { got = /table class="sd"/.test(mdToHtml(src)); }
+    catch (e) { bad.push(`syndiv ${name} THREW ${e.message}`); continue; }
+    if (got !== wantTable) {
+      bad.push(`syndiv ${name}\n            got  ${got ? 'table' : 'fallback'}` +
+               `\n            want ${wantTable ? 'table' : 'fallback'}`);
+    }
+  }
+  return bad;
+}
+
+function checkAbsolute(V, verdictOf) {
+  const bad = [];
+  for (const [tag, q, a, want] of ABSOLUTE) {
+    let got;
+    try { got = V.run(q, a).state; } catch (e) { got = 'THREW: ' + e.message; }
+    if (got !== want) {
+      bad.push(`verdict[${tag}] ${JSON.stringify(q)}\n            answer ${JSON.stringify(a.replace(/\n/g, ' ').slice(0, 60))}` +
+               `\n            got  ${got}\n            want ${want}`);
+    }
+  }
+  return bad;
+}
+
 function checkDerivatives(D, A) {
   const bad = [];
   for (const [src, want] of DERIVATIVES) {
@@ -453,6 +876,42 @@ function checkDerivatives(D, A) {
   return bad;
 }
 
+/* ---------- LOAD ORDER ----------
+   `var W = window` is declared partway down the page. A TOP-LEVEL `W.x = …`
+   in any earlier script block throws ReferenceError at load and aborts the
+   rest of that block — silently, because nothing catches it and the page
+   still paints.
+
+   That is exactly what broke the Solve button in .36: three exports added at
+   the bottom of a new module ran before W existed, and everything after them
+   in that block — including the answer pipeline — never executed.
+
+   Syntax checks cannot see this. A parser is happy with W.x; only the running
+   order makes it wrong. So the shape is checked here instead: statements at
+   column 0 execute at load, statements inside a function do not. */
+function checkLoadOrder(html) {
+  const bad = [];
+  const marks = [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>/gi)].map((m) => m.index);
+  const blockOf = (i) => marks.filter((x) => x < i).length;
+  const wDecl = html.search(/(?:^|\n)\s*var\s+W\s*=\s*window/);
+  if (wDecl < 0) return ['load-order: `var W = window` not found — this guard is stale'];
+  const wBlock = blockOf(wDecl);
+
+  const lines = html.split('\n');
+  let offset = 0;
+  for (let n = 0; n < lines.length; n++) {
+    const line = lines[n];
+    /* Column 0 means it runs when the block does. Indented code is inside
+       something, and by the time that something is CALLED, W exists. */
+    if (/^W\./.test(line) && blockOf(offset) < wBlock) {
+      bad.push(`load-order: line ${n + 1} runs "W." at load, before W exists (block ` +
+               `${blockOf(offset)} < ${wBlock}) — use window.* there`);
+    }
+    offset += line.length + 1;
+  }
+  return bad;
+}
+
 /* ---------- compare ---------- */
 function norm(v) {
   if (v === null || v === undefined) return null;
@@ -461,7 +920,9 @@ function norm(v) {
 }
 
 (function main() {
-  const { A, V, D } = loadJs();
+  ANSWER_LEVEL = loadAnswerLevel(fs.readFileSync(path.join(HERE, 'index.html'), 'utf8'));
+  REGISTRY = JSON.parse(fs.readFileSync(path.join(HERE, 'checks.json'), 'utf8'));
+  const { A, V, D, M } = loadJs();
 
   const evalCases = [];
   for (const src of EXPRS) for (const env of ENVS) evalCases.push({ src, env });
@@ -472,6 +933,8 @@ function norm(v) {
   const varCases = EQUATIONS.map(([src]) => src);
 
   const verdictCases = VERDICTS.map(([q, a]) => ({ q, a }));
+  JS_ONLY = jsOnlyKinds(V, REGISTRY, verdictCases);
+  const contractPairs = [];
 
   const php = runPhp({ eval: evalCases, holds: holdCases, vars: varCases, verdicts: verdictCases });
 
@@ -510,23 +973,19 @@ function norm(v) {
     /* Must assemble the SAME set of checks Checks::run assembles on the PHP
        side. Adding a check to one engine and forgetting it here produces a
        harness that reports a divergence it created itself. */
-    const checks = [].concat(
-      V.substitution(c.q, c.a) || [],
-      V.arithmetic(c.a) || [],
-      V.units(c.q, c.a) || [],
-      V.integrity(c.q, c.a) || [],
-      V.trace(c.q, c.a) || [],
-      V.questionCheck(c.q, c.a) || [],
-      V.presentation(c.a) || [],
-      V.unproved(c.a) || [],
-      V.primality(c.a) || [],
-      V.completeness(c.a) || [],
-      V.taxonomy(c.a) || [],
-      V.contradiction(c.q, c.a) || []);
+    /* BOTH sides call their own production run(). This used to recompose the
+       pipeline by hand on the JS side while PHP called run() — thirteen
+       checkers listed in a fourteenth place, so a checker added to production
+       and forgotten here made the harness compare two different pipelines and
+       pass. There is now nothing to forget: whatever run() composes is what
+       gets compared, in both languages. */
+    const r = V.run(c.q, c.a);
+    const checks = (r.checks || []).filter((x) => !JS_ONLY[x.kind]);
     const sig = checks.map((x) => x.kind + (x.ok ? '+' : '-')).sort().join(',');
-    const js = { state: verdictOf(checks), n: checks.length, sig };
+    const js = { state: r.state, n: checks.length, sig };
     const ph = php.verdicts[i];
-    if (js.state !== ph.state || js.n !== ph.n || js.sig !== ph.sig) {
+    contractPairs.push({ q: c.q, a: c.a, js: js.state, php: ph.state });
+    if (!sameVerdict(js.state, ph.state) || js.n !== ph.n || js.sig !== ph.sig) {
       bad.push('verdict ' + JSON.stringify(c.q.slice(0, 70)) +
                '\n            answer ' + JSON.stringify(c.a.replace(/\n/g, ' ').slice(0, 70)) +
                '\n            js =' + js.state + '(' + js.n + ') [' + js.sig + ']' +
@@ -534,10 +993,30 @@ function norm(v) {
     }
   });
 
+  /* the JS/PHP state contract: never verified here and not-verified there */
+  bad.push(...stateContract(contractPairs));
+
+  /* load order: a top-level W.* before W exists kills the rest of its block */
+  bad.push(...checkLoadOrder(fs.readFileSync(path.join(HERE, 'index.html'), 'utf8')));
+
   /* derivatives: checked against known results, not engine-to-engine */
   if (D) bad.push(...checkDerivatives(D, A));
 
-  const total = evalCases.length + holdCases.length + varCases.length + verdictCases.length + DERIVATIVES.length;
+  /* absolute verdicts: is it RIGHT, not merely is it the same on both sides */
+  bad.push(...checkAbsolute(V, verdictOf));
+
+  /* the synthetic-division layout: structural, not engine-to-engine */
+  bad.push(...checkSynDiv(M));
+
+  /* the canonical registry must match both shipped pipelines, both ways */
+  bad.push(...checkRegistry(REGISTRY,
+    fs.readFileSync(path.join(HERE, 'index.html'), 'utf8'),
+    fs.readFileSync(path.join(HERE, 'verify.php'), 'utf8')));
+
+  const total = evalCases.length + holdCases.length + varCases.length +
+                verdictCases.length + DERIVATIVES.length + ABSOLUTE.length +
+                SYNDIV.length + contractPairs.length +
+                (process.env.PARITY_NO_REGISTRY === '1' ? 0 : REGISTRY.checks.length);
   if (bad.length) {
     console.log(`\nPARITY FAILED — ${bad.length} of ${total} cases disagree\n`);
     bad.slice(0, 40).forEach((b) => console.log('  ' + b));
