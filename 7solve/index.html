@@ -8,7 +8,7 @@
 <!-- Build stamp. Bump this whenever the site is rebuilt: it is the one place
      to look to answer "is the new version actually live?" — Settings shows it,
      the console logs it, and you can read it straight out of view-source. -->
-<meta name="7solve-build" content="2026-08-19.7">
+<meta name="7solve-build" content="2026-08-19.8">
 <link rel="icon" href="favicon.ico?v=7by4" sizes="any">
 <link rel="icon" href="assets/logo.svg?v=7by4" type="image/svg+xml">
 <link rel="icon" href="favicon.png?v=7by4" type="image/png" sizes="96x96">
@@ -8112,10 +8112,27 @@ var Deriv = (function(){
     if(a.t === 'u') return {t:'u', a:d(a.a, v)};
     if(a.t === 'b'){
       var u = a.a, w = a.b;
-      if(a.op === '+' || a.op === '-'){ note('sum'); return B(a.op, d(u, v), d(w, v)); }
-      if(a.op === '*'){ note('product'); return B('+', B('*', d(u, v), w), B('*', u, d(w, v))); }
+      /* Null-check every sub-derivative before building a node with it. A
+         non-differentiable subterm — floor, abs, a fractional power — makes
+         d() return null, and wrapping that in B() produced an AST with a null
+         child that crashed simp() one level up. "x + floor(x)" threw while
+         "floor(x) + x" did not, purely because simp evaluates its left branch
+         first. The exception was invisible in production: the pipeline wraps
+         every checker in try/catch, so it degraded to no verdict — which is
+         also what null gives. Found by JS/PHP parity, because the PHP port
+         checked and the original did not. */
+      if(a.op === '+' || a.op === '-'){ note('sum');
+        var ds1 = d(u, v), ds2 = d(w, v);
+        if(ds1 === null || ds2 === null) return null;
+        return B(a.op, ds1, ds2); }
+      if(a.op === '*'){ note('product');
+        var dp1 = d(u, v), dp2 = d(w, v);
+        if(dp1 === null || dp2 === null) return null;
+        return B('+', B('*', dp1, w), B('*', u, dp2)); }
       if(a.op === '/'){ note('quotient');
-        return B('/', B('-', B('*', d(u, v), w), B('*', u, d(w, v))), B('^', w, N(2))); }
+        var dq1 = d(u, v), dq2 = d(w, v);
+        if(dq1 === null || dq2 === null) return null;
+        return B('/', B('-', B('*', dq1, w), B('*', u, dq2)), B('^', w, N(2))); }
       if(a.op === '^'){
         /* Constant exponent only. x^x needs logarithmic differentiation and
            this returns null rather than pretend. */

@@ -39,6 +39,10 @@
    ============================================================ */
 declare(strict_types=1);
 
+/* Phase 1: /v1 must distinguish "a checker ran and could not decide" from
+   "this API has no checker for that subject". See VERIFICATION-CONTRACT.md. */
+require_once __DIR__ . '/capability.php';
+
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: no-referrer');
 header('Cache-Control: no-store');
@@ -363,8 +367,15 @@ if ($route === 'verify') {
     ];
 
     bump_usage($CFG, $key['id'], 'verify', true);
+    /* "unverified" was doing two jobs: a checker ran and could not decide, and
+       this API has no checker for that subject at all. A customer could not
+       tell them apart, and only one of them says anything about the answer. */
+    $cap = Capability::forQuestion($question, $r['state']);
     ok_out([
         'status'       => strtoupper($r['state']),
+        'subject'      => $cap['subject'],
+        'capability'   => $cap['capability'],
+        'capability_means' => $cap['means'],
         /* FULLY_VERIFIED requires all three layers. A mathematically correct
            solution to the wrong question is not a verified answer. */
         'verified'     => ($r['trust']['overall'] ?? '') === 'FULLY_VERIFIED',
