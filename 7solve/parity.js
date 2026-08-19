@@ -911,6 +911,69 @@ function checkRegistry(registry, html, php) {
   return bad;
 }
 
+/* ---------- BADGE / WIRING CONTRACT ----------
+   Unit-testing derivativeCheck is not enough, and this file has the scar to
+   prove it: while chasing the 3x² sin x report I set state.lastQuestion and the
+   badge came back "⚠ Unable to verify" on an answer Verify.run called disputed.
+   The product was fine — paintVerif reads state.lastQ, and my probe wrote a
+   field nothing reads. But that is EXACTLY the production failure this
+   architecture exists to prevent, and nothing would have caught it for real:
+
+     rename state.lastQ, and verification silently runs against an empty
+     question. Every check goes quiet, every answer becomes "Unable to
+     verify", and a WRONG answer is never disputed again. Every unit test
+     still passes, because every checker still works.
+
+   So this pins the two joints between a correct verdict and what a student
+   actually sees:
+
+     1. the field paintVerif reads is a field the solve path writes
+     2. the green "Verified" badge is reachable ONLY from state `checked`
+
+   Static, but it guards the wiring rather than the mathematics. */
+function checkBadgeContract(html) {
+  const bad = [];
+  const pv = html.indexOf('function paintVerif(md){');
+  if (pv < 0) return ['badge: paintVerif not found in index.html'];
+  const body = html.slice(pv, pv + 4000);
+
+  /* 1. the question field the renderer verifies against */
+  const read = body.match(/Verify\.run\(\s*W\.state\s*&&\s*W\.state\.([A-Za-z_$][\w$]*)/);
+  if (!read) {
+    bad.push('badge: could not see which state field paintVerif verifies against — ' +
+             'this guard is stale and must be repaired, not deleted');
+  } else {
+    const field = read[1];
+    const written = new RegExp('\\bstate\\.' + field + '\\s*=' ).test(html);
+    if (!written) {
+      bad.push(`badge: paintVerif verifies against state.${field}, but nothing in ` +
+               'index.html ever assigns it — verification would run on an empty ' +
+               'question and no wrong answer could ever be disputed');
+    }
+  }
+
+  /* 2. green is reachable only from `checked` */
+  const branches = [...body.matchAll(/r\.state === '([a-z_]+)'\)\{\s*\n?\s*label = '([^']*)'; cls = '([^']*)'/g)]
+    .map((m) => ({ state: m[1], label: m[2], cls: m[3] }));
+  if (branches.length < 4) {
+    bad.push('badge: could not read the state-to-badge branches — guard is stale');
+  }
+  for (const b of branches) {
+    const green = b.cls.trim() === 'verif';
+    if (green && b.state !== 'checked') {
+      bad.push(`badge: state "${b.state}" renders the green verified badge ` +
+               `("${b.label}") — only "checked" may claim verification`);
+    }
+    if (b.state === 'checked' && !green) {
+      bad.push(`badge: state "checked" no longer renders the green badge (cls "${b.cls}")`);
+    }
+  }
+  if (branches.length && !branches.some((b) => b.state === 'checked' && b.cls.trim() === 'verif')) {
+    bad.push('badge: no branch maps `checked` to the green verified badge');
+  }
+  return bad;
+}
+
 function checkSynDiv(mdToHtml) {
   const bad = [];
   for (const [name, src, wantTable] of SYNDIV) {
@@ -1076,6 +1139,9 @@ function norm(v) {
                '\n            php=' + ph.state + '(' + ph.n + ') [' + ph.sig + ']');
     }
   });
+
+  /* the wiring between a verdict and the badge a student actually sees */
+  bad.push(...checkBadgeContract(fs.readFileSync(path.join(HERE, 'index.html'), 'utf8')));
 
   /* the JS/PHP state contract: never verified here and not-verified there */
   bad.push(...stateContract(contractPairs));
