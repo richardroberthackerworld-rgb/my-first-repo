@@ -690,6 +690,46 @@ const ABSOLUTE = [
   ['d-', 'differentiate x^3 sin x', '## ✅ Answer\n**x³ cos(x)**',  'disputed'],
   ['d-', 'd/dx sin x',              '## ✅ Answer\n**-cos(x)**',    'disputed'],
 
+  /* --- P0: 3x² sin x, reported from production ---
+     The site returned 9x sin x + 3x² cos x. Its own steps computed u' = 6x and
+     applied the product rule correctly; a later "simplification" turned 6x into
+     9x, and the answer was not disputed.
+
+     The cause was NOT this expression and NOT the maths — Deriv returns
+     6 x sin(x) + 3 x² cos(x) correctly, and the plain "differentiate 3x² sin x"
+     phrasing was already caught. The hole was in which QUESTIONS the checker
+     recognised: a question that names its function rather than its expression.
+     "Differentiate y = 3x² sin x" handed Deriv the string "y = 3x² sin x",
+     which has an '=' and does not parse, so truth came back null and the check
+     returned no verdict at all; "f(x) = …, find f'(x)" never matched the
+     trigger in the first place. A wrong derivative then reached the student
+     without a dispute, which is the one outcome this checker exists to prevent.
+
+     So these pin the class, not the case: every ordinary way a student writes a
+     derivative question, with a wrong answer that must be disputed and a right
+     one that must still verify. */
+  ['P0 wrong', 'differentiate 3x² sin x',        '## ✅ Answer\n**9x sin x + 3x² cos x**', 'disputed'],
+  ['P0 wrong', 'Differentiate y = 3x² sin x',    '## ✅ Answer\n**9x sin x + 3x² cos x**', 'disputed'],
+  ['P0 wrong', "f(x) = 3x² sin x, find f'(x)",   '## ✅ Answer\n**9x sin x + 3x² cos x**', 'disputed'],
+  ['P0 wrong', 'y = 3x² sin x, find dy/dx',      '## ✅ Answer\n**9x sin x + 3x² cos x**', 'disputed'],
+  ['P0 wrong', "If y = 3x^2 sin x find y'",      '## ✅ Answer\n**9x sin x + 3x² cos x**', 'disputed'],
+  /* the reported shape exactly: correct working, wrong final line */
+  ['P0 wrong', 'differentiate 3x² sin x',
+   '## ✅ Answer\n**9x sin x + 3x² cos x**\n\n## 📝 Steps\n1. u = 3x², v = sin x\n' +
+   "2. u' = 6x, v' = cos x\n3. Product rule: 6x sin x + 3x² cos x\n" +
+   '4. Simplifying: 9x sin x + 3x² cos x', 'disputed'],
+
+  ['P0 right', 'differentiate 3x² sin x',        '## ✅ Answer\n**6x sin x + 3x² cos x**', 'checked'],
+  ['P0 right', 'Differentiate y = 3x² sin x',    '## ✅ Answer\n**6x sin x + 3x² cos x**', 'checked'],
+  ['P0 right', "f(x) = 3x² sin x, find f'(x)",   '## ✅ Answer\n**6x sin x + 3x² cos x**', 'checked'],
+  ['P0 right', "If y = 3x^2 sin x find y'",      '## ✅ Answer\n**6x sin x + 3x² cos x**', 'checked'],
+  /* algebraically equivalent forms must all verify — the checker compares
+     VALUES at scattered points, so factored and reordered forms are the same
+     derivative and a student is not marked wrong for tidying their answer */
+  ['P0 equiv', 'differentiate 3x² sin x',        '## ✅ Answer\n**6x sin(x) + 3x² cos(x)**', 'checked'],
+  ['P0 equiv', 'differentiate 3x² sin x',        '## ✅ Answer\n**3x(2 sin(x) + x cos(x))**', 'checked'],
+  ['P0 equiv', 'differentiate 3x² sin x',        '## ✅ Answer\n**3x²cos(x) + 6x sin(x)**', 'checked'],
+
   /* --- the cubic, with all three roots verified individually ---
      x³ − 6x² + 11x − 6 factors as (x−1)(x−2)(x−3). Each root is pinned on its
      own as well as together, so a substitution regression that only breaks one

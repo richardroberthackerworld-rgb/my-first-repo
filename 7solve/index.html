@@ -8,7 +8,7 @@
 <!-- Build stamp. Bump this whenever the site is rebuilt: it is the one place
      to look to answer "is the new version actually live?" — Settings shows it,
      the console logs it, and you can read it straight out of view-source. -->
-<meta name="7solve-build" content="2026-08-19.2">
+<meta name="7solve-build" content="2026-08-19.3">
 <link rel="icon" href="favicon.ico?v=7by4" sizes="any">
 <link rel="icon" href="assets/logo.svg?v=7by4" type="image/svg+xml">
 <link rel="icon" href="favicon.png?v=7by4" type="image/png" sizes="96x96">
@@ -14757,9 +14757,30 @@ var Verify = (function(){
     if(typeof Deriv === 'undefined' || !Deriv) return [];
     var q = deLatexSafe(question);
     var dm = q.match(/(?:d\s*\/\s*d([a-z])|differentiate|derivative\s+of)\s*[:\s]*(.+)$/i);
-    if(!dm) return [];
-    var body = String(dm[2] || '').trim().replace(/[?.]+$/, '')
-                 .replace(/\s+with\s+respect\s+to\s+[a-z]\s*$/i, '').trim();
+    var body = null, wrt = null;
+    if(dm){ body = dm[2]; wrt = (dm[1] || '').toLowerCase() || null; }
+    else {
+      /* A question can name the function instead of the expression:
+         "f(x) = 3x² sin x, find f'(x)". There is no "differentiate" to match,
+         so the check used to return no verdict at all and a WRONG derivative
+         escaped without being disputed. Ask for a derivative in any of the
+         usual ways, and the definition is the thing to differentiate. */
+      if(!/\bf\s*'|\by\s*'|d\s*y\s*\/\s*d\s*[a-z]|derivative|differentiat/i.test(q)) return [];
+      var def = q.match(/(?:^|[\s,;(])(?:y|f\s*\(\s*[a-z]\s*\))\s*=\s*([^,;\n]+)/i);
+      if(!def) return [];
+      /* "If y = 3x² sin x find y'" has no comma, so the capture runs to the end
+         of the line and swallows the instruction — Deriv then cannot parse it
+         and the check goes quiet on a question it can answer. The ask is not
+         part of the function. */
+      body = String(def[1]).replace(/\s+(?:find|determine|calculate|evaluate|compute|what|obtain)\b[\s\S]*$/i, '');
+    }
+    body = String(body || '').trim().replace(/[?.]+$/, '')
+             .replace(/\s+with\s+respect\s+to\s+[a-z]\s*$/i, '').trim();
+    /* "differentiate y = 3x² sin x" hands over "y = 3x² sin x", which Deriv
+       cannot parse because of the '=' — so truth came back null and the check
+       gave no verdict on a question it could perfectly well have answered.
+       A leading definition is naming the function, not part of it. */
+    body = body.replace(/^(?:y|f\s*\(\s*[a-z]\s*\))\s*=\s*/i, '').trim();
     if(/^\(.*\)$/.test(body)){
       var inner = body.slice(1, -1), d = 0, ok = true;
       for(var i = 0; i < inner.length; i++){
@@ -14767,7 +14788,7 @@ var Verify = (function(){
       }
       if(ok && d === 0) body = inner;
     }
-    var truth = Deriv.of(Algebra, body, (dm[1] || '').toLowerCase() || null);
+    var truth = Deriv.of(Algebra, body, wrt);
     if(!truth) return [];                       // cannot compute it → no verdict
 
     /* What the answer claims, read from the claim zone with emphasis stripped. */
