@@ -13617,7 +13617,35 @@ var Verify = (function(){
       ints.push(r);
     }
     while(ints.length > 1 && ints[ints.length-1] === 0) ints.pop();
-    return ints.length >= 2 ? ints : null;
+    if(ints.length < 2) return null;
+
+    /* CONFIRM THE RECONSTRUCTION.
+       Finite differences need equally spaced points, so unlike the other
+       checkers this one cannot simply move to random samples — the recovery
+       maths depends on the spacing. That left the integer grid 0…7 fixed and
+       forgeable in exactly the way every other fixed grid was: adding
+       x(x-1)(x-2)…(x-7) to a cubic is invisible here, so a degree-11 equation
+       was read as the cubic and its root set certified COMPLETE while the real
+       equation has further roots off the integers.
+
+       The fix keeps the recovery and checks its answer. Whatever polynomial
+       came out is compared against the original expression at claim-derived
+       points; anything that is not really that polynomial disagrees there and
+       gets no verdict at all. The grid stays predictable, and being on it
+       stops being sufficient. */
+    var VP = samplePoints("p|" + v + "|" + ints.join(","));
+    var okPts = 0;
+    for(var q = 0; q < VP.length; q++){
+      var e3 = {}; e3[v] = VP[q];
+      var lhs = evalAt(eq.L, e3), rhs = evalAt(eq.R, e3);
+      if(lhs === null || rhs === null || !isFinite(lhs) || !isFinite(rhs)) continue;
+      var want = lhs - rhs, got = 0;
+      for(var p2 = 0; p2 < ints.length; p2++) got += ints[p2] * Math.pow(VP[q], p2);
+      if(Math.abs(got - want) > 1e-6 * Math.max(1, Math.abs(want), Math.abs(got))) return null;
+      okPts++;
+    }
+    if(okPts < 3) return null;          /* too little evidence to trust it */
+    return ints;
   }
 
   /* every distinct real root, exactly; null when it cannot be certain */
@@ -13886,11 +13914,25 @@ var Verify = (function(){
          the false factorisation a³ − b³ = (a−b)(a²−ab+b²) evaluates 0 = 0 and
          passed. Distinct, irrational-ish, sign-varied values make an accidental
          agreement vanishingly unlikely. */
+      /* Points come from the CENTRAL sampler, keyed on this very line. The
+         grid used to be (k%2?1:-1)*(0.7 + k*0.61 + vi*1.37) — fixed, published
+         and therefore forgeable, exactly as the derivative, integral and system
+         probes were. A false factorisation
+
+             (x-3)(x-4) = x^2 - 7x + 12 + PROD(x - p_i)
+
+         agreed at all twelve of those points and took a green badge while
+         being wrong everywhere else. Keying on the claim means a forger must
+         know points chosen by hashing the expression they have not yet
+         written. */
+      var IPTS = samplePoints("id|" + line);
       var agree = 0, tested = 0;
-      for(var k = 0; k < 12; k++){
+      for(var k = 0; k < IPTS.length; k++){
         var env = {};
         eq.vars.forEach(function(v, vi){
-          env[v] = (k % 2 ? 1 : -1) * (0.7 + k * 0.61 + vi * 1.37);
+          /* each variable gets a DIFFERENT value, or a = b collapses whole
+             families of false claim into 0 = 0 */
+          env[v] = (k % 2 ? 1 : -1) * IPTS[(k + vi * 5) % IPTS.length];
         });
         var h = holdsAt(eq, env);
         if(h === null) continue;
@@ -14765,6 +14807,60 @@ var Verify = (function(){
      anywhere is not.
 
      Refuses — says nothing — whenever it cannot compute the truth itself. */
+  /* ---------- SAMPLE POINTS ----------
+     Equivalence here is decided by agreeing at a set of points, and for a long
+     time that set was a fixed public grid: 0.83 + k·1.19. Anything published
+     is forgeable. A claim of
+
+         2x + (x−0.83)(x−2.02)(x−3.21)(x−4.40)(x−5.59)(x−6.78)(x−7.97)(x−9.16)
+
+     equals 2x at every one of those eight points and is wrong by −1849 at
+     x = 1.5 — and it earned a green "Verified by 7Solve". That is the cardinal
+     invariant broken: WRONG became checked.
+
+     The grid is now derived from the QUESTION AND THE CLAIM. To build a
+     polynomial that vanishes on the grid you must know the grid; to know the
+     grid you must already have written the polynomial, because its own text is
+     the hash input. Changing one digit moves every point. That turns a
+     one-line construction into a fixed-point search.
+
+     Two independent passes with different salts, sixteen points in all, so a
+     spoofing polynomial needs degree ≥ 16 even if the search succeeded.
+
+     Deterministic on purpose — same question and claim give the same points
+     every time, so the harness can reproduce any verdict exactly. Math.random
+     would make failures unrepeatable, which is worse than the attack.
+
+     This is hardening, not a proof: a determined attacker with the source can
+     still search. It raises the cost from trivial to substantial, and the
+     honest claim is exactly that. */
+  function sampleSeed(s){
+    var hsh = 0x811c9dc5;                       /* FNV-1a */
+    s = String(s == null ? '' : s);
+    for(var i = 0; i < s.length; i++){
+      hsh ^= s.charCodeAt(i);
+      hsh = (hsh + ((hsh << 1) + (hsh << 4) + (hsh << 7) + (hsh << 8) + (hsh << 24))) >>> 0;
+    }
+    return hsh >>> 0;
+  }
+  /* xorshift32 over (0.35, 9.5) — strictly positive, because sqrt and ln are
+     only defined there and a negative probe would silently drop every sample
+     for those and leave the check with nothing to say. */
+  function sampleGrid(seed, n){
+    var st = (seed >>> 0) || 0x9E3779B9, out = [];
+    for(var i = 0; i < n; i++){
+      st ^= st << 13; st >>>= 0;
+      st ^= st >>> 17; st >>>= 0;
+      st ^= st << 5;  st >>>= 0;
+      out.push(0.35 + (st % 1000003) / 1000003 * 9.15);
+    }
+    return out;
+  }
+  function samplePoints(key){
+    var s = sampleSeed(key);
+    return sampleGrid(s, 8).concat(sampleGrid((s ^ 0x5bf03635) >>> 0, 8));
+  }
+
   function derivativeCheck(question, md){
     if(typeof Deriv === 'undefined' || !Deriv) return [];
     var q = deLatexSafe(question);
@@ -14833,8 +14929,9 @@ var Verify = (function(){
        disputed one. The guard is there for "too little evidence to speak",
        which is not the same as "found the answer immediately". */
     var seen = 0, same = true;
-    for(var k = 0; k < 8; k++){
-      var env = {}; env[v] = 0.83 + k * 1.19;
+    var PTS = samplePoints('d|' + truth.expr + '|' + line);
+    for(var k = 0; k < PTS.length; k++){
+      var env = {}; env[v] = PTS[k];
       var A1 = evalAt(claimed, env), A2 = evalAt(actual, env);
       if(!isFinite(A1) || !isFinite(A2)) continue;
       seen++;
@@ -14929,8 +15026,9 @@ var Verify = (function(){
        that broke early once left too few samples and threw away the very
        failure it had just found. */
     var seen = 0, same = true;
-    for(var k = 0; k < 8; k++){
-      var env = {}; env[v0] = 0.7 + k * 0.53;
+    var PTS = samplePoints('i|' + body + '|' + line);
+    for(var k = 0; k < PTS.length; k++){
+      var env = {}; env[v0] = PTS[k];
       var A1 = evalAt(got, env), A2 = evalAt(integrand, env);
       if(A1 === null || A2 === null || !isFinite(A1) || !isFinite(A2)) continue;
       seen++;
@@ -15046,23 +15144,43 @@ var Verify = (function(){
       if(a === null || b === null || !isFinite(a) || !isFinite(b)) return null;
       return a - b;
     };
+    /* Probe values are hashed from the system and the claim, never fixed.
+       They used to be 0, 1 and 2, and that was forgeable exactly as the
+       derivative grid was: x*(x-1)*(x-2)*(x-6) is zero at all three probes AND
+       at the claimed x = 6, so
+
+           x + y + x(x-1)(x-2)(x-6) = 10,  x - y = 2   with  x = 6, y = 4
+
+       probed as the linear system x + y = 10, was declared unique, and took a
+       green "Verified by 7Solve" — while being genuinely non-linear and having
+       other solutions. Certifying uniqueness there is simply wrong.
+
+       Slopes are compared instead of a second difference, so the test does not
+       depend on the probe spacing: a linear f has the same slope from the base
+       to either probe. An attacker must now make the term vanish at points
+       chosen by hashing the text of the term itself. */
+    var PB = samplePoints("s|" + eqs.map(function(E){ return E.src; }).join(";") + "|" + vars.join(","));
     for(i = 0; i < eqs.length; i++){
       var E = eqs[i].eq, f0 = f(E, base());
       if(f0 === null) return null;
       var row = [];
       for(j = 0; j < n; j++){
-        var e1 = base(); e1[vars[j]] = 1;
-        var e2 = base(); e2[vars[j]] = 2;
+        var t1 = PB[(i * n + j) % PB.length], t2 = PB[(i * n + j + 7) % PB.length];
+        if(Math.abs(t1 - t2) < 1e-6) t2 = t1 + 1.7;        // the probes must differ
+        var e1 = base(); e1[vars[j]] = t1;
+        var e2 = base(); e2[vars[j]] = t2;
         var f1 = f(E, e1), f2 = f(E, e2);
         if(f1 === null || f2 === null) return null;
-        /* a linear f satisfies f(2) - 2f(1) + f(0) = 0 */
-        if(Math.abs(f2 - 2 * f1 + f0) > 1e-9 * Math.max(1, Math.abs(f2))) return {linear:false};
-        row.push(f1 - f0);
+        var s1 = (f1 - f0) / t1, s2 = (f2 - f0) / t2;
+        /* linear in this variable iff both probes give the same slope */
+        if(Math.abs(s1 - s2) > 1e-9 * Math.max(1, Math.abs(s1), Math.abs(s2))) return {linear:false};
+        row.push(s1);
       }
       for(j = 0; j < n; j++) for(k = j + 1; k < n; k++){
-        var ej = base(); ej[vars[j]] = 1; ej[vars[k]] = 1;
-        var ea = base(); ea[vars[j]] = 1;
-        var eb = base(); eb[vars[k]] = 1;
+        var u = PB[(i + j) % PB.length], w = PB[(i + k + 3) % PB.length];
+        var ej = base(); ej[vars[j]] = u; ej[vars[k]] = w;
+        var ea = base(); ea[vars[j]] = u;
+        var eb = base(); eb[vars[k]] = w;
         var fj = f(E, ej), fa = f(E, ea), fb = f(E, eb);
         if(fj === null || fa === null || fb === null) return null;
         if(Math.abs(fj - fa - fb + f0) > 1e-9 * Math.max(1, Math.abs(fj))) return {linear:false};
@@ -16026,7 +16144,7 @@ var Verify = (function(){
   }
 
   return { run:run, evalFlat:evalFlat, arithmetic:arithmetic, units:units, integrity:integrity, trace:trace, questionCheck:questionCheck, presentation:presentation, leaks:leaks, unproved:unproved, primality:primality, isPrime:isPrime, completeness:completeness, taxonomy:taxonomy, contradiction:contradiction, derivativeCheck:derivativeCheck,
-           substitution:substitution, solutionCompleteness:solutionCompleteness, integralCheck:integralCheck, systemCheck:systemCheck, equationsOf:equationsOf, consistency:consistency,
+           substitution:substitution, solutionCompleteness:solutionCompleteness, integralCheck:integralCheck, systemCheck:systemCheck, samplePoints:samplePoints, equationsOf:equationsOf, consistency:consistency,
            chemistry:chemistry, parseFormula:parseFormula, parseSide:parseSide,
            units:units, unitPresence:unitPresence, bounds:bounds,
            transformCheck:transformCheck, identityCheck:identityCheck,
