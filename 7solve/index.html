@@ -8,7 +8,7 @@
 <!-- Build stamp. Bump this whenever the site is rebuilt: it is the one place
      to look to answer "is the new version actually live?" — Settings shows it,
      the console logs it, and you can read it straight out of view-source. -->
-<meta name="7solve-build" content="2026-08-18.46">
+<meta name="7solve-build" content="2026-08-19.1">
 <link rel="icon" href="favicon.ico?v=7by4" sizes="any">
 <link rel="icon" href="assets/logo.svg?v=7by4" type="image/svg+xml">
 <link rel="icon" href="favicon.png?v=7by4" type="image/png" sizes="96x96">
@@ -10106,10 +10106,101 @@ function synDivHtml(d){
   return h;
 }
 
+/* ------------------------------------------------------------
+   SYNTHETIC DIVISION, LaTeX array form
+   ------------------------------------------------------------
+   Models also write the same division as a LaTeX array:
+
+       \begin{array}{r|rrrr}
+       1 & 1 & -6 & 11 & -6 \\
+         &   &  1 & -5 &  6 \\
+       \hline
+         & 1 & -5 &  6 &  0
+       \end{array}
+
+   which leaked to the screen as raw "r|rrrr ... \hline" on a
+   flagship answer. deLatex strips the \begin{array}{…} wrapper
+   but leaves the column spec behind on its own line, so BOTH
+   shapes have to be recognised — the untouched LaTeX and the
+   half-stripped remnant.
+
+   This does not re-implement anything. It converts the array to
+   the ASCII layout synDivParse already reads, and hands it over.
+   That matters for one reason above all: the reconciliation gate
+   lives in synDivParse, so the LaTeX path inherits it rather
+   than getting a second, subtly different copy. A LaTeX block
+   whose arithmetic does not check out falls through to the
+   ordinary renderer exactly as the ASCII form does.
+
+   `&` has already been HTML-escaped to `&amp;` by the time these
+   lines are seen, which is why the separator matches both.
+   ------------------------------------------------------------ */
+function latexArrayRows(lines, start){
+  var i = start, L = String(lines[i] || '');
+  var opened = false;
+  if(/^\s*\\?begin\{array\}/.test(L)) opened = true;
+  /* the deLatex'd remnant: a bare column spec, which must contain the rule
+     bar — "ccc" alone is an ordinary table and none of our business */
+  else if(/^\s*[lcr]*\|[lcr|]*\s*$/.test(L) && /[lcr]/.test(L)) opened = true;
+  if(!opened) return null;
+
+  var rows = [], guard = 0;
+  for(i = start + 1; i < lines.length && guard++ < 14; i++){
+    var T = String(lines[i] || '').trim();
+    if(/^\\?end\{array\}/.test(T)){ i++; break; }
+    /* deLatex may already have eaten the backslash on its way here, so both
+       spellings count — the half-stripped remnant is the shape that actually
+       reached production and leaked "hline" onto a student's screen. */
+    if(/^\\?hline\s*$/.test(T)){ rows.push(null); continue; }      // the rule
+    T = T.replace(/\\\\\s*$/, '').replace(/\\?hline/g, '').trim();
+    if(!T) continue;
+    if(!/&amp;|&/.test(T)) break;                                  // not a row
+    rows.push(T.split(/&amp;|&/).map(function(c){ return c.trim(); }));
+  }
+  var real = rows.filter(function(r){ return r; });
+  if(real.length < 2) return null;
+  return { rows: rows, end: i - 1 };
+}
+
+/* the array as the ASCII lines synDivParse understands, or null */
+function latexToAscii(block){
+  var rows = block.rows, out = [], first = true, sawRule = false, k, r, cells;
+  for(k = 0; k < rows.length; k++){
+    r = rows[k];
+    if(r === null){ if(!first) sawRule = true; out.push('----------------'); continue; }
+    cells = r.slice(1).filter(function(c){ return c !== ''; });
+    if(first){
+      var root = r[0];
+      /* Row one is "root & c0 & c1 & …". No root, or too few coefficients, and
+         this is an ordinary array that happens to have a rule in it. */
+      if(!/^[+-]?\d+$/.test(root) || cells.length < 3) return null;
+      out.push(root + ' | ' + cells.join(' '));
+      first = false;
+    } else {
+      if(!cells.length) continue;
+      out.push(sawRule ? '  ' + cells.join(' ') : '| ' + cells.join(' '));
+    }
+  }
+  return out.length >= 2 ? out : null;
+}
+
+/* both shapes, one gate: returns rendered HTML or null */
+function synDivAny(lines, li){
+  var lx = latexArrayRows(lines, li);
+  if(lx){
+    var asc = latexToAscii(lx);
+    var d = asc && synDivParse(asc, 0);
+    /* only when it RECONCILES; otherwise the caller leaves the text alone */
+    if(d) return { html: synDivHtml(d), end: lx.end };
+  }
+  var sd = synDivParse(lines, li);
+  return sd ? { html: synDivHtml(sd), end: sd.end } : null;
+}
+
 function renderFence(lang, buf){
   /* a model that fences its synthetic division still deserves the table */
-  const sd = synDivParse(buf, 0);
-  if(sd && sd.end >= buf.length - 1) return synDivHtml(sd);
+  const sd = synDivAny(buf, 0);
+  if(sd && sd.end >= buf.length - 1) return sd.html;
   const raw = unescapeHtml(buf.join('\n')).trim();
   // models sometimes label the fence xml/html or forget the label — detect <svg content directly
   if(lang==='svg' || raw.startsWith('<svg')){
@@ -10158,8 +10249,8 @@ function mdToHtml(md){
        is destroyed by both of them, and its first line can also look enough
        like a pipe table to be swallowed whole. */
     {
-      const sd = synDivParse(lines, li);
-      if(sd){ closeLists(); flushTable(); html += synDivHtml(sd); li = sd.end; continue; }
+      const sd = synDivAny(lines, li);
+      if(sd){ closeLists(); flushTable(); html += sd.html; li = sd.end; continue; }
     }
     if(/^\s*\|.*\|/.test(raw)){ closeLists(); inTable=true; tableBuf.push(raw); continue; }
     else flushTable();
