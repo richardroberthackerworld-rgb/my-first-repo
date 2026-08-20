@@ -127,7 +127,11 @@ foreach ($js in $renamed) { $roots += (Join-Path $stage ($js + '.txt')) }
 # docs/ carries the public API reference. It ships because a developer
 # integrating /v1 expects the documentation on the vendor's own domain, and a
 # reference that exists only in the repo is a reference nobody can read.
-foreach ($sub in @('.well-known','blog','assets','docs')) {
+# taxonomy/ is DATA the running site reads — the academic tree behind course and
+# subject coverage. It ships for the same reason checks.json does. tools/ does
+# NOT ship: the generator and the gates are build-time only, and a public
+# document root is no place for a script that rewrites index.html.
+foreach ($sub in @('.well-known','blog','assets','docs','taxonomy')) {
   $p = Join-Path $src $sub
   if (Test-Path -LiteralPath $p) { $roots += $p }
 }
@@ -144,7 +148,11 @@ foreach ($sub in @('.well-known','blog','assets','docs')) {
 # checks.json is NOT in this list and must never be: capability.php reads it at
 # runtime to decide which subjects /v1 can report. sample-vectors.json only
 # appears in a sampling.php comment — nothing reads it on the server.
-$testFixtures = @('sample-vectors.json', 'api-parity-expected.json')
+#
+# capabilities.json is likewise NOT excluded: it IS the capability source the
+# running API reads. subject-corpus.json is — it holds the frozen .2 subject
+# answers the build gate compares against, which is a test fixture.
+$testFixtures = @('sample-vectors.json', 'api-parity-expected.json', 'subject-corpus.json')
 $n = New-Zip -Zip $zip -Roots $roots -ExcludeExt @('.js') `
   -ExcludeNames (@('keys.php', 'deploy-check.php') + $testFixtures)
 

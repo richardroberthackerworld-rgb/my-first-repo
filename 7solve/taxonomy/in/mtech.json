@@ -1,0 +1,22 @@
+{
+  "_": "M.Tech / ME, India. Structural point: a PG program reusing the SAME branch labels as UG. The ids differ by their level prefix, so cse under M.Tech and cse under B.Tech never collide — the id-collision test for the flat node table.",
+  "schema": "7solve.taxonomy/1",
+  "version": "2026-08-21",
+  "source": "7solve-core",
+  "nodes": [
+    { "id": "in.pg.mtech", "kind": "program", "parent": "in.pg", "label": "M.Tech / ME",
+      "aliases": ["m.tech", "mtech", "m tech", "me", "m.e.",
+                  "master of technology", "master of engineering"],
+      "match": ["\\bm\\.?\\s?tech\\b", "\\bm\\.?e\\.?\\b"] },
+
+    { "id": "in.pg.mtech.cse", "kind": "branch", "parent": "in.pg.mtech",
+      "label": "Computer Science & Engineering", "aliases": ["cse", "computer science"] },
+    { "id": "in.pg.mtech.cse.s1", "kind": "semester", "parent": "in.pg.mtech.cse",
+      "label": "Semester 1" },
+    { "id": "in.pg.mtech.cse.s1.aa", "kind": "subject", "parent": "in.pg.mtech.cse.s1",
+      "label": "Advanced Algorithms", "aliases": ["advanced algorithms", "aa"] },
+    { "id": "in.pg.mtech.cse.s1.aa.np", "kind": "topic", "parent": "in.pg.mtech.cse.s1.aa",
+      "label": "Complexity classes and reductions",
+      "problem_types": ["algo.complexity.analyse"] }
+  ]
+}

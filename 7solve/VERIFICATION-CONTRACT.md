@@ -255,3 +255,120 @@ vectors: JS `charCodeAt` yields UTF-16 code units, so an implementation walking
 bytes diverges on the first non-ASCII character; and `>>> 0` is an unsigned
 32-bit coercion, so a 64-bit language must mask every step or the high bits
 leak into the next round.
+
+---
+
+# Phase 2 — Release A additions
+
+Phase 1 is **frozen**. Nothing above this line changed. Everything below is
+additive, and none of it may authorise a verification.
+
+## Capability authority lives on the check KIND
+
+`capabilities.json` is the single source of truth for what 7Solve can check.
+`checks.json` and the `PROOF` set in `index.html` are **generated** from it;
+`capability.php` reads it at runtime. There is no second hand-maintained copy
+of any of these facts, and `tools/gate-capabilities.js` fails the build if a
+generated artifact drifts from the manifest.
+
+Each check kind declares one of three authorities:
+
+| Authority | In `PROOF`? | Can reach `checked` |
+|---|---|---|
+| `proof` | yes | Yes — settles the claim on its own |
+| `evidence` | yes | Only alongside a proof (the existing `evidenceOnly` rule) |
+| `advisory` | no | Never |
+
+**Authority is a property of the kind, never of the subject or the checker.**
+A subject cannot grant itself certifying power by declaring it, and a new
+checker inherits the authority of the kind it emits. Creating a new certifying
+kind is a manifest edit that the negative-control suite immediately demands a
+control for.
+
+This exists because release `.2` shipped an identity checker that was wired,
+correct and certifying in both engines while `capability.php` had no branch
+that could name it — so `/v1` reported `unknown_subject` about questions it had
+just verified. Four hand-kept lists, one forgotten. Gate C3 catches that
+directly and C8 catches it from the other side.
+
+## Capability states
+
+| State | Means | Verdicts reachable |
+|---|---|---|
+| `supported` | A checker exists in this engine and ran | `verified` `disputed` `unverified` |
+| `covered_not_verifiable` | 7Solve answers this and cannot independently check it | `unverified` **only** |
+| `not_supported_by_api` | The site can check this; this API build cannot | `unverified` only |
+| `unknown_subject` | The subject could not be identified | `unverified` only |
+
+**Only `supported` can reach `checked`,** and this needs no new enforcement: a
+`covered_not_verifiable` subject declares no checkers, so it emits no
+proof-kind checks, so `passedProofs.length` is 0 and the frozen state machine
+cannot select `checked`. Gate S2 asserts it anyway.
+
+`covered_not_verifiable` must never be read as a pass. It is the state that
+lets 7Solve answer an MBA or BA question honestly: *we can help with this, and
+we cannot verify it.*
+
+## Coverage never authorises verification
+
+The academic taxonomy under `taxonomy/` is contributor-facing data. A taxonomy
+node may **name** a problem type; it may not **invent** one. `gate-taxonomy.js`
+rejects any `problem_type` that no subject in `capabilities.json` declares.
+
+Nothing in this list can put a check kind into `PROOF`:
+
+* AI prose
+* the taxonomy
+* course coverage
+* extraction confidence
+* `covered_not_verifiable`
+* a subject existing in the manifest
+
+Only an explicitly registered proof or evidence kind participates in
+certification.
+
+## Provenance — the ingestion trust boundary
+
+The verifier must know **what it is looking at**. Four origins:
+
+| Origin | Meaning |
+|---|---|
+| `typed` | The student wrote it |
+| `extracted` | Pulled from a PDF text layer |
+| `transcribed` | Read from pixels by OCR or a vision model |
+| `reconstructed` | Assembled from layout analysis |
+
+Question and answer carry **separate** records, because they routinely differ —
+a student photographs a textbook question and types their own answer.
+
+The cap (`provenance.php`, and `Prov` in `index.html`) obeys three rules, each
+with a property test over all 360 origin × confidence × round-trip × state
+combinations:
+
+1. **It only lowers.** Output is the input state or `plain`.
+2. **It never manufactures `disputed`.** Low confidence in the *question* says
+   nothing about whether the *answer* is wrong. Claiming otherwise would be the
+   same category error this contract exists to prevent, aimed at the input.
+3. **It is exactly inert for `typed`.** All 965 regression cases are unchanged.
+
+It runs strictly **outside** the Phase 1 state machine, which is not modified.
+
+Release A ships the cap **provably inert**: no code path in this build produces
+an extraction origin, because nothing transcribes a question into the verifier
+yet. The contract lands before the pipeline that needs it, so the trust
+boundary is never retrofitted around a live verdict path.
+
+## Known, deliberately unfixed at Release A
+
+Release A is a refactor. It fixes no behaviour, including these:
+
+* The five false negatives (bold identity, degree-8 completeness, `∫1/x`,
+  `∫√x`, numerical root tolerance) — Release B, each with an adversarial
+  wrong-answer control.
+* A photographed question with no typed text reaches the verifier as the
+  literal placeholder `(photo question)`. Most checks then find nothing and the
+  answer is correctly not certified — but the **arithmetic** checker reads only
+  the answer, so a self-contained correct calculation can still reach `checked`
+  without the question ever being read. The arithmetic is genuinely correct;
+  the badge is nevertheless earned without the question. Fixing it changes
+  behaviour and so is out of Release A's scope.
