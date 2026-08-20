@@ -815,7 +815,11 @@ const ABSOLUTE = [
      after it. Rule 1: no verdict beats a wrong verdict. */
   ['∫ silent',  '∫ x^2 dx', '## ✅ Answer\nthe integral is x cubed over three plus a constant', 'plain'],
   ['∫ silent',  '∫ x^2 dx', '## ✅ Answer\nSee the working above.',        'plain'],
-  ['∫ silent',  'integrate tan(x)',   '## ✅ Answer\n**-ln|cos x| + C**',  'plain'],
+  /* PROMOTED in Release B. −ln|cos x| is a correct antiderivative of tan x, and
+     it sat here as "silent" only because the absolute-value bars did not
+     tokenise. They do now, so a correct textbook answer is certified instead of
+     being passed over. */
+  ['∫ silent',  'integrate tan(x)',   '## ✅ Answer\n**-ln|cos x| + C**',  'checked'],
   ['∫ silent',  'integrate sec(x)^2', '## ✅ Answer\n**tan(x) + C**',      'plain'],
   /* several variables is a partial-derivative question in disguise — no verdict */
   ['∫ silent',  'integrate x*y',      '## ✅ Answer\n**x²y/2 + C**',       'plain'],
@@ -832,15 +836,20 @@ const ABSOLUTE = [
   ['∫ definite','integrate x^2 from 0 to 1','## ✅ Answer\n**1/3**', 'plain'],
   ['∫ definite','∫_0^1 x^2 dx',           '## ✅ Answer\n**1/2**', 'plain'],
 
-  /* KNOWN LIMITS, pinned deliberately — these assert what the code DOES, not
-     what it should. Both are correct answers going unverified, which is the
-     safe direction, and both are one Deriv capability away:
-       ln|x|      absolute-value bars do not parse
-       x^(3/2)    a fractional exponent returns null, and 2*x^(3/2)/3 throws
-     When Deriv learns either, these rows fail and get promoted to 'checked'
-     rather than the gap sitting unnoticed. Do not read them as approval. */
-  ['∫ limit',   '∫ 1/x dx',       '## ✅ Answer\n**ln|x| + C**',            'plain'],
-  ['∫ limit',   '∫ sqrt(x) dx',   '## ✅ Answer\n**2*x^(3/2)/3 + C**',      'plain'],
+  /* CLOSED IN RELEASE B. These were pinned as known limits with the note that
+     "when Deriv learns either, these rows fail and get promoted to 'checked'
+     rather than the gap sitting unnoticed". That is exactly what happened: the
+     rows failed the moment the parser learned absolute-value bars and rational
+     exponents, and the promotion is recorded here rather than the suite being
+     quietly re-baselined.
+
+     Both are the form a textbook actually prints, which is why they mattered:
+     every student writing the standard answer to the standard question was
+     going unverified. The forged versions are covered in parity-release-b.js —
+     ln|x^2| (which differentiates to 2/x) and 3x^(3/2)/2 are both still
+     disputed. */
+  ['∫ limit',   '∫ 1/x dx',       '## ✅ Answer\n**ln|x| + C**',            'checked'],
+  ['∫ limit',   '∫ sqrt(x) dx',   '## ✅ Answer\n**2*x^(3/2)/3 + C**',      'checked'],
 
   /* ---- SYSTEMS OF EQUATIONS ----
      Checking one equation of a system does not merely under-verify, it

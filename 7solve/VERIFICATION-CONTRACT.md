@@ -358,17 +358,109 @@ an extraction origin, because nothing transcribes a question into the verifier
 yet. The contract lands before the pipeline that needs it, so the trust
 boundary is never retrofitted around a live verdict path.
 
-## Known, deliberately unfixed at Release A
+---
 
-Release A is a refactor. It fixes no behaviour, including these:
+# Phase 2 — Release B: the five false negatives
 
-* The five false negatives (bold identity, degree-8 completeness, `∫1/x`,
-  `∫√x`, numerical root tolerance) — Release B, each with an adversarial
-  wrong-answer control.
-* A photographed question with no typed text reaches the verifier as the
-  literal placeholder `(photo question)`. Most checks then find nothing and the
-  answer is correctly not certified — but the **arithmetic** checker reads only
-  the answer, so a self-contained correct calculation can still reach `checked`
-  without the question ever being read. The arithmetic is genuinely correct;
-  the badge is nevertheless earned without the question. Fixing it changes
-  behaviour and so is out of Release A's scope.
+Release B closes five confirmed coverage gaps and the photo-question
+provenance hole. **No safety invariant was relaxed to do it.** Every fix widens
+what the engine will *look at*; none widens what it will *accept*. Each carries
+a negative control, and `parity-release-b.js` refuses to report success if any
+fix lacks one — a positive without a control is not a fix, it is a liability.
+
+## The declared numerical accuracy policy
+
+`holdsAt` asks *"is the residual ~0?"*. That is the right question for an exact
+root and the wrong one for a decimal. `x + eˣ = 0` has no closed form; its root
+is −0.56714…, and a student who writes `x = −0.567` has given a **correct**
+answer to three decimal places. The residual there is about 3e-4, so the
+universal relative `1e-9` called it wrong.
+
+**The fix is not a bigger epsilon.** A looser tolerance accepts a near-miss,
+which is the exact failure the contract exists to prevent. Instead the notation
+is read as what it means:
+
+| Policy | Applies when | Test |
+|---|---|---|
+| **exact** | integer or exact rational claim | `holdsAt`, unchanged relative `1e-9` |
+| **algebraic** | surd or symbolic claim | `holdsAt`, unchanged |
+| **numeric** | decimal claim to *d* places | a root is **proved** to lie in `[v − ½·10⁻ᵈ, v + ½·10⁻ᵈ]` |
+
+Proved, not estimated. A sign change of a continuous *f* across the interval
+proves a root exists in it; a small residual is only evidence of one. **The
+precision comes from the student's own notation**, so the checker never chooses
+how forgiving to be.
+
+Two guards make this safe:
+
+* The interval test runs **only where the strict test already said no**. It can
+  turn a false into a true and never the reverse, so every answer that verified
+  before still verifies on exactly the same grounds.
+* A **pole** also changes sign, and `1/(x−2)` has no root at 2. The interval is
+  bisected to locate the crossing and `|f|` must actually collapse there —
+  measured against the endpoint magnitudes, because at a pole `|f|` at the
+  crossing is enormous and would excuse itself.
+
+Boundary controls sit on both sides of the rounding interval: `−0.567` is
+certified, `−0.568` and `−0.566` are disputed.
+
+## `log` is deliberately not differentiable
+
+In Indian textbooks `log` means log₁₀ in algebra and ln in calculus, and the
+notation does not say which. Guessing would either certify a wrong answer or
+dispute a right one, so a bare `log()` falls through to null and the claim gets
+**no verdict** — the same rule every other checker follows when it cannot parse
+its input. `log10` and `log2` are explicit and are checked; `ln` always was.
+
+## A parity divergence this release exposed
+
+PHP's state machine had **no `evidenceOnly` rule**. The completeness authority
+shipped in release `.7` was applied to `index.html` only.
+
+It never showed up in parity because a passing `subst` was always accompanied
+by a passing `roots` on the polynomial corpus, so both engines said `checked`
+for the same reason. The precision policy made substitution pass on a
+*transcendental* equation, where completeness cannot run — and the divergence
+appeared at once: JS declined, PHP certified.
+
+**PHP was the one that was wrong**, and `/v1` would have certified on evidence
+alone. Putting `x = −0.567` back into `x + eˣ = 0` proves that value is *a*
+root; it says nothing about whether it is *the* solution set. The rule is now
+in both engines, and PHP reads its certifying kinds from `capabilities.json`
+rather than carrying a hand-copied list.
+
+## Why a correct transcendental root is `unverified`, not `verified`
+
+Substitution now passes for `x = −0.567`, and the answer settles at
+**unverified** because completeness cannot run: `x + eˣ = 0` is not a
+polynomial, so the engine cannot enumerate its roots and cannot know whether one
+value is the whole solution set. (It is — `1 + eˣ > 0` everywhere — but that is
+a monotonicity argument this engine does not make.)
+
+Phase 1's `evidenceOnly` rule then correctly refuses the badge. Moving a correct
+answer from *"you are wrong"* to *"not checked"* is the honest gain; certifying
+it would mean weakening the completeness authority, which Release B does not do.
+
+## The photo-question hole, closed
+
+A photographed question with nothing typed reaches the verifier as the literal
+placeholder `(photo question)`. Most checks find nothing to read — but
+**arithmetic reads only the answer**, so a self-contained correct calculation
+like `2/3 + 1/3 = 1` reached `checked` with the question never having been read.
+The arithmetic really is right; the badge is not earned, because *"✓ Verified by
+7Solve"* is a claim about the student's answer **to their question**.
+
+`Prov.forQuestion()` now declares an image with no typed text for what it is: a
+transcription that never happened, confidence 0. The cap declines to certify —
+and only to decline. It cannot dispute, so a student is never told a correct
+calculation is wrong. Typing a question alongside the photo restores `typed`.
+
+## Caps raised together
+
+`polyOf` was capped at degree 6, `claimedRootsOf` accepted comma-lists of at
+most 4, and `substitution` refused more than 6 roots. Those three disagreed, and
+the disagreement had a hole in it: an answer listing 7+ roots with one of them
+**wrong** got no verdict from anyone — completeness bails when a claimed value
+is not a root, and substitution refused to run at all. All three are now 12,
+chosen by arithmetic: reconstruction samples at x = 0…13, and 13¹² ≈ 2.3e13 is
+inside the range where a double still represents every integer exactly.

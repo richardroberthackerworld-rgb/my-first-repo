@@ -8105,6 +8105,50 @@ var Deriv = (function(){
   var lastRules = [];
   function note(r){ if(lastRules.indexOf(r) < 0) lastRules.push(r); }
 
+  /* The numeric value of a subtree that contains no variable, or null.
+     This is what lets x^(3/2) be differentiated: the exponent is a division
+     node rather than a number, and refusing it meant the standard textbook
+     answer to ∫√x dx received no verdict at all.
+
+     It folds only what is exactly foldable and returns null the moment a
+     variable appears, so it can never turn a variable exponent into a
+     constant one. Non-finite results are null too — 1/0 inside an exponent
+     is not a constant, it is a mistake. */
+  function constOf(a){
+    if(!a) return null;
+    if(a.t === 'n') return isFinite(a.v) ? a.v : null;
+    if(a.t === 'v') return null;
+    if(a.t === 'u'){ var s = constOf(a.a); return s === null ? null : -s; }
+    if(a.t === 'c'){
+      var iv = constOf(a.a);
+      if(iv === null) return null;
+      var f = FUNCS_D[a.fn];
+      if(!f) return null;
+      var r = f(iv);
+      return (typeof r === 'number' && isFinite(r)) ? r : null;
+    }
+    if(a.t === 'b'){
+      var x = constOf(a.a), y = constOf(a.b);
+      if(x === null || y === null) return null;
+      var out;
+      switch(a.op){
+        case '+': out = x + y; break;
+        case '-': out = x - y; break;
+        case '*': out = x * y; break;
+        case '/': if(Math.abs(y) < 1e-15) return null; out = x / y; break;
+        case '^': out = Math.pow(x, y); break;
+        default: return null;
+      }
+      return isFinite(out) ? out : null;
+    }
+    return null;
+  }
+  /* Deriv is parsed before Verify's FUNCS table exists, so it carries the
+     handful it needs for constant folding rather than reaching across. */
+  var FUNCS_D = { sqrt: Math.sqrt, cbrt: Math.cbrt, abs: Math.abs, exp: Math.exp,
+                  ln: Math.log, log: Math.log10, log10: Math.log10, log2: Math.log2,
+                  sin: Math.sin, cos: Math.cos, tan: Math.tan };
+
   function d(a, v){
     if(!a) return null;
     if(a.t === 'n') return N(0);
@@ -8134,14 +8178,33 @@ var Deriv = (function(){
         if(dq1 === null || dq2 === null) return null;
         return B('/', B('-', B('*', dq1, w), B('*', u, dq2)), B('^', w, N(2))); }
       if(a.op === '^'){
-        /* Constant exponent only. x^x needs logarithmic differentiation and
-           this returns null rather than pretend. */
-        if(w.t !== 'n') return null;
-        note('power');
-        var du = d(u, v);
-        if(du === null) return null;
-        if(!(u.t === 'v' && u.v.toLowerCase() === v)) note('chain');
-        return B('*', B('*', N(w.v), B('^', u, N(w.v - 1))), du);
+        /* The exponent must be CONSTANT — but it need not be a bare number.
+           A textbook writes x^(3/2), which parses as a division node, and the
+           old test `w.t !== 'n'` refused it outright, so the standard answer
+           to ∫√x dx reached no verdict at all. constOf folds any
+           variable-free exponent: x^(3/2), x^(1/2), x^(-2) all work, and x^x
+           is still refused. */
+        var wc = constOf(w);
+        if(wc !== null){
+          note('power');
+          var du = d(u, v);
+          if(du === null) return null;
+          if(!(u.t === 'v' && u.v.toLowerCase() === v)) note('chain');
+          return B('*', B('*', N(wc), B('^', u, N(wc - 1))), du);
+        }
+        /* CONSTANT BASE, variable exponent: d/dx a^u = a^u · ln(a) · du.
+           e^x is the case that matters, and `e` tokenises to a NUMBER, so it
+           arrives here as 2.718…^x rather than as a named function. */
+        var uc = constOf(u);
+        if(uc !== null){
+          if(!(uc > 0)) return null;                 // ln(a) is undefined for a ≤ 0
+          note('exp');
+          var dw = d(w, v);
+          if(dw === null) return null;
+          return B('*', B('*', B('^', N(uc), w), N(Math.log(uc))), dw);
+        }
+        /* x^x needs logarithmic differentiation; null rather than pretend. */
+        return null;
       }
       return null;
     }
@@ -8157,7 +8220,22 @@ var Deriv = (function(){
         case 'exp':  note('exp');  return B('*', C('exp', inner), g);
         case 'ln':   note('log');  return B('/', g, inner);
         case 'sqrt': note('power');return B('/', g, B('*', N(2), C('sqrt', inner)));
-        default: return null;                       // abs, floor, log10 … not differentiable here
+        /* |u|' = (u/|u|)·u'. Undefined at u = 0, where evalAt yields 0/0 and
+           the sample is discarded rather than counted — which is the correct
+           reading of a point where the derivative does not exist. This is
+           what lets ln|x| be checked, and ln|x| + C is how every textbook
+           writes ∫(1/x)dx. */
+        case 'abs':  note('abs');  return B('*', B('/', inner, C('abs', inner)), g);
+        /* Explicit bases only. `log` is deliberately ABSENT: in Indian
+           textbooks it means log₁₀ in algebra and ln in calculus, and there
+           is no way to tell from the notation which was meant. Guessing would
+           either certify a wrong answer or dispute a right one, so a bare
+           log() falls through to null and the claim gets NO VERDICT — the
+           same rule every other checker follows when it cannot parse its
+           input. Write log10 or ln and it is checked. */
+        case 'log10': note('log'); return B('/', g, B('*', inner, N(Math.LN10)));
+        case 'log2':  note('log'); return B('/', g, B('*', inner, N(Math.LN2)));
+        default: return null;                       // log, floor, ceil … no verdict
       }
     }
     return null;
@@ -8284,6 +8362,30 @@ var Prov = (function(){
     return {question: one(raw.question), answer: one(raw.answer)};
   }
 
+  /* What the app actually knows about the question it just verified.
+
+     A photographed question with nothing typed reaches the verifier as the
+     literal placeholder "(photo question)". Most checks then find nothing to
+     read and stay quiet — but ARITHMETIC reads only the answer, so a
+     self-contained correct calculation like "2/3 + 1/3 = 1" reached `checked`
+     with the question never having been read at all. The arithmetic really is
+     right; the badge is not earned, because "✓ Verified by 7Solve" is a claim
+     about the student's answer TO THEIR QUESTION.
+
+     So an image with no typed text is declared for what it is: a transcription
+     that never happened, confidence 0. The cap then declines to certify —
+     and only to decline. It cannot dispute, so a student is never told a
+     correct calculation is wrong.
+
+     Typing a question alongside the photo restores `typed`: the words being
+     checked against are then the student's own. */
+  function forQuestion(typedText, hasImage){
+    var typed = String(typedText == null ? '' : typedText).trim();
+    if(!hasImage || typed) return of(null);                 // typed — nothing to doubt
+    return of({ question: { origin: 'transcribed', confidence: 0,
+                            method: 'image-not-transcribed' } });
+  }
+
   function isExtracted(p){ return !!(p && EXTRACTION[p.question.origin]); }
 
   function cap(state, p){
@@ -8306,7 +8408,8 @@ var Prov = (function(){
     return report;
   }
 
-  return {of:of, cap:cap, capReport:capReport, isExtracted:isExtracted, FLOOR:FLOOR};
+  return {of:of, forQuestion:forQuestion, cap:cap, capReport:capReport,
+          isExtracted:isExtracted, FLOOR:FLOOR};
 })();
 window.Prov7 = Prov;
 
@@ -9255,7 +9358,7 @@ async function solve(extraQuestion){
        provably inert and all 965 regression cases are unchanged. The contract
        lands before the pipeline that needs it, so it never has to be
        retrofitted around a live verdict. */
-    report = Prov.capReport(report, Prov.of(null));
+    report = Prov.capReport(report, Prov.forQuestion(typed, !!state.imageData));
 
     /* Only a failed PROOF forces a re-solve. A failed hint is worth showing the
        student but is not grounds for spending another AI call and 20 more
@@ -9280,7 +9383,7 @@ async function solve(extraQuestion){
         second.text = deLatex(second.text);
         let r2 = null;
         try { r2 = Verify.run(qForCheck, second.text); } catch(e){}
-        r2 = Prov.capReport(r2, Prov.of(null));
+        r2 = Prov.capReport(r2, Prov.forQuestion(typed, !!state.imageData));
         /* keep whichever survives more scrutiny */
         if(r2 && r2.state !== 'disputed'){ text = second.text; via = second.via; report = r2; }
         else if(r2 && r2.failed.length < report.failed.length){ text = second.text; via = second.via; report = r2; }
@@ -13160,7 +13263,19 @@ var Verify = (function(){
 
   function tokenize(src){
     var s = String(src)
-      .replace(/[−–—]/g, '-').replace(/×/g, '*').replace(/÷/g, '/')
+        /* |u| is absolute value. The bars were not in the grammar at all, so
+           ln|x| failed to tokenise — and ln|x| + C is how every textbook writes
+           the integral of 1/x, which meant the standard answer to the standard
+           question received no verdict.
+
+           The replacement is BRACKETED, not bare: ln|x| has to become
+           ln(abs(x)) and not lnabs(x), because the tokeniser reads a run of
+           letters greedily and would take lnabs as five separate variables.
+
+           A lone unpaired bar still fails to tokenise, exactly as before —
+           set-builder notation is not arithmetic and must not be guessed at. */
+        .replace(/\|([^|]+)\|/g, '(abs($1))')
+        .replace(/[−–—]/g, '-').replace(/×/g, '*').replace(/÷/g, '/')
       .replace(/⁰/g, '^0').replace(/¹/g, '^1').replace(/²/g, '^2')
       .replace(/³/g, '^3').replace(/⁴/g, '^4').replace(/⁵/g, '^5')
       /* A root is usually written without brackets — "30√7", "√25200" — and
@@ -13341,6 +13456,61 @@ var Verify = (function(){
     if(!isFinite(a) || !isFinite(b)) return null;         // undefined here → no verdict
     var scale = Math.max(1, Math.abs(a), Math.abs(b));
     return Math.abs(a - b) <= scale * 1e-9;
+  }
+
+  /* ---------- DECLARED NUMERICAL PRECISION ----------
+     holdsAt asks "is the residual ~0?", which is the right question for an
+     exact root and the wrong one for a decimal. x + eˣ = 0 has no closed form;
+     its root is −0.56714…, and a student who writes x = −0.567 has given a
+     CORRECT answer to three decimal places. The residual there is about 3e-4,
+     so the universal 1e-9 called it wrong.
+
+     The fix is NOT a bigger epsilon. A looser tolerance accepts a near-miss,
+     which is the exact failure mode the verification contract exists to
+     prevent. Instead the notation is read as what it means: −0.567 denotes the
+     interval [−0.5675, −0.5665], and the claim is certified only if a genuine
+     root is PROVED to lie inside it.
+
+     Proved, not estimated. A sign change of a continuous f across the interval
+     is a proof that a root exists in it; a small residual is only evidence of
+     one. And the precision comes from the student's own notation, so the
+     checker never chooses how forgiving to be.
+
+     A POLE also changes sign, and 1/(x−2) has no root at 2. So the interval is
+     bisected to locate the crossing and |f| must actually collapse there: at a
+     root it tends to zero, at a pole it explodes. */
+  function decimalsFor(md, val){
+    var re = /-?\d+\.(\d+)/g, m;
+    while((m = re.exec(md)) !== null){
+      if(Math.abs(parseFloat(m[0]) - val) < 1e-12) return m[1].length;
+    }
+    return null;                                          // not written as a decimal
+  }
+
+  function rootInInterval(eq, v, lo, hi){
+    var f = function(x){
+      var env = {}; env[v] = x;
+      var L = evalAt(eq.L, env), R = evalAt(eq.R, env);
+      if(L === null || R === null || !isFinite(L) || !isFinite(R)) return null;
+      return L - R;
+    };
+    var flo = f(lo), fhi = f(hi);
+    if(flo === null || fhi === null) return null;         // undefined on an edge → no verdict
+    if(flo === 0 || fhi === 0) return true;
+    if((flo > 0) === (fhi > 0)) return false;             // no sign change → no root proved
+    var a = lo, b = hi, fa = flo, k, mid, fm;
+    for(k = 0; k < 80; k++){
+      mid = (a + b) / 2;
+      fm = f(mid);
+      if(fm === null) return null;
+      if(fm === 0) return true;
+      if((fm > 0) === (fa > 0)){ a = mid; fa = fm; } else { b = mid; }
+    }
+    var fr = f((a + b) / 2);
+    if(fr === null) return null;
+    /* Measured against the ENDPOINT magnitudes, not against f at the crossing:
+       at a pole the latter is enormous and would excuse itself. */
+    return Math.abs(fr) <= 1e-9 * Math.max(1, Math.abs(flo), Math.abs(fhi));
   }
   var Algebra = {parse:parse, evalAt:evalAt, varsOf:varsOf, parseEquation:parseEquation,
                  holdsAt:holdsAt, hasTrig:hasTrig, tokenize:tokenize};
@@ -13578,7 +13748,11 @@ var Verify = (function(){
          be marked wrong for naming what it rejected. */
       var REJECTED = /\b(extraneous|rejected?|discard(ed)?|invalid|not a solution|does not satisfy|fails)\b/i;
       var rre = new RegExp('(?:^|[^0-9a-zA-Z])' + v0 + '\\s*=\\s*([^\\n=]{1,60})', 'gi'), rm;
-      while((rm = rre.exec(md)) !== null && roots.length <= 6){
+      /* 12, not 6, to match polyOf's degree cap. A degree-8 equation has eight
+         roots and a student who writes all eight was having the last two
+         silently dropped, which then read as an incomplete answer — the check
+         reported the student's fault when the fault was the reader's. */
+      while((rm = rre.exec(md)) !== null && roots.length <= 12){
         /* Resume scanning just after this '=' rather than after the whole tail.
            "x = 2 and x = 3" otherwise consumed the second statement into the
            first tail and the second root was silently never checked. */
@@ -13598,7 +13772,13 @@ var Verify = (function(){
         var got = [];
   
         var parts = tail.split(new RegExp(SEP, 'i'));
-        if(parts.length > 1 && parts.length <= 4){
+        /* Was capped at 4, so "x = 1, 2, 3, 4, 5" fell through to the
+           word-eating fallback and yielded ONE root — the completeness check
+           then correctly reported the other four as missing, which made a
+           complete answer look incomplete. The cap is now polyOf's degree cap.
+           `allOk` below is what keeps this safe: every part must evaluate to a
+           number on its own, so a prose list is still rejected wholesale. */
+        if(parts.length > 1 && parts.length <= 12){
           var allOk = parts.every(function(p){
             var n = constOf(p.trim());
             if(n === null) return false;
@@ -13683,7 +13863,19 @@ var Verify = (function(){
 
   /* integer coefficients of f(x) = L − R, lowest power first, or null */
   function polyOf(eq, v){
-    var MAXD = 6, y = [], i, env;
+    /* The cap was 6, so a fully factored degree-8 product reconstructed as
+       nothing and completeness could not run — the student who wrote out all
+       eight roots of (x-1)…(x-8) = 0 got no verdict, and so did the one who
+       wrote out only four.
+
+       12 is chosen by arithmetic, not by taste. Reconstruction samples at
+       x = 0…MAXD+1, so degree 12 evaluates at 13, and 13^12 ≈ 2.3e13 — inside
+       the 2^53 range where a double still represents every integer exactly.
+       Push much further and the finite differences stop being exact, which
+       would turn a clean refusal into a wrong reconstruction. The
+       integer-coefficient test and the reconstruction confirmation below both
+       still have to pass, so a degree this misses is refused, not guessed. */
+    var MAXD = 12, y = [], i, env;
     for(i = 0; i <= MAXD + 1; i++){
       env = {}; env[v] = i;
       var a = evalAt(eq.L, env), b = evalAt(eq.R, env);
@@ -13929,14 +14121,37 @@ var Verify = (function(){
     /* remember how each was written, for the receipt */
     var srcs = [];
     var sre = new RegExp('(?:^|[^0-9a-zA-Z])' + v0 + '\\s*=\\s*([^\\n,;.]{1,40})', 'gi'), sm;
-    while((sm = sre.exec(md)) !== null && srcs.length < 8) srcs.push(sm[1].trim());
+    while((sm = sre.exec(md)) !== null && srcs.length < 12) srcs.push(sm[1].trim());
 
-    if(!roots.length || roots.length > 6) return [];
+    /* 12, not 6, to match polyOf's degree cap.
+       At 6 an answer listing 7 or more roots produced NO substitution checks
+       at all — and completeness bails whenever a claimed value is not a root,
+       leaving that exact case with no verdict from anyone. A student who
+       listed the eight roots of a degree-8 equation with one of them wrong
+       was told nothing. Both caps now agree, so every root a student writes
+       is substituted back. */
+    if(!roots.length || roots.length > 12) return [];
 
     return roots.map(function(r, i){
       var env = {}; env[v0] = r.v;
       var ok = holdsAt(eq, env);
       if(ok === null) return null;                       // undefined there → no verdict
+      /* DECLARED PRECISION. Reached ONLY where the strict test already said no,
+         and only for a value the student wrote as a decimal. It can turn a
+         false into a true and never the reverse, so every answer that verified
+         before still verifies on exactly the same grounds — an exact or
+         algebraic root never enters this branch at all. */
+      var toPrecision = false;
+      if(ok === false){
+        var dp = decimalsFor(md, r.v);
+        if(dp !== null && dp > 0){
+          var half = 0.5 * Math.pow(10, -dp);
+          if(rootInInterval(eq, v0, r.v - half, r.v + half) === true){
+            ok = true;
+            toPrecision = dp;
+          }
+        }
+      }
       var l = round6(evalAt(eq.L, env)), rr = round6(evalAt(eq.R, env));
       /* Show the exact form the answer used when we have it, with the decimal
          in brackets — "x = 82 − 30√7 (≈ 2.62746)" is what the student wrote. */
@@ -13948,8 +14163,13 @@ var Verify = (function(){
          can tell "these values are right" from "this is the whole solution
          set" — only the second earns the green badge. */
       return { kind:'subst', ok: ok === true, needsComplete: true,
-               text: v0 + ' = ' + shown + ' put back into ' + found.src.trim() +
-                     ' gives ' + l + (ok === true ? ' = ' : ' ≠ ') + rr };
+               text: toPrecision !== false
+                 ? v0 + ' = ' + shown + ' is a correct root of ' + found.src.trim() +
+                   ' to the ' + toPrecision + ' decimal place' + (toPrecision > 1 ? 's' : '') +
+                   ' it is written to — a root is proved to lie inside the interval that ' +
+                   'figure denotes'
+                 : v0 + ' = ' + shown + ' put back into ' + found.src.trim() +
+                   ' gives ' + l + (ok === true ? ' = ' : ' ≠ ') + rr };
     }).filter(Boolean);
   }
 
@@ -13978,7 +14198,21 @@ var Verify = (function(){
     var out = [], seen = {};
     var lines = String(md).split(/\n+/);
     for(var i = 0; i < lines.length && out.length < 4; i++){
-      var line = lines[i].replace(/^[\s>*\-–—•\d.)]+/, '').trim();
+      /* Strip the markdown wrapper from BOTH ends. The leading strip has
+         always been here; the trailing one had not, so `**(x-3)(x-4) =
+         x²-7x+12**` arrived as `… + 12**` and failed to parse.
+
+         That was not an edge case: the answer template this product ships
+         instructs the model to put the answer in **bold**, so the app's own
+         output format was the one form identityCheck could never read. Every
+         factorisation and expansion a student actually saw went unchecked —
+         and, just as importantly, every FORGED one went undisputed.
+
+         Only markdown emphasis is stripped. The leading class keeps its
+         digits and brackets for list markers; the trailing class does not,
+         because `)` and digits are ordinary and load-bearing at the end of
+         an expression — stripping them would corrupt `(x-3)(x-4)`. */
+      var line = lines[i].replace(/^[\s>*_\-–—•\d.)]+/, '').replace(/[\s*_]+$/, '').trim();
       if(line.indexOf('=') < 0) continue;
       if(/^##/.test(line)) continue;
       if(line.split('=').length !== 2) continue;
@@ -15525,8 +15759,64 @@ var Verify = (function(){
   }
   function firstFactor(n){ for(var i = 2; i * i <= n; i++) if(n % i === 0) return i; return n; }
 
+  /* ---------- FACTORISATION CLAIMS ----------
+     "No, 5779 = 7 × 826" is a complete answer to "is 5779 prime?" and it
+     reached no checker at all: the primality regex below only ever matched the
+     phrasing "N is prime/composite", so an answer that made its case by
+     exhibiting factors went entirely unread.
+
+     That answer is false twice over — 5779 is prime, AND 7 × 826 is 5782, not
+     5779. The second fault is the one to check first, because it is decidable
+     by multiplication alone and needs no view on primality: a product either
+     equals the number or it does not.
+
+     So this reports on the ARITHMETIC of the claim. A true factorisation
+     ("5781 = 3 × 41 × 47") passes and settles compositeness; a product that
+     does not multiply out is disputed whatever it was meant to prove. Anything
+     that is not a bare product of positive integers is not a factorisation
+     claim and gets no verdict here. */
+  function factorisationClaims(md, out, seen){
+    var s = deLatexSafe(md), m;
+    /* N = a × b [× c …]. The trailing guard stops "12 = 3 × 4 + 1" being read
+       as a factorisation of 12 — a product that continues into a sum is an
+       expression, not a factor list. */
+    var re = /(?:^|[^\d.])(\d{2,15})\s*=\s*(\d{1,15}(?:\s*[×x*·]\s*\d{1,15})+)(?![\d.\s]*[+\-^/])/gi;
+    while((m = re.exec(s)) !== null){
+      if(out.length >= 8) break;
+      var n = parseInt(m[1], 10);
+      var key = 'f' + n + '|' + m[2].replace(/\s+/g, '');
+      if(seen[key]) continue;
+      seen[key] = 1;
+      var parts = m[2].split(/[×x*·]/).map(function(t){ return parseInt(t.trim(), 10); });
+      if(parts.length < 2) continue;
+      var okParts = true;
+      parts.forEach(function(p){ if(!isFinite(p) || p <= 0) okParts = false; });
+      if(!okParts) continue;
+      var prod = 1;
+      parts.forEach(function(p){ prod *= p; });
+      /* Beyond 2^53 the product is no longer exact, so a mismatch would be a
+         rounding artefact rather than the student's error. Say nothing. */
+      if(!isFinite(prod) || prod > 9007199254740991) continue;
+      var good = (prod === n);
+      /* A TRUE factorisation into factors above 1 also settles primality.
+         N = 1 × N is arithmetically true and shows nothing, and must not be
+         allowed to certify compositeness. */
+      var nontrivial = parts.filter(function(p){ return p > 1; }).length >= 2;
+      out.push({ kind:'primality', ok:good, soft: good && !nontrivial,
+        text: good
+          ? (nontrivial
+              ? n + ' = ' + parts.join(' × ') + ' — the product checks out, so ' + n +
+                ' is composite as the answer says'
+              : n + ' = ' + parts.join(' × ') + ' is true but trivial: 1 × ' + n +
+                ' shows nothing about primality')
+          : n + ' ≠ ' + parts.join(' × ') + ' — that product is ' + prod +
+            ', so the factorisation given does not hold' });
+    }
+  }
+
   function primality(md){
     var s = deLatexSafe(md), out = [], seen = {}, m;
+    factorisationClaims(md, out, seen);
     var re = /(-?\d{1,15})\s*(?:is|seems\s+to\s+be|appears\s+to\s+be|looks)\s+(not\s+prime|composite|prime)\b/gi;
     while((m = re.exec(s)) !== null){
       if(out.length >= 8) break;
