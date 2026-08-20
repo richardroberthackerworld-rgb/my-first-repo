@@ -1,6 +1,6 @@
 {
   "_": "Expected verdicts for the authenticated /v1 production parity check. Generated from the SHIPPED JS engine. Comparison is by CANONICAL VERDICT CLASS, never by raw state: the browser splits the not-verified outcome four ways (plain/partial/worked/explained) so the badge can say what it looked at, while verify.php collapses them into one public `unverified`. That divergence is documented and accepted in VERIFICATION-CONTRACT.md; comparing raw strings reports it as a failure it is not.",
-  "build": "2026-08-19.9",
+  "build": "2026-08-20.2",
   "canonical": {
     "checked": "verified",
     "disputed": "disputed",

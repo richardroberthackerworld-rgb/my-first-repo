@@ -134,7 +134,19 @@ foreach ($sub in @('.well-known','blog','assets','docs')) {
 
 # deploy-check.php is a throwaway diagnostic that lists the folder it sits in —
 # it ships as a separate single-file upload, never inside the site archive.
-$n = New-Zip -Zip $zip -Roots $roots -ExcludeExt @('.js') -ExcludeNames @('keys.php', 'deploy-check.php')
+#
+# The harness is .js and is already excluded by extension, but its FIXTURES are
+# .json and were riding along into a public document root. They carry no
+# secrets, yet a test file served from the vendor's own domain is still a test
+# file nobody asked for, and api-parity-expected.json publishes the exact
+# verdicts the suite expects.
+#
+# checks.json is NOT in this list and must never be: capability.php reads it at
+# runtime to decide which subjects /v1 can report. sample-vectors.json only
+# appears in a sampling.php comment — nothing reads it on the server.
+$testFixtures = @('sample-vectors.json', 'api-parity-expected.json')
+$n = New-Zip -Zip $zip -Roots $roots -ExcludeExt @('.js') `
+  -ExcludeNames (@('keys.php', 'deploy-check.php') + $testFixtures)
 
 $kb = [math]::Round((Get-Item -LiteralPath $zip).Length / 1KB)
 Write-Output ""
