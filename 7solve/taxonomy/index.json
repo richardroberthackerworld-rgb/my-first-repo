@@ -1,0 +1,30 @@
+{
+  "_": "TAXONOMY ROOT INDEX. Lists the shards that make up the academic taxonomy and the tiers above them. Everything below a program lives in a shard so the client never has to hold every syllabus in memory. See TAXONOMY-CONTRACT.md before editing — this is a data file, and adding a course must never require a code change.",
+  "schema": "7solve.taxonomy/1",
+  "version": "2026-08-21",
+  "source": "7solve-core",
+  "nodes": [
+    { "id": "in", "kind": "country", "parent": null, "label": "India",
+      "aliases": ["india", "in", "bharat"] },
+
+    { "id": "in.school", "kind": "level", "parent": "in", "label": "School",
+      "aliases": ["school", "cbse", "icse", "state board"] },
+    { "id": "in.diploma", "kind": "level", "parent": "in", "label": "Diploma / Polytechnic",
+      "aliases": ["diploma", "polytechnic"] },
+    { "id": "in.ug", "kind": "level", "parent": "in", "label": "Undergraduate",
+      "aliases": ["ug", "undergraduate", "bachelors", "bachelor's"] },
+    { "id": "in.pg", "kind": "level", "parent": "in", "label": "Postgraduate",
+      "aliases": ["pg", "postgraduate", "masters", "master's"] }
+  ],
+  "shards": [
+    "in/school.json",
+    "in/diploma.json",
+    "in/btech.json",
+    "in/mtech.json",
+    "in/bca-mca.json",
+    "in/bsc-msc.json",
+    "in/bcom-mcom.json",
+    "in/bba-mba.json",
+    "in/ba-ma.json"
+  ]
+}

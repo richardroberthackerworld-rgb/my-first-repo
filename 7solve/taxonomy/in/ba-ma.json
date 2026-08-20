@@ -1,0 +1,45 @@
+{
+  "_": "BA and MA, India. BAND D — humanities. An essay on the causes of the French Revolution has no residual to compute and no root to substitute back. 7Solve answers it; the badge must never claim it was checked. Economics is included deliberately as the awkward case: it carries genuine mathematics in places, so its numeric problem types are separated from its essay ones rather than the whole subject being written off.",
+  "schema": "7solve.taxonomy/1",
+  "version": "2026-08-21",
+  "source": "7solve-core",
+  "nodes": [
+    { "id": "in.ug.ba", "kind": "program", "parent": "in.ug", "label": "BA",
+      "aliases": ["ba", "b.a.", "bachelor of arts"], "match": ["\\bb\\.?a\\.?\\b"] },
+
+    { "id": "in.ug.ba.history", "kind": "branch", "parent": "in.ug.ba", "label": "History",
+      "aliases": ["history"] },
+    { "id": "in.ug.ba.history.s1", "kind": "semester", "parent": "in.ug.ba.history",
+      "label": "Semester 1" },
+    { "id": "in.ug.ba.history.s1.modern", "kind": "subject", "parent": "in.ug.ba.history.s1",
+      "label": "Modern World History", "aliases": ["modern history", "world history"] },
+    { "id": "in.ug.ba.history.s1.modern.revolutions", "kind": "topic",
+      "parent": "in.ug.ba.history.s1.modern", "label": "The age of revolutions",
+      "problem_types": ["humanities.essay.analyse"] },
+
+    { "id": "in.ug.ba.english", "kind": "branch", "parent": "in.ug.ba", "label": "English Literature",
+      "aliases": ["english", "english literature", "literature"] },
+    { "id": "in.ug.ba.english.s1", "kind": "semester", "parent": "in.ug.ba.english",
+      "label": "Semester 1" },
+    { "id": "in.ug.ba.english.s1.poetry", "kind": "subject", "parent": "in.ug.ba.english.s1",
+      "label": "Poetry", "aliases": ["poetry"] },
+    { "id": "in.ug.ba.english.s1.poetry.criticism", "kind": "topic",
+      "parent": "in.ug.ba.english.s1.poetry", "label": "Practical criticism",
+      "problem_types": ["humanities.essay.analyse", "lang.essay.compose"] },
+
+    { "id": "in.pg.ma", "kind": "program", "parent": "in.pg", "label": "MA",
+      "aliases": ["ma", "m.a.", "master of arts"], "match": ["\\bm\\.?a\\.?\\b"] },
+    { "id": "in.pg.ma.economics", "kind": "branch", "parent": "in.pg.ma", "label": "Economics",
+      "aliases": ["economics", "eco"] },
+    { "id": "in.pg.ma.economics.s1", "kind": "semester", "parent": "in.pg.ma.economics",
+      "label": "Semester 1" },
+    { "id": "in.pg.ma.economics.s1.micro", "kind": "subject", "parent": "in.pg.ma.economics.s1",
+      "label": "Microeconomics", "aliases": ["microeconomics", "micro"] },
+    { "id": "in.pg.ma.economics.s1.micro.elasticity", "kind": "topic",
+      "parent": "in.pg.ma.economics.s1.micro", "label": "Elasticity of demand",
+      "problem_types": ["arith.evaluate", "econ.theory.explain"] },
+    { "id": "in.pg.ma.economics.s1.micro.welfare", "kind": "topic",
+      "parent": "in.pg.ma.economics.s1.micro", "label": "Welfare economics",
+      "problem_types": ["econ.theory.explain"] }
+  ]
+}

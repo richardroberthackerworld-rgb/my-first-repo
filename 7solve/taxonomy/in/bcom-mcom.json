@@ -1,0 +1,27 @@
+{
+  "_": "B.Com and M.Com, India. Band B — the numeric core of accounting IS checkable (a trial balance either balances or it does not) even though the subject is not mathematics. No verifier is registered for these problem types in Release A; declaring them now means a checker can be attached later without the taxonomy changing at all. Until one is, they report covered_not_verifiable.",
+  "schema": "7solve.taxonomy/1",
+  "version": "2026-08-21",
+  "source": "7solve-core",
+  "nodes": [
+    { "id": "in.ug.bcom", "kind": "program", "parent": "in.ug", "label": "B.Com",
+      "aliases": ["b.com", "bcom", "b com", "bachelor of commerce"],
+      "match": ["\\bb\\.?\\s?com\\b"] },
+    { "id": "in.ug.bcom.s1", "kind": "semester", "parent": "in.ug.bcom", "label": "Semester 1" },
+    { "id": "in.ug.bcom.s1.fa", "kind": "subject", "parent": "in.ug.bcom.s1",
+      "label": "Financial Accounting", "aliases": ["financial accounting", "accounts", "fa"] },
+    { "id": "in.ug.bcom.s1.fa.doubleentry", "kind": "topic", "parent": "in.ug.bcom.s1.fa",
+      "label": "Double-entry and the trial balance",
+      "problem_types": ["commerce.accounting.balance"] },
+
+    { "id": "in.pg.mcom", "kind": "program", "parent": "in.pg", "label": "M.Com",
+      "aliases": ["m.com", "mcom", "m com", "master of commerce"],
+      "match": ["\\bm\\.?\\s?com\\b"] },
+    { "id": "in.pg.mcom.s1", "kind": "semester", "parent": "in.pg.mcom", "label": "Semester 1" },
+    { "id": "in.pg.mcom.s1.fm", "kind": "subject", "parent": "in.pg.mcom.s1",
+      "label": "Financial Management", "aliases": ["financial management", "fm"] },
+    { "id": "in.pg.mcom.s1.fm.tvm", "kind": "topic", "parent": "in.pg.mcom.s1.fm",
+      "label": "Time value of money",
+      "problem_types": ["commerce.finance.tvm"] }
+  ]
+}

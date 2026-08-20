@@ -1,0 +1,42 @@
+{
+  "_": "B.Sc and M.Sc, India. Structural point: the branch tier here is a SPECIALISATION rather than an engineering discipline. The same node kind absorbs both without a schema change, which is the case that would have forced a second schema under a rigid nine-tier model.",
+  "schema": "7solve.taxonomy/1",
+  "version": "2026-08-21",
+  "source": "7solve-core",
+  "nodes": [
+    { "id": "in.ug.bsc", "kind": "program", "parent": "in.ug", "label": "B.Sc",
+      "aliases": ["b.sc", "bsc", "b sc", "bachelor of science"], "match": ["\\bb\\.?\\s?sc\\b"] },
+
+    { "id": "in.ug.bsc.maths", "kind": "branch", "parent": "in.ug.bsc",
+      "label": "Mathematics", "aliases": ["maths", "mathematics"] },
+    { "id": "in.ug.bsc.maths.s1", "kind": "semester", "parent": "in.ug.bsc.maths",
+      "label": "Semester 1" },
+    { "id": "in.ug.bsc.maths.s1.calculus", "kind": "subject", "parent": "in.ug.bsc.maths.s1",
+      "label": "Differential Calculus", "aliases": ["calculus"] },
+    { "id": "in.ug.bsc.maths.s1.calculus.diff", "kind": "topic",
+      "parent": "in.ug.bsc.maths.s1.calculus", "label": "Differentiation",
+      "problem_types": ["calculus.derivative"] },
+
+    { "id": "in.ug.bsc.physics", "kind": "branch", "parent": "in.ug.bsc",
+      "label": "Physics", "aliases": ["physics"] },
+    { "id": "in.ug.bsc.physics.s1", "kind": "semester", "parent": "in.ug.bsc.physics",
+      "label": "Semester 1" },
+    { "id": "in.ug.bsc.physics.s1.mech", "kind": "subject", "parent": "in.ug.bsc.physics.s1",
+      "label": "Mechanics", "aliases": ["mechanics"] },
+    { "id": "in.ug.bsc.physics.s1.mech.dimensions", "kind": "topic",
+      "parent": "in.ug.bsc.physics.s1.mech", "label": "Dimensional analysis",
+      "problem_types": ["physics.units.dimension"] },
+
+    { "id": "in.pg.msc", "kind": "program", "parent": "in.pg", "label": "M.Sc",
+      "aliases": ["m.sc", "msc", "m sc", "master of science"], "match": ["\\bm\\.?\\s?sc\\b"] },
+    { "id": "in.pg.msc.maths", "kind": "branch", "parent": "in.pg.msc", "label": "Mathematics",
+      "aliases": ["maths", "mathematics"] },
+    { "id": "in.pg.msc.maths.s1", "kind": "semester", "parent": "in.pg.msc.maths",
+      "label": "Semester 1" },
+    { "id": "in.pg.msc.maths.s1.algebra", "kind": "subject", "parent": "in.pg.msc.maths.s1",
+      "label": "Abstract Algebra", "aliases": ["algebra", "abstract algebra"] },
+    { "id": "in.pg.msc.maths.s1.algebra.groups", "kind": "topic",
+      "parent": "in.pg.msc.maths.s1.algebra", "label": "Group theory",
+      "problem_types": ["algebra.equation.solve"] }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "_": "BBA and MBA, India. BAND D — 7Solve answers these, and cannot independently verify the answers. There is no deterministic test for whether a segmentation strategy is right. Every problem type here is registered in capabilities.json with status covered_not_verifiable, which is what makes the honest UI state reachable. This shard exists in the Release A seed set on purpose: if Band D is never exercised, covered_not_verifiable is untested theatre.",
+  "schema": "7solve.taxonomy/1",
+  "version": "2026-08-21",
+  "source": "7solve-core",
+  "nodes": [
+    { "id": "in.ug.bba", "kind": "program", "parent": "in.ug", "label": "BBA",
+      "aliases": ["bba", "bachelor of business administration"], "match": ["\\bbba\\b"] },
+    { "id": "in.ug.bba.s1", "kind": "semester", "parent": "in.ug.bba", "label": "Semester 1" },
+    { "id": "in.ug.bba.s1.pom", "kind": "subject", "parent": "in.ug.bba.s1",
+      "label": "Principles of Management",
+      "aliases": ["principles of management", "pom", "management"] },
+    { "id": "in.ug.bba.s1.pom.functions", "kind": "topic", "parent": "in.ug.bba.s1.pom",
+      "label": "Functions of management",
+      "problem_types": ["mgmt.theory.explain"] },
+
+    { "id": "in.pg.mba", "kind": "program", "parent": "in.pg", "label": "MBA / PGDM",
+      "aliases": ["mba", "pgdm", "master of business administration",
+                  "post graduate diploma in management"],
+      "match": ["\\bmba\\b", "\\bpgdm\\b"] },
+    { "id": "in.pg.mba.marketing", "kind": "branch", "parent": "in.pg.mba",
+      "label": "Marketing", "aliases": ["marketing"] },
+    { "id": "in.pg.mba.marketing.s2", "kind": "semester", "parent": "in.pg.mba.marketing",
+      "label": "Semester 2" },
+    { "id": "in.pg.mba.marketing.s2.mm", "kind": "subject", "parent": "in.pg.mba.marketing.s2",
+      "label": "Marketing Management", "aliases": ["marketing management", "mm"] },
+    { "id": "in.pg.mba.marketing.s2.mm.stp", "kind": "topic",
+      "parent": "in.pg.mba.marketing.s2.mm",
+      "label": "Segmentation, targeting and positioning",
+      "problem_types": ["mgmt.marketing.case"] },
+
+    { "id": "in.pg.mba.hr", "kind": "branch", "parent": "in.pg.mba",
+      "label": "Human Resources", "aliases": ["hr", "human resources"] },
+    { "id": "in.pg.mba.hr.s2", "kind": "semester", "parent": "in.pg.mba.hr", "label": "Semester 2" },
+    { "id": "in.pg.mba.hr.s2.ob", "kind": "subject", "parent": "in.pg.mba.hr.s2",
+      "label": "Organisational Behaviour", "aliases": ["organisational behaviour", "ob"] },
+    { "id": "in.pg.mba.hr.s2.ob.motivation", "kind": "topic", "parent": "in.pg.mba.hr.s2.ob",
+      "label": "Theories of motivation",
+      "problem_types": ["mgmt.theory.explain"] }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "_": "Diploma / Polytechnic, India. Structural point: a branch tier but NO year tier — polytechnic syllabi are organised semester-first, straight under the branch.",
+  "schema": "7solve.taxonomy/1",
+  "version": "2026-08-21",
+  "source": "7solve-core",
+  "nodes": [
+    { "id": "in.diploma.poly", "kind": "program", "parent": "in.diploma", "label": "Diploma (Polytechnic)",
+      "aliases": ["diploma", "polytechnic", "poly"], "match": ["\\bdiploma\\b", "\\bpolytechnic\\b"] },
+
+    { "id": "in.diploma.poly.mech", "kind": "branch", "parent": "in.diploma.poly",
+      "label": "Mechanical Engineering", "aliases": ["mech", "mechanical"] },
+    { "id": "in.diploma.poly.mech.s2", "kind": "semester", "parent": "in.diploma.poly.mech",
+      "label": "Semester 2" },
+    { "id": "in.diploma.poly.mech.s2.maths", "kind": "subject", "parent": "in.diploma.poly.mech.s2",
+      "label": "Engineering Mathematics II", "aliases": ["maths 2", "m2"] },
+    { "id": "in.diploma.poly.mech.s2.maths.integration", "kind": "topic",
+      "parent": "in.diploma.poly.mech.s2.maths", "label": "Integration",
+      "problem_types": ["calculus.integral.indefinite"] },
+
+    { "id": "in.diploma.poly.civil", "kind": "branch", "parent": "in.diploma.poly",
+      "label": "Civil Engineering", "aliases": ["civil"] },
+    { "id": "in.diploma.poly.civil.s2", "kind": "semester", "parent": "in.diploma.poly.civil",
+      "label": "Semester 2" },
+    { "id": "in.diploma.poly.civil.s2.mechanics", "kind": "subject",
+      "parent": "in.diploma.poly.civil.s2", "label": "Engineering Mechanics",
+      "aliases": ["mechanics"] },
+    { "id": "in.diploma.poly.civil.s2.mechanics.forces", "kind": "topic",
+      "parent": "in.diploma.poly.civil.s2.mechanics", "label": "Resolution of forces",
+      "problem_types": ["physics.units.dimension", "algebra.system.linear"] }
+  ]
+}

@@ -8237,6 +8237,79 @@ var Deriv = (function(){
    safe against load order. */
 window.Deriv = Deriv;
 
+/* ============================================================
+   PROVENANCE — the ingestion trust boundary (Phase 2 / Release A)
+   ------------------------------------------------------------
+   The mirror of provenance.php. The verifier must know WHAT IT IS
+   LOOKING AT: a question the student typed and a question read off
+   a blurred scan are not the same evidence, and a checker that
+   cannot tell them apart will certify an answer to a question
+   nobody read.
+
+   THE CAP MAY ONLY LOWER A VERDICT. It never raises one, and it
+   never manufactures `disputed` — low confidence in the QUESTION
+   says nothing about whether the ANSWER is wrong, and claiming
+   otherwise would be the same category error the verification
+   contract exists to prevent, aimed at the input instead of the
+   output. It caps to `plain`, the canonical `unverified`: we are
+   declining to certify, not disputing.
+
+   Applied strictly OUTSIDE Verify.run(). The Phase 1 state machine
+   is frozen and is not modified by Phase 2.
+   ============================================================ */
+var Prov = (function(){
+  var EXTRACTION = {extracted:1, transcribed:1, reconstructed:1};
+  var ORIGINS    = {typed:1, extracted:1, transcribed:1, reconstructed:1};
+  /* Not a per-call option. A caller that could choose its own floor would be
+     deciding how much to trust its own input, which is the thing being
+     guarded against. Kept identical to Provenance::FLOOR in PHP. */
+  var FLOOR = 0.98;
+
+  function one(r){
+    if(!r || typeof r !== 'object')
+      return {origin:'typed', confidence:1, method:null, round_trip:null, region:null};
+    var origin = String(r.origin || 'typed');
+    if(!ORIGINS[origin]) origin = 'transcribed';         // unknown → cautious, never `typed`
+    var c = (typeof r.confidence === 'number' && isFinite(r.confidence))
+      ? Math.max(0, Math.min(1, r.confidence))
+      : (origin === 'typed' ? 1 : 0);
+    return {origin:origin, confidence:c,
+            method: r.method == null ? null : String(r.method),
+            round_trip: r.round_trip == null ? null : !!r.round_trip,
+            region: r.region == null ? null : String(r.region)};
+  }
+
+  function of(raw){
+    raw = raw || {};
+    return {question: one(raw.question), answer: one(raw.answer)};
+  }
+
+  function isExtracted(p){ return !!(p && EXTRACTION[p.question.origin]); }
+
+  function cap(state, p){
+    if(!isExtracted(p))    return state;                 // typed — nothing to doubt
+    if(state !== 'checked') return state;                // only certification is capped
+    var q = p.question;
+    if(q.confidence >= FLOOR && q.round_trip === true) return state;
+    return 'plain';
+  }
+
+  /* Cap a whole report. Returns the SAME object when nothing changed, so the
+     inert path cannot perturb anything downstream that compares by identity. */
+  function capReport(report, p){
+    if(!report || !report.state) return report;
+    var next = cap(report.state, p);
+    if(next === report.state) return report;
+    report.state = next;
+    report.capped = true;
+    report.provenance = p;
+    return report;
+  }
+
+  return {of:of, cap:cap, capReport:capReport, isExtracted:isExtracted, FLOOR:FLOOR};
+})();
+window.Prov7 = Prov;
+
 var LocalSolve = (function(){
   var V = function(){ return (window.Verify) || null; };
 
@@ -9170,6 +9243,19 @@ async function solve(extraQuestion){
     const qForCheck = state.lastQ || typed || '';
     let report = null;
     try { report = Verify.run(qForCheck, text); } catch(e){}
+    /* PROVENANCE (Phase 2 / Release A). The engine decided the verdict; this
+       asks whether the QUESTION it decided against is trustworthy enough to
+       certify against, and may lower `checked` if it is not. It runs OUTSIDE
+       Verify.run() — the frozen state machine is not consulted again.
+
+       Today every question here is `typed`: the student either wrote it, or
+       photographed one and qForCheck is the literal placeholder set above,
+       which is not a transcription of anything. Nothing in this build reads a
+       question out of pixels and hands it to the verifier, so Prov.cap() is
+       provably inert and all 965 regression cases are unchanged. The contract
+       lands before the pipeline that needs it, so it never has to be
+       retrofitted around a live verdict. */
+    report = Prov.capReport(report, Prov.of(null));
 
     /* Only a failed PROOF forces a re-solve. A failed hint is worth showing the
        student but is not grounds for spending another AI call and 20 more
@@ -9194,6 +9280,7 @@ async function solve(extraQuestion){
         second.text = deLatex(second.text);
         let r2 = null;
         try { r2 = Verify.run(qForCheck, second.text); } catch(e){}
+        r2 = Prov.capReport(r2, Prov.of(null));
         /* keep whichever survives more scrutiny */
         if(r2 && r2.state !== 'disputed'){ text = second.text; via = second.via; report = r2; }
         else if(r2 && r2.failed.length < report.failed.length){ text = second.text; via = second.via; report = r2; }
@@ -16096,9 +16183,13 @@ var Verify = (function(){
        landed in no bucket at all — not answer-level, not a proof — which
        dropped it into 'partial' and labelled a correct answer
        "⚠ Partially verified". Every answer looked half-checked. */
-    var PROOF = {subst:1, transform:1, arith:1, chem:1, identity:1, bound:1,
-                 divis:1, unique:1, condition:1, extremum:1,
-                 integrity:1, units:1, trace:1, question:1, claim:1, primality:1, truncated:1, contradiction:1, deriv:1, roots:1, integral:1, system:1};
+    /* @generated:PROOF from capabilities.json — do not edit by hand.
+       sha256:20156901c68cdff2  regenerate: node tools/gen-capabilities.js */
+    var PROOF = {subst:1, transform:1, arith:1, chem:1, identity:1, bound:1, divis:1,
+                 unique:1, condition:1, extremum:1, integrity:1, units:1, trace:1,
+                 question:1, claim:1, primality:1, truncated:1, contradiction:1, deriv:1,
+                 roots:1, integral:1, system:1};
+    /* @end:PROOF */
     /* A soft check is advisory: it reports what could NOT be tested, not a
        problem found. It belongs in the receipt and nowhere near the failure
        count, because a caveat must never decide the badge. */

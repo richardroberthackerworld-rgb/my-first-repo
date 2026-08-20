@@ -42,6 +42,7 @@ declare(strict_types=1);
 /* Phase 1: /v1 must distinguish "a checker ran and could not decide" from
    "this API has no checker for that subject". See VERIFICATION-CONTRACT.md. */
 require_once __DIR__ . '/capability.php';
+require_once __DIR__ . '/provenance.php';
 
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: no-referrer');
@@ -355,6 +356,18 @@ if ($route === 'verify') {
         err_out('FAILED', 'The verification engine could not process that input.', 500);
     }
 
+    /* PROVENANCE (Phase 2 / Release A).
+       A caller that read the question off a scan may say so, and the verdict is
+       then capped at what that reading can support. Absent or malformed, the
+       record degrades to `typed`, which caps nothing — so every existing caller
+       gets byte-identical responses. The cap runs OUTSIDE Checks::run(): the
+       frozen state machine produced $r['state'] and is not consulted again. */
+    $prov      = Provenance::of(is_array($in['provenance'] ?? null) ? $in['provenance'] : null);
+    $rawState  = $r['state'];
+    $state     = Provenance::cap($rawState, $prov);
+    $capNote   = Provenance::explain($rawState, $state, $prov);
+    $r['state'] = $state;
+
     /* The four states are honest about their own limits. "unverified" is NOT a
        pass — it means nothing here was mechanically checkable, and a caller
        that treats it as approval has misread the contract. It is spelled out
@@ -376,9 +389,20 @@ if ($route === 'verify') {
         'subject'      => $cap['subject'],
         'capability'   => $cap['capability'],
         'capability_means' => $cap['means'],
+        /* Echoed so a caller can see what the engine believed it was reading.
+           `capped` is false for every request that does not send provenance. */
+        'provenance'   => ['question' => $prov['question']['origin'],
+                           'answer'   => $prov['answer']['origin'],
+                           'capped'   => $rawState !== $state,
+                           'means'    => $capNote],
         /* FULLY_VERIFIED requires all three layers. A mathematically correct
-           solution to the wrong question is not a verified answer. */
-        'verified'     => ($r['trust']['overall'] ?? '') === 'FULLY_VERIFIED',
+           solution to the wrong question is not a verified answer.
+
+           A capped verdict must not report verified=true. `trust` is computed
+           inside the frozen engine and knows nothing about ingestion, so the
+           cap is applied here too rather than left to disagree with `status`. */
+        'verified'     => ($rawState === $state)
+                          && (($r['trust']['overall'] ?? '') === 'FULLY_VERIFIED'),
         'trust'        => $r['trust'],
         'means'        => $meaning[$r['state']] ?? '',
         'checks_run'   => $r['checked'],

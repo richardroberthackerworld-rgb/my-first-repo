@@ -1,0 +1,869 @@
+{
+  "_": "CANONICAL CAPABILITY MANIFEST. The single source of truth for what 7Solve can check, what each check may conclude, and which subject a question belongs to. checks.json and the PROOF set in index.html are GENERATED from this file; capability.php reads it at runtime. Nothing here may be duplicated by hand anywhere else — tools/gate-capabilities.js fails the build if a generated artifact drifts. Authority lives on the KIND, never on the subject or the checker, so a subject cannot grant itself certification power by declaring it.",
+  "schema": "7solve.capability/1",
+  "version": "2026-08-21",
+  "kinds": [
+    {
+      "kind": "subst",
+      "authority": "evidence",
+      "needs_complete": true,
+      "describes": "A stated value satisfies the equation"
+    },
+    {
+      "kind": "transform",
+      "authority": "proof",
+      "needs_complete": false,
+      "describes": "The transformation preserves the value"
+    },
+    {
+      "kind": "arith",
+      "authority": "proof",
+      "needs_complete": false,
+      "describes": "The arithmetic recomputes"
+    },
+    {
+      "kind": "chem",
+      "authority": "proof",
+      "needs_complete": false,
+      "describes": "The equation balances"
+    },
+    {
+      "kind": "identity",
+      "authority": "proof",
+      "needs_complete": false,
+      "describes": "Two expressions are equal for all values"
+    },
+    {
+      "kind": "bound",
+      "authority": "proof",
+      "needs_complete": false,
+      "describes": "The stated bound holds"
+    },
+    {
+      "kind": "divis",
+      "authority": "proof",
+      "needs_complete": false,
+      "describes": "The divisibility claim recomputes"
+    },
+    {
+      "kind": "unique",
+      "authority": "proof",
+      "needs_complete": false,
+      "describes": "Uniqueness established"
+    },
+    {
+      "kind": "condition",
+      "authority": "proof",
+      "needs_complete": false,
+      "describes": "The stated conditions are satisfied"
+    },
+    {
+      "kind": "extremum",
+      "authority": "proof",
+      "needs_complete": false,
+      "describes": "The extremum is confirmed"
+    },
+    {
+      "kind": "integrity",
+      "authority": "proof",
+      "needs_complete": false,
+      "describes": "The question was transcribed faithfully into the working"
+    },
+    {
+      "kind": "units",
+      "authority": "proof",
+      "needs_complete": false,
+      "describes": "The answer carries the dimensions the question asked for"
+    },
+    {
+      "kind": "trace",
+      "authority": "proof",
+      "needs_complete": false,
+      "describes": "The working reaches the answer it claims"
+    },
+    {
+      "kind": "question",
+      "authority": "proof",
+      "needs_complete": false,
+      "describes": "The question itself is well posed"
+    },
+    {
+      "kind": "claim",
+      "authority": "proof",
+      "needs_complete": false,
+      "describes": "A stated claim is supported by the working"
+    },
+    {
+      "kind": "primality",
+      "authority": "proof",
+      "needs_complete": false,
+      "describes": "Primality by exact test"
+    },
+    {
+      "kind": "truncated",
+      "authority": "proof",
+      "needs_complete": false,
+      "describes": "The solution is finished, not cut off"
+    },
+    {
+      "kind": "contradiction",
+      "authority": "proof",
+      "needs_complete": false,
+      "describes": "The answer does not contradict its own working"
+    },
+    {
+      "kind": "deriv",
+      "authority": "proof",
+      "needs_complete": false,
+      "describes": "The derivative is correct, by symbolic differentiation"
+    },
+    {
+      "kind": "roots",
+      "authority": "proof",
+      "needs_complete": false,
+      "describes": "The stated set is the complete solution set"
+    },
+    {
+      "kind": "integral",
+      "authority": "proof",
+      "needs_complete": false,
+      "describes": "The antiderivative differentiates back to the integrand"
+    },
+    {
+      "kind": "system",
+      "authority": "proof",
+      "needs_complete": false,
+      "describes": "The system is linear with a unique solution and it is this one"
+    },
+    {
+      "kind": "presentation",
+      "authority": "advisory",
+      "needs_complete": false,
+      "describes": null
+    },
+    {
+      "kind": "taxonomy",
+      "authority": "advisory",
+      "needs_complete": false,
+      "describes": null
+    },
+    {
+      "kind": "optimum",
+      "authority": "advisory",
+      "needs_complete": false,
+      "describes": null
+    },
+    {
+      "kind": "quant",
+      "authority": "advisory",
+      "needs_complete": false,
+      "describes": null
+    },
+    {
+      "kind": "method",
+      "authority": "advisory",
+      "needs_complete": false,
+      "describes": null
+    },
+    {
+      "kind": "agree",
+      "authority": "advisory",
+      "needs_complete": false,
+      "describes": null
+    },
+    {
+      "kind": "reaches",
+      "authority": "advisory",
+      "needs_complete": false,
+      "describes": null
+    },
+    {
+      "kind": "unitmiss",
+      "authority": "advisory",
+      "needs_complete": false,
+      "describes": null
+    }
+  ],
+  "checkers": [
+    {
+      "checker": "questionCheck",
+      "emits": [
+        "question"
+      ],
+      "engines": {
+        "js": "function questionCheck(question, md){",
+        "php": "QuestionCheck::check($question, $body),"
+      }
+    },
+    {
+      "checker": "integrity",
+      "emits": [
+        "integrity"
+      ],
+      "engines": {
+        "js": "function integrity(question, md){",
+        "php": "self::integrity($question, $answer),"
+      }
+    },
+    {
+      "checker": "substitution",
+      "emits": [
+        "subst"
+      ],
+      "engines": {
+        "js": "try { checks = checks.concat(substitution(question, text)); } catch(e){}",
+        "php": "self::substitution($question, $body),"
+      }
+    },
+    {
+      "checker": "solutionCompleteness",
+      "emits": [
+        "roots"
+      ],
+      "engines": {
+        "js": "checks = checks.concat(solutionCompleteness(question, text));",
+        "php": "self::solutionCompleteness($question, $body),"
+      }
+    },
+    {
+      "checker": "arithmetic",
+      "emits": [
+        "arith"
+      ],
+      "engines": {
+        "js": "try { checks = checks.concat(arithmetic(text)); } catch(e){}",
+        "php": "self::arithmetic($body),"
+      }
+    },
+    {
+      "checker": "units",
+      "emits": [
+        "units"
+      ],
+      "engines": {
+        "js": "function units(question, md){",
+        "php": "Units::check($question, $body),"
+      }
+    },
+    {
+      "checker": "trace",
+      "emits": [
+        "trace"
+      ],
+      "engines": {
+        "js": "function trace(question, md){",
+        "php": "self::trace($question, $body),"
+      }
+    },
+    {
+      "checker": "presentation",
+      "emits": [
+        "presentation"
+      ],
+      "engines": {
+        "js": "function presentation(md){",
+        "php": "self::presentation($body),"
+      }
+    },
+    {
+      "checker": "unproved",
+      "emits": [
+        "claim"
+      ],
+      "engines": {
+        "js": "function unproved(md){",
+        "php": "self::unproved($body),"
+      }
+    },
+    {
+      "checker": "primality",
+      "emits": [
+        "primality"
+      ],
+      "engines": {
+        "js": "function primality(md){",
+        "php": "self::primality($body),"
+      }
+    },
+    {
+      "checker": "completeness",
+      "emits": [
+        "truncated"
+      ],
+      "engines": {
+        "js": "function completeness(md){",
+        "php": "self::completeness($answer),"
+      }
+    },
+    {
+      "checker": "taxonomy",
+      "emits": [
+        "taxonomy"
+      ],
+      "engines": {
+        "js": "function taxonomy(md){",
+        "php": "self::taxonomy($body),"
+      }
+    },
+    {
+      "checker": "contradiction",
+      "emits": [
+        "contradiction"
+      ],
+      "engines": {
+        "js": "function contradiction(question, md){",
+        "php": "self::contradiction($question, $answer)"
+      }
+    },
+    {
+      "checker": "derivativeCheck",
+      "emits": [
+        "deriv"
+      ],
+      "engines": {
+        "js": "function derivativeCheck(question, md){",
+        "php": "Phase1Calculus::derivativeCheck($question, $body),"
+      },
+      "note": "Phase 1: ported to PHP so /v1 matches the site. Sample points come from sample_points(), byte-identical to JS by golden vector."
+    },
+    {
+      "checker": "integralCheck",
+      "emits": [
+        "integral"
+      ],
+      "engines": {
+        "js": "try { checks = checks.concat(integralCheck(question, text)); } catch(e){}",
+        "php": "Phase1Calculus::integralCheck($question, $body)"
+      },
+      "note": "Phase 1: ported to PHP so /v1 matches the site. Sample points come from sample_points(), byte-identical to JS by golden vector."
+    },
+    {
+      "checker": "systemCheck",
+      "emits": [
+        "system"
+      ],
+      "engines": {
+        "js": "try { checks = checks.concat(systemCheck(question, text)); } catch(e){}",
+        "php": "Phase1::systemCheck($question, $body),"
+      },
+      "note": "Phase 1: ported to PHP so /v1 matches the site. Sample points come from sample_points(), byte-identical to JS by golden vector."
+    },
+    {
+      "checker": "transformCheck",
+      "emits": [
+        "transform"
+      ],
+      "engines": {
+        "js": "try { checks = checks.concat(transformCheck(question, text)); } catch(e){}",
+        "php": null
+      }
+    },
+    {
+      "checker": "identityCheck",
+      "emits": [
+        "identity"
+      ],
+      "engines": {
+        "js": "try { checks = checks.concat(identityCheck(text)); } catch(e){}",
+        "php": "Phase1::identityCheck($body),"
+      },
+      "note": "Phase 1: ported to PHP so /v1 matches the site. Sample points come from sample_points(), byte-identical to JS by golden vector."
+    },
+    {
+      "checker": "checkDivisibility",
+      "emits": [
+        "divis"
+      ],
+      "engines": {
+        "js": "try { checks = checks.concat(checkDivisibility(text)); } catch(e){}",
+        "php": null
+      }
+    },
+    {
+      "checker": "conditionCheck",
+      "emits": [
+        "condition"
+      ],
+      "engines": {
+        "js": "try { checks = checks.concat(conditionCheck(question, text)); } catch(e){}",
+        "php": null
+      }
+    },
+    {
+      "checker": "uniqueness",
+      "emits": [
+        "unique"
+      ],
+      "engines": {
+        "js": "try { checks = checks.concat(uniqueness(question, text)); } catch(e){}",
+        "php": null
+      }
+    },
+    {
+      "checker": "optimality",
+      "emits": [
+        "optimum"
+      ],
+      "engines": {
+        "js": "try { if(!extremum.length) checks = checks.concat(optimality(question, text)); } catch(e){}",
+        "php": null
+      }
+    },
+    {
+      "checker": "quantifier",
+      "emits": [
+        "quant"
+      ],
+      "engines": {
+        "js": "try { checks = checks.concat(quantifier(text)); } catch(e){}",
+        "php": null
+      }
+    },
+    {
+      "checker": "exampleAsProof",
+      "emits": [
+        "method"
+      ],
+      "engines": {
+        "js": "try { checks = checks.concat(exampleAsProof(text)); } catch(e){}",
+        "php": null
+      }
+    },
+    {
+      "checker": "consistency",
+      "emits": [
+        "agree",
+        "reaches"
+      ],
+      "engines": {
+        "js": "try { checks = checks.concat(consistency(text)); } catch(e){}",
+        "php": null
+      }
+    },
+    {
+      "checker": "unitPresence",
+      "emits": [
+        "unitmiss"
+      ],
+      "engines": {
+        "js": "function unitPresence(question, md){",
+        "php": null
+      }
+    },
+    {
+      "checker": "bounds",
+      "emits": [
+        "bound"
+      ],
+      "engines": {
+        "js": "function bounds(question, md){",
+        "php": null
+      }
+    },
+    {
+      "checker": "extremumCheck",
+      "emits": [
+        "extremum"
+      ],
+      "engines": {
+        "js": "try { extremum = extremumCheck(question, text); } catch(e){}",
+        "php": null
+      },
+      "note": "result is parked in a local and concatenated on the next line, so the pipeline-to-registry sweep cannot see it — registered by hand"
+    },
+    {
+      "checker": "chemistry",
+      "emits": [
+        "chem"
+      ],
+      "engines": {
+        "js": "checks = checks.concat(chem.length ? chem : chemistry(text));",
+        "php": null
+      },
+      "note": "invoked inside a ternary, so the pipeline-to-registry sweep cannot see it — registered by hand"
+    }
+  ],
+  "subjects": [
+    {
+      "id": "derivative",
+      "display": "Differentiation",
+      "aliases": [
+        "differentiation",
+        "derivative",
+        "differentiate"
+      ],
+      "problem_types": [
+        "calculus.derivative"
+      ],
+      "taxonomy": [
+        "in.school.c12.maths.calculus",
+        "in.ug.btech.s1.m1.calculus"
+      ],
+      "match": {
+        "any": [
+          "(?:d\\s*/\\s*d[a-z]|differentiate|derivative)"
+        ],
+        "flags": "i",
+        "rank": 10
+      },
+      "checkers": [
+        "derivativeCheck"
+      ],
+      "status": "supported"
+    },
+    {
+      "id": "integral",
+      "display": "Integration",
+      "aliases": [
+        "integration",
+        "integral",
+        "antiderivative"
+      ],
+      "problem_types": [
+        "calculus.integral.indefinite"
+      ],
+      "taxonomy": [
+        "in.school.c12.maths.calculus",
+        "in.ug.btech.s1.m1.calculus"
+      ],
+      "match": {
+        "any": [
+          "(?:∫|integrate|integral\\s+of|antiderivative)"
+        ],
+        "flags": "iu",
+        "rank": 20
+      },
+      "checkers": [
+        "integralCheck"
+      ],
+      "status": "supported"
+    },
+    {
+      "id": "system",
+      "display": "Simultaneous equations",
+      "aliases": [
+        "system of equations",
+        "simultaneous equations"
+      ],
+      "problem_types": [
+        "algebra.system.linear"
+      ],
+      "taxonomy": [
+        "in.school.c10.maths.linear"
+      ],
+      "match": {
+        "count": {
+          "pattern": "=",
+          "min": 2
+        },
+        "any": [
+          "\\band\\b|,|;|\\n"
+        ],
+        "flags": "",
+        "rank": 50
+      },
+      "checkers": [
+        "systemCheck"
+      ],
+      "status": "supported"
+    },
+    {
+      "id": "identity",
+      "display": "Factorisation & expansion",
+      "aliases": [
+        "factorisation",
+        "factorization",
+        "expansion",
+        "factorise",
+        "expand"
+      ],
+      "problem_types": [
+        "algebra.factorise",
+        "algebra.expand"
+      ],
+      "taxonomy": [
+        "in.school.c9.maths.polynomials",
+        "in.school.c10.maths.polynomials"
+      ],
+      "match": {
+        "any": [
+          "\\b(factoris|factoriz|expand)"
+        ],
+        "none": [
+          "\\bsolve\\b|\\broots?\\b"
+        ],
+        "flags": "i",
+        "rank": 40
+      },
+      "checkers": [
+        "identityCheck"
+      ],
+      "status": "supported"
+    },
+    {
+      "id": "equation_roots",
+      "display": "Solving equations",
+      "aliases": [
+        "roots",
+        "solve",
+        "solution"
+      ],
+      "problem_types": [
+        "algebra.equation.solve"
+      ],
+      "taxonomy": [
+        "in.school.c10.maths.quadratic"
+      ],
+      "match": {
+        "count": {
+          "pattern": "=",
+          "min": 1
+        },
+        "flags": "",
+        "rank": 60
+      },
+      "checkers": [
+        "substitution"
+      ],
+      "status": "supported"
+    },
+    {
+      "id": "root_completeness",
+      "display": "Complete solution sets",
+      "aliases": [
+        "all roots",
+        "complete solution set"
+      ],
+      "problem_types": [
+        "algebra.equation.solve.complete"
+      ],
+      "taxonomy": [
+        "in.school.c10.maths.quadratic"
+      ],
+      "checkers": [
+        "solutionCompleteness"
+      ],
+      "status": "supported"
+    },
+    {
+      "id": "arithmetic",
+      "display": "Arithmetic",
+      "aliases": [
+        "arithmetic",
+        "calculation"
+      ],
+      "problem_types": [
+        "arith.evaluate"
+      ],
+      "taxonomy": [
+        "in.school.c6.maths"
+      ],
+      "checkers": [
+        "arithmetic"
+      ],
+      "status": "supported"
+    },
+    {
+      "id": "primality",
+      "display": "Primality",
+      "aliases": [
+        "prime",
+        "composite"
+      ],
+      "problem_types": [
+        "number.primality"
+      ],
+      "taxonomy": [
+        "in.school.c6.maths.numbers"
+      ],
+      "match": {
+        "any": [
+          "\\bis\\s+\\d+\\s+prime\\b|\\bprime\\s+number\\b"
+        ],
+        "flags": "i",
+        "rank": 30
+      },
+      "checkers": [
+        "primality"
+      ],
+      "status": "supported"
+    },
+    {
+      "id": "units",
+      "display": "Units & dimensions",
+      "aliases": [
+        "units",
+        "dimensions",
+        "dimensional analysis"
+      ],
+      "problem_types": [
+        "physics.units.dimension"
+      ],
+      "taxonomy": [
+        "in.school.c11.physics.units"
+      ],
+      "checkers": [
+        "units"
+      ],
+      "status": "supported"
+    },
+    {
+      "id": "question_integrity",
+      "display": "Question validity",
+      "aliases": [
+        "question validity"
+      ],
+      "problem_types": [
+        "meta.question.validity"
+      ],
+      "taxonomy": [],
+      "checkers": [
+        "questionCheck"
+      ],
+      "status": "supported"
+    },
+    {
+      "id": "management",
+      "display": "Management & business studies",
+      "aliases": [
+        "management",
+        "marketing",
+        "organisational behaviour",
+        "business studies"
+      ],
+      "problem_types": [
+        "mgmt.theory.explain",
+        "mgmt.marketing.case"
+      ],
+      "taxonomy": [
+        "in.ug.bba.s1.pom.functions",
+        "in.pg.mba.marketing.s2.mm.stp",
+        "in.pg.mba.hr.s2.ob.motivation"
+      ],
+      "match": {
+        "any": [
+          "\\b(segmentation|targeting|positioning|marketing\\s+mix|swot)\\b",
+          "\\b(theories?|principles?|functions?)\\s+of\\s+(management|motivation|leadership)\\b"
+        ],
+        "flags": "i",
+        "rank": 100
+      },
+      "checkers": [],
+      "status": "covered_not_verifiable"
+    },
+    {
+      "id": "humanities",
+      "display": "Humanities & literature",
+      "aliases": [
+        "history",
+        "literature",
+        "english literature",
+        "essay"
+      ],
+      "problem_types": [
+        "humanities.essay.analyse",
+        "lang.essay.compose"
+      ],
+      "taxonomy": [
+        "in.ug.ba.history.s1.modern.revolutions",
+        "in.ug.ba.english.s1.poetry.criticism",
+        "in.school.c12.english.essay"
+      ],
+      "match": {
+        "any": [
+          "\\bwrite\\s+an?\\s+essay\\b",
+          "\\b(critically\\s+)?(analyse|analyze|discuss)\\b.{0,40}\\b(poem|novel|revolution|war|reign|dynasty|movement)\\b"
+        ],
+        "flags": "i",
+        "rank": 110
+      },
+      "checkers": [],
+      "status": "covered_not_verifiable"
+    },
+    {
+      "id": "economics_theory",
+      "display": "Economic theory",
+      "aliases": [
+        "economics",
+        "microeconomics",
+        "macroeconomics"
+      ],
+      "problem_types": [
+        "econ.theory.explain"
+      ],
+      "taxonomy": [
+        "in.pg.ma.economics.s1.micro.elasticity",
+        "in.pg.ma.economics.s1.micro.welfare"
+      ],
+      "match": {
+        "any": [
+          "\\b(welfare\\s+economics|consumer\\s+surplus|pareto)\\b"
+        ],
+        "flags": "i",
+        "rank": 120
+      },
+      "checkers": [],
+      "status": "covered_not_verifiable"
+    },
+    {
+      "id": "accounting",
+      "display": "Accounting",
+      "aliases": [
+        "accounting",
+        "financial accounting",
+        "trial balance",
+        "double entry"
+      ],
+      "problem_types": [
+        "commerce.accounting.balance",
+        "commerce.finance.tvm"
+      ],
+      "taxonomy": [
+        "in.ug.bcom.s1.fa.doubleentry",
+        "in.pg.mcom.s1.fm.tvm"
+      ],
+      "match": {
+        "any": [
+          "\\b(trial\\s+balance|double[- ]entry|journal\\s+entr|ledger)\\b"
+        ],
+        "flags": "i",
+        "rank": 130
+      },
+      "checkers": [],
+      "status": "covered_not_verifiable"
+    },
+    {
+      "id": "algorithms",
+      "display": "Algorithm analysis",
+      "aliases": [
+        "algorithms",
+        "complexity",
+        "big o"
+      ],
+      "problem_types": [
+        "algo.complexity.analyse"
+      ],
+      "taxonomy": [
+        "in.ug.btech.cse.s3.dsa.u2.complexity",
+        "in.pg.mtech.cse.s1.aa.np",
+        "in.pg.mca.s1.dsa.analysis"
+      ],
+      "match": {
+        "any": [
+          "\\b(time\\s+complexity|big[-\\s]?o\\b|space\\s+complexity)"
+        ],
+        "flags": "i",
+        "rank": 140
+      },
+      "checkers": [],
+      "status": "covered_not_verifiable"
+    }
+  ],
+  "_generated": {
+    "checks.json": {
+      "header": "CANONICAL CHECK REGISTRY. Every checker in the production verification pipeline appears here exactly once, with the exact line that wires it into each engine. parity.js asserts this list and the two shipped pipelines agree in BOTH directions, so a checker added to production and not registered here fails the suite; negative-control.js drives its removals from this list, so registering a checker is what puts it under negative-control coverage. Edit the pipelines and this file together.",
+      "limits": "The pipeline-to-registry sweep in parity.js recognises the two ordinary wiring shapes (a result concatenated directly, or parked in a local declared with it). Checkers wired unusually — inside a ternary, or assigned to a pre-declared local — are invisible to it and carry a note here. Wire new checks the ordinary way and the sweep will catch a missing registration for you.",
+      "eol": "crlf"
+    }
+  }
+}

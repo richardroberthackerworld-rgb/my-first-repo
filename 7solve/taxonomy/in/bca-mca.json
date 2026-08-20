@@ -1,0 +1,24 @@
+{
+  "_": "BCA and MCA, India. Structural point: programs with NO branch tier at all — the subject sits directly under a semester, one tier shallower than B.Tech.",
+  "schema": "7solve.taxonomy/1",
+  "version": "2026-08-21",
+  "source": "7solve-core",
+  "nodes": [
+    { "id": "in.ug.bca", "kind": "program", "parent": "in.ug", "label": "BCA",
+      "aliases": ["bca", "bachelor of computer applications"], "match": ["\\bbca\\b"] },
+    { "id": "in.ug.bca.s2", "kind": "semester", "parent": "in.ug.bca", "label": "Semester 2" },
+    { "id": "in.ug.bca.s2.dm", "kind": "subject", "parent": "in.ug.bca.s2",
+      "label": "Discrete Mathematics", "aliases": ["discrete maths", "dm"] },
+    { "id": "in.ug.bca.s2.dm.logic", "kind": "topic", "parent": "in.ug.bca.s2.dm",
+      "label": "Propositional logic and number theory",
+      "problem_types": ["number.primality", "arith.evaluate"] },
+
+    { "id": "in.pg.mca", "kind": "program", "parent": "in.pg", "label": "MCA",
+      "aliases": ["mca", "master of computer applications"], "match": ["\\bmca\\b"] },
+    { "id": "in.pg.mca.s1", "kind": "semester", "parent": "in.pg.mca", "label": "Semester 1" },
+    { "id": "in.pg.mca.s1.dsa", "kind": "subject", "parent": "in.pg.mca.s1",
+      "label": "Data Structures", "aliases": ["dsa", "data structures"] },
+    { "id": "in.pg.mca.s1.dsa.analysis", "kind": "topic", "parent": "in.pg.mca.s1.dsa",
+      "label": "Algorithm analysis", "problem_types": ["algo.complexity.analyse"] }
+  ]
+}
