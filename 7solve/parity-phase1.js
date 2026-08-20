@@ -188,10 +188,65 @@ const DERIV_EXPRS = ['x^2', 'x^3', '2x', '5x^2 + 3x + 7', 'sin(x)', 'cos(x)', 't
     }
   });
 
-  const total = G.vectors.length + DERIV_EXPRS.length + CASES.length;
+  /* ---- 4. capability reporting ----
+     The verdict is only half of what /v1 returns. If it reports
+     `unknown_subject` for a subject it CAN verify, it under-reports the
+     product — which is what happened to factorisation: identityCheck ran and
+     reached a verdict while the API said it did not recognise the question,
+     because a factorisation carries no "=" sign.
+
+     The exclusion matters as much as the match. "Solve x^2-5x+6=0 by
+     factorising" is a roots question that merely names a method, and the roots
+     checker is the one that answers it. Asking to SOLVE outranks the mention
+     of factorising, or the capability field would contradict the checker that
+     actually ran. */
+  const CAPS = [
+    ['Factorise x^2 - 7x + 12', 'identity', 'supported'],
+    ['Factorize x^2 - 9', 'identity', 'supported'],
+    ['Expand (x + 1)^2', 'identity', 'supported'],
+    ['Factorise a^3 - b^3', 'identity', 'supported'],
+    ['Solve x^2-5x+6=0 by factorising', 'equation_roots', 'supported'],
+    ['Solve x^2-5x+6=0', 'equation_roots', 'supported'],
+    ['Solve x + y = 10 and x - y = 2', 'system', 'supported'],
+    ['differentiate 3x^2 sin x', 'derivative', 'supported'],
+    ['integrate x^2', 'integral', 'supported'],
+    ['Is 5779 prime?', 'primality', 'supported'],
+    ['What is photosynthesis?', null, 'unknown_subject'],
+    ['Find lim x->0 of sin(x)/x', null, 'unknown_subject'],
+  ];
+  const capOut = php(req('capability.php') +
+    '$in=json_decode(file_get_contents("php://stdin"),true);$o=[];' +
+    'foreach($in as $q){ $s=Capability::subjectOf($q); $r=Capability::forQuestion($q,"checked");' +
+    '$o[]=["subject"=>$s,"capability"=>$r["capability"]]; } echo json_encode($o);',
+    CAPS.map((c) => c[0]));
+  CAPS.forEach(([q, subject, capability], i) => {
+    const got = capOut[i];
+    if ((got.subject ?? null) !== subject)
+      bad.push(`capability: subject for ${JSON.stringify(q.slice(0, 44))} is ${JSON.stringify(got.subject)} — expected ${JSON.stringify(subject)}`);
+    if (got.capability !== capability)
+      bad.push(`capability: ${JSON.stringify(q.slice(0, 44))} reports ${got.capability} — expected ${capability}`);
+  });
+
+  /* the identity VERDICTS must be untouched by the capability change */
+  const idV = [
+    ['Factorise x^2 - 7x + 12', '## ✅ Answer' + String.fromCharCode(10) + '(x - 3)(x - 4) = x^2 - 7x + 12', 'identity:ok'],
+    ['Factorise x^2 - 7x + 12', '## ✅ Answer' + String.fromCharCode(10) + '(x - 3)(x - 4) = x^2 - 7x + 99', 'identity:fail'],
+  ];
+  const idPhp = php(req('verify.php') + req('checkers-phase1.php') +
+    '$in=json_decode(file_get_contents("php://stdin"),true);$o=[];' +
+    'foreach($in as $c){ $k=[]; foreach(Phase1::identityCheck($c[1]) as $x) $k[]=$x["kind"].":".($x["ok"]?"ok":"fail");' +
+    '$o[]=count($k)?implode(",",$k):"-"; } echo json_encode($o);', idV.map((c) => [c[0], c[1]]));
+  idV.forEach(([q, md, want], i) => {
+    const js = (V.identityCheck(md) || []).map((c) => c.kind + ':' + (c.ok ? 'ok' : 'fail')).join(',') || '-';
+    if (js !== want || idPhp[i] !== want)
+      bad.push(`identity verdict changed: js=${js} php=${idPhp[i]} expected=${want}`);
+  });
+
+  const total = G.vectors.length + DERIV_EXPRS.length + CASES.length + CAPS.length + idV.length;
   console.log('  golden vectors : ' + vecOk + '   (' + (vecOk * 16) + ' points, byte equality)');
   console.log('  deriv strings  : ' + DERIV_EXPRS.length);
   console.log('  checker cases  : ' + CASES.length);
+  console.log('  capability     : ' + CAPS.length + '   identity verdicts: ' + idV.length);
   for (const g of Object.keys(tally).sort())
     console.log('      ' + g.padEnd(13) + tally[g].n + ' cases, ' + tally[g].bad + ' differing');
 

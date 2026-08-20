@@ -87,6 +87,18 @@ final class Capability
         if (preg_match('/(?:d\s*\/\s*d[a-z]|differentiate|derivative)/i', $q)) return 'derivative';
         if (preg_match('/(?:\x{222B}|integrate|integral\s+of|antiderivative)/iu', $q)) return 'integral';
         if (preg_match('/\bis\s+\d+\s+prime\b|\bprime\s+number\b/i', $q)) return 'primality';
+        /* Factorisation and expansion are identity questions, and they were
+           reported as `unknown_subject` because they carry no "=" — the check
+           ran and reached a verdict while the API said it did not recognise
+           the subject, which under-reports what this build can do.
+
+           "Solve x^2-5x+6=0 by factorising" is deliberately excluded: it is a
+           roots question that happens to name a method, and the roots checker
+           is the one that answers it. Asking to SOLVE outranks the mention of
+           factorising. "Simplify" is left out too — it covers arithmetic as
+           often as algebra, and a wrong subject is worse than none. */
+        if (preg_match('/\b(factoris|factoriz|expand)/i', $q)
+            && !preg_match('/\bsolve\b|\broots?\b/i', $q)) return 'identity';
         $eqs = preg_match_all('/=/', $q);
         if ($eqs >= 2 && preg_match('/\band\b|,|;|\n/', $q)) return 'system';
         if ($eqs >= 1) return 'equation_roots';

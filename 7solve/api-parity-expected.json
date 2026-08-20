@@ -1,0 +1,185 @@
+{
+  "_": "Expected verdicts for the authenticated /v1 production parity check. Generated from the SHIPPED JS engine. Comparison is by CANONICAL VERDICT CLASS, never by raw state: the browser splits the not-verified outcome four ways (plain/partial/worked/explained) so the badge can say what it looked at, while verify.php collapses them into one public `unverified`. That divergence is documented and accepted in VERIFICATION-CONTRACT.md; comparing raw strings reports it as a failure it is not.",
+  "build": "2026-08-19.9",
+  "canonical": {
+    "checked": "verified",
+    "disputed": "disputed",
+    "stepfail": "disputed",
+    "invalid_question": "disputed",
+    "unverified": "unverified",
+    "worked": "unverified",
+    "explained": "unverified",
+    "plain": "unverified",
+    "partial": "unverified"
+  },
+  "cases": [
+    {
+      "name": "1a derivative correct",
+      "question": "differentiate 3x² sin x",
+      "answer": "## ✅ Answer\n**6x sin x + 3x² cos x**",
+      "expect": {
+        "jsState": "checked",
+        "canonical": "verified",
+        "checked": true,
+        "kinds": [
+          "deriv+"
+        ],
+        "subject": "derivative"
+      }
+    },
+    {
+      "name": "1b derivative wrong",
+      "question": "differentiate 3x² sin x",
+      "answer": "## ✅ Answer\n**9x sin x + 3x² cos x**",
+      "expect": {
+        "jsState": "disputed",
+        "canonical": "disputed",
+        "checked": false,
+        "kinds": [
+          "deriv-"
+        ],
+        "subject": "derivative"
+      }
+    },
+    {
+      "name": "2a integral correct",
+      "question": "∫ x^2 dx",
+      "answer": "## ✅ Answer\n**x³/3 + C**",
+      "expect": {
+        "jsState": "checked",
+        "canonical": "verified",
+        "checked": true,
+        "kinds": [
+          "integral+"
+        ],
+        "subject": "integral"
+      }
+    },
+    {
+      "name": "2b integral wrong",
+      "question": "∫ x^2 dx",
+      "answer": "## ✅ Answer\n**x³ + C**",
+      "expect": {
+        "jsState": "disputed",
+        "canonical": "disputed",
+        "checked": false,
+        "kinds": [
+          "integral-"
+        ],
+        "subject": "integral"
+      }
+    },
+    {
+      "name": "3a system correct",
+      "question": "Solve x + y = 10 and x - y = 2",
+      "answer": "## ✅ Answer\n**x = 6, y = 4**",
+      "expect": {
+        "jsState": "checked",
+        "canonical": "verified",
+        "checked": true,
+        "kinds": [
+          "system+"
+        ],
+        "subject": "system"
+      }
+    },
+    {
+      "name": "3b system wrong",
+      "question": "Solve x + y = 10 and x - y = 2",
+      "answer": "## ✅ Answer\n**x = 5, y = 5**",
+      "expect": {
+        "jsState": "disputed",
+        "canonical": "disputed",
+        "checked": false,
+        "kinds": [
+          "system-"
+        ],
+        "subject": "system"
+      }
+    },
+    {
+      "name": "4a identity correct",
+      "question": "Factorise x^2 - 7x + 12",
+      "answer": "## ✅ Answer\n(x - 3)(x - 4) = x^2 - 7x + 12",
+      "expect": {
+        "jsState": "checked",
+        "canonical": "verified",
+        "checked": true,
+        "kinds": [
+          "identity+"
+        ],
+        "subject": "identity"
+      }
+    },
+    {
+      "name": "4b identity forged",
+      "question": "Factorise x^2 - 7x + 12",
+      "answer": "## ✅ Answer\n(x - 3)(x - 4) = x^2 - 7x + 12 + (x - (-0.7))*(x - (1.31))*(x - (-1.92))*(x - (2.5300000000000002))*(x - (-3.1399999999999997))*(x - (3.75))*(x - (-4.36))*(x - (4.97))*(x - (-5.58))*(x - (6.19))*(x - (-6.8))*(x - (7.41))",
+      "expect": {
+        "jsState": "stepfail",
+        "canonical": "disputed",
+        "checked": false,
+        "kinds": [
+          "identity-"
+        ],
+        "subject": "identity"
+      }
+    },
+    {
+      "name": "5  equation roots",
+      "question": "Solve x^2-5x+6=0",
+      "answer": "## ✅ Answer\n**x = 2, x = 3**",
+      "expect": {
+        "jsState": "checked",
+        "canonical": "verified",
+        "checked": true,
+        "kinds": [
+          "roots+",
+          "subst+"
+        ],
+        "subject": "equation_roots"
+      }
+    },
+    {
+      "name": "6  root completeness",
+      "question": "Solve x^3-6x^2+11x-6=0",
+      "answer": "## ✅ Answer\n**x = 1, x = 2**",
+      "expect": {
+        "jsState": "disputed",
+        "canonical": "disputed",
+        "checked": false,
+        "kinds": [
+          "roots-",
+          "subst+"
+        ],
+        "subject": "equation_roots"
+      }
+    },
+    {
+      "name": "7  unsupported subject",
+      "question": "What is photosynthesis?",
+      "answer": "## ✅ Answer\nIt converts light into sugar.",
+      "expect": {
+        "jsState": "plain",
+        "canonical": "unverified",
+        "checked": false,
+        "kinds": [],
+        "subject": null
+      }
+    },
+    {
+      "name": "8  AI-prose authority",
+      "question": "differentiate 3x² sin x",
+      "answer": "## ✅ Answer\n**9x sin x + 3x² cos x**\n\n## 🔍 Verification\n✓ Verified. Correct. Confirmed by AI.",
+      "expect": {
+        "jsState": "disputed",
+        "canonical": "disputed",
+        "checked": false,
+        "kinds": [
+          "deriv-"
+        ],
+        "subject": "derivative"
+      }
+    }
+  ]
+}
