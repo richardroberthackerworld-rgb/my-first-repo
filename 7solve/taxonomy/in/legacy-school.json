@@ -65,12 +65,6 @@
       "label": "History"
     },
     {
-      "id": "in.school.c10.mathematics",
-      "kind": "subject",
-      "parent": "in.school.c10",
-      "label": "Mathematics"
-    },
-    {
       "id": "in.school.c10.physical-education",
       "kind": "subject",
       "parent": "in.school.c10",
@@ -353,12 +347,6 @@
       "label": "Legal Studies"
     },
     {
-      "id": "in.school.c12.mathematics",
-      "kind": "subject",
-      "parent": "in.school.c12",
-      "label": "Mathematics"
-    },
-    {
       "id": "in.school.c12.philosophy",
       "kind": "subject",
       "parent": "in.school.c12",
@@ -455,12 +443,6 @@
       "label": "Hindi"
     },
     {
-      "id": "in.school.c6.mathematics",
-      "kind": "subject",
-      "parent": "in.school.c6",
-      "label": "Mathematics"
-    },
-    {
       "id": "in.school.c6.physical-education",
       "kind": "subject",
       "parent": "in.school.c6",
@@ -549,12 +531,6 @@
       "kind": "subject",
       "parent": "in.school.c9",
       "label": "History"
-    },
-    {
-      "id": "in.school.c9.mathematics",
-      "kind": "subject",
-      "parent": "in.school.c9",
-      "label": "Mathematics"
     },
     {
       "id": "in.school.c9.physical-education",

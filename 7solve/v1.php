@@ -307,6 +307,48 @@ if ($route === 'keys' || strpos($route, 'keys/') === 0) {
     err_out('FAILED', 'Use POST, GET or DELETE on /v1/keys.', 405);
 }
 
+/* ---- GET /v1/taxonomy — the academic tree -----------------------------
+   UNAUTHENTICATED, deliberately. The shards it reads are already served as
+   static files from the document root, so putting a key in front of the same
+   bytes would be security theatre — it would inconvenience an honest caller
+   and stop nobody. What it must never do is imply capability: every node
+   reports the honest capability read from capabilities.json, and a node with
+   no problem types says "unknown", not "unsupported".
+
+     /v1/taxonomy                 roots + stats
+     /v1/taxonomy?node=<id>       one node, its children and its path
+     /v1/taxonomy?q=<text>        label and alias search
+   ---------------------------------------------------------------------- */
+if ($route === 'taxonomy') {
+    if ($method !== 'GET') err_out('FAILED', 'Use GET for /v1/taxonomy.', 405);
+    require_once __DIR__ . '/taxonomy.php';
+
+    $nodeId = trim((string)($_GET['node'] ?? ''));
+    $q      = trim((string)($_GET['q'] ?? ''));
+
+    if ($nodeId !== '') {
+        if (strlen($nodeId) > 200 || !preg_match('/^[a-z0-9.\-]+$/i', $nodeId)) {
+            err_out('FAILED', 'A node id is dotted lowercase, like in.ug.btech.cse.', 400);
+        }
+        $n = Taxonomy::node($nodeId);
+        if ($n === null) err_out('NOT_FOUND', 'No node with id "' . $nodeId . '".', 404);
+        ok_out(['node' => $n,
+                'means' => 'A node in this tree is COVERAGE. Its `capability` field is the only '
+                         . 'thing that says whether an answer under it can be independently '
+                         . 'verified, and covered_not_verifiable is not a pass.']);
+    }
+
+    if ($q !== '') {
+        if (strlen($q) > 120) err_out('FAILED', 'Search text is limited to 120 characters.', 400);
+        $hits = Taxonomy::search($q);
+        ok_out(['query' => $q, 'count' => count($hits), 'results' => $hits]);
+    }
+
+    ok_out(['roots' => Taxonomy::children(null), 'stats' => Taxonomy::stats(),
+            'means' => 'Coverage, not capability. Ask for a node to see what can be verified '
+                     . 'under it.']);
+}
+
 /* ---- everything below needs a customer key ---- */
 $key   = auth_key($CFG);
 $limit = (int)($key['rate_per_hour'] ?? DEFAULT_LIMIT);
@@ -332,6 +374,43 @@ if ($route === 'usage') {
         'label'     => $key['label'],
         'this_hour' => ['used' => (int)$rate['used'], 'limit' => $limit],
         'by_day'    => $u[$key['id']] ?? new stdClass(),
+    ]);
+}
+
+/* ---- POST /v1/classify — "could you check this?" ----------------------
+   Answers the question a caller currently has to spend a verify request to
+   find out: what subject is this, and is there a checker for it. No AI, no
+   solving, no answer required — it reads the question and reports what this
+   build could do with one.
+
+   It exists because "unverified" is expensive to discover after the fact. A
+   caller batching a thousand questions can now route them: the supported ones
+   to /v1/verify, the covered_not_verifiable ones to a human, and the unknown
+   ones to neither. Metered like any other route, because it is cheap but not
+   free, and unmetered endpoints are how rate limits get worked around.
+   ---------------------------------------------------------------------- */
+if ($route === 'classify') {
+    if ($method !== 'POST') err_out('FAILED', 'Use POST for /v1/classify.', 405);
+    $in = body_json();
+    $question = trim((string)($in['question'] ?? ''));
+    if ($question === '') {
+        bump_usage($CFG, $key['id'], 'classify', false);
+        err_out('NEEDS_CLARIFICATION', 'Send a "question" to classify.', 400);
+    }
+
+    $cap = Capability::forQuestion($question, 'unverified');
+    bump_usage($CFG, $key['id'], 'classify', true);
+    ok_out([
+        'subject'          => $cap['subject'],
+        'capability'       => $cap['capability'],
+        'capability_means' => $cap['means'],
+        /* what a verify call would be able to do, stated before it is spent */
+        'verifiable'       => $cap['capability'] === 'supported',
+        'supported_subjects' => Capability::supportedSubjects(),
+        'means' => $cap['capability'] === 'supported'
+            ? 'A checker for this subject exists in this build. /v1/verify can reach a verdict.'
+            : 'No deterministic checker will run for this subject. /v1/verify would return '
+            . 'unverified, which is honest and is NOT a pass.',
     ]);
 }
 
