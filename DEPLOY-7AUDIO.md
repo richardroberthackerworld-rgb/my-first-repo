@@ -356,6 +356,23 @@ Ten minutes, in this order. Each step depends on the one before.
 8. **Install.** On a phone, use the browser's Install / Add to Home Screen and
    confirm it opens without a browser bar.
 
+   **This step is load-bearing — the service worker could not be verified
+   before shipping.** Registration fails in the browser used to test this
+   build, but it is not the app's fault:
+
+   - `sw.js` is served correctly (200, `text/javascript`, `no-cache`) and
+     parses cleanly;
+   - it fails identically with cross-origin isolation on and off, so COEP is
+     not the cause;
+   - a **two-line service worker that does nothing** fails with the same error.
+
+   That last point settles it: the test browser refuses to register any
+   service worker at all. Nothing in `sw.js` is implicated, but nothing in it
+   has been exercised either, so this is the first real test it gets.
+
+   If Install does not appear, check DevTools → Application → Service Workers
+   on the live site before touching the code.
+
 Only after step 7 passes end to end should you set `CASHFREE_ENV=production`.
 
 ---
