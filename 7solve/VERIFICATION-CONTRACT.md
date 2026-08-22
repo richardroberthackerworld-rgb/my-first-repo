@@ -464,3 +464,29 @@ the disagreement had a hole in it: an answer listing 7+ roots with one of them
 is not a root, and substitution refused to run at all. All three are now 12,
 chosen by arithmetic: reconstruction samples at x = 0…13, and 13¹² ≈ 2.3e13 is
 inside the range where a double still represents every integer exactly.
+
+## The answer-format contract
+
+`buildSystemPrompt()` tells the model to head its sections `## ✅`, `## 📖`,
+`## 🎯`, and to bold the answer. Every checker then finds the answer through
+exactly those markers — `claimZone()` reads `withHead(md,'✅')` and
+`withHead(md,'🎯')`, `hasSteps` tests for `## 📖` or `## 📝`, and
+`claimedRootsOf` strips the `**` the prompt asks for.
+
+Nothing enforced that. Every suite in this repo supplies its own answer text,
+so an edit to the prompt's emoji would leave all of them green while live
+answers stopped matching and every student saw "unable to verify" on correct
+work. The engine would be intact; the pipe into it would be cut.
+
+`tools/gate-answer-format.js` reads the section markers **out of the prompt**,
+composes answers in exactly that shape, and runs them through the shipping
+`Verify.run`. Correct answers must reach `checked` and wrong ones `disputed` —
+the second half matters, or the gate would prove only that the engine reads
+headings. Because the fixtures are built from the prompt rather than typed
+into the test, a prompt that drifts drifts the fixtures with it and the
+verdicts collapse.
+
+This covers the format half of the model→engine link. The transport half —
+`getAnswer` actually returning text — remains untested here, because it sits
+behind `aiGate()` and needs a signed-in account with credits.
+
