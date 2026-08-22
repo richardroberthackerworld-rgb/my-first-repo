@@ -16582,6 +16582,72 @@ W.Verify = Verify;
 
 /* honest verification badge — it says what actually happened, and now there is
    sometimes something better than "it looked structured" to say */
+/* @generated:SUBJECTS from capabilities.json — do not edit by hand.
+   sha256:3bb58af8d0c95e5f  regenerate: node tools/gen-capabilities.js */
+var SUBJECT_RULES = [
+  {id:"derivative", status:"supported", rank:10, any:["(?:d\\s*/\\s*d[a-z]|differentiate|derivative)"], flags:"i"},
+  {id:"integral", status:"supported", rank:20, any:["(?:∫|integrate|integral\\s+of|antiderivative)"], flags:"iu"},
+  {id:"primality", status:"supported", rank:30, any:["\\bis\\s+\\d+\\s+prime\\b|\\bprime\\s+number\\b"], flags:"i"},
+  {id:"identity", status:"supported", rank:40, any:["\\b(factoris|factoriz|expand)"], none:["\\bsolve\\b|\\broots?\\b"], flags:"i"},
+  {id:"optimisation", status:"supported", rank:45, any:["\\b(maximum|minimum|largest|smallest|greatest|least)\\s+value\\s+of\\b","\\b(maximi[sz]e|minimi[sz]e)\\b"], flags:"i"},
+  {id:"system", status:"supported", rank:50, count:{"pattern":"=","min":2}, any:["\\band\\b|,|;|\\n"], flags:""},
+  {id:"equation_roots", status:"supported", rank:60, count:{"pattern":"=","min":1}, flags:""},
+  {id:"chemistry", status:"supported", rank:70, any:["\\b(balanc\\w*)\\b[\\s\\S]{0,40}\\b(equation|reaction|combustion)\\b","\\bchemical\\s+equation\\b","\\breaction\\b","\\bcombustion\\b","\\bstoichiometr"], flags:"i"},
+  {id:"probability", status:"supported", rank:80, any:["\\bprobabilit"], flags:"i"},
+  {id:"divisibility", status:"supported", rank:90, any:["\\bdivisib\\w*\\b","\\bdivides\\b","\\bdivide\\s+by\\b"], flags:"i"},
+  {id:"management", status:"covered_not_verifiable", rank:100, any:["\\b(segmentation|targeting|positioning|marketing\\s+mix|swot)\\b","\\b(theories?|principles?|functions?)\\s+of\\s+(management|motivation|leadership)\\b"], flags:"i"},
+  {id:"humanities", status:"covered_not_verifiable", rank:110, any:["\\bwrite\\s+an?\\s+essay\\b","\\b(critically\\s+)?(analyse|analyze|discuss)\\b.{0,40}\\b(poem|novel|revolution|war|reign|dynasty|movement)\\b"], flags:"i"},
+  {id:"economics_theory", status:"covered_not_verifiable", rank:120, any:["\\b(welfare\\s+economics|consumer\\s+surplus|pareto)\\b"], flags:"i"},
+  {id:"accounting", status:"covered_not_verifiable", rank:130, any:["\\b(trial\\s+balance|double[- ]entry|journal\\s+entr|ledger)\\b"], flags:"i"},
+  {id:"algorithms", status:"covered_not_verifiable", rank:140, any:["\\b(time\\s+complexity|big[-\\s]?o\\b|space\\s+complexity)"], flags:"i"}
+];
+/* @end:SUBJECTS */
+
+/* Which subject a question is about, and what this build can do about it.
+
+   The mirror of Capability::subjectOf(). The API has always been able to say
+   "this is a management question, and management is covered_not_verifiable";
+   the browser could not, so a student saw the same "Unable to verify" for an
+   MBA question as for a broken parse. Those are different facts and the badge
+   should say which.
+
+   The ladder is walked in rank order, lowest first — the same order PHP uses,
+   and the reason the WHOLE ladder is generated rather than only the covered
+   subjects: "Solve x = 2 and explain the marketing mix" is an equation
+   question, and only ranking says so. */
+function subjectOf7(question){
+  var q = String(question == null ? '' : question);
+  for(var i = 0; i < SUBJECT_RULES.length; i++){
+    var s = SUBJECT_RULES[i];
+    if(s.count){
+      var n = 0, p = s.count.pattern, at = 0;
+      while((at = q.indexOf(p, at)) >= 0){ n++; at += p.length; }
+      if(n < (s.count.min || 1)) continue;
+    }
+    if(s.any){
+      var hit = false;
+      for(var a = 0; a < s.any.length; a++){
+        try { if(new RegExp(s.any[a], s.flags || '').test(q)){ hit = true; break; } }
+        catch(e){ /* a pattern that will not compile matches nothing */ }
+      }
+      if(!hit) continue;
+    }
+    if(s.none){
+      var blocked = false;
+      for(var b = 0; b < s.none.length; b++){
+        try { if(new RegExp(s.none[b], s.flags || '').test(q)){ blocked = true; break; } }
+        catch(e){}
+      }
+      if(blocked) continue;
+    }
+    /* a rule with neither a count nor an `any` would match everything */
+    if(!s.count && !s.any) continue;
+    return s;
+  }
+  return null;
+}
+W.subjectOf7 = subjectOf7;
+
 function paintVerif(md){
   var el = $1('ansVerif'); if(!el) return;
   var note = $1('verifNote');
@@ -16640,6 +16706,34 @@ function paintVerif(md){
     label = '⚠ Unable to verify'; cls = 'verif unchecked';
     title = 'A direct answer with limited working, and nothing that could be checked. Read it critically.';
   }
+  /* COVERED BUT NOT VERIFIABLE.
+
+     Applied AFTER the state machine and only ever to a NOT-verified badge: the
+     guard below refuses to touch `checked`, so this cannot promote anything. It
+     replaces one honest-but-vague label with a precise one.
+
+     "⚠ Unable to verify" is true of an MBA question and of a broken parse
+     alike, and a student cannot tell which happened. For a subject the manifest
+     marks covered_not_verifiable there is nothing to try — no deterministic
+     check exists for management theory — and saying so is the difference
+     between "we failed" and "this is not the kind of thing that can be
+     checked".
+
+     Deliberately NOT a new colour. The visual meaning is unchanged — this is
+     not verified — and a fourth swatch beside green, amber and red would read
+     as a fourth verdict. The reason belongs in words. */
+  if(cls !== 'verif'){
+    try {
+      var subj = subjectOf7(W.state && W.state.lastQ);
+      if(subj && subj.status === 'covered_not_verifiable'){
+        label = '⚠ AI answer — not verified';
+        title = '7Solve can help with this subject, but it cannot independently verify an ' +
+                'answer to it — there is no deterministic check for it. Treat this as a ' +
+                'well-informed draft, not a checked result.';
+      }
+    } catch(e){ /* never let the badge fail to render */ }
+  }
+
   el.className = cls;
   el.querySelector('b').textContent = label;
   el.title = title + ' AI-generated; verify before your exam.';
