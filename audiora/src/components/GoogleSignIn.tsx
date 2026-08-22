@@ -58,7 +58,12 @@ function loadGis(): Promise<boolean> {
 export function GoogleSignIn({ onDone }: { onDone?: () => void }) {
   const { signInWithGoogle } = useSession();
   const holder = useRef<HTMLDivElement>(null);
-  const [state, setState] = useState<'loading' | 'ready' | 'blocked'>('loading');
+  // Held in a ref so a caller passing an inline arrow does not re-run the
+  // effect on every render — which re-initialises GIS and makes it warn that
+  // initialize() was called more than once.
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
+  const [state, setState] = useState<'loading' | 'ready' | 'blocked' | 'origin'>('loading');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -83,7 +88,7 @@ export function GoogleSignIn({ onDone }: { onDone?: () => void }) {
           setMessage(null);
           const result = await signInWithGoogle(response.credential);
           setBusy(false);
-          if (result.ok) onDone?.();
+          if (result.ok) onDoneRef.current?.();
           else setMessage(result.error ?? 'Could not sign you in.');
         },
       });
@@ -96,13 +101,61 @@ export function GoogleSignIn({ onDone }: { onDone?: () => void }) {
         logo_alignment: 'left',
         width: 300,
       });
-      setState('ready');
+      /*
+       * renderButton does NOT throw when the page's origin is missing from the
+       * OAuth client's authorised JavaScript origins. It quietly renders an
+       * iframe with no content, measuring 0x0. Without this check the component
+       * would report itself 'ready' and the visitor would stare at a blank gap
+       * where the button should be, with nothing said and nothing to click.
+       *
+       * So: watch for the button to gain a real size. If it never does, say so.
+       * Polling rather than one timeout, because the iframe can take a moment
+       * on a slow connection and a single check would cry wolf.
+       */
+      const deadline = Date.now() + 4000;
+      const check = () => {
+        if (!alive || !holder.current) return;
+        /*
+         * Measure the IFRAME, not the holder and not GIS's wrapper.
+         *
+         * When the origin is not authorised, GIS still builds its wrapper div
+         * at a full 300x40 and still paints "Continue with Google" into it —
+         * it simply leaves the iframe that carries the actual click target at
+         * 0x0. So the holder looks fine, the wrapper looks fine, the text is
+         * there, and nothing happens when you press it. The iframe's height is
+         * the only honest signal.
+         */
+        const frame = holder.current.querySelector('iframe');
+        if (frame && frame.getBoundingClientRect().height > 0) {
+          setState('ready');
+        } else if (Date.now() < deadline) {
+          window.setTimeout(check, 200);
+        } else {
+          console.error(
+            '[7audio] Google button did not render. The most likely cause is that ' +
+              window.location.origin +
+              " is not listed under Authorised JavaScript origins for this OAuth client.",
+          );
+          setState('origin');
+        }
+      };
+      check();
     });
 
     return () => {
       alive = false;
     };
-  }, [signInWithGoogle, onDone]);
+  }, [signInWithGoogle]);
+
+  if (state === 'origin') {
+    return (
+      <InlineNotice kind="warning">
+        Google sign-in is not set up for this address yet. Every tool still works
+        without an account — you get 10 free credits, and nothing you make is
+        uploaded.
+      </InlineNotice>
+    );
+  }
 
   if (state === 'blocked') {
     return (
