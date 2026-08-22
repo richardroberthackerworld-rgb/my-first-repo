@@ -35,6 +35,8 @@ const HERE = path.join(__dirname);
 const PHP = process.env.PHP_BIN || 'php';
 const VERIFY = path.join(HERE, 'verify.php');
 const INDEX = path.join(HERE, 'index.html');
+/* Survives a kill; `finally` does not. See the pre-flight below. */
+const RESTORE = path.join(HERE, '.negative-control-restore.json');
 
 /* The checks to remove come from checks.json — the canonical registry, which
    parity.js also holds to both shipped pipelines. That is what makes coverage
@@ -73,6 +75,31 @@ function cut(file, needle) {
 }
 
 (function main() {
+  /* Pre-flight 0: did an earlier run get KILLED mid-cut? Its sidecar is then
+     still on disk with the originals in it. Put them back before doing
+     anything else, and say so loudly — a silently repaired tree teaches nobody
+     that this tool needs watching. */
+  if (fs.existsSync(RESTORE)) {
+    try {
+      const saved = JSON.parse(fs.readFileSync(RESTORE, 'utf8'));
+      const hurtPhp = fs.readFileSync(VERIFY, 'utf8') !== saved.verify;
+      const hurtJs = fs.readFileSync(INDEX, 'utf8') !== saved.index;
+      if (hurtPhp) fs.writeFileSync(VERIFY, saved.verify, 'utf8');
+      if (hurtJs) fs.writeFileSync(INDEX, saved.index, 'utf8');
+      fs.unlinkSync(RESTORE);
+      if (hurtPhp || hurtJs) {
+        console.log('\n  RECOVERED: a previous run was killed mid-cut and left ' +
+          [hurtPhp ? 'verify.php' : null, hurtJs ? 'index.html' : null].filter(Boolean).join(' and ') +
+          ' damaged.\n  The originals have been restored from the sidecar. Check `git diff` before ' +
+          'trusting anything built since.\n');
+      }
+    } catch (e) {
+      console.log('\n  A restore sidecar exists but could not be read: ' + e.message);
+      console.log('  Refusing to cut anything into a tree of unknown state.\n');
+      process.exit(1);
+    }
+  }
+
   /* Pre-flight: is every checker still wired BEFORE we start cutting? An
      interrupted earlier run can leave one removed, and then "parity is
      failing" is a true but useless message — it does not say that a checker
@@ -104,6 +131,18 @@ function cut(file, needle) {
     const phpBefore = fs.readFileSync(VERIFY, 'utf8');
     const jsBefore = fs.readFileSync(INDEX, 'utf8');
 
+    /* A SIDECAR, because `finally` does not run when the process is KILLED.
+       The pre-flight above catches a tree that was already damaged and the
+       finally below catches a thrown error, but neither survives the run being
+       killed outright — and that has now happened twice, once leaving
+       `function presentation(md){` cut out of index.html and once
+       `function integrity(question, md){`. Both were noticed only because a
+       parse check happened to run afterwards.
+
+       So the originals go to disk BEFORE the cut, and the next run puts them
+       back and says so, whatever killed this one. */
+    fs.writeFileSync(RESTORE, JSON.stringify({ verify: phpBefore, index: jsBefore }), 'utf8');
+
     /* The restore MUST be unconditional. This tool deletes a checker from a
        production file and puts it back a moment later; when a run died between
        those two moments it left `self::taxonomy($body),` cut out of verify.php,
@@ -123,6 +162,7 @@ function cut(file, needle) {
     } finally {
       fs.writeFileSync(VERIFY, phpBefore, 'utf8');
       fs.writeFileSync(INDEX, jsBefore, 'utf8');
+      try { fs.unlinkSync(RESTORE); } catch (e) { /* already gone */ }
     }
 
     console.log('  ' + (caught ? 'PASS  caught  ' : 'FAIL  missed  ') +

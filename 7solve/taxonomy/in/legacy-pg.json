@@ -1,0 +1,416 @@
+{
+  "_": "GENERATED from tools/legacy-taxonomy.json by tools/gen-legacy-taxonomy.js. Do not hand-edit — the generator owns these nodes and tools/gate-legacy-taxonomy.js fails the build if they drift. The six mapping decisions are documented in the generator.",
+  "schema": "7solve.taxonomy/1",
+  "version": "2026-08-22",
+  "source": "7solve-legacy",
+  "nodes": [
+    {
+      "id": "in.pg.llm",
+      "kind": "program",
+      "parent": "in.pg",
+      "label": "LLM"
+    },
+    {
+      "id": "in.pg.llm.constitutional-and-administrative-law",
+      "kind": "subject",
+      "parent": "in.pg.llm",
+      "label": "Constitutional & Administrative Law"
+    },
+    {
+      "id": "in.pg.llm.corporate-and-commercial-law",
+      "kind": "subject",
+      "parent": "in.pg.llm",
+      "label": "Corporate & Commercial Law"
+    },
+    {
+      "id": "in.pg.llm.criminal-law-and-criminology",
+      "kind": "subject",
+      "parent": "in.pg.llm",
+      "label": "Criminal Law & Criminology"
+    },
+    {
+      "id": "in.pg.llm.human-rights-law",
+      "kind": "subject",
+      "parent": "in.pg.llm",
+      "label": "Human Rights Law"
+    },
+    {
+      "id": "in.pg.llm.intellectual-property-rights",
+      "kind": "subject",
+      "parent": "in.pg.llm",
+      "label": "Intellectual Property Rights"
+    },
+    {
+      "id": "in.pg.llm.international-law",
+      "kind": "subject",
+      "parent": "in.pg.llm",
+      "label": "International Law"
+    },
+    {
+      "id": "in.pg.llm.legal-research-methodology",
+      "kind": "subject",
+      "parent": "in.pg.llm",
+      "label": "Legal Research Methodology"
+    },
+    {
+      "id": "in.pg.m-ed",
+      "kind": "program",
+      "parent": "in.pg",
+      "label": "M.Ed"
+    },
+    {
+      "id": "in.pg.m-pharm",
+      "kind": "program",
+      "parent": "in.pg",
+      "label": "M.Pharm"
+    },
+    {
+      "id": "in.pg.mba-business-analytics",
+      "kind": "program",
+      "parent": "in.pg",
+      "label": "MBA (Business Analytics)"
+    },
+    {
+      "id": "in.pg.mba-finance",
+      "kind": "program",
+      "parent": "in.pg",
+      "label": "MBA (Finance)"
+    },
+    {
+      "id": "in.pg.mba-finance.business-research-methods",
+      "kind": "subject",
+      "parent": "in.pg.mba-finance",
+      "label": "Business Research Methods"
+    },
+    {
+      "id": "in.pg.mba-finance.corporate-finance",
+      "kind": "subject",
+      "parent": "in.pg.mba-finance",
+      "label": "Corporate Finance"
+    },
+    {
+      "id": "in.pg.mba-finance.derivatives-and-risk-management",
+      "kind": "subject",
+      "parent": "in.pg.mba-finance",
+      "label": "Derivatives & Risk Management"
+    },
+    {
+      "id": "in.pg.mba-finance.financial-management",
+      "kind": "subject",
+      "parent": "in.pg.mba-finance",
+      "label": "Financial Management"
+    },
+    {
+      "id": "in.pg.mba-finance.financial-markets-and-services",
+      "kind": "subject",
+      "parent": "in.pg.mba-finance",
+      "label": "Financial Markets & Services"
+    },
+    {
+      "id": "in.pg.mba-finance.financial-modelling",
+      "kind": "subject",
+      "parent": "in.pg.mba-finance",
+      "label": "Financial Modelling"
+    },
+    {
+      "id": "in.pg.mba-finance.international-finance",
+      "kind": "subject",
+      "parent": "in.pg.mba-finance",
+      "label": "International Finance"
+    },
+    {
+      "id": "in.pg.mba-finance.investment-analysis-and-portfolio-management",
+      "kind": "subject",
+      "parent": "in.pg.mba-finance",
+      "label": "Investment Analysis & Portfolio Management"
+    },
+    {
+      "id": "in.pg.mba-finance.management-accounting",
+      "kind": "subject",
+      "parent": "in.pg.mba-finance",
+      "label": "Management Accounting"
+    },
+    {
+      "id": "in.pg.mba-finance.mergers-and-acquisitions",
+      "kind": "subject",
+      "parent": "in.pg.mba-finance",
+      "label": "Mergers & Acquisitions"
+    },
+    {
+      "id": "in.pg.mba-finance.strategic-management",
+      "kind": "subject",
+      "parent": "in.pg.mba-finance",
+      "label": "Strategic Management"
+    },
+    {
+      "id": "in.pg.mba-finance.taxation",
+      "kind": "subject",
+      "parent": "in.pg.mba-finance",
+      "label": "Taxation"
+    },
+    {
+      "id": "in.pg.mba-hr",
+      "kind": "program",
+      "parent": "in.pg",
+      "label": "MBA (HR)"
+    },
+    {
+      "id": "in.pg.mba-hr.compensation-management",
+      "kind": "subject",
+      "parent": "in.pg.mba-hr",
+      "label": "Compensation Management"
+    },
+    {
+      "id": "in.pg.mba-hr.hr-analytics",
+      "kind": "subject",
+      "parent": "in.pg.mba-hr",
+      "label": "HR Analytics"
+    },
+    {
+      "id": "in.pg.mba-hr.human-resource-management",
+      "kind": "subject",
+      "parent": "in.pg.mba-hr",
+      "label": "Human Resource Management"
+    },
+    {
+      "id": "in.pg.mba-hr.industrial-relations",
+      "kind": "subject",
+      "parent": "in.pg.mba-hr",
+      "label": "Industrial Relations"
+    },
+    {
+      "id": "in.pg.mba-hr.labour-laws",
+      "kind": "subject",
+      "parent": "in.pg.mba-hr",
+      "label": "Labour Laws"
+    },
+    {
+      "id": "in.pg.mba-hr.organisational-behaviour",
+      "kind": "subject",
+      "parent": "in.pg.mba-hr",
+      "label": "Organisational Behaviour"
+    },
+    {
+      "id": "in.pg.mba-hr.organisational-development",
+      "kind": "subject",
+      "parent": "in.pg.mba-hr",
+      "label": "Organisational Development"
+    },
+    {
+      "id": "in.pg.mba-hr.performance-management",
+      "kind": "subject",
+      "parent": "in.pg.mba-hr",
+      "label": "Performance Management"
+    },
+    {
+      "id": "in.pg.mba-hr.strategic-management",
+      "kind": "subject",
+      "parent": "in.pg.mba-hr",
+      "label": "Strategic Management"
+    },
+    {
+      "id": "in.pg.mba-hr.talent-acquisition",
+      "kind": "subject",
+      "parent": "in.pg.mba-hr",
+      "label": "Talent Acquisition"
+    },
+    {
+      "id": "in.pg.mba-hr.training-and-development",
+      "kind": "subject",
+      "parent": "in.pg.mba-hr",
+      "label": "Training & Development"
+    },
+    {
+      "id": "in.pg.mba-marketing",
+      "kind": "program",
+      "parent": "in.pg",
+      "label": "MBA (Marketing)"
+    },
+    {
+      "id": "in.pg.mba-marketing.advertising-and-promotion",
+      "kind": "subject",
+      "parent": "in.pg.mba-marketing",
+      "label": "Advertising & Promotion"
+    },
+    {
+      "id": "in.pg.mba-marketing.brand-management",
+      "kind": "subject",
+      "parent": "in.pg.mba-marketing",
+      "label": "Brand Management"
+    },
+    {
+      "id": "in.pg.mba-marketing.business-analytics",
+      "kind": "subject",
+      "parent": "in.pg.mba-marketing",
+      "label": "Business Analytics"
+    },
+    {
+      "id": "in.pg.mba-marketing.consumer-behaviour",
+      "kind": "subject",
+      "parent": "in.pg.mba-marketing",
+      "label": "Consumer Behaviour"
+    },
+    {
+      "id": "in.pg.mba-marketing.digital-marketing",
+      "kind": "subject",
+      "parent": "in.pg.mba-marketing",
+      "label": "Digital Marketing"
+    },
+    {
+      "id": "in.pg.mba-marketing.international-marketing",
+      "kind": "subject",
+      "parent": "in.pg.mba-marketing",
+      "label": "International Marketing"
+    },
+    {
+      "id": "in.pg.mba-marketing.market-research",
+      "kind": "subject",
+      "parent": "in.pg.mba-marketing",
+      "label": "Market Research"
+    },
+    {
+      "id": "in.pg.mba-marketing.marketing-management",
+      "kind": "subject",
+      "parent": "in.pg.mba-marketing",
+      "label": "Marketing Management"
+    },
+    {
+      "id": "in.pg.mba-marketing.retail-management",
+      "kind": "subject",
+      "parent": "in.pg.mba-marketing",
+      "label": "Retail Management"
+    },
+    {
+      "id": "in.pg.mba-marketing.sales-and-distribution-management",
+      "kind": "subject",
+      "parent": "in.pg.mba-marketing",
+      "label": "Sales & Distribution Management"
+    },
+    {
+      "id": "in.pg.mba-marketing.services-marketing",
+      "kind": "subject",
+      "parent": "in.pg.mba-marketing",
+      "label": "Services Marketing"
+    },
+    {
+      "id": "in.pg.mba-marketing.strategic-management",
+      "kind": "subject",
+      "parent": "in.pg.mba-marketing",
+      "label": "Strategic Management"
+    },
+    {
+      "id": "in.pg.mba-operations",
+      "kind": "program",
+      "parent": "in.pg",
+      "label": "MBA (Operations)"
+    },
+    {
+      "id": "in.pg.mca.advanced-data-structures",
+      "kind": "subject",
+      "parent": "in.pg.mca",
+      "label": "Advanced Data Structures"
+    },
+    {
+      "id": "in.pg.mca.advanced-dbms",
+      "kind": "subject",
+      "parent": "in.pg.mca",
+      "label": "Advanced DBMS"
+    },
+    {
+      "id": "in.pg.mca.big-data-analytics",
+      "kind": "subject",
+      "parent": "in.pg.mca",
+      "label": "Big Data Analytics"
+    },
+    {
+      "id": "in.pg.mca.cloud-computing",
+      "kind": "subject",
+      "parent": "in.pg.mca",
+      "label": "Cloud Computing"
+    },
+    {
+      "id": "in.pg.mca.computer-networks",
+      "kind": "subject",
+      "parent": "in.pg.mca",
+      "label": "Computer Networks"
+    },
+    {
+      "id": "in.pg.mca.cyber-security",
+      "kind": "subject",
+      "parent": "in.pg.mca",
+      "label": "Cyber Security"
+    },
+    {
+      "id": "in.pg.mca.design-and-analysis-of-algorithms",
+      "kind": "subject",
+      "parent": "in.pg.mca",
+      "label": "Design & Analysis of Algorithms"
+    },
+    {
+      "id": "in.pg.mca.discrete-mathematics",
+      "kind": "subject",
+      "parent": "in.pg.mca",
+      "label": "Discrete Mathematics"
+    },
+    {
+      "id": "in.pg.mca.java-python-programming",
+      "kind": "subject",
+      "parent": "in.pg.mca",
+      "label": "Java / Python Programming"
+    },
+    {
+      "id": "in.pg.mca.machine-learning",
+      "kind": "subject",
+      "parent": "in.pg.mca",
+      "label": "Machine Learning"
+    },
+    {
+      "id": "in.pg.mca.mobile-computing",
+      "kind": "subject",
+      "parent": "in.pg.mca",
+      "label": "Mobile Computing"
+    },
+    {
+      "id": "in.pg.mca.operating-systems",
+      "kind": "subject",
+      "parent": "in.pg.mca",
+      "label": "Operating Systems"
+    },
+    {
+      "id": "in.pg.mca.software-engineering",
+      "kind": "subject",
+      "parent": "in.pg.mca",
+      "label": "Software Engineering"
+    },
+    {
+      "id": "in.pg.mca.web-technologies",
+      "kind": "subject",
+      "parent": "in.pg.mca",
+      "label": "Web Technologies"
+    },
+    {
+      "id": "in.pg.md-ms",
+      "kind": "program",
+      "parent": "in.pg",
+      "label": "MD / MS"
+    },
+    {
+      "id": "in.pg.mph",
+      "kind": "program",
+      "parent": "in.pg",
+      "label": "MPH"
+    },
+    {
+      "id": "in.pg.msw",
+      "kind": "program",
+      "parent": "in.pg",
+      "label": "MSW"
+    },
+    {
+      "id": "in.pg.ph-d-research",
+      "kind": "program",
+      "parent": "in.pg",
+      "label": "Ph.D / Research"
+    }
+  ]
+}

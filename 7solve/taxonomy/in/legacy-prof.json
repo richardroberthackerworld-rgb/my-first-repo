@@ -1,0 +1,873 @@
+{
+  "_": "GENERATED from tools/legacy-taxonomy.json by tools/gen-legacy-taxonomy.js. Do not hand-edit — the generator owns these nodes and tools/gate-legacy-taxonomy.js fails the build if they drift. The six mapping decisions are documented in the generator.",
+  "schema": "7solve.taxonomy/1",
+  "version": "2026-08-22",
+  "source": "7solve-legacy",
+  "nodes": [
+    {
+      "id": "in.prof",
+      "kind": "level",
+      "parent": "in",
+      "label": "Professional qualifications",
+      "aliases": [
+        "professional",
+        "ca",
+        "cma",
+        "cs",
+        "cfa"
+      ]
+    },
+    {
+      "id": "in.prof.acca",
+      "kind": "program",
+      "parent": "in.prof",
+      "label": "ACCA"
+    },
+    {
+      "id": "in.prof.acca.aa-audit-and-assurance",
+      "kind": "subject",
+      "parent": "in.prof.acca",
+      "label": "AA — Audit & Assurance"
+    },
+    {
+      "id": "in.prof.acca.bt-business-and-technology",
+      "kind": "subject",
+      "parent": "in.prof.acca",
+      "label": "BT — Business & Technology"
+    },
+    {
+      "id": "in.prof.acca.fa-financial-accounting",
+      "kind": "subject",
+      "parent": "in.prof.acca",
+      "label": "FA — Financial Accounting"
+    },
+    {
+      "id": "in.prof.acca.fm-financial-management",
+      "kind": "subject",
+      "parent": "in.prof.acca",
+      "label": "FM — Financial Management"
+    },
+    {
+      "id": "in.prof.acca.fr-financial-reporting",
+      "kind": "subject",
+      "parent": "in.prof.acca",
+      "label": "FR — Financial Reporting"
+    },
+    {
+      "id": "in.prof.acca.lw-corporate-and-business-law",
+      "kind": "subject",
+      "parent": "in.prof.acca",
+      "label": "LW — Corporate & Business Law"
+    },
+    {
+      "id": "in.prof.acca.ma-management-accounting",
+      "kind": "subject",
+      "parent": "in.prof.acca",
+      "label": "MA — Management Accounting"
+    },
+    {
+      "id": "in.prof.acca.options-afm-apm-atx-aaa",
+      "kind": "subject",
+      "parent": "in.prof.acca",
+      "label": "Options (AFM / APM / ATX / AAA)"
+    },
+    {
+      "id": "in.prof.acca.pm-performance-management",
+      "kind": "subject",
+      "parent": "in.prof.acca",
+      "label": "PM — Performance Management"
+    },
+    {
+      "id": "in.prof.acca.sbl-strategic-business-leader",
+      "kind": "subject",
+      "parent": "in.prof.acca",
+      "label": "SBL — Strategic Business Leader"
+    },
+    {
+      "id": "in.prof.acca.sbr-strategic-business-reporting",
+      "kind": "subject",
+      "parent": "in.prof.acca",
+      "label": "SBR — Strategic Business Reporting"
+    },
+    {
+      "id": "in.prof.acca.tx-taxation",
+      "kind": "subject",
+      "parent": "in.prof.acca",
+      "label": "TX — Taxation"
+    },
+    {
+      "id": "in.prof.ca-final",
+      "kind": "program",
+      "parent": "in.prof",
+      "label": "CA Final"
+    },
+    {
+      "id": "in.prof.ca-final.paper-1-financial-reporting",
+      "kind": "subject",
+      "parent": "in.prof.ca-final",
+      "label": "Paper 1 — Financial Reporting"
+    },
+    {
+      "id": "in.prof.ca-final.paper-2-advanced-financial-management",
+      "kind": "subject",
+      "parent": "in.prof.ca-final",
+      "label": "Paper 2 — Advanced Financial Management"
+    },
+    {
+      "id": "in.prof.ca-final.paper-3-advanced-auditing-assurance-and-professi",
+      "kind": "subject",
+      "parent": "in.prof.ca-final",
+      "label": "Paper 3 — Advanced Auditing, Assurance & Professional Ethics"
+    },
+    {
+      "id": "in.prof.ca-final.paper-4-direct-tax-laws-and-international-taxati",
+      "kind": "subject",
+      "parent": "in.prof.ca-final",
+      "label": "Paper 4 — Direct Tax Laws & International Taxation"
+    },
+    {
+      "id": "in.prof.ca-final.paper-5-indirect-tax-laws",
+      "kind": "subject",
+      "parent": "in.prof.ca-final",
+      "label": "Paper 5 — Indirect Tax Laws"
+    },
+    {
+      "id": "in.prof.ca-final.paper-6-integrated-business-solutions-case-study",
+      "kind": "subject",
+      "parent": "in.prof.ca-final",
+      "label": "Paper 6 — Integrated Business Solutions (Case Study)"
+    },
+    {
+      "id": "in.prof.ca-foundation",
+      "kind": "program",
+      "parent": "in.prof",
+      "label": "CA Foundation"
+    },
+    {
+      "id": "in.prof.ca-foundation.paper-1-accounting",
+      "kind": "subject",
+      "parent": "in.prof.ca-foundation",
+      "label": "Paper 1 — Accounting"
+    },
+    {
+      "id": "in.prof.ca-foundation.paper-2-business-laws",
+      "kind": "subject",
+      "parent": "in.prof.ca-foundation",
+      "label": "Paper 2 — Business Laws"
+    },
+    {
+      "id": "in.prof.ca-foundation.paper-3-quantitative-aptitude-maths-lr-stats",
+      "kind": "subject",
+      "parent": "in.prof.ca-foundation",
+      "label": "Paper 3 — Quantitative Aptitude (Maths, LR, Stats)"
+    },
+    {
+      "id": "in.prof.ca-foundation.paper-4-business-economics",
+      "kind": "subject",
+      "parent": "in.prof.ca-foundation",
+      "label": "Paper 4 — Business Economics"
+    },
+    {
+      "id": "in.prof.ca-intermediate",
+      "kind": "program",
+      "parent": "in.prof",
+      "label": "CA Intermediate"
+    },
+    {
+      "id": "in.prof.ca-intermediate.paper-1-advanced-accounting",
+      "kind": "subject",
+      "parent": "in.prof.ca-intermediate",
+      "label": "Paper 1 — Advanced Accounting"
+    },
+    {
+      "id": "in.prof.ca-intermediate.paper-2-corporate-and-other-laws",
+      "kind": "subject",
+      "parent": "in.prof.ca-intermediate",
+      "label": "Paper 2 — Corporate & Other Laws"
+    },
+    {
+      "id": "in.prof.ca-intermediate.paper-3-taxation-income-tax-and-gst",
+      "kind": "subject",
+      "parent": "in.prof.ca-intermediate",
+      "label": "Paper 3 — Taxation (Income Tax & GST)"
+    },
+    {
+      "id": "in.prof.ca-intermediate.paper-4-cost-and-management-accounting",
+      "kind": "subject",
+      "parent": "in.prof.ca-intermediate",
+      "label": "Paper 4 — Cost & Management Accounting"
+    },
+    {
+      "id": "in.prof.ca-intermediate.paper-5-auditing-and-ethics",
+      "kind": "subject",
+      "parent": "in.prof.ca-intermediate",
+      "label": "Paper 5 — Auditing & Ethics"
+    },
+    {
+      "id": "in.prof.ca-intermediate.paper-6-financial-management-and-strategic-manag",
+      "kind": "subject",
+      "parent": "in.prof.ca-intermediate",
+      "label": "Paper 6 — Financial Management & Strategic Management"
+    },
+    {
+      "id": "in.prof.cfa-level-i",
+      "kind": "program",
+      "parent": "in.prof",
+      "label": "CFA Level I"
+    },
+    {
+      "id": "in.prof.cfa-level-i.alternative-investments",
+      "kind": "subject",
+      "parent": "in.prof.cfa-level-i",
+      "label": "Alternative Investments"
+    },
+    {
+      "id": "in.prof.cfa-level-i.corporate-issuers",
+      "kind": "subject",
+      "parent": "in.prof.cfa-level-i",
+      "label": "Corporate Issuers"
+    },
+    {
+      "id": "in.prof.cfa-level-i.derivatives",
+      "kind": "subject",
+      "parent": "in.prof.cfa-level-i",
+      "label": "Derivatives"
+    },
+    {
+      "id": "in.prof.cfa-level-i.economics",
+      "kind": "subject",
+      "parent": "in.prof.cfa-level-i",
+      "label": "Economics"
+    },
+    {
+      "id": "in.prof.cfa-level-i.equity-investments",
+      "kind": "subject",
+      "parent": "in.prof.cfa-level-i",
+      "label": "Equity Investments"
+    },
+    {
+      "id": "in.prof.cfa-level-i.ethical-and-professional-standards",
+      "kind": "subject",
+      "parent": "in.prof.cfa-level-i",
+      "label": "Ethical & Professional Standards"
+    },
+    {
+      "id": "in.prof.cfa-level-i.financial-statement-analysis",
+      "kind": "subject",
+      "parent": "in.prof.cfa-level-i",
+      "label": "Financial Statement Analysis"
+    },
+    {
+      "id": "in.prof.cfa-level-i.fixed-income",
+      "kind": "subject",
+      "parent": "in.prof.cfa-level-i",
+      "label": "Fixed Income"
+    },
+    {
+      "id": "in.prof.cfa-level-i.portfolio-management",
+      "kind": "subject",
+      "parent": "in.prof.cfa-level-i",
+      "label": "Portfolio Management"
+    },
+    {
+      "id": "in.prof.cfa-level-i.quantitative-methods",
+      "kind": "subject",
+      "parent": "in.prof.cfa-level-i",
+      "label": "Quantitative Methods"
+    },
+    {
+      "id": "in.prof.cfa-level-ii",
+      "kind": "program",
+      "parent": "in.prof",
+      "label": "CFA Level II"
+    },
+    {
+      "id": "in.prof.cfa-level-ii.alternative-investments",
+      "kind": "subject",
+      "parent": "in.prof.cfa-level-ii",
+      "label": "Alternative Investments"
+    },
+    {
+      "id": "in.prof.cfa-level-ii.corporate-issuers",
+      "kind": "subject",
+      "parent": "in.prof.cfa-level-ii",
+      "label": "Corporate Issuers"
+    },
+    {
+      "id": "in.prof.cfa-level-ii.derivatives",
+      "kind": "subject",
+      "parent": "in.prof.cfa-level-ii",
+      "label": "Derivatives"
+    },
+    {
+      "id": "in.prof.cfa-level-ii.economics",
+      "kind": "subject",
+      "parent": "in.prof.cfa-level-ii",
+      "label": "Economics"
+    },
+    {
+      "id": "in.prof.cfa-level-ii.equity-valuation",
+      "kind": "subject",
+      "parent": "in.prof.cfa-level-ii",
+      "label": "Equity Valuation"
+    },
+    {
+      "id": "in.prof.cfa-level-ii.ethical-and-professional-standards",
+      "kind": "subject",
+      "parent": "in.prof.cfa-level-ii",
+      "label": "Ethical & Professional Standards"
+    },
+    {
+      "id": "in.prof.cfa-level-ii.financial-statement-analysis",
+      "kind": "subject",
+      "parent": "in.prof.cfa-level-ii",
+      "label": "Financial Statement Analysis"
+    },
+    {
+      "id": "in.prof.cfa-level-ii.fixed-income",
+      "kind": "subject",
+      "parent": "in.prof.cfa-level-ii",
+      "label": "Fixed Income"
+    },
+    {
+      "id": "in.prof.cfa-level-ii.portfolio-management",
+      "kind": "subject",
+      "parent": "in.prof.cfa-level-ii",
+      "label": "Portfolio Management"
+    },
+    {
+      "id": "in.prof.cfa-level-ii.quantitative-methods",
+      "kind": "subject",
+      "parent": "in.prof.cfa-level-ii",
+      "label": "Quantitative Methods"
+    },
+    {
+      "id": "in.prof.cfa-level-iii",
+      "kind": "program",
+      "parent": "in.prof",
+      "label": "CFA Level III"
+    },
+    {
+      "id": "in.prof.cfa-level-iii.asset-allocation",
+      "kind": "subject",
+      "parent": "in.prof.cfa-level-iii",
+      "label": "Asset Allocation"
+    },
+    {
+      "id": "in.prof.cfa-level-iii.derivatives-and-risk-management",
+      "kind": "subject",
+      "parent": "in.prof.cfa-level-iii",
+      "label": "Derivatives & Risk Management"
+    },
+    {
+      "id": "in.prof.cfa-level-iii.ethics-and-professional-standards",
+      "kind": "subject",
+      "parent": "in.prof.cfa-level-iii",
+      "label": "Ethics & Professional Standards"
+    },
+    {
+      "id": "in.prof.cfa-level-iii.pathway-private-wealth-private-markets-portfolio",
+      "kind": "subject",
+      "parent": "in.prof.cfa-level-iii",
+      "label": "Pathway (Private Wealth / Private Markets / Portfolio Mgmt)"
+    },
+    {
+      "id": "in.prof.cfa-level-iii.performance-measurement",
+      "kind": "subject",
+      "parent": "in.prof.cfa-level-iii",
+      "label": "Performance Measurement"
+    },
+    {
+      "id": "in.prof.cfa-level-iii.portfolio-construction",
+      "kind": "subject",
+      "parent": "in.prof.cfa-level-iii",
+      "label": "Portfolio Construction"
+    },
+    {
+      "id": "in.prof.cia-internal-auditor",
+      "kind": "program",
+      "parent": "in.prof",
+      "label": "CIA (Internal Auditor)"
+    },
+    {
+      "id": "in.prof.cia-internal-auditor.part-1-essentials-of-internal-auditing",
+      "kind": "subject",
+      "parent": "in.prof.cia-internal-auditor",
+      "label": "Part 1 — Essentials of Internal Auditing"
+    },
+    {
+      "id": "in.prof.cia-internal-auditor.part-2-practice-of-internal-auditing",
+      "kind": "subject",
+      "parent": "in.prof.cia-internal-auditor",
+      "label": "Part 2 — Practice of Internal Auditing"
+    },
+    {
+      "id": "in.prof.cia-internal-auditor.part-3-business-knowledge-for-internal-auditing",
+      "kind": "subject",
+      "parent": "in.prof.cia-internal-auditor",
+      "label": "Part 3 — Business Knowledge for Internal Auditing"
+    },
+    {
+      "id": "in.prof.cma-india-final",
+      "kind": "program",
+      "parent": "in.prof",
+      "label": "CMA (India) Final"
+    },
+    {
+      "id": "in.prof.cma-india-final.paper-13-corporate-and-economic-laws",
+      "kind": "subject",
+      "parent": "in.prof.cma-india-final",
+      "label": "Paper 13 — Corporate & Economic Laws"
+    },
+    {
+      "id": "in.prof.cma-india-final.paper-14-strategic-financial-management",
+      "kind": "subject",
+      "parent": "in.prof.cma-india-final",
+      "label": "Paper 14 — Strategic Financial Management"
+    },
+    {
+      "id": "in.prof.cma-india-final.paper-15-direct-tax-laws-and-international-taxat",
+      "kind": "subject",
+      "parent": "in.prof.cma-india-final",
+      "label": "Paper 15 — Direct Tax Laws & International Taxation"
+    },
+    {
+      "id": "in.prof.cma-india-final.paper-16-strategic-cost-management",
+      "kind": "subject",
+      "parent": "in.prof.cma-india-final",
+      "label": "Paper 16 — Strategic Cost Management"
+    },
+    {
+      "id": "in.prof.cma-india-final.paper-17-cost-and-management-audit",
+      "kind": "subject",
+      "parent": "in.prof.cma-india-final",
+      "label": "Paper 17 — Cost & Management Audit"
+    },
+    {
+      "id": "in.prof.cma-india-final.paper-18-corporate-financial-reporting",
+      "kind": "subject",
+      "parent": "in.prof.cma-india-final",
+      "label": "Paper 18 — Corporate Financial Reporting"
+    },
+    {
+      "id": "in.prof.cma-india-final.paper-19-indirect-tax-laws-and-practice",
+      "kind": "subject",
+      "parent": "in.prof.cma-india-final",
+      "label": "Paper 19 — Indirect Tax Laws & Practice"
+    },
+    {
+      "id": "in.prof.cma-india-final.paper-20-elective-performance-mgmt-risk-entrepre",
+      "kind": "subject",
+      "parent": "in.prof.cma-india-final",
+      "label": "Paper 20 — Elective (Performance Mgmt / Risk / Entrepreneurship)"
+    },
+    {
+      "id": "in.prof.cma-india-foundation",
+      "kind": "program",
+      "parent": "in.prof",
+      "label": "CMA (India) Foundation"
+    },
+    {
+      "id": "in.prof.cma-india-foundation.paper-1-fundamentals-of-business-laws-and-commun",
+      "kind": "subject",
+      "parent": "in.prof.cma-india-foundation",
+      "label": "Paper 1 — Fundamentals of Business Laws & Communication"
+    },
+    {
+      "id": "in.prof.cma-india-foundation.paper-2-fundamentals-of-financial-and-cost-accou",
+      "kind": "subject",
+      "parent": "in.prof.cma-india-foundation",
+      "label": "Paper 2 — Fundamentals of Financial & Cost Accounting"
+    },
+    {
+      "id": "in.prof.cma-india-foundation.paper-3-fundamentals-of-business-mathematics-and",
+      "kind": "subject",
+      "parent": "in.prof.cma-india-foundation",
+      "label": "Paper 3 — Fundamentals of Business Mathematics & Statistics"
+    },
+    {
+      "id": "in.prof.cma-india-foundation.paper-4-fundamentals-of-business-economics-and-m",
+      "kind": "subject",
+      "parent": "in.prof.cma-india-foundation",
+      "label": "Paper 4 — Fundamentals of Business Economics & Management"
+    },
+    {
+      "id": "in.prof.cma-india-intermediate",
+      "kind": "program",
+      "parent": "in.prof",
+      "label": "CMA (India) Intermediate"
+    },
+    {
+      "id": "in.prof.cma-india-intermediate.paper-10-corporate-accounting-and-auditing",
+      "kind": "subject",
+      "parent": "in.prof.cma-india-intermediate",
+      "label": "Paper 10 — Corporate Accounting & Auditing"
+    },
+    {
+      "id": "in.prof.cma-india-intermediate.paper-11-financial-management-and-business-data-",
+      "kind": "subject",
+      "parent": "in.prof.cma-india-intermediate",
+      "label": "Paper 11 — Financial Management & Business Data Analytics"
+    },
+    {
+      "id": "in.prof.cma-india-intermediate.paper-12-management-accounting",
+      "kind": "subject",
+      "parent": "in.prof.cma-india-intermediate",
+      "label": "Paper 12 — Management Accounting"
+    },
+    {
+      "id": "in.prof.cma-india-intermediate.paper-5-business-laws-and-ethics",
+      "kind": "subject",
+      "parent": "in.prof.cma-india-intermediate",
+      "label": "Paper 5 — Business Laws & Ethics"
+    },
+    {
+      "id": "in.prof.cma-india-intermediate.paper-6-financial-accounting",
+      "kind": "subject",
+      "parent": "in.prof.cma-india-intermediate",
+      "label": "Paper 6 — Financial Accounting"
+    },
+    {
+      "id": "in.prof.cma-india-intermediate.paper-7-direct-and-indirect-taxation",
+      "kind": "subject",
+      "parent": "in.prof.cma-india-intermediate",
+      "label": "Paper 7 — Direct & Indirect Taxation"
+    },
+    {
+      "id": "in.prof.cma-india-intermediate.paper-8-cost-accounting",
+      "kind": "subject",
+      "parent": "in.prof.cma-india-intermediate",
+      "label": "Paper 8 — Cost Accounting"
+    },
+    {
+      "id": "in.prof.cma-india-intermediate.paper-9-operations-and-strategic-management",
+      "kind": "subject",
+      "parent": "in.prof.cma-india-intermediate",
+      "label": "Paper 9 — Operations & Strategic Management"
+    },
+    {
+      "id": "in.prof.cs-executive",
+      "kind": "program",
+      "parent": "in.prof",
+      "label": "CS Executive"
+    },
+    {
+      "id": "in.prof.cs-executive.capital-market-and-securities-laws",
+      "kind": "subject",
+      "parent": "in.prof.cs-executive",
+      "label": "Capital Market & Securities Laws"
+    },
+    {
+      "id": "in.prof.cs-executive.company-law-and-practice",
+      "kind": "subject",
+      "parent": "in.prof.cs-executive",
+      "label": "Company Law & Practice"
+    },
+    {
+      "id": "in.prof.cs-executive.corporate-accounting-and-financial-management",
+      "kind": "subject",
+      "parent": "in.prof.cs-executive",
+      "label": "Corporate Accounting & Financial Management"
+    },
+    {
+      "id": "in.prof.cs-executive.economic-commercial-and-intellectual-property-la",
+      "kind": "subject",
+      "parent": "in.prof.cs-executive",
+      "label": "Economic, Commercial & Intellectual Property Laws"
+    },
+    {
+      "id": "in.prof.cs-executive.jurisprudence-interpretation-and-general-laws",
+      "kind": "subject",
+      "parent": "in.prof.cs-executive",
+      "label": "Jurisprudence, Interpretation & General Laws"
+    },
+    {
+      "id": "in.prof.cs-executive.setting-up-of-business-industrial-and-labour-law",
+      "kind": "subject",
+      "parent": "in.prof.cs-executive",
+      "label": "Setting up of Business, Industrial & Labour Laws"
+    },
+    {
+      "id": "in.prof.cs-executive.tax-laws-and-practice",
+      "kind": "subject",
+      "parent": "in.prof.cs-executive",
+      "label": "Tax Laws & Practice"
+    },
+    {
+      "id": "in.prof.cs-professional",
+      "kind": "program",
+      "parent": "in.prof",
+      "label": "CS Professional"
+    },
+    {
+      "id": "in.prof.cs-professional.compliance-management-audit-and-due-diligence",
+      "kind": "subject",
+      "parent": "in.prof.cs-professional",
+      "label": "Compliance Management, Audit & Due Diligence"
+    },
+    {
+      "id": "in.prof.cs-professional.corporate-restructuring-valuation-and-insolvency",
+      "kind": "subject",
+      "parent": "in.prof.cs-professional",
+      "label": "Corporate Restructuring, Valuation & Insolvency"
+    },
+    {
+      "id": "in.prof.cs-professional.drafting-pleadings-and-appearances",
+      "kind": "subject",
+      "parent": "in.prof.cs-professional",
+      "label": "Drafting, Pleadings & Appearances"
+    },
+    {
+      "id": "in.prof.cs-professional.elective-banking-insurance-ip-labour-laws",
+      "kind": "subject",
+      "parent": "in.prof.cs-professional",
+      "label": "Elective (Banking / Insurance / IP / Labour Laws)"
+    },
+    {
+      "id": "in.prof.cs-professional.environmental-social-and-governance-esg",
+      "kind": "subject",
+      "parent": "in.prof.cs-professional",
+      "label": "Environmental, Social & Governance (ESG)"
+    },
+    {
+      "id": "in.prof.cs-professional.strategic-management-and-corporate-finance",
+      "kind": "subject",
+      "parent": "in.prof.cs-professional",
+      "label": "Strategic Management & Corporate Finance"
+    },
+    {
+      "id": "in.prof.ea-enrolled-agent",
+      "kind": "program",
+      "parent": "in.prof",
+      "label": "EA (Enrolled Agent)"
+    },
+    {
+      "id": "in.prof.ea-enrolled-agent.part-1-individuals",
+      "kind": "subject",
+      "parent": "in.prof.ea-enrolled-agent",
+      "label": "Part 1 — Individuals"
+    },
+    {
+      "id": "in.prof.ea-enrolled-agent.part-2-businesses",
+      "kind": "subject",
+      "parent": "in.prof.ea-enrolled-agent",
+      "label": "Part 2 — Businesses"
+    },
+    {
+      "id": "in.prof.ea-enrolled-agent.part-3-representation-practices-and-procedures",
+      "kind": "subject",
+      "parent": "in.prof.ea-enrolled-agent",
+      "label": "Part 3 — Representation, Practices & Procedures"
+    },
+    {
+      "id": "in.prof.frm-part-i",
+      "kind": "program",
+      "parent": "in.prof",
+      "label": "FRM Part I"
+    },
+    {
+      "id": "in.prof.frm-part-i.financial-markets-and-products",
+      "kind": "subject",
+      "parent": "in.prof.frm-part-i",
+      "label": "Financial Markets & Products"
+    },
+    {
+      "id": "in.prof.frm-part-i.foundations-of-risk-management",
+      "kind": "subject",
+      "parent": "in.prof.frm-part-i",
+      "label": "Foundations of Risk Management"
+    },
+    {
+      "id": "in.prof.frm-part-i.quantitative-analysis",
+      "kind": "subject",
+      "parent": "in.prof.frm-part-i",
+      "label": "Quantitative Analysis"
+    },
+    {
+      "id": "in.prof.frm-part-i.valuation-and-risk-models",
+      "kind": "subject",
+      "parent": "in.prof.frm-part-i",
+      "label": "Valuation & Risk Models"
+    },
+    {
+      "id": "in.prof.frm-part-ii",
+      "kind": "program",
+      "parent": "in.prof",
+      "label": "FRM Part II"
+    },
+    {
+      "id": "in.prof.frm-part-ii.credit-risk-measurement-and-management",
+      "kind": "subject",
+      "parent": "in.prof.frm-part-ii",
+      "label": "Credit Risk Measurement & Management"
+    },
+    {
+      "id": "in.prof.frm-part-ii.current-issues-in-financial-markets",
+      "kind": "subject",
+      "parent": "in.prof.frm-part-ii",
+      "label": "Current Issues in Financial Markets"
+    },
+    {
+      "id": "in.prof.frm-part-ii.liquidity-and-treasury-risk",
+      "kind": "subject",
+      "parent": "in.prof.frm-part-ii",
+      "label": "Liquidity & Treasury Risk"
+    },
+    {
+      "id": "in.prof.frm-part-ii.market-risk-measurement-and-management",
+      "kind": "subject",
+      "parent": "in.prof.frm-part-ii",
+      "label": "Market Risk Measurement & Management"
+    },
+    {
+      "id": "in.prof.frm-part-ii.operational-risk-and-resilience",
+      "kind": "subject",
+      "parent": "in.prof.frm-part-ii",
+      "label": "Operational Risk & Resilience"
+    },
+    {
+      "id": "in.prof.frm-part-ii.risk-management-and-investment-management",
+      "kind": "subject",
+      "parent": "in.prof.frm-part-ii",
+      "label": "Risk Management & Investment Management"
+    },
+    {
+      "id": "in.prof.us-cma-part-1",
+      "kind": "program",
+      "parent": "in.prof",
+      "label": "US CMA Part 1"
+    },
+    {
+      "id": "in.prof.us-cma-part-1.full-part-1-mixed-all-sections",
+      "kind": "subject",
+      "parent": "in.prof.us-cma-part-1",
+      "label": "Full Part 1 — Mixed (All Sections)"
+    },
+    {
+      "id": "in.prof.us-cma-part-1.part-1a-external-financial-reporting-decisions",
+      "kind": "subject",
+      "parent": "in.prof.us-cma-part-1",
+      "label": "Part 1A — External Financial Reporting Decisions"
+    },
+    {
+      "id": "in.prof.us-cma-part-1.part-1b-planning-budgeting-and-forecasting",
+      "kind": "subject",
+      "parent": "in.prof.us-cma-part-1",
+      "label": "Part 1B — Planning, Budgeting & Forecasting"
+    },
+    {
+      "id": "in.prof.us-cma-part-1.part-1c-performance-management",
+      "kind": "subject",
+      "parent": "in.prof.us-cma-part-1",
+      "label": "Part 1C — Performance Management"
+    },
+    {
+      "id": "in.prof.us-cma-part-1.part-1d-cost-management",
+      "kind": "subject",
+      "parent": "in.prof.us-cma-part-1",
+      "label": "Part 1D — Cost Management"
+    },
+    {
+      "id": "in.prof.us-cma-part-1.part-1e-internal-controls",
+      "kind": "subject",
+      "parent": "in.prof.us-cma-part-1",
+      "label": "Part 1E — Internal Controls"
+    },
+    {
+      "id": "in.prof.us-cma-part-1.part-1f-technology-and-analytics",
+      "kind": "subject",
+      "parent": "in.prof.us-cma-part-1",
+      "label": "Part 1F — Technology & Analytics"
+    },
+    {
+      "id": "in.prof.us-cma-part-2",
+      "kind": "program",
+      "parent": "in.prof",
+      "label": "US CMA Part 2"
+    },
+    {
+      "id": "in.prof.us-cma-part-2.full-part-2-mixed-all-sections",
+      "kind": "subject",
+      "parent": "in.prof.us-cma-part-2",
+      "label": "Full Part 2 — Mixed (All Sections)"
+    },
+    {
+      "id": "in.prof.us-cma-part-2.part-2a-financial-statement-analysis",
+      "kind": "subject",
+      "parent": "in.prof.us-cma-part-2",
+      "label": "Part 2A — Financial Statement Analysis"
+    },
+    {
+      "id": "in.prof.us-cma-part-2.part-2b-corporate-finance",
+      "kind": "subject",
+      "parent": "in.prof.us-cma-part-2",
+      "label": "Part 2B — Corporate Finance"
+    },
+    {
+      "id": "in.prof.us-cma-part-2.part-2c-decision-analysis",
+      "kind": "subject",
+      "parent": "in.prof.us-cma-part-2",
+      "label": "Part 2C — Decision Analysis"
+    },
+    {
+      "id": "in.prof.us-cma-part-2.part-2d-risk-management",
+      "kind": "subject",
+      "parent": "in.prof.us-cma-part-2",
+      "label": "Part 2D — Risk Management"
+    },
+    {
+      "id": "in.prof.us-cma-part-2.part-2e-investment-decisions",
+      "kind": "subject",
+      "parent": "in.prof.us-cma-part-2",
+      "label": "Part 2E — Investment Decisions"
+    },
+    {
+      "id": "in.prof.us-cma-part-2.part-2f-professional-ethics",
+      "kind": "subject",
+      "parent": "in.prof.us-cma-part-2",
+      "label": "Part 2F — Professional Ethics"
+    },
+    {
+      "id": "in.prof.us-cpa",
+      "kind": "program",
+      "parent": "in.prof",
+      "label": "US CPA"
+    },
+    {
+      "id": "in.prof.us-cpa.aud-auditing-and-attestation",
+      "kind": "subject",
+      "parent": "in.prof.us-cpa",
+      "label": "AUD — Auditing & Attestation"
+    },
+    {
+      "id": "in.prof.us-cpa.bar-business-analysis-and-reporting",
+      "kind": "subject",
+      "parent": "in.prof.us-cpa",
+      "label": "BAR — Business Analysis & Reporting"
+    },
+    {
+      "id": "in.prof.us-cpa.far-financial-accounting-and-reporting",
+      "kind": "subject",
+      "parent": "in.prof.us-cpa",
+      "label": "FAR — Financial Accounting & Reporting"
+    },
+    {
+      "id": "in.prof.us-cpa.isc-information-systems-and-controls",
+      "kind": "subject",
+      "parent": "in.prof.us-cpa",
+      "label": "ISC — Information Systems & Controls"
+    },
+    {
+      "id": "in.prof.us-cpa.reg-regulation-tax-and-law",
+      "kind": "subject",
+      "parent": "in.prof.us-cpa",
+      "label": "REG — Regulation (Tax & Law)"
+    },
+    {
+      "id": "in.prof.us-cpa.tcp-tax-compliance-and-planning",
+      "kind": "subject",
+      "parent": "in.prof.us-cpa",
+      "label": "TCP — Tax Compliance & Planning"
+    }
+  ]
+}
