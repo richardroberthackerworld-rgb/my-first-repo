@@ -155,3 +155,47 @@ The country tier exists and is exercised (`in`). Adding `us`, `gb` or any other
 country is new shards under `taxonomy/<country>/` plus an index entry — no
 schema change and no code change. It has not been done yet only because nobody
 has asked for it; the tier is there so that when they do, it is data.
+
+## Who consumes this tier — and who does not
+
+Measured 2026-08-23, because it decides what is worth building next.
+
+`capabilityOf()` has exactly two consumers: `GET /v1/taxonomy` and
+`POST /v1/classify`. **No student-facing surface reads the taxonomy at all.**
+`index.html` never fetches `taxonomy/index.json`, `taxonomy.php`, or either
+endpoint. The eight occurrences of the word "taxonomy" in the page are
+`Checks::taxonomy`, a presentation check, and unrelated to this tier.
+
+The honesty a student actually sees — the green badge, and the
+"⚠ AI answer — not verified" line for a Band D subject — runs entirely
+through `capabilities.json` → `subjectOf7` → the badge. That path does not
+touch the taxonomy and does not need it.
+
+**So adding `problem_types` to the generated shards would reach API clients
+and no students.** It is not wrong; it is simply not the lever it looks like.
+
+The surface that WOULD put this tier in front of a student is a course
+picker, and a picker is ruled out by an explicit logged decision — DESIGN.md,
+2026-08-16: *"remove both options completely, keep only Ask your doubt, and
+say which course or which subject class or exam automatically"*. The premise
+there was that an inventory task in front of someone who arrived with one
+doubt is the wrong trade. That reasoning has not changed. **Do not rebuild
+the picker to give this tier a consumer.** If the taxonomy is ever to reach
+a student, it has to arrive through automatic detection, not a menu.
+
+## How much of the tree can answer for itself
+
+31 of 1,695 nodes carry `problem_types`. The other 1,664 — 98.2%, every
+generated node — return capability `unknown`. That is honest, and it is also
+most of the tree.
+
+`tools/gate-taxonomy-capability.js` puts that ratio on the record and pins a
+floor under it, so the tree can gain honesty and never quietly lose it:
+bulk-importing another 500 courses would otherwise grow the node count while
+shrinking the share that can say anything true, with every gate still green.
+
+The same gate refuses `problem_types` inside a `legacy-*` shard. Those files
+belong to `gen-legacy-taxonomy.js`, which does not emit capability, so a
+hand-edit there would survive review and then be destroyed by the next
+regeneration. Failing the build is kinder than losing the work.
+
