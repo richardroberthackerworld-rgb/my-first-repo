@@ -31,6 +31,11 @@
    ============================================================ */
 declare(strict_types=1);
 
+/* Certifying kinds come from capabilities.json via Capability::certifyingKinds().
+   Release A made that the single source of truth; duplicating the list here
+   would restore the fourth hand-kept copy it removed. */
+require_once __DIR__ . '/capability.php';
+
 /* Phase 1: checkers that used to exist only in the browser, ported so that
    /v1 gives the same verdict as the website. See VERIFICATION-CONTRACT.md. */
 require_once __DIR__ . '/sampling.php';
@@ -84,6 +89,19 @@ final class Algebra
     public static function tokenize(string $src): ?array
     {
         $s = $src;
+        /* |u| is absolute value. The bars were not in the grammar at all, so
+           ln|x| failed to tokenise — and ln|x| + C is how every textbook writes
+           the integral of 1/x, which meant the standard answer to the standard
+           question received no verdict.
+
+           The replacement is BRACKETED, not bare: ln|x| has to become
+           ln(abs(x)) and not lnabs(x), because the tokeniser reads a run of
+           letters greedily and would take lnabs as five separate variables.
+
+           A lone unpaired bar still fails to tokenise, exactly as before —
+           set-builder notation is not arithmetic and must not be guessed at.
+           Mirrors tokenize() in index.html. */
+        $s = preg_replace('/\|([^|]+)\|/u', '(abs($1))', $s);
         $s = preg_replace('/[\x{2212}\x{2013}\x{2014}]/u', '-', $s);   // − – —
         $s = str_replace(['×', '÷'], ['*', '/'], $s);
         $s = str_replace(['⁰', '¹', '²', '³', '⁴', '⁵'],
@@ -334,6 +352,58 @@ final class Algebra
         if (!is_finite($a) || !is_finite($b)) return null;
         $scale = max(1.0, abs($a), abs($b));
         return abs($a - $b) <= $scale * 1e-9;
+    }
+
+    /* ---------- DECLARED NUMERICAL PRECISION ----------
+       holdsAt asks "is the residual ~0?" — the right question for an exact
+       root and the wrong one for a decimal. x + e^x = 0 has no closed form;
+       its root is -0.56714…, and a student writing x = -0.567 has given a
+       CORRECT answer to three decimal places. The residual is about 3e-4, so
+       the universal 1e-9 called it wrong.
+
+       The fix is NOT a bigger epsilon, which would accept a near-miss. The
+       notation is read as what it means: -0.567 denotes [-0.5675, -0.5665],
+       and the claim is certified only if a root is PROVED to lie inside it by
+       a sign change. A pole also changes sign, so the interval is bisected and
+       |f| must actually collapse at the crossing.
+
+       Mirrors decimalsFor()/rootInInterval() in index.html. */
+    public static function decimalsFor(string $md, float $val): ?int
+    {
+        if (!preg_match_all('/-?\d+\.(\d+)/u', $md, $ms, PREG_SET_ORDER)) return null;
+        foreach ($ms as $m) {
+            if (abs((float)$m[0] - $val) < 1e-12) return strlen($m[1]);
+        }
+        return null;
+    }
+
+    public static function rootInInterval(array $eq, string $v, float $lo, float $hi): ?bool
+    {
+        $f = static function (float $x) use ($eq, $v) {
+            $env = [$v => $x];
+            $L = self::evalAt($eq['L'], $env);
+            $R = self::evalAt($eq['R'], $env);
+            if (!is_finite($L) || !is_finite($R)) return null;
+            return $L - $R;
+        };
+        $flo = $f($lo);
+        $fhi = $f($hi);
+        if ($flo === null || $fhi === null) return null;
+        if ($flo === 0.0 || $fhi === 0.0) return true;
+        if (($flo > 0) === ($fhi > 0)) return false;       // no sign change → no root proved
+        $a = $lo; $b = $hi; $fa = $flo;
+        for ($k = 0; $k < 80; $k++) {
+            $mid = ($a + $b) / 2;
+            $fm = $f($mid);
+            if ($fm === null) return null;
+            if ($fm === 0.0) return true;
+            if (($fm > 0) === ($fa > 0)) { $a = $mid; $fa = $fm; } else { $b = $mid; }
+        }
+        $fr = $f(($a + $b) / 2);
+        if ($fr === null) return null;
+        /* Measured against the ENDPOINT magnitudes, not against f at the
+           crossing: at a pole the latter is enormous and would excuse itself. */
+        return abs($fr) <= 1e-9 * max(1.0, abs($flo), abs($fhi));
     }
 
     public static function round6(float $n): float
@@ -758,7 +828,12 @@ final class Checks
        ============================================================ */
     public static function polyOf(array $eq, string $v): ?array
     {
-        $MAXD = 6; $y = [];
+        /* The cap was 6, so a fully factored degree-8 product reconstructed as
+           nothing and completeness could not run. 12 is chosen by arithmetic:
+           reconstruction samples at x = 0…MAXD+1, so degree 12 evaluates at 13,
+           and 13^12 is about 2.3e13 — inside the range where a double still
+           represents every integer exactly. Mirrors index.html. */
+        $MAXD = 12; $y = [];
         for ($i = 0; $i <= $MAXD + 1; $i++) {
             $a = Algebra::evalAt($eq['L'], [$v => (float)$i]);
             $b = Algebra::evalAt($eq['R'], [$v => (float)$i]);
@@ -964,18 +1039,47 @@ final class Checks
            reports a clean pass on an answer whose second root is wrong. */
         $v0 = $eq['vars'][0];
         $roots = self::claimedRoots($zone, $v0);
-        if (!count($roots) || count($roots) > 6) return [];
+        /* 12, not 6, to match polyOf degree cap. At 6 an answer listing 7 or more
+           roots produced NO substitution checks, and completeness bails whenever a
+           claimed value is not a root — leaving that case with no verdict from
+           anyone. Mirrors index.html. */
+        if (!count($roots) || count($roots) > 12) return [];
 
         $out = [];
         foreach ($roots as $rv) {
             $env = [$v0 => $rv];
             $ok = Algebra::holdsAt($eq, $env);
             if ($ok === null) continue;                   // undefined there → no verdict
+            /* DECLARED PRECISION. Reached ONLY where the strict test already
+               said no, and only for a value the student wrote as a decimal. It
+               can turn a false into a true and never the reverse, so every
+               answer that verified before still verifies on the same grounds.
+               Mirrors index.html. */
+            $toPrecision = false;
+            if ($ok === false) {
+                $dp = Algebra::decimalsFor($md, $rv);
+                if ($dp !== null && $dp > 0) {
+                    $half = 0.5 * pow(10, -$dp);
+                    if (Algebra::rootInInterval($eq, $v0, $rv - $half, $rv + $half) === true) {
+                        $ok = true;
+                        $toPrecision = $dp;
+                    }
+                }
+            }
             $l = Algebra::round6(Algebra::evalAt($eq['L'], $env));
             $r = Algebra::round6(Algebra::evalAt($eq['R'], $env));
-            $out[] = ['kind' => 'subst', 'ok' => $ok,
-                'text' => $v0 . ' = ' . Algebra::round6($rv) . ' put back into '
-                        . trim($found['src']) . ' gives ' . $l . ($ok ? ' = ' : ' ≠ ') . $r];
+            /* A root that checks out is EVIDENCE, not a complete answer.
+               Putting x = 1, 2, 3 back into a degree-8 equation proves those
+               three genuine and says nothing about the other five. Mirrors
+               index.html; without it /v1 certified on evidence alone. */
+            $out[] = ['kind' => 'subst', 'ok' => $ok, 'needsComplete' => true,
+                'text' => $toPrecision !== false
+                    ? $v0 . ' = ' . Algebra::round6($rv) . ' is a correct root of '
+                      . trim($found['src']) . ' to the ' . $toPrecision . ' decimal place'
+                      . ($toPrecision > 1 ? 's' : '') . ' it is written to — a root is proved '
+                      . 'to lie inside the interval that figure denotes'
+                    : $v0 . ' = ' . Algebra::round6($rv) . ' put back into '
+                      . trim($found['src']) . ' gives ' . $l . ($ok ? ' = ' : ' ≠ ') . $r];
         }
         return $out;
     }
@@ -1007,7 +1111,10 @@ final class Checks
            it. preg_match_all cannot express this; the offset walk can. */
         $offset = 0;
         $len = strlen($zone);
-        while ($offset < $len && count($roots) <= 6) {
+        /* 12, not 6, to match polyOf degree cap. A degree-8 equation has eight roots
+           and a student who wrote all eight was having the last two silently
+           dropped, which then read as an incomplete answer. Mirrors index.html. */
+        while ($offset < $len && count($roots) <= 12) {
             if (!preg_match($re, $zone, $m, PREG_OFFSET_CAPTURE, $offset)) break;
             $at   = $m[0][1];
             $tail = $m[1][0];
@@ -1028,7 +1135,10 @@ final class Checks
             /* "x = 2, 3" / "x = 2 or 3" — accepted only when EVERY part is a
                closed value on its own, so prose is not mistaken for a list. */
             $parts = preg_split($sep, $tail);
-            if ($parts !== false && count($parts) > 1 && count($parts) <= 4) {
+            /* Was capped at 4, so "x = 1, 2, 3, 4, 5" fell through to the word-eating
+               fallback and yielded ONE root. $allOk below is what keeps this safe:
+               every part must evaluate on its own. Mirrors index.html. */
+            if ($parts !== false && count($parts) > 1 && count($parts) <= 12) {
                 $all = [];
                 $ok = true;
                 foreach ($parts as $p) {
@@ -1499,11 +1609,77 @@ final class Checks
     }
 
     /* Claims of the form "N is prime" / "N is composite" / "N is not prime". */
+    /* ---------- FACTORISATION CLAIMS ----------
+       "No, 5779 = 7 x 826" is a complete answer to "is 5779 prime?" and it
+       reached no checker at all: the primality regex only ever matched the
+       phrasing "N is prime/composite", so an answer making its case by
+       exhibiting factors went entirely unread.
+
+       That answer is false twice over — 5779 is prime, AND 7 x 826 is 5782.
+       The second fault is the one to check first: it is decidable by
+       multiplication alone and needs no view on primality.
+
+       Mirrors factorisationClaims() in index.html; the Release B suite
+       compares both engines on every case. */
+    private static function factorisationClaims(string $answer, array &$out, array &$seen): void
+    {
+        $s = self::deLatex($answer);
+        /* N = a x b [x c …]. The trailing guard stops "12 = 3 x 4 + 1" being
+           read as a factorisation — a product continuing into a sum is an
+           expression, not a factor list. */
+        $re = '/(?:^|[^\d.])(\d{2,15})\s*=\s*(\d{1,15}(?:\s*[×x*·]\s*\d{1,15})+)(?![\d.\s]*[+\-^\/])/iu';
+        if (!preg_match_all($re, $s, $ms, PREG_SET_ORDER)) return;
+        foreach ($ms as $m) {
+            if (count($out) >= 8) break;
+            $n = (int)$m[1];
+            $key = 'f' . $n . '|' . preg_replace('/\s+/u', '', $m[2]);
+            if (isset($seen[$key])) continue;
+            $seen[$key] = true;
+            $raw = preg_split('/[×x*·]/u', $m[2]);
+            if ($raw === false || count($raw) < 2) continue;
+            $parts = [];
+            $okParts = true;
+            foreach ($raw as $t) {
+                $p = (int)trim($t);
+                if ($p <= 0) { $okParts = false; break; }
+                $parts[] = $p;
+            }
+            if (!$okParts) continue;
+            $prod = 1;
+            foreach ($parts as $p) $prod *= $p;
+            /* Beyond 2^53 the product is no longer exact, so a mismatch would
+               be a rounding artefact rather than the student's error. */
+            if (!is_finite((float)$prod) || $prod > 9007199254740991) continue;
+            $good = ($prod === $n);
+            /* A TRUE factorisation into factors above 1 also settles primality.
+               N = 1 x N is true and shows nothing. */
+            $nontrivial = count(array_filter($parts, static function ($p) { return $p > 1; })) >= 2;
+            $joined = implode(' × ', $parts);
+            $out[] = [
+                'kind' => 'primality',
+                'ok'   => $good,
+                'soft' => ($good && !$nontrivial),
+                'text' => $good
+                    ? ($nontrivial
+                        ? $n . ' = ' . $joined . ' — the product checks out, so ' . $n .
+                          ' is composite as the answer says'
+                        : $n . ' = ' . $joined . ' is true but trivial: 1 × ' . $n .
+                          ' shows nothing about primality')
+                    : $n . ' ≠ ' . $joined . ' — that product is ' . $prod .
+                      ', so the factorisation given does not hold',
+            ];
+        }
+    }
+
     public static function primality(string $answer): array
     {
         $s = self::deLatex($answer);
         $out = [];
         $seen = [];
+        /* Factorisation claims first, and OUTSIDE the early return below — the
+           phrasing regex not matching is precisely the case where an answer
+           made its argument by exhibiting factors instead. Mirrors index.html. */
+        self::factorisationClaims($answer, $out, $seen);
         $re = '/(-?\d{1,15})\s*(?:is|seems\s+to\s+be|appears\s+to\s+be|looks)\s+'
             . '(not\s+prime|composite|prime)\b/iu';
         if (!preg_match_all($re, $s, $ms, PREG_SET_ORDER)) return $out;
@@ -1780,10 +1956,39 @@ final class Checks
         foreach ($checks as $c) if (!empty($c['invalid_question'])) $invalidQuestion = true;
         $failedAnswer = array_filter($failed, static fn($c) => isset($answerLevel[$c['kind']]));
 
+        /* ---------- EVIDENCE IS NOT A COMPLETE ANSWER ----------
+           This rule existed only in index.html. It never showed up in parity
+           because a passing `subst` was always accompanied by a passing
+           `roots` on the polynomial corpus, so both engines said `checked` for
+           the same reason. Release B's precision policy made substitution pass
+           on a TRANSCENDENTAL equation, where completeness cannot run — and
+           the divergence appeared at once: JS declined, PHP certified.
+
+           PHP was the one that was wrong. Putting x = -0.567 back into
+           x + e^x = 0 proves that value is A root; it says nothing about
+           whether it is THE solution set. Certifying on that alone is exactly
+           the false certification the contract forbids, and /v1 would have
+           done it.
+
+           The certifying kinds come from capabilities.json, the same single
+           source index.html's PROOF set is generated from — mirroring the JS
+           list by hand here would put back the fourth copy Release A removed. */
+        $certifying = array_fill_keys(Capability::certifyingKinds(), true);
+        $passedProofs = array_values(array_filter($passed,
+            static fn($c) => isset($certifying[$c['kind'] ?? ''])));
+        $completeProved = false;
+        foreach ($passed as $c) if (($c['kind'] ?? '') === 'roots') { $completeProved = true; break; }
+        $evidenceOnly = count($passedProofs) > 0 && !$completeProved;
+        if ($evidenceOnly) {
+            foreach ($passedProofs as $c) {
+                if (empty($c['needsComplete'])) { $evidenceOnly = false; break; }
+            }
+        }
+
         if ($invalidQuestion)         $state = 'invalid_question';
         elseif (count($failedAnswer)) $state = 'disputed';
         elseif (count($failed))       $state = 'stepfail';
-        elseif (count($passed))       $state = 'checked';
+        elseif (count($passedProofs) && !$evidenceOnly) $state = 'checked';
         else                          $state = 'unverified';
 
         /* ---------- three trust layers, reported separately ----------

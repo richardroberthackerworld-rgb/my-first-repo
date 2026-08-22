@@ -77,6 +77,61 @@ final class Deriv
         if (!in_array($r, self::$lastRules, true)) self::$lastRules[] = $r;
     }
 
+    /* The numeric value of a subtree containing no variable, or null.
+       This is what lets x^(3/2) be differentiated: the exponent is a division
+       node rather than a number, and refusing it meant the standard textbook
+       answer to the integral of sqrt(x) received no verdict at all.
+
+       It folds only what is exactly foldable and returns null the moment a
+       variable appears, so it can never turn a variable exponent into a
+       constant one. Non-finite results are null too — 1/0 inside an exponent
+       is not a constant, it is a mistake.
+
+       Byte-for-byte the same decisions as constOf() in index.html; the
+       Release B suite compares both engines on every case. */
+    private static function constOf($a)
+    {
+        if (!is_array($a)) return null;
+        $t = $a['t'] ?? '';
+        if ($t === 'n') return is_finite((float)$a['v']) ? (float)$a['v'] : null;
+        if ($t === 'v') return null;
+        if ($t === 'u') { $s = self::constOf($a['a']); return $s === null ? null : -$s; }
+        if ($t === 'c') {
+            $iv = self::constOf($a['a']);
+            if ($iv === null) return null;
+            switch ($a['fn']) {
+                case 'sqrt':  $r = $iv < 0 ? NAN : sqrt($iv); break;
+                case 'cbrt':  $r = ($iv < 0 ? -pow(-$iv, 1 / 3) : pow($iv, 1 / 3)); break;
+                case 'abs':   $r = abs($iv); break;
+                case 'exp':   $r = exp($iv); break;
+                case 'ln':    $r = $iv > 0 ? log($iv) : NAN; break;
+                case 'log':
+                case 'log10': $r = $iv > 0 ? log10($iv) : NAN; break;
+                case 'log2':  $r = $iv > 0 ? log($iv, 2) : NAN; break;
+                case 'sin':   $r = sin($iv); break;
+                case 'cos':   $r = cos($iv); break;
+                case 'tan':   $r = tan($iv); break;
+                default: return null;
+            }
+            return is_finite($r) ? (float)$r : null;
+        }
+        if ($t === 'b') {
+            $x = self::constOf($a['a']);
+            $y = self::constOf($a['b']);
+            if ($x === null || $y === null) return null;
+            switch ($a['op']) {
+                case '+': $out = $x + $y; break;
+                case '-': $out = $x - $y; break;
+                case '*': $out = $x * $y; break;
+                case '/': if (abs($y) < 1e-15) return null; $out = $x / $y; break;
+                case '^': $out = pow($x, $y); break;
+                default: return null;
+            }
+            return is_finite($out) ? (float)$out : null;
+        }
+        return null;
+    }
+
     private static function d($a, string $v)
     {
         if (!$a) return null;
@@ -106,12 +161,33 @@ final class Deriv
                                     self::B('^', $w, self::N(2)));
             }
             if ($a['op'] === '^') {
-                if (($w['t'] ?? '') !== 'n') return null;
-                self::note('power');
-                $du = self::d($u, $v);
-                if ($du === null) return null;
-                if (!(($u['t'] ?? '') === 'v' && strtolower($u['v']) === $v)) self::note('chain');
-                return self::B('*', self::B('*', self::N($w['v']), self::B('^', $u, self::N($w['v'] - 1))), $du);
+                /* The exponent must be CONSTANT — but not necessarily a bare
+                   number. A textbook writes x^(3/2), which parses as a division
+                   node, and the old test ($w['t'] !== 'n') refused it, so the
+                   standard answer to the integral of sqrt(x) got no verdict.
+                   constOf folds any variable-free exponent and still refuses
+                   x^x. Mirrors index.html exactly. */
+                $wc = self::constOf($w);
+                if ($wc !== null) {
+                    self::note('power');
+                    $du = self::d($u, $v);
+                    if ($du === null) return null;
+                    if (!(($u['t'] ?? '') === 'v' && strtolower($u['v']) === $v)) self::note('chain');
+                    return self::B('*', self::B('*', self::N($wc), self::B('^', $u, self::N($wc - 1))), $du);
+                }
+                /* CONSTANT BASE, variable exponent: d/dx a^u = a^u * ln(a) * du.
+                   e^x is the case that matters, and `e` tokenises to a NUMBER,
+                   so it arrives here as 2.718…^x, not as a named function. */
+                $uc = self::constOf($u);
+                if ($uc !== null) {
+                    if (!($uc > 0)) return null;          // ln(a) undefined for a <= 0
+                    self::note('exp');
+                    $dw = self::d($w, $v);
+                    if ($dw === null) return null;
+                    return self::B('*', self::B('*', self::B('^', self::N($uc), $w), self::N(log($uc))), $dw);
+                }
+                /* x^x needs logarithmic differentiation; null rather than pretend. */
+                return null;
             }
             return null;
         }
@@ -127,7 +203,20 @@ final class Deriv
                 case 'exp':  self::note('exp');   return self::B('*', self::C('exp', $inner), $g);
                 case 'ln':   self::note('log');   return self::B('/', $g, $inner);
                 case 'sqrt': self::note('power'); return self::B('/', $g, self::B('*', self::N(2), self::C('sqrt', $inner)));
-                default: return null;             // abs, floor, log10 … not differentiable here
+                /* |u|' = (u/|u|)*u'. Undefined at u = 0, where evalAt yields
+                   0/0 and the sample is discarded rather than counted — the
+                   correct reading of a point where the derivative does not
+                   exist. This is what lets ln|x| be checked, and ln|x| + C is
+                   how every textbook writes the integral of 1/x. */
+                case 'abs':  self::note('abs');   return self::B('*', self::B('/', $inner, self::C('abs', $inner)), $g);
+                /* Explicit bases only. `log` is deliberately ABSENT: in Indian
+                   textbooks it means log10 in algebra and ln in calculus, and
+                   the notation does not say which. Guessing would either
+                   certify a wrong answer or dispute a right one, so a bare
+                   log() falls through to null and the claim gets NO VERDICT. */
+                case 'log10': self::note('log');  return self::B('/', $g, self::B('*', $inner, self::N(M_LN10)));
+                case 'log2':  self::note('log');  return self::B('/', $g, self::B('*', $inner, self::N(M_LN2)));
+                default: return null;             // log, floor, ceil … no verdict
             }
         }
         return null;

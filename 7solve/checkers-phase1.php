@@ -210,7 +210,19 @@ final class Phase1
         $out = []; $seen = [];
         foreach (preg_split('/\n+/', $md) ?: [] as $line) {
             if (count($out) >= 4) break;
-            $line = trim(preg_replace('/^[\s>*\-–—•\d.)]+/u', '', $line));
+            /* Strip the markdown wrapper from BOTH ends. The leading strip has
+               always been here; the trailing one had not, so `**(x-3)(x-4) =
+               x^2-7x+12**` arrived as `… + 12**` and failed to parse — and the
+               answer template this product ships instructs the model to put the
+               answer in **bold**, so the app's own output format was the one
+               form identityCheck could never read.
+
+               Only markdown emphasis is stripped. The leading class keeps its
+               digits and brackets for list markers; the trailing class does
+               not, because `)` and digits are ordinary and load-bearing at the
+               end of an expression. Mirrors index.html. */
+            $line = trim(preg_replace('/[\s*_]+$/u', '',
+                    preg_replace('/^[\s>*_\-–—•\d.)]+/u', '', $line)));
             if (strpos($line, '=') === false) continue;
             if (preg_match('/^##/', $line)) continue;
             if (count(explode('=', $line)) !== 2) continue;
