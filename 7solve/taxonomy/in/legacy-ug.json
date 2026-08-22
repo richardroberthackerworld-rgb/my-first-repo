@@ -1,0 +1,1880 @@
+{
+  "_": "GENERATED from tools/legacy-taxonomy.json by tools/gen-legacy-taxonomy.js. Do not hand-edit — the generator owns these nodes and tools/gate-legacy-taxonomy.js fails the build if they drift. The six mapping decisions are documented in the generator.",
+  "schema": "7solve.taxonomy/1",
+  "version": "2026-08-22",
+  "source": "7solve-legacy",
+  "nodes": [
+    {
+      "id": "in.ug.b-a-economics",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.A (Economics)"
+    },
+    {
+      "id": "in.ug.b-a-fine-arts",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.A (Fine Arts)"
+    },
+    {
+      "id": "in.ug.b-a-hep",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.A (HEP)"
+    },
+    {
+      "id": "in.ug.b-a-journalism",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.A (Journalism)"
+    },
+    {
+      "id": "in.ug.b-a-languages-literature",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.A (Languages / Literature)"
+    },
+    {
+      "id": "in.ug.b-a-political-science",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.A (Political Science)"
+    },
+    {
+      "id": "in.ug.b-a-psychology",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.A (Psychology)"
+    },
+    {
+      "id": "in.ug.b-a-public-administration",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.A (Public Administration)"
+    },
+    {
+      "id": "in.ug.b-a-sociology",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.A (Sociology)"
+    },
+    {
+      "id": "in.ug.b-arch",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.Arch"
+    },
+    {
+      "id": "in.ug.b-arch.architectural-design",
+      "kind": "subject",
+      "parent": "in.ug.b-arch",
+      "label": "Architectural Design"
+    },
+    {
+      "id": "in.ug.b-arch.building-construction",
+      "kind": "subject",
+      "parent": "in.ug.b-arch",
+      "label": "Building Construction"
+    },
+    {
+      "id": "in.ug.b-arch.building-materials",
+      "kind": "subject",
+      "parent": "in.ug.b-arch",
+      "label": "Building Materials"
+    },
+    {
+      "id": "in.ug.b-arch.climatology",
+      "kind": "subject",
+      "parent": "in.ug.b-arch",
+      "label": "Climatology"
+    },
+    {
+      "id": "in.ug.b-arch.computer-aided-design",
+      "kind": "subject",
+      "parent": "in.ug.b-arch",
+      "label": "Computer Aided Design"
+    },
+    {
+      "id": "in.ug.b-arch.estimation-and-specification",
+      "kind": "subject",
+      "parent": "in.ug.b-arch",
+      "label": "Estimation & Specification"
+    },
+    {
+      "id": "in.ug.b-arch.history-of-architecture",
+      "kind": "subject",
+      "parent": "in.ug.b-arch",
+      "label": "History of Architecture"
+    },
+    {
+      "id": "in.ug.b-arch.interior-design",
+      "kind": "subject",
+      "parent": "in.ug.b-arch",
+      "label": "Interior Design"
+    },
+    {
+      "id": "in.ug.b-arch.landscape-architecture",
+      "kind": "subject",
+      "parent": "in.ug.b-arch",
+      "label": "Landscape Architecture"
+    },
+    {
+      "id": "in.ug.b-arch.professional-practice",
+      "kind": "subject",
+      "parent": "in.ug.b-arch",
+      "label": "Professional Practice"
+    },
+    {
+      "id": "in.ug.b-arch.structural-design",
+      "kind": "subject",
+      "parent": "in.ug.b-arch",
+      "label": "Structural Design"
+    },
+    {
+      "id": "in.ug.b-arch.town-planning",
+      "kind": "subject",
+      "parent": "in.ug.b-arch",
+      "label": "Town Planning"
+    },
+    {
+      "id": "in.ug.b-arch.working-drawing",
+      "kind": "subject",
+      "parent": "in.ug.b-arch",
+      "label": "Working Drawing"
+    },
+    {
+      "id": "in.ug.b-com-accounting-and-finance",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.Com (Accounting & Finance)"
+    },
+    {
+      "id": "in.ug.b-com-banking-and-insurance",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.Com (Banking & Insurance)"
+    },
+    {
+      "id": "in.ug.b-com-computers",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.Com (Computers)"
+    },
+    {
+      "id": "in.ug.b-com-general",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.Com (General)"
+    },
+    {
+      "id": "in.ug.b-com-honours",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.Com (Honours)"
+    },
+    {
+      "id": "in.ug.b-com-taxation",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.Com (Taxation)"
+    },
+    {
+      "id": "in.ug.b-des",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.Des"
+    },
+    {
+      "id": "in.ug.b-ed",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.Ed"
+    },
+    {
+      "id": "in.ug.b-ed.assessment-for-learning",
+      "kind": "subject",
+      "parent": "in.ug.b-ed",
+      "label": "Assessment for Learning"
+    },
+    {
+      "id": "in.ug.b-ed.childhood-and-growing-up",
+      "kind": "subject",
+      "parent": "in.ug.b-ed",
+      "label": "Childhood & Growing Up"
+    },
+    {
+      "id": "in.ug.b-ed.contemporary-india-and-education",
+      "kind": "subject",
+      "parent": "in.ug.b-ed",
+      "label": "Contemporary India & Education"
+    },
+    {
+      "id": "in.ug.b-ed.educational-psychology",
+      "kind": "subject",
+      "parent": "in.ug.b-ed",
+      "label": "Educational Psychology"
+    },
+    {
+      "id": "in.ug.b-ed.gender-school-and-society",
+      "kind": "subject",
+      "parent": "in.ug.b-ed",
+      "label": "Gender, School & Society"
+    },
+    {
+      "id": "in.ug.b-ed.ict-in-education",
+      "kind": "subject",
+      "parent": "in.ug.b-ed",
+      "label": "ICT in Education"
+    },
+    {
+      "id": "in.ug.b-ed.inclusive-education",
+      "kind": "subject",
+      "parent": "in.ug.b-ed",
+      "label": "Inclusive Education"
+    },
+    {
+      "id": "in.ug.b-ed.knowledge-and-curriculum",
+      "kind": "subject",
+      "parent": "in.ug.b-ed",
+      "label": "Knowledge & Curriculum"
+    },
+    {
+      "id": "in.ug.b-ed.learning-and-teaching",
+      "kind": "subject",
+      "parent": "in.ug.b-ed",
+      "label": "Learning & Teaching"
+    },
+    {
+      "id": "in.ug.b-ed.pedagogy-of-english",
+      "kind": "subject",
+      "parent": "in.ug.b-ed",
+      "label": "Pedagogy of English"
+    },
+    {
+      "id": "in.ug.b-ed.pedagogy-of-mathematics",
+      "kind": "subject",
+      "parent": "in.ug.b-ed",
+      "label": "Pedagogy of Mathematics"
+    },
+    {
+      "id": "in.ug.b-ed.pedagogy-of-regional-language",
+      "kind": "subject",
+      "parent": "in.ug.b-ed",
+      "label": "Pedagogy of Regional Language"
+    },
+    {
+      "id": "in.ug.b-ed.pedagogy-of-science",
+      "kind": "subject",
+      "parent": "in.ug.b-ed",
+      "label": "Pedagogy of Science"
+    },
+    {
+      "id": "in.ug.b-ed.pedagogy-of-social-science",
+      "kind": "subject",
+      "parent": "in.ug.b-ed",
+      "label": "Pedagogy of Social Science"
+    },
+    {
+      "id": "in.ug.b-ed.school-internship",
+      "kind": "subject",
+      "parent": "in.ug.b-ed",
+      "label": "School Internship"
+    },
+    {
+      "id": "in.ug.b-ed.school-organisation-and-management",
+      "kind": "subject",
+      "parent": "in.ug.b-ed",
+      "label": "School Organisation & Management"
+    },
+    {
+      "id": "in.ug.b-lib-sc",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.Lib.Sc"
+    },
+    {
+      "id": "in.ug.b-pharmacy",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.Pharmacy"
+    },
+    {
+      "id": "in.ug.b-pharmacy.biopharmaceutics-and-pharmacokinetics",
+      "kind": "subject",
+      "parent": "in.ug.b-pharmacy",
+      "label": "Biopharmaceutics & Pharmacokinetics"
+    },
+    {
+      "id": "in.ug.b-pharmacy.hospital-and-clinical-pharmacy",
+      "kind": "subject",
+      "parent": "in.ug.b-pharmacy",
+      "label": "Hospital & Clinical Pharmacy"
+    },
+    {
+      "id": "in.ug.b-pharmacy.industrial-pharmacy",
+      "kind": "subject",
+      "parent": "in.ug.b-pharmacy",
+      "label": "Industrial Pharmacy"
+    },
+    {
+      "id": "in.ug.b-pharmacy.pharmaceutical-analysis",
+      "kind": "subject",
+      "parent": "in.ug.b-pharmacy",
+      "label": "Pharmaceutical Analysis"
+    },
+    {
+      "id": "in.ug.b-pharmacy.pharmaceutical-chemistry",
+      "kind": "subject",
+      "parent": "in.ug.b-pharmacy",
+      "label": "Pharmaceutical Chemistry"
+    },
+    {
+      "id": "in.ug.b-pharmacy.pharmaceutical-jurisprudence",
+      "kind": "subject",
+      "parent": "in.ug.b-pharmacy",
+      "label": "Pharmaceutical Jurisprudence"
+    },
+    {
+      "id": "in.ug.b-pharmacy.pharmaceutical-microbiology-and-biotechnology",
+      "kind": "subject",
+      "parent": "in.ug.b-pharmacy",
+      "label": "Pharmaceutical Microbiology & Biotechnology"
+    },
+    {
+      "id": "in.ug.b-pharmacy.pharmaceutics",
+      "kind": "subject",
+      "parent": "in.ug.b-pharmacy",
+      "label": "Pharmaceutics"
+    },
+    {
+      "id": "in.ug.b-pharmacy.pharmacognosy",
+      "kind": "subject",
+      "parent": "in.ug.b-pharmacy",
+      "label": "Pharmacognosy"
+    },
+    {
+      "id": "in.ug.b-pharmacy.pharmacology",
+      "kind": "subject",
+      "parent": "in.ug.b-pharmacy",
+      "label": "Pharmacology"
+    },
+    {
+      "id": "in.ug.b-sc-agriculture",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.Sc (Agriculture)"
+    },
+    {
+      "id": "in.ug.b-sc-agriculture.agricultural-economics",
+      "kind": "subject",
+      "parent": "in.ug.b-sc-agriculture",
+      "label": "Agricultural Economics"
+    },
+    {
+      "id": "in.ug.b-sc-agriculture.agricultural-engineering",
+      "kind": "subject",
+      "parent": "in.ug.b-sc-agriculture",
+      "label": "Agricultural Engineering"
+    },
+    {
+      "id": "in.ug.b-sc-agriculture.agricultural-extension",
+      "kind": "subject",
+      "parent": "in.ug.b-sc-agriculture",
+      "label": "Agricultural Extension"
+    },
+    {
+      "id": "in.ug.b-sc-agriculture.agrometeorology",
+      "kind": "subject",
+      "parent": "in.ug.b-sc-agriculture",
+      "label": "Agrometeorology"
+    },
+    {
+      "id": "in.ug.b-sc-agriculture.agronomy",
+      "kind": "subject",
+      "parent": "in.ug.b-sc-agriculture",
+      "label": "Agronomy"
+    },
+    {
+      "id": "in.ug.b-sc-agriculture.animal-husbandry",
+      "kind": "subject",
+      "parent": "in.ug.b-sc-agriculture",
+      "label": "Animal Husbandry"
+    },
+    {
+      "id": "in.ug.b-sc-agriculture.entomology",
+      "kind": "subject",
+      "parent": "in.ug.b-sc-agriculture",
+      "label": "Entomology"
+    },
+    {
+      "id": "in.ug.b-sc-agriculture.food-technology",
+      "kind": "subject",
+      "parent": "in.ug.b-sc-agriculture",
+      "label": "Food Technology"
+    },
+    {
+      "id": "in.ug.b-sc-agriculture.genetics-and-plant-breeding",
+      "kind": "subject",
+      "parent": "in.ug.b-sc-agriculture",
+      "label": "Genetics & Plant Breeding"
+    },
+    {
+      "id": "in.ug.b-sc-agriculture.horticulture",
+      "kind": "subject",
+      "parent": "in.ug.b-sc-agriculture",
+      "label": "Horticulture"
+    },
+    {
+      "id": "in.ug.b-sc-agriculture.plant-pathology",
+      "kind": "subject",
+      "parent": "in.ug.b-sc-agriculture",
+      "label": "Plant Pathology"
+    },
+    {
+      "id": "in.ug.b-sc-agriculture.seed-technology",
+      "kind": "subject",
+      "parent": "in.ug.b-sc-agriculture",
+      "label": "Seed Technology"
+    },
+    {
+      "id": "in.ug.b-sc-agriculture.soil-science",
+      "kind": "subject",
+      "parent": "in.ug.b-sc-agriculture",
+      "label": "Soil Science"
+    },
+    {
+      "id": "in.ug.b-sc-biotechnology",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.Sc (Biotechnology)"
+    },
+    {
+      "id": "in.ug.b-sc-bzc-life-sciences",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.Sc (BZC — Life Sciences)"
+    },
+    {
+      "id": "in.ug.b-sc-data-science",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.Sc (Data Science)"
+    },
+    {
+      "id": "in.ug.b-sc-forensic-science",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.Sc (Forensic Science)"
+    },
+    {
+      "id": "in.ug.b-sc-home-science",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.Sc (Home Science)"
+    },
+    {
+      "id": "in.ug.b-sc-horticulture",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.Sc (Horticulture)"
+    },
+    {
+      "id": "in.ug.b-sc-microbiology",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.Sc (Microbiology)"
+    },
+    {
+      "id": "in.ug.b-sc-mlt",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.Sc MLT"
+    },
+    {
+      "id": "in.ug.b-sc-mpc",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.Sc (MPC)"
+    },
+    {
+      "id": "in.ug.b-sc-mpcs-computer-science",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.Sc (MPCs — Computer Science)"
+    },
+    {
+      "id": "in.ug.b-sc-mscs-statistics",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.Sc (MSCs — Statistics)"
+    },
+    {
+      "id": "in.ug.b-sc-nursing",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.Sc (Nursing)"
+    },
+    {
+      "id": "in.ug.b-sc-nursing.anatomy",
+      "kind": "subject",
+      "parent": "in.ug.b-sc-nursing",
+      "label": "Anatomy"
+    },
+    {
+      "id": "in.ug.b-sc-nursing.biochemistry",
+      "kind": "subject",
+      "parent": "in.ug.b-sc-nursing",
+      "label": "Biochemistry"
+    },
+    {
+      "id": "in.ug.b-sc-nursing.child-health-nursing",
+      "kind": "subject",
+      "parent": "in.ug.b-sc-nursing",
+      "label": "Child Health Nursing"
+    },
+    {
+      "id": "in.ug.b-sc-nursing.community-health-nursing",
+      "kind": "subject",
+      "parent": "in.ug.b-sc-nursing",
+      "label": "Community Health Nursing"
+    },
+    {
+      "id": "in.ug.b-sc-nursing.medical-surgical-nursing",
+      "kind": "subject",
+      "parent": "in.ug.b-sc-nursing",
+      "label": "Medical Surgical Nursing"
+    },
+    {
+      "id": "in.ug.b-sc-nursing.mental-health-nursing",
+      "kind": "subject",
+      "parent": "in.ug.b-sc-nursing",
+      "label": "Mental Health Nursing"
+    },
+    {
+      "id": "in.ug.b-sc-nursing.microbiology",
+      "kind": "subject",
+      "parent": "in.ug.b-sc-nursing",
+      "label": "Microbiology"
+    },
+    {
+      "id": "in.ug.b-sc-nursing.nursing-foundation",
+      "kind": "subject",
+      "parent": "in.ug.b-sc-nursing",
+      "label": "Nursing Foundation"
+    },
+    {
+      "id": "in.ug.b-sc-nursing.nursing-management",
+      "kind": "subject",
+      "parent": "in.ug.b-sc-nursing",
+      "label": "Nursing Management"
+    },
+    {
+      "id": "in.ug.b-sc-nursing.nursing-research-and-statistics",
+      "kind": "subject",
+      "parent": "in.ug.b-sc-nursing",
+      "label": "Nursing Research & Statistics"
+    },
+    {
+      "id": "in.ug.b-sc-nursing.nutrition-and-dietetics",
+      "kind": "subject",
+      "parent": "in.ug.b-sc-nursing",
+      "label": "Nutrition & Dietetics"
+    },
+    {
+      "id": "in.ug.b-sc-nursing.obstetrics-and-gynaecology-nursing",
+      "kind": "subject",
+      "parent": "in.ug.b-sc-nursing",
+      "label": "Obstetrics & Gynaecology Nursing"
+    },
+    {
+      "id": "in.ug.b-sc-nursing.pathology",
+      "kind": "subject",
+      "parent": "in.ug.b-sc-nursing",
+      "label": "Pathology"
+    },
+    {
+      "id": "in.ug.b-sc-nursing.pharmacology",
+      "kind": "subject",
+      "parent": "in.ug.b-sc-nursing",
+      "label": "Pharmacology"
+    },
+    {
+      "id": "in.ug.b-sc-nursing.physiology",
+      "kind": "subject",
+      "parent": "in.ug.b-sc-nursing",
+      "label": "Physiology"
+    },
+    {
+      "id": "in.ug.b-tech-aeronautical",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.Tech (Aeronautical)"
+    },
+    {
+      "id": "in.ug.b-tech-agricultural-engineering",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.Tech (Agricultural Engineering)"
+    },
+    {
+      "id": "in.ug.b-tech-biotechnology",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.Tech (Biotechnology)"
+    },
+    {
+      "id": "in.ug.b-tech-chemical",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.Tech (Chemical)"
+    },
+    {
+      "id": "in.ug.b-tech-civil",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.Tech (Civil)"
+    },
+    {
+      "id": "in.ug.b-tech-civil.building-materials-and-construction",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-civil",
+      "label": "Building Materials & Construction"
+    },
+    {
+      "id": "in.ug.b-tech-civil.engineering-mathematics",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-civil",
+      "label": "Engineering Mathematics"
+    },
+    {
+      "id": "in.ug.b-tech-civil.environmental-engineering",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-civil",
+      "label": "Environmental Engineering"
+    },
+    {
+      "id": "in.ug.b-tech-civil.estimation-and-costing",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-civil",
+      "label": "Estimation & Costing"
+    },
+    {
+      "id": "in.ug.b-tech-civil.fluid-mechanics-and-hydraulics",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-civil",
+      "label": "Fluid Mechanics & Hydraulics"
+    },
+    {
+      "id": "in.ug.b-tech-civil.geotechnical-engineering",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-civil",
+      "label": "Geotechnical Engineering"
+    },
+    {
+      "id": "in.ug.b-tech-civil.rcc-design",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-civil",
+      "label": "RCC Design"
+    },
+    {
+      "id": "in.ug.b-tech-civil.steel-structures",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-civil",
+      "label": "Steel Structures"
+    },
+    {
+      "id": "in.ug.b-tech-civil.strength-of-materials",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-civil",
+      "label": "Strength of Materials"
+    },
+    {
+      "id": "in.ug.b-tech-civil.structural-analysis",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-civil",
+      "label": "Structural Analysis"
+    },
+    {
+      "id": "in.ug.b-tech-civil.surveying",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-civil",
+      "label": "Surveying"
+    },
+    {
+      "id": "in.ug.b-tech-civil.transportation-engineering",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-civil",
+      "label": "Transportation Engineering"
+    },
+    {
+      "id": "in.ug.b-tech-civil.water-resources-engineering",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-civil",
+      "label": "Water Resources Engineering"
+    },
+    {
+      "id": "in.ug.b-tech-cse",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.Tech (CSE)"
+    },
+    {
+      "id": "in.ug.b-tech-cse.artificial-intelligence",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-cse",
+      "label": "Artificial Intelligence"
+    },
+    {
+      "id": "in.ug.b-tech-cse.cloud-computing",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-cse",
+      "label": "Cloud Computing"
+    },
+    {
+      "id": "in.ug.b-tech-cse.compiler-design",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-cse",
+      "label": "Compiler Design"
+    },
+    {
+      "id": "in.ug.b-tech-cse.computer-networks",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-cse",
+      "label": "Computer Networks"
+    },
+    {
+      "id": "in.ug.b-tech-cse.computer-organisation-and-architecture",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-cse",
+      "label": "Computer Organisation & Architecture"
+    },
+    {
+      "id": "in.ug.b-tech-cse.cyber-security",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-cse",
+      "label": "Cyber Security"
+    },
+    {
+      "id": "in.ug.b-tech-cse.data-structures-and-algorithms",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-cse",
+      "label": "Data Structures & Algorithms"
+    },
+    {
+      "id": "in.ug.b-tech-cse.dbms",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-cse",
+      "label": "DBMS"
+    },
+    {
+      "id": "in.ug.b-tech-cse.digital-logic",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-cse",
+      "label": "Digital Logic"
+    },
+    {
+      "id": "in.ug.b-tech-cse.discrete-mathematics",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-cse",
+      "label": "Discrete Mathematics"
+    },
+    {
+      "id": "in.ug.b-tech-cse.engineering-mathematics",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-cse",
+      "label": "Engineering Mathematics"
+    },
+    {
+      "id": "in.ug.b-tech-cse.machine-learning",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-cse",
+      "label": "Machine Learning"
+    },
+    {
+      "id": "in.ug.b-tech-cse.object-oriented-programming",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-cse",
+      "label": "Object Oriented Programming"
+    },
+    {
+      "id": "in.ug.b-tech-cse.operating-systems",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-cse",
+      "label": "Operating Systems"
+    },
+    {
+      "id": "in.ug.b-tech-cse.programming-in-c-c-java-python",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-cse",
+      "label": "Programming in C / C++ / Java / Python"
+    },
+    {
+      "id": "in.ug.b-tech-cse.software-engineering",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-cse",
+      "label": "Software Engineering"
+    },
+    {
+      "id": "in.ug.b-tech-cse.theory-of-computation",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-cse",
+      "label": "Theory of Computation"
+    },
+    {
+      "id": "in.ug.b-tech-cse.web-technologies",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-cse",
+      "label": "Web Technologies"
+    },
+    {
+      "id": "in.ug.b-tech-ece",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.Tech (ECE)"
+    },
+    {
+      "id": "in.ug.b-tech-ece.analog-and-digital-communication",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-ece",
+      "label": "Analog & Digital Communication"
+    },
+    {
+      "id": "in.ug.b-tech-ece.analog-circuits",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-ece",
+      "label": "Analog Circuits"
+    },
+    {
+      "id": "in.ug.b-tech-ece.antennas-and-wave-propagation",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-ece",
+      "label": "Antennas & Wave Propagation"
+    },
+    {
+      "id": "in.ug.b-tech-ece.control-systems",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-ece",
+      "label": "Control Systems"
+    },
+    {
+      "id": "in.ug.b-tech-ece.digital-electronics",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-ece",
+      "label": "Digital Electronics"
+    },
+    {
+      "id": "in.ug.b-tech-ece.digital-signal-processing",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-ece",
+      "label": "Digital Signal Processing"
+    },
+    {
+      "id": "in.ug.b-tech-ece.electromagnetic-theory",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-ece",
+      "label": "Electromagnetic Theory"
+    },
+    {
+      "id": "in.ug.b-tech-ece.electronic-devices-and-circuits",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-ece",
+      "label": "Electronic Devices & Circuits"
+    },
+    {
+      "id": "in.ug.b-tech-ece.embedded-systems",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-ece",
+      "label": "Embedded Systems"
+    },
+    {
+      "id": "in.ug.b-tech-ece.engineering-mathematics",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-ece",
+      "label": "Engineering Mathematics"
+    },
+    {
+      "id": "in.ug.b-tech-ece.microprocessors-and-microcontrollers",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-ece",
+      "label": "Microprocessors & Microcontrollers"
+    },
+    {
+      "id": "in.ug.b-tech-ece.network-analysis",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-ece",
+      "label": "Network Analysis"
+    },
+    {
+      "id": "in.ug.b-tech-ece.signals-and-systems",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-ece",
+      "label": "Signals & Systems"
+    },
+    {
+      "id": "in.ug.b-tech-ece.vlsi-design",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-ece",
+      "label": "VLSI Design"
+    },
+    {
+      "id": "in.ug.b-tech-eee",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.Tech (EEE)"
+    },
+    {
+      "id": "in.ug.b-tech-eee.control-systems",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-eee",
+      "label": "Control Systems"
+    },
+    {
+      "id": "in.ug.b-tech-eee.electrical-circuits",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-eee",
+      "label": "Electrical Circuits"
+    },
+    {
+      "id": "in.ug.b-tech-eee.electrical-machines",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-eee",
+      "label": "Electrical Machines"
+    },
+    {
+      "id": "in.ug.b-tech-eee.electrical-measurements",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-eee",
+      "label": "Electrical Measurements"
+    },
+    {
+      "id": "in.ug.b-tech-eee.electromagnetic-fields",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-eee",
+      "label": "Electromagnetic Fields"
+    },
+    {
+      "id": "in.ug.b-tech-eee.engineering-mathematics",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-eee",
+      "label": "Engineering Mathematics"
+    },
+    {
+      "id": "in.ug.b-tech-eee.microprocessors",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-eee",
+      "label": "Microprocessors"
+    },
+    {
+      "id": "in.ug.b-tech-eee.power-electronics",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-eee",
+      "label": "Power Electronics"
+    },
+    {
+      "id": "in.ug.b-tech-eee.power-systems",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-eee",
+      "label": "Power Systems"
+    },
+    {
+      "id": "in.ug.b-tech-eee.renewable-energy-systems",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-eee",
+      "label": "Renewable Energy Systems"
+    },
+    {
+      "id": "in.ug.b-tech-eee.switchgear-and-protection",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-eee",
+      "label": "Switchgear & Protection"
+    },
+    {
+      "id": "in.ug.b-tech-eee.utilisation-of-electrical-energy",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-eee",
+      "label": "Utilisation of Electrical Energy"
+    },
+    {
+      "id": "in.ug.b-tech-it-ai-and-ml-data-science",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.Tech (IT / AI & ML / Data Science)"
+    },
+    {
+      "id": "in.ug.b-tech-it-ai-and-ml-data-science.ai-ethics",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-it-ai-and-ml-data-science",
+      "label": "AI Ethics"
+    },
+    {
+      "id": "in.ug.b-tech-it-ai-and-ml-data-science.big-data-analytics",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-it-ai-and-ml-data-science",
+      "label": "Big Data Analytics"
+    },
+    {
+      "id": "in.ug.b-tech-it-ai-and-ml-data-science.cloud-computing",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-it-ai-and-ml-data-science",
+      "label": "Cloud Computing"
+    },
+    {
+      "id": "in.ug.b-tech-it-ai-and-ml-data-science.computer-vision",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-it-ai-and-ml-data-science",
+      "label": "Computer Vision"
+    },
+    {
+      "id": "in.ug.b-tech-it-ai-and-ml-data-science.data-mining-and-warehousing",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-it-ai-and-ml-data-science",
+      "label": "Data Mining & Warehousing"
+    },
+    {
+      "id": "in.ug.b-tech-it-ai-and-ml-data-science.data-structures-and-algorithms",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-it-ai-and-ml-data-science",
+      "label": "Data Structures & Algorithms"
+    },
+    {
+      "id": "in.ug.b-tech-it-ai-and-ml-data-science.data-visualisation",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-it-ai-and-ml-data-science",
+      "label": "Data Visualisation"
+    },
+    {
+      "id": "in.ug.b-tech-it-ai-and-ml-data-science.dbms",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-it-ai-and-ml-data-science",
+      "label": "DBMS"
+    },
+    {
+      "id": "in.ug.b-tech-it-ai-and-ml-data-science.deep-learning",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-it-ai-and-ml-data-science",
+      "label": "Deep Learning"
+    },
+    {
+      "id": "in.ug.b-tech-it-ai-and-ml-data-science.engineering-mathematics",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-it-ai-and-ml-data-science",
+      "label": "Engineering Mathematics"
+    },
+    {
+      "id": "in.ug.b-tech-it-ai-and-ml-data-science.machine-learning",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-it-ai-and-ml-data-science",
+      "label": "Machine Learning"
+    },
+    {
+      "id": "in.ug.b-tech-it-ai-and-ml-data-science.natural-language-processing",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-it-ai-and-ml-data-science",
+      "label": "Natural Language Processing"
+    },
+    {
+      "id": "in.ug.b-tech-it-ai-and-ml-data-science.python-programming",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-it-ai-and-ml-data-science",
+      "label": "Python Programming"
+    },
+    {
+      "id": "in.ug.b-tech-it-ai-and-ml-data-science.statistics-and-probability",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-it-ai-and-ml-data-science",
+      "label": "Statistics & Probability"
+    },
+    {
+      "id": "in.ug.b-tech-mechanical",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.Tech (Mechanical)"
+    },
+    {
+      "id": "in.ug.b-tech-mechanical.automobile-engineering",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-mechanical",
+      "label": "Automobile Engineering"
+    },
+    {
+      "id": "in.ug.b-tech-mechanical.cad-cam",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-mechanical",
+      "label": "CAD / CAM"
+    },
+    {
+      "id": "in.ug.b-tech-mechanical.engineering-mathematics",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-mechanical",
+      "label": "Engineering Mathematics"
+    },
+    {
+      "id": "in.ug.b-tech-mechanical.engineering-mechanics",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-mechanical",
+      "label": "Engineering Mechanics"
+    },
+    {
+      "id": "in.ug.b-tech-mechanical.fluid-mechanics",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-mechanical",
+      "label": "Fluid Mechanics"
+    },
+    {
+      "id": "in.ug.b-tech-mechanical.heat-and-mass-transfer",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-mechanical",
+      "label": "Heat & Mass Transfer"
+    },
+    {
+      "id": "in.ug.b-tech-mechanical.industrial-engineering",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-mechanical",
+      "label": "Industrial Engineering"
+    },
+    {
+      "id": "in.ug.b-tech-mechanical.machine-design",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-mechanical",
+      "label": "Machine Design"
+    },
+    {
+      "id": "in.ug.b-tech-mechanical.manufacturing-technology",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-mechanical",
+      "label": "Manufacturing Technology"
+    },
+    {
+      "id": "in.ug.b-tech-mechanical.refrigeration-and-air-conditioning",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-mechanical",
+      "label": "Refrigeration & Air Conditioning"
+    },
+    {
+      "id": "in.ug.b-tech-mechanical.strength-of-materials",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-mechanical",
+      "label": "Strength of Materials"
+    },
+    {
+      "id": "in.ug.b-tech-mechanical.theory-of-machines",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-mechanical",
+      "label": "Theory of Machines"
+    },
+    {
+      "id": "in.ug.b-tech-mechanical.thermodynamics",
+      "kind": "subject",
+      "parent": "in.ug.b-tech-mechanical",
+      "label": "Thermodynamics"
+    },
+    {
+      "id": "in.ug.b-tech-mining-metallurgy",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.Tech (Mining / Metallurgy)"
+    },
+    {
+      "id": "in.ug.b-voc",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "B.Voc"
+    },
+    {
+      "id": "in.ug.bba-business-analytics",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "BBA (Business Analytics)"
+    },
+    {
+      "id": "in.ug.bba.business-communication",
+      "kind": "subject",
+      "parent": "in.ug.bba",
+      "label": "Business Communication"
+    },
+    {
+      "id": "in.ug.bba.business-economics",
+      "kind": "subject",
+      "parent": "in.ug.bba",
+      "label": "Business Economics"
+    },
+    {
+      "id": "in.ug.bba.business-law",
+      "kind": "subject",
+      "parent": "in.ug.bba",
+      "label": "Business Law"
+    },
+    {
+      "id": "in.ug.bba.business-mathematics-and-statistics",
+      "kind": "subject",
+      "parent": "in.ug.bba",
+      "label": "Business Mathematics & Statistics"
+    },
+    {
+      "id": "in.ug.bba.business-research-methods",
+      "kind": "subject",
+      "parent": "in.ug.bba",
+      "label": "Business Research Methods"
+    },
+    {
+      "id": "in.ug.bba.entrepreneurship",
+      "kind": "subject",
+      "parent": "in.ug.bba",
+      "label": "Entrepreneurship"
+    },
+    {
+      "id": "in.ug.bba.financial-accounting",
+      "kind": "subject",
+      "parent": "in.ug.bba",
+      "label": "Financial Accounting"
+    },
+    {
+      "id": "in.ug.bba.financial-management",
+      "kind": "subject",
+      "parent": "in.ug.bba",
+      "label": "Financial Management"
+    },
+    {
+      "id": "in.ug.bba.human-resource-management",
+      "kind": "subject",
+      "parent": "in.ug.bba",
+      "label": "Human Resource Management"
+    },
+    {
+      "id": "in.ug.bba.international-business",
+      "kind": "subject",
+      "parent": "in.ug.bba",
+      "label": "International Business"
+    },
+    {
+      "id": "in.ug.bba.marketing-management",
+      "kind": "subject",
+      "parent": "in.ug.bba",
+      "label": "Marketing Management"
+    },
+    {
+      "id": "in.ug.bba.operations-management",
+      "kind": "subject",
+      "parent": "in.ug.bba",
+      "label": "Operations Management"
+    },
+    {
+      "id": "in.ug.bba.organisational-behaviour",
+      "kind": "subject",
+      "parent": "in.ug.bba",
+      "label": "Organisational Behaviour"
+    },
+    {
+      "id": "in.ug.bba.principles-of-management",
+      "kind": "subject",
+      "parent": "in.ug.bba",
+      "label": "Principles of Management"
+    },
+    {
+      "id": "in.ug.bbm",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "BBM"
+    },
+    {
+      "id": "in.ug.bca.ai-and-machine-learning",
+      "kind": "subject",
+      "parent": "in.ug.bca",
+      "label": "AI & Machine Learning"
+    },
+    {
+      "id": "in.ug.bca.c-java-python",
+      "kind": "subject",
+      "parent": "in.ug.bca",
+      "label": "C++ / Java / Python"
+    },
+    {
+      "id": "in.ug.bca.cloud-computing",
+      "kind": "subject",
+      "parent": "in.ug.bca",
+      "label": "Cloud Computing"
+    },
+    {
+      "id": "in.ug.bca.computer-networks",
+      "kind": "subject",
+      "parent": "in.ug.bca",
+      "label": "Computer Networks"
+    },
+    {
+      "id": "in.ug.bca.computer-organisation",
+      "kind": "subject",
+      "parent": "in.ug.bca",
+      "label": "Computer Organisation"
+    },
+    {
+      "id": "in.ug.bca.cyber-security",
+      "kind": "subject",
+      "parent": "in.ug.bca",
+      "label": "Cyber Security"
+    },
+    {
+      "id": "in.ug.bca.data-structures",
+      "kind": "subject",
+      "parent": "in.ug.bca",
+      "label": "Data Structures"
+    },
+    {
+      "id": "in.ug.bca.dbms",
+      "kind": "subject",
+      "parent": "in.ug.bca",
+      "label": "DBMS"
+    },
+    {
+      "id": "in.ug.bca.discrete-mathematics",
+      "kind": "subject",
+      "parent": "in.ug.bca",
+      "label": "Discrete Mathematics"
+    },
+    {
+      "id": "in.ug.bca.e-commerce",
+      "kind": "subject",
+      "parent": "in.ug.bca",
+      "label": "E-Commerce"
+    },
+    {
+      "id": "in.ug.bca.mathematics",
+      "kind": "subject",
+      "parent": "in.ug.bca",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.ug.bca.mobile-app-development",
+      "kind": "subject",
+      "parent": "in.ug.bca",
+      "label": "Mobile App Development"
+    },
+    {
+      "id": "in.ug.bca.operating-systems",
+      "kind": "subject",
+      "parent": "in.ug.bca",
+      "label": "Operating Systems"
+    },
+    {
+      "id": "in.ug.bca.programming-in-c",
+      "kind": "subject",
+      "parent": "in.ug.bca",
+      "label": "Programming in C"
+    },
+    {
+      "id": "in.ug.bca.software-engineering",
+      "kind": "subject",
+      "parent": "in.ug.bca",
+      "label": "Software Engineering"
+    },
+    {
+      "id": "in.ug.bca.statistics",
+      "kind": "subject",
+      "parent": "in.ug.bca",
+      "label": "Statistics"
+    },
+    {
+      "id": "in.ug.bca.system-analysis-and-design",
+      "kind": "subject",
+      "parent": "in.ug.bca",
+      "label": "System Analysis & Design"
+    },
+    {
+      "id": "in.ug.bca.web-technologies",
+      "kind": "subject",
+      "parent": "in.ug.bca",
+      "label": "Web Technologies"
+    },
+    {
+      "id": "in.ug.bds",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "BDS"
+    },
+    {
+      "id": "in.ug.bds.conservative-dentistry-and-endodontics",
+      "kind": "subject",
+      "parent": "in.ug.bds",
+      "label": "Conservative Dentistry & Endodontics"
+    },
+    {
+      "id": "in.ug.bds.dental-anatomy-and-histology",
+      "kind": "subject",
+      "parent": "in.ug.bds",
+      "label": "Dental Anatomy & Histology"
+    },
+    {
+      "id": "in.ug.bds.oral-and-maxillofacial-surgery",
+      "kind": "subject",
+      "parent": "in.ug.bds",
+      "label": "Oral & Maxillofacial Surgery"
+    },
+    {
+      "id": "in.ug.bds.oral-medicine-and-radiology",
+      "kind": "subject",
+      "parent": "in.ug.bds",
+      "label": "Oral Medicine & Radiology"
+    },
+    {
+      "id": "in.ug.bds.oral-pathology",
+      "kind": "subject",
+      "parent": "in.ug.bds",
+      "label": "Oral Pathology"
+    },
+    {
+      "id": "in.ug.bds.orthodontics",
+      "kind": "subject",
+      "parent": "in.ug.bds",
+      "label": "Orthodontics"
+    },
+    {
+      "id": "in.ug.bds.pedodontics",
+      "kind": "subject",
+      "parent": "in.ug.bds",
+      "label": "Pedodontics"
+    },
+    {
+      "id": "in.ug.bds.periodontics",
+      "kind": "subject",
+      "parent": "in.ug.bds",
+      "label": "Periodontics"
+    },
+    {
+      "id": "in.ug.bds.prosthodontics",
+      "kind": "subject",
+      "parent": "in.ug.bds",
+      "label": "Prosthodontics"
+    },
+    {
+      "id": "in.ug.bds.public-health-dentistry",
+      "kind": "subject",
+      "parent": "in.ug.bds",
+      "label": "Public Health Dentistry"
+    },
+    {
+      "id": "in.ug.bhms-bams",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "BHMS / BAMS"
+    },
+    {
+      "id": "in.ug.bms",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "BMS"
+    },
+    {
+      "id": "in.ug.bped-physical-education",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "BPEd (Physical Education)"
+    },
+    {
+      "id": "in.ug.bpt-physiotherapy",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "BPT (Physiotherapy)"
+    },
+    {
+      "id": "in.ug.bpt-physiotherapy.anatomy",
+      "kind": "subject",
+      "parent": "in.ug.bpt-physiotherapy",
+      "label": "Anatomy"
+    },
+    {
+      "id": "in.ug.bpt-physiotherapy.biochemistry",
+      "kind": "subject",
+      "parent": "in.ug.bpt-physiotherapy",
+      "label": "Biochemistry"
+    },
+    {
+      "id": "in.ug.bpt-physiotherapy.cardiopulmonary-physiotherapy",
+      "kind": "subject",
+      "parent": "in.ug.bpt-physiotherapy",
+      "label": "Cardiopulmonary Physiotherapy"
+    },
+    {
+      "id": "in.ug.bpt-physiotherapy.community-physiotherapy",
+      "kind": "subject",
+      "parent": "in.ug.bpt-physiotherapy",
+      "label": "Community Physiotherapy"
+    },
+    {
+      "id": "in.ug.bpt-physiotherapy.electrotherapy",
+      "kind": "subject",
+      "parent": "in.ug.bpt-physiotherapy",
+      "label": "Electrotherapy"
+    },
+    {
+      "id": "in.ug.bpt-physiotherapy.exercise-therapy",
+      "kind": "subject",
+      "parent": "in.ug.bpt-physiotherapy",
+      "label": "Exercise Therapy"
+    },
+    {
+      "id": "in.ug.bpt-physiotherapy.kinesiology-and-biomechanics",
+      "kind": "subject",
+      "parent": "in.ug.bpt-physiotherapy",
+      "label": "Kinesiology & Biomechanics"
+    },
+    {
+      "id": "in.ug.bpt-physiotherapy.neurological-physiotherapy",
+      "kind": "subject",
+      "parent": "in.ug.bpt-physiotherapy",
+      "label": "Neurological Physiotherapy"
+    },
+    {
+      "id": "in.ug.bpt-physiotherapy.orthopaedic-physiotherapy",
+      "kind": "subject",
+      "parent": "in.ug.bpt-physiotherapy",
+      "label": "Orthopaedic Physiotherapy"
+    },
+    {
+      "id": "in.ug.bpt-physiotherapy.pathology-and-microbiology",
+      "kind": "subject",
+      "parent": "in.ug.bpt-physiotherapy",
+      "label": "Pathology & Microbiology"
+    },
+    {
+      "id": "in.ug.bpt-physiotherapy.physiology",
+      "kind": "subject",
+      "parent": "in.ug.bpt-physiotherapy",
+      "label": "Physiology"
+    },
+    {
+      "id": "in.ug.bpt-physiotherapy.sports-physiotherapy",
+      "kind": "subject",
+      "parent": "in.ug.bpt-physiotherapy",
+      "label": "Sports Physiotherapy"
+    },
+    {
+      "id": "in.ug.bsw-social-work",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "BSW (Social Work)"
+    },
+    {
+      "id": "in.ug.bums-bnys",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "BUMS / BNYS"
+    },
+    {
+      "id": "in.ug.d-el-ed-d-ed",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "D.El.Ed / D.Ed"
+    },
+    {
+      "id": "in.ug.d-pharmacy",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "D.Pharmacy"
+    },
+    {
+      "id": "in.ug.hotel-management-bhm",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "Hotel Management (BHM)"
+    },
+    {
+      "id": "in.ug.hotel-management-bhm.communication-skills",
+      "kind": "subject",
+      "parent": "in.ug.hotel-management-bhm",
+      "label": "Communication Skills"
+    },
+    {
+      "id": "in.ug.hotel-management-bhm.food-and-beverage-service",
+      "kind": "subject",
+      "parent": "in.ug.hotel-management-bhm",
+      "label": "Food & Beverage Service"
+    },
+    {
+      "id": "in.ug.hotel-management-bhm.food-production",
+      "kind": "subject",
+      "parent": "in.ug.hotel-management-bhm",
+      "label": "Food Production"
+    },
+    {
+      "id": "in.ug.hotel-management-bhm.food-safety-and-hygiene",
+      "kind": "subject",
+      "parent": "in.ug.hotel-management-bhm",
+      "label": "Food Safety & Hygiene"
+    },
+    {
+      "id": "in.ug.hotel-management-bhm.front-office-operations",
+      "kind": "subject",
+      "parent": "in.ug.hotel-management-bhm",
+      "label": "Front Office Operations"
+    },
+    {
+      "id": "in.ug.hotel-management-bhm.hotel-accounting",
+      "kind": "subject",
+      "parent": "in.ug.hotel-management-bhm",
+      "label": "Hotel Accounting"
+    },
+    {
+      "id": "in.ug.hotel-management-bhm.hotel-engineering",
+      "kind": "subject",
+      "parent": "in.ug.hotel-management-bhm",
+      "label": "Hotel Engineering"
+    },
+    {
+      "id": "in.ug.hotel-management-bhm.housekeeping-operations",
+      "kind": "subject",
+      "parent": "in.ug.hotel-management-bhm",
+      "label": "Housekeeping Operations"
+    },
+    {
+      "id": "in.ug.hotel-management-bhm.human-resource-management",
+      "kind": "subject",
+      "parent": "in.ug.hotel-management-bhm",
+      "label": "Human Resource Management"
+    },
+    {
+      "id": "in.ug.hotel-management-bhm.marketing",
+      "kind": "subject",
+      "parent": "in.ug.hotel-management-bhm",
+      "label": "Marketing"
+    },
+    {
+      "id": "in.ug.hotel-management-bhm.tourism-management",
+      "kind": "subject",
+      "parent": "in.ug.hotel-management-bhm",
+      "label": "Tourism Management"
+    },
+    {
+      "id": "in.ug.iti-certificate-course",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "ITI / Certificate Course"
+    },
+    {
+      "id": "in.ug.llb-ba-llb",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "LLB / BA LLB"
+    },
+    {
+      "id": "in.ug.llb-ba-llb.administrative-law",
+      "kind": "subject",
+      "parent": "in.ug.llb-ba-llb",
+      "label": "Administrative Law"
+    },
+    {
+      "id": "in.ug.llb-ba-llb.civil-and-criminal-procedure-cpc-crpc-bnss",
+      "kind": "subject",
+      "parent": "in.ug.llb-ba-llb",
+      "label": "Civil & Criminal Procedure (CPC / CrPC / BNSS)"
+    },
+    {
+      "id": "in.ug.llb-ba-llb.company-law",
+      "kind": "subject",
+      "parent": "in.ug.llb-ba-llb",
+      "label": "Company Law"
+    },
+    {
+      "id": "in.ug.llb-ba-llb.constitutional-law",
+      "kind": "subject",
+      "parent": "in.ug.llb-ba-llb",
+      "label": "Constitutional Law"
+    },
+    {
+      "id": "in.ug.llb-ba-llb.criminal-law-ipc-bns",
+      "kind": "subject",
+      "parent": "in.ug.llb-ba-llb",
+      "label": "Criminal Law (IPC / BNS)"
+    },
+    {
+      "id": "in.ug.llb-ba-llb.environmental-law",
+      "kind": "subject",
+      "parent": "in.ug.llb-ba-llb",
+      "label": "Environmental Law"
+    },
+    {
+      "id": "in.ug.llb-ba-llb.family-law",
+      "kind": "subject",
+      "parent": "in.ug.llb-ba-llb",
+      "label": "Family Law"
+    },
+    {
+      "id": "in.ug.llb-ba-llb.intellectual-property-rights",
+      "kind": "subject",
+      "parent": "in.ug.llb-ba-llb",
+      "label": "Intellectual Property Rights"
+    },
+    {
+      "id": "in.ug.llb-ba-llb.jurisprudence",
+      "kind": "subject",
+      "parent": "in.ug.llb-ba-llb",
+      "label": "Jurisprudence"
+    },
+    {
+      "id": "in.ug.llb-ba-llb.labour-and-industrial-law",
+      "kind": "subject",
+      "parent": "in.ug.llb-ba-llb",
+      "label": "Labour & Industrial Law"
+    },
+    {
+      "id": "in.ug.llb-ba-llb.law-of-contracts",
+      "kind": "subject",
+      "parent": "in.ug.llb-ba-llb",
+      "label": "Law of Contracts"
+    },
+    {
+      "id": "in.ug.llb-ba-llb.law-of-evidence",
+      "kind": "subject",
+      "parent": "in.ug.llb-ba-llb",
+      "label": "Law of Evidence"
+    },
+    {
+      "id": "in.ug.llb-ba-llb.law-of-torts",
+      "kind": "subject",
+      "parent": "in.ug.llb-ba-llb",
+      "label": "Law of Torts"
+    },
+    {
+      "id": "in.ug.llb-ba-llb.legal-drafting-and-pleading",
+      "kind": "subject",
+      "parent": "in.ug.llb-ba-llb",
+      "label": "Legal Drafting & Pleading"
+    },
+    {
+      "id": "in.ug.llb-ba-llb.property-law",
+      "kind": "subject",
+      "parent": "in.ug.llb-ba-llb",
+      "label": "Property Law"
+    },
+    {
+      "id": "in.ug.llb-ba-llb.public-international-law",
+      "kind": "subject",
+      "parent": "in.ug.llb-ba-llb",
+      "label": "Public International Law"
+    },
+    {
+      "id": "in.ug.llb-ba-llb.taxation-law",
+      "kind": "subject",
+      "parent": "in.ug.llb-ba-llb",
+      "label": "Taxation Law"
+    },
+    {
+      "id": "in.ug.mbbs",
+      "kind": "program",
+      "parent": "in.ug",
+      "label": "MBBS"
+    },
+    {
+      "id": "in.ug.mbbs.anaesthesia",
+      "kind": "subject",
+      "parent": "in.ug.mbbs",
+      "label": "Anaesthesia"
+    },
+    {
+      "id": "in.ug.mbbs.anatomy",
+      "kind": "subject",
+      "parent": "in.ug.mbbs",
+      "label": "Anatomy"
+    },
+    {
+      "id": "in.ug.mbbs.biochemistry",
+      "kind": "subject",
+      "parent": "in.ug.mbbs",
+      "label": "Biochemistry"
+    },
+    {
+      "id": "in.ug.mbbs.community-medicine-psm",
+      "kind": "subject",
+      "parent": "in.ug.mbbs",
+      "label": "Community Medicine (PSM)"
+    },
+    {
+      "id": "in.ug.mbbs.dermatology",
+      "kind": "subject",
+      "parent": "in.ug.mbbs",
+      "label": "Dermatology"
+    },
+    {
+      "id": "in.ug.mbbs.ent",
+      "kind": "subject",
+      "parent": "in.ug.mbbs",
+      "label": "ENT"
+    },
+    {
+      "id": "in.ug.mbbs.forensic-medicine",
+      "kind": "subject",
+      "parent": "in.ug.mbbs",
+      "label": "Forensic Medicine"
+    },
+    {
+      "id": "in.ug.mbbs.general-medicine",
+      "kind": "subject",
+      "parent": "in.ug.mbbs",
+      "label": "General Medicine"
+    },
+    {
+      "id": "in.ug.mbbs.general-surgery",
+      "kind": "subject",
+      "parent": "in.ug.mbbs",
+      "label": "General Surgery"
+    },
+    {
+      "id": "in.ug.mbbs.microbiology",
+      "kind": "subject",
+      "parent": "in.ug.mbbs",
+      "label": "Microbiology"
+    },
+    {
+      "id": "in.ug.mbbs.obstetrics-and-gynaecology",
+      "kind": "subject",
+      "parent": "in.ug.mbbs",
+      "label": "Obstetrics & Gynaecology"
+    },
+    {
+      "id": "in.ug.mbbs.ophthalmology",
+      "kind": "subject",
+      "parent": "in.ug.mbbs",
+      "label": "Ophthalmology"
+    },
+    {
+      "id": "in.ug.mbbs.orthopaedics",
+      "kind": "subject",
+      "parent": "in.ug.mbbs",
+      "label": "Orthopaedics"
+    },
+    {
+      "id": "in.ug.mbbs.paediatrics",
+      "kind": "subject",
+      "parent": "in.ug.mbbs",
+      "label": "Paediatrics"
+    },
+    {
+      "id": "in.ug.mbbs.pathology",
+      "kind": "subject",
+      "parent": "in.ug.mbbs",
+      "label": "Pathology"
+    },
+    {
+      "id": "in.ug.mbbs.pharmacology",
+      "kind": "subject",
+      "parent": "in.ug.mbbs",
+      "label": "Pharmacology"
+    },
+    {
+      "id": "in.ug.mbbs.physiology",
+      "kind": "subject",
+      "parent": "in.ug.mbbs",
+      "label": "Physiology"
+    },
+    {
+      "id": "in.ug.mbbs.psychiatry",
+      "kind": "subject",
+      "parent": "in.ug.mbbs",
+      "label": "Psychiatry"
+    },
+    {
+      "id": "in.ug.mbbs.radiology",
+      "kind": "subject",
+      "parent": "in.ug.mbbs",
+      "label": "Radiology"
+    }
+  ]
+}

@@ -1,0 +1,1070 @@
+{
+  "_": "GENERATED from tools/legacy-taxonomy.json by tools/gen-legacy-taxonomy.js. Do not hand-edit — the generator owns these nodes and tools/gate-legacy-taxonomy.js fails the build if they drift. The six mapping decisions are documented in the generator.",
+  "schema": "7solve.taxonomy/1",
+  "version": "2026-08-22",
+  "source": "7solve-legacy",
+  "nodes": [
+    {
+      "id": "in.school.c10.biology",
+      "kind": "subject",
+      "parent": "in.school.c10",
+      "label": "Biology"
+    },
+    {
+      "id": "in.school.c10.chemistry",
+      "kind": "subject",
+      "parent": "in.school.c10",
+      "label": "Chemistry"
+    },
+    {
+      "id": "in.school.c10.civics",
+      "kind": "subject",
+      "parent": "in.school.c10",
+      "label": "Civics"
+    },
+    {
+      "id": "in.school.c10.computer-science-it",
+      "kind": "subject",
+      "parent": "in.school.c10",
+      "label": "Computer Science / IT"
+    },
+    {
+      "id": "in.school.c10.economics",
+      "kind": "subject",
+      "parent": "in.school.c10",
+      "label": "Economics"
+    },
+    {
+      "id": "in.school.c10.english",
+      "kind": "subject",
+      "parent": "in.school.c10",
+      "label": "English"
+    },
+    {
+      "id": "in.school.c10.english-grammar",
+      "kind": "subject",
+      "parent": "in.school.c10",
+      "label": "English Grammar"
+    },
+    {
+      "id": "in.school.c10.geography",
+      "kind": "subject",
+      "parent": "in.school.c10",
+      "label": "Geography"
+    },
+    {
+      "id": "in.school.c10.hindi",
+      "kind": "subject",
+      "parent": "in.school.c10",
+      "label": "Hindi"
+    },
+    {
+      "id": "in.school.c10.history",
+      "kind": "subject",
+      "parent": "in.school.c10",
+      "label": "History"
+    },
+    {
+      "id": "in.school.c10.mathematics",
+      "kind": "subject",
+      "parent": "in.school.c10",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.school.c10.physical-education",
+      "kind": "subject",
+      "parent": "in.school.c10",
+      "label": "Physical Education"
+    },
+    {
+      "id": "in.school.c10.physics",
+      "kind": "subject",
+      "parent": "in.school.c10",
+      "label": "Physics"
+    },
+    {
+      "id": "in.school.c10.sanskrit",
+      "kind": "subject",
+      "parent": "in.school.c10",
+      "label": "Sanskrit"
+    },
+    {
+      "id": "in.school.c10.science",
+      "kind": "subject",
+      "parent": "in.school.c10",
+      "label": "Science"
+    },
+    {
+      "id": "in.school.c10.social-studies",
+      "kind": "subject",
+      "parent": "in.school.c10",
+      "label": "Social Studies"
+    },
+    {
+      "id": "in.school.c10.telugu",
+      "kind": "subject",
+      "parent": "in.school.c10",
+      "label": "Telugu"
+    },
+    {
+      "id": "in.school.c11.accountancy",
+      "kind": "subject",
+      "parent": "in.school.c11",
+      "label": "Accountancy"
+    },
+    {
+      "id": "in.school.c11.biology",
+      "kind": "subject",
+      "parent": "in.school.c11",
+      "label": "Biology"
+    },
+    {
+      "id": "in.school.c11.botany",
+      "kind": "subject",
+      "parent": "in.school.c11",
+      "label": "Botany"
+    },
+    {
+      "id": "in.school.c11.business-studies",
+      "kind": "subject",
+      "parent": "in.school.c11",
+      "label": "Business Studies"
+    },
+    {
+      "id": "in.school.c11.chemistry",
+      "kind": "subject",
+      "parent": "in.school.c11",
+      "label": "Chemistry"
+    },
+    {
+      "id": "in.school.c11.computer-science",
+      "kind": "subject",
+      "parent": "in.school.c11",
+      "label": "Computer Science"
+    },
+    {
+      "id": "in.school.c11.economics",
+      "kind": "subject",
+      "parent": "in.school.c11",
+      "label": "Economics"
+    },
+    {
+      "id": "in.school.c11.english",
+      "kind": "subject",
+      "parent": "in.school.c11",
+      "label": "English"
+    },
+    {
+      "id": "in.school.c11.entrepreneurship",
+      "kind": "subject",
+      "parent": "in.school.c11",
+      "label": "Entrepreneurship"
+    },
+    {
+      "id": "in.school.c11.fine-arts",
+      "kind": "subject",
+      "parent": "in.school.c11",
+      "label": "Fine Arts"
+    },
+    {
+      "id": "in.school.c11.geography",
+      "kind": "subject",
+      "parent": "in.school.c11",
+      "label": "Geography"
+    },
+    {
+      "id": "in.school.c11.hindi",
+      "kind": "subject",
+      "parent": "in.school.c11",
+      "label": "Hindi"
+    },
+    {
+      "id": "in.school.c11.history",
+      "kind": "subject",
+      "parent": "in.school.c11",
+      "label": "History"
+    },
+    {
+      "id": "in.school.c11.home-science",
+      "kind": "subject",
+      "parent": "in.school.c11",
+      "label": "Home Science"
+    },
+    {
+      "id": "in.school.c11.informatics-practices",
+      "kind": "subject",
+      "parent": "in.school.c11",
+      "label": "Informatics Practices"
+    },
+    {
+      "id": "in.school.c11.legal-studies",
+      "kind": "subject",
+      "parent": "in.school.c11",
+      "label": "Legal Studies"
+    },
+    {
+      "id": "in.school.c11.mathematics",
+      "kind": "subject",
+      "parent": "in.school.c11",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.school.c11.philosophy",
+      "kind": "subject",
+      "parent": "in.school.c11",
+      "label": "Philosophy"
+    },
+    {
+      "id": "in.school.c11.physical-education",
+      "kind": "subject",
+      "parent": "in.school.c11",
+      "label": "Physical Education"
+    },
+    {
+      "id": "in.school.c11.political-science",
+      "kind": "subject",
+      "parent": "in.school.c11",
+      "label": "Political Science"
+    },
+    {
+      "id": "in.school.c11.psychology",
+      "kind": "subject",
+      "parent": "in.school.c11",
+      "label": "Psychology"
+    },
+    {
+      "id": "in.school.c11.regional-language",
+      "kind": "subject",
+      "parent": "in.school.c11",
+      "label": "Regional Language"
+    },
+    {
+      "id": "in.school.c11.sanskrit",
+      "kind": "subject",
+      "parent": "in.school.c11",
+      "label": "Sanskrit"
+    },
+    {
+      "id": "in.school.c11.sociology",
+      "kind": "subject",
+      "parent": "in.school.c11",
+      "label": "Sociology"
+    },
+    {
+      "id": "in.school.c11.statistics",
+      "kind": "subject",
+      "parent": "in.school.c11",
+      "label": "Statistics"
+    },
+    {
+      "id": "in.school.c11.zoology",
+      "kind": "subject",
+      "parent": "in.school.c11",
+      "label": "Zoology"
+    },
+    {
+      "id": "in.school.c12.accountancy",
+      "kind": "subject",
+      "parent": "in.school.c12",
+      "label": "Accountancy"
+    },
+    {
+      "id": "in.school.c12.biology",
+      "kind": "subject",
+      "parent": "in.school.c12",
+      "label": "Biology"
+    },
+    {
+      "id": "in.school.c12.botany",
+      "kind": "subject",
+      "parent": "in.school.c12",
+      "label": "Botany"
+    },
+    {
+      "id": "in.school.c12.business-studies",
+      "kind": "subject",
+      "parent": "in.school.c12",
+      "label": "Business Studies"
+    },
+    {
+      "id": "in.school.c12.chemistry",
+      "kind": "subject",
+      "parent": "in.school.c12",
+      "label": "Chemistry"
+    },
+    {
+      "id": "in.school.c12.computer-science",
+      "kind": "subject",
+      "parent": "in.school.c12",
+      "label": "Computer Science"
+    },
+    {
+      "id": "in.school.c12.economics",
+      "kind": "subject",
+      "parent": "in.school.c12",
+      "label": "Economics"
+    },
+    {
+      "id": "in.school.c12.entrepreneurship",
+      "kind": "subject",
+      "parent": "in.school.c12",
+      "label": "Entrepreneurship"
+    },
+    {
+      "id": "in.school.c12.fine-arts",
+      "kind": "subject",
+      "parent": "in.school.c12",
+      "label": "Fine Arts"
+    },
+    {
+      "id": "in.school.c12.geography",
+      "kind": "subject",
+      "parent": "in.school.c12",
+      "label": "Geography"
+    },
+    {
+      "id": "in.school.c12.hindi",
+      "kind": "subject",
+      "parent": "in.school.c12",
+      "label": "Hindi"
+    },
+    {
+      "id": "in.school.c12.history",
+      "kind": "subject",
+      "parent": "in.school.c12",
+      "label": "History"
+    },
+    {
+      "id": "in.school.c12.home-science",
+      "kind": "subject",
+      "parent": "in.school.c12",
+      "label": "Home Science"
+    },
+    {
+      "id": "in.school.c12.informatics-practices",
+      "kind": "subject",
+      "parent": "in.school.c12",
+      "label": "Informatics Practices"
+    },
+    {
+      "id": "in.school.c12.legal-studies",
+      "kind": "subject",
+      "parent": "in.school.c12",
+      "label": "Legal Studies"
+    },
+    {
+      "id": "in.school.c12.mathematics",
+      "kind": "subject",
+      "parent": "in.school.c12",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.school.c12.philosophy",
+      "kind": "subject",
+      "parent": "in.school.c12",
+      "label": "Philosophy"
+    },
+    {
+      "id": "in.school.c12.physical-education",
+      "kind": "subject",
+      "parent": "in.school.c12",
+      "label": "Physical Education"
+    },
+    {
+      "id": "in.school.c12.physics",
+      "kind": "subject",
+      "parent": "in.school.c12",
+      "label": "Physics"
+    },
+    {
+      "id": "in.school.c12.political-science",
+      "kind": "subject",
+      "parent": "in.school.c12",
+      "label": "Political Science"
+    },
+    {
+      "id": "in.school.c12.psychology",
+      "kind": "subject",
+      "parent": "in.school.c12",
+      "label": "Psychology"
+    },
+    {
+      "id": "in.school.c12.regional-language",
+      "kind": "subject",
+      "parent": "in.school.c12",
+      "label": "Regional Language"
+    },
+    {
+      "id": "in.school.c12.sanskrit",
+      "kind": "subject",
+      "parent": "in.school.c12",
+      "label": "Sanskrit"
+    },
+    {
+      "id": "in.school.c12.sociology",
+      "kind": "subject",
+      "parent": "in.school.c12",
+      "label": "Sociology"
+    },
+    {
+      "id": "in.school.c12.statistics",
+      "kind": "subject",
+      "parent": "in.school.c12",
+      "label": "Statistics"
+    },
+    {
+      "id": "in.school.c12.zoology",
+      "kind": "subject",
+      "parent": "in.school.c12",
+      "label": "Zoology"
+    },
+    {
+      "id": "in.school.c6.art-and-drawing",
+      "kind": "subject",
+      "parent": "in.school.c6",
+      "label": "Art & Drawing"
+    },
+    {
+      "id": "in.school.c6.computer-science",
+      "kind": "subject",
+      "parent": "in.school.c6",
+      "label": "Computer Science"
+    },
+    {
+      "id": "in.school.c6.english",
+      "kind": "subject",
+      "parent": "in.school.c6",
+      "label": "English"
+    },
+    {
+      "id": "in.school.c6.english-grammar",
+      "kind": "subject",
+      "parent": "in.school.c6",
+      "label": "English Grammar"
+    },
+    {
+      "id": "in.school.c6.general-knowledge",
+      "kind": "subject",
+      "parent": "in.school.c6",
+      "label": "General Knowledge"
+    },
+    {
+      "id": "in.school.c6.hindi",
+      "kind": "subject",
+      "parent": "in.school.c6",
+      "label": "Hindi"
+    },
+    {
+      "id": "in.school.c6.mathematics",
+      "kind": "subject",
+      "parent": "in.school.c6",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.school.c6.physical-education",
+      "kind": "subject",
+      "parent": "in.school.c6",
+      "label": "Physical Education"
+    },
+    {
+      "id": "in.school.c6.sanskrit",
+      "kind": "subject",
+      "parent": "in.school.c6",
+      "label": "Sanskrit"
+    },
+    {
+      "id": "in.school.c6.science",
+      "kind": "subject",
+      "parent": "in.school.c6",
+      "label": "Science"
+    },
+    {
+      "id": "in.school.c6.social-studies",
+      "kind": "subject",
+      "parent": "in.school.c6",
+      "label": "Social Studies"
+    },
+    {
+      "id": "in.school.c6.telugu",
+      "kind": "subject",
+      "parent": "in.school.c6",
+      "label": "Telugu"
+    },
+    {
+      "id": "in.school.c9.biology",
+      "kind": "subject",
+      "parent": "in.school.c9",
+      "label": "Biology"
+    },
+    {
+      "id": "in.school.c9.chemistry",
+      "kind": "subject",
+      "parent": "in.school.c9",
+      "label": "Chemistry"
+    },
+    {
+      "id": "in.school.c9.civics",
+      "kind": "subject",
+      "parent": "in.school.c9",
+      "label": "Civics"
+    },
+    {
+      "id": "in.school.c9.computer-science-it",
+      "kind": "subject",
+      "parent": "in.school.c9",
+      "label": "Computer Science / IT"
+    },
+    {
+      "id": "in.school.c9.economics",
+      "kind": "subject",
+      "parent": "in.school.c9",
+      "label": "Economics"
+    },
+    {
+      "id": "in.school.c9.english",
+      "kind": "subject",
+      "parent": "in.school.c9",
+      "label": "English"
+    },
+    {
+      "id": "in.school.c9.english-grammar",
+      "kind": "subject",
+      "parent": "in.school.c9",
+      "label": "English Grammar"
+    },
+    {
+      "id": "in.school.c9.geography",
+      "kind": "subject",
+      "parent": "in.school.c9",
+      "label": "Geography"
+    },
+    {
+      "id": "in.school.c9.hindi",
+      "kind": "subject",
+      "parent": "in.school.c9",
+      "label": "Hindi"
+    },
+    {
+      "id": "in.school.c9.history",
+      "kind": "subject",
+      "parent": "in.school.c9",
+      "label": "History"
+    },
+    {
+      "id": "in.school.c9.mathematics",
+      "kind": "subject",
+      "parent": "in.school.c9",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.school.c9.physical-education",
+      "kind": "subject",
+      "parent": "in.school.c9",
+      "label": "Physical Education"
+    },
+    {
+      "id": "in.school.c9.physics",
+      "kind": "subject",
+      "parent": "in.school.c9",
+      "label": "Physics"
+    },
+    {
+      "id": "in.school.c9.sanskrit",
+      "kind": "subject",
+      "parent": "in.school.c9",
+      "label": "Sanskrit"
+    },
+    {
+      "id": "in.school.c9.science",
+      "kind": "subject",
+      "parent": "in.school.c9",
+      "label": "Science"
+    },
+    {
+      "id": "in.school.c9.social-studies",
+      "kind": "subject",
+      "parent": "in.school.c9",
+      "label": "Social Studies"
+    },
+    {
+      "id": "in.school.c9.telugu",
+      "kind": "subject",
+      "parent": "in.school.c9",
+      "label": "Telugu"
+    },
+    {
+      "id": "in.school.class-1",
+      "kind": "class",
+      "parent": "in.school",
+      "label": "Class 1"
+    },
+    {
+      "id": "in.school.class-1.art-and-drawing",
+      "kind": "subject",
+      "parent": "in.school.class-1",
+      "label": "Art & Drawing"
+    },
+    {
+      "id": "in.school.class-1.computer-basics",
+      "kind": "subject",
+      "parent": "in.school.class-1",
+      "label": "Computer Basics"
+    },
+    {
+      "id": "in.school.class-1.english",
+      "kind": "subject",
+      "parent": "in.school.class-1",
+      "label": "English"
+    },
+    {
+      "id": "in.school.class-1.environmental-studies-evs",
+      "kind": "subject",
+      "parent": "in.school.class-1",
+      "label": "Environmental Studies (EVS)"
+    },
+    {
+      "id": "in.school.class-1.general-knowledge",
+      "kind": "subject",
+      "parent": "in.school.class-1",
+      "label": "General Knowledge"
+    },
+    {
+      "id": "in.school.class-1.hindi",
+      "kind": "subject",
+      "parent": "in.school.class-1",
+      "label": "Hindi"
+    },
+    {
+      "id": "in.school.class-1.mathematics",
+      "kind": "subject",
+      "parent": "in.school.class-1",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.school.class-1.moral-science-value-education",
+      "kind": "subject",
+      "parent": "in.school.class-1",
+      "label": "Moral Science / Value Education"
+    },
+    {
+      "id": "in.school.class-1.telugu",
+      "kind": "subject",
+      "parent": "in.school.class-1",
+      "label": "Telugu"
+    },
+    {
+      "id": "in.school.class-2",
+      "kind": "class",
+      "parent": "in.school",
+      "label": "Class 2"
+    },
+    {
+      "id": "in.school.class-2.art-and-drawing",
+      "kind": "subject",
+      "parent": "in.school.class-2",
+      "label": "Art & Drawing"
+    },
+    {
+      "id": "in.school.class-2.computer-basics",
+      "kind": "subject",
+      "parent": "in.school.class-2",
+      "label": "Computer Basics"
+    },
+    {
+      "id": "in.school.class-2.english",
+      "kind": "subject",
+      "parent": "in.school.class-2",
+      "label": "English"
+    },
+    {
+      "id": "in.school.class-2.environmental-studies-evs",
+      "kind": "subject",
+      "parent": "in.school.class-2",
+      "label": "Environmental Studies (EVS)"
+    },
+    {
+      "id": "in.school.class-2.general-knowledge",
+      "kind": "subject",
+      "parent": "in.school.class-2",
+      "label": "General Knowledge"
+    },
+    {
+      "id": "in.school.class-2.hindi",
+      "kind": "subject",
+      "parent": "in.school.class-2",
+      "label": "Hindi"
+    },
+    {
+      "id": "in.school.class-2.mathematics",
+      "kind": "subject",
+      "parent": "in.school.class-2",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.school.class-2.moral-science-value-education",
+      "kind": "subject",
+      "parent": "in.school.class-2",
+      "label": "Moral Science / Value Education"
+    },
+    {
+      "id": "in.school.class-2.telugu",
+      "kind": "subject",
+      "parent": "in.school.class-2",
+      "label": "Telugu"
+    },
+    {
+      "id": "in.school.class-3",
+      "kind": "class",
+      "parent": "in.school",
+      "label": "Class 3"
+    },
+    {
+      "id": "in.school.class-3.art-and-drawing",
+      "kind": "subject",
+      "parent": "in.school.class-3",
+      "label": "Art & Drawing"
+    },
+    {
+      "id": "in.school.class-3.computer-basics",
+      "kind": "subject",
+      "parent": "in.school.class-3",
+      "label": "Computer Basics"
+    },
+    {
+      "id": "in.school.class-3.english",
+      "kind": "subject",
+      "parent": "in.school.class-3",
+      "label": "English"
+    },
+    {
+      "id": "in.school.class-3.environmental-studies-evs",
+      "kind": "subject",
+      "parent": "in.school.class-3",
+      "label": "Environmental Studies (EVS)"
+    },
+    {
+      "id": "in.school.class-3.general-knowledge",
+      "kind": "subject",
+      "parent": "in.school.class-3",
+      "label": "General Knowledge"
+    },
+    {
+      "id": "in.school.class-3.hindi",
+      "kind": "subject",
+      "parent": "in.school.class-3",
+      "label": "Hindi"
+    },
+    {
+      "id": "in.school.class-3.mathematics",
+      "kind": "subject",
+      "parent": "in.school.class-3",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.school.class-3.moral-science-value-education",
+      "kind": "subject",
+      "parent": "in.school.class-3",
+      "label": "Moral Science / Value Education"
+    },
+    {
+      "id": "in.school.class-3.telugu",
+      "kind": "subject",
+      "parent": "in.school.class-3",
+      "label": "Telugu"
+    },
+    {
+      "id": "in.school.class-4",
+      "kind": "class",
+      "parent": "in.school",
+      "label": "Class 4"
+    },
+    {
+      "id": "in.school.class-4.art-and-drawing",
+      "kind": "subject",
+      "parent": "in.school.class-4",
+      "label": "Art & Drawing"
+    },
+    {
+      "id": "in.school.class-4.computer-basics",
+      "kind": "subject",
+      "parent": "in.school.class-4",
+      "label": "Computer Basics"
+    },
+    {
+      "id": "in.school.class-4.english",
+      "kind": "subject",
+      "parent": "in.school.class-4",
+      "label": "English"
+    },
+    {
+      "id": "in.school.class-4.environmental-studies-evs",
+      "kind": "subject",
+      "parent": "in.school.class-4",
+      "label": "Environmental Studies (EVS)"
+    },
+    {
+      "id": "in.school.class-4.general-knowledge",
+      "kind": "subject",
+      "parent": "in.school.class-4",
+      "label": "General Knowledge"
+    },
+    {
+      "id": "in.school.class-4.hindi",
+      "kind": "subject",
+      "parent": "in.school.class-4",
+      "label": "Hindi"
+    },
+    {
+      "id": "in.school.class-4.mathematics",
+      "kind": "subject",
+      "parent": "in.school.class-4",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.school.class-4.moral-science-value-education",
+      "kind": "subject",
+      "parent": "in.school.class-4",
+      "label": "Moral Science / Value Education"
+    },
+    {
+      "id": "in.school.class-4.telugu",
+      "kind": "subject",
+      "parent": "in.school.class-4",
+      "label": "Telugu"
+    },
+    {
+      "id": "in.school.class-5",
+      "kind": "class",
+      "parent": "in.school",
+      "label": "Class 5"
+    },
+    {
+      "id": "in.school.class-5.art-and-drawing",
+      "kind": "subject",
+      "parent": "in.school.class-5",
+      "label": "Art & Drawing"
+    },
+    {
+      "id": "in.school.class-5.computer-basics",
+      "kind": "subject",
+      "parent": "in.school.class-5",
+      "label": "Computer Basics"
+    },
+    {
+      "id": "in.school.class-5.english",
+      "kind": "subject",
+      "parent": "in.school.class-5",
+      "label": "English"
+    },
+    {
+      "id": "in.school.class-5.environmental-studies-evs",
+      "kind": "subject",
+      "parent": "in.school.class-5",
+      "label": "Environmental Studies (EVS)"
+    },
+    {
+      "id": "in.school.class-5.general-knowledge",
+      "kind": "subject",
+      "parent": "in.school.class-5",
+      "label": "General Knowledge"
+    },
+    {
+      "id": "in.school.class-5.hindi",
+      "kind": "subject",
+      "parent": "in.school.class-5",
+      "label": "Hindi"
+    },
+    {
+      "id": "in.school.class-5.mathematics",
+      "kind": "subject",
+      "parent": "in.school.class-5",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.school.class-5.moral-science-value-education",
+      "kind": "subject",
+      "parent": "in.school.class-5",
+      "label": "Moral Science / Value Education"
+    },
+    {
+      "id": "in.school.class-5.telugu",
+      "kind": "subject",
+      "parent": "in.school.class-5",
+      "label": "Telugu"
+    },
+    {
+      "id": "in.school.class-7",
+      "kind": "class",
+      "parent": "in.school",
+      "label": "Class 7"
+    },
+    {
+      "id": "in.school.class-7.art-and-drawing",
+      "kind": "subject",
+      "parent": "in.school.class-7",
+      "label": "Art & Drawing"
+    },
+    {
+      "id": "in.school.class-7.computer-science",
+      "kind": "subject",
+      "parent": "in.school.class-7",
+      "label": "Computer Science"
+    },
+    {
+      "id": "in.school.class-7.english",
+      "kind": "subject",
+      "parent": "in.school.class-7",
+      "label": "English"
+    },
+    {
+      "id": "in.school.class-7.english-grammar",
+      "kind": "subject",
+      "parent": "in.school.class-7",
+      "label": "English Grammar"
+    },
+    {
+      "id": "in.school.class-7.general-knowledge",
+      "kind": "subject",
+      "parent": "in.school.class-7",
+      "label": "General Knowledge"
+    },
+    {
+      "id": "in.school.class-7.hindi",
+      "kind": "subject",
+      "parent": "in.school.class-7",
+      "label": "Hindi"
+    },
+    {
+      "id": "in.school.class-7.mathematics",
+      "kind": "subject",
+      "parent": "in.school.class-7",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.school.class-7.physical-education",
+      "kind": "subject",
+      "parent": "in.school.class-7",
+      "label": "Physical Education"
+    },
+    {
+      "id": "in.school.class-7.sanskrit",
+      "kind": "subject",
+      "parent": "in.school.class-7",
+      "label": "Sanskrit"
+    },
+    {
+      "id": "in.school.class-7.science",
+      "kind": "subject",
+      "parent": "in.school.class-7",
+      "label": "Science"
+    },
+    {
+      "id": "in.school.class-7.social-studies",
+      "kind": "subject",
+      "parent": "in.school.class-7",
+      "label": "Social Studies"
+    },
+    {
+      "id": "in.school.class-7.telugu",
+      "kind": "subject",
+      "parent": "in.school.class-7",
+      "label": "Telugu"
+    },
+    {
+      "id": "in.school.class-8",
+      "kind": "class",
+      "parent": "in.school",
+      "label": "Class 8"
+    },
+    {
+      "id": "in.school.class-8.art-and-drawing",
+      "kind": "subject",
+      "parent": "in.school.class-8",
+      "label": "Art & Drawing"
+    },
+    {
+      "id": "in.school.class-8.computer-science",
+      "kind": "subject",
+      "parent": "in.school.class-8",
+      "label": "Computer Science"
+    },
+    {
+      "id": "in.school.class-8.english",
+      "kind": "subject",
+      "parent": "in.school.class-8",
+      "label": "English"
+    },
+    {
+      "id": "in.school.class-8.english-grammar",
+      "kind": "subject",
+      "parent": "in.school.class-8",
+      "label": "English Grammar"
+    },
+    {
+      "id": "in.school.class-8.general-knowledge",
+      "kind": "subject",
+      "parent": "in.school.class-8",
+      "label": "General Knowledge"
+    },
+    {
+      "id": "in.school.class-8.hindi",
+      "kind": "subject",
+      "parent": "in.school.class-8",
+      "label": "Hindi"
+    },
+    {
+      "id": "in.school.class-8.mathematics",
+      "kind": "subject",
+      "parent": "in.school.class-8",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.school.class-8.physical-education",
+      "kind": "subject",
+      "parent": "in.school.class-8",
+      "label": "Physical Education"
+    },
+    {
+      "id": "in.school.class-8.sanskrit",
+      "kind": "subject",
+      "parent": "in.school.class-8",
+      "label": "Sanskrit"
+    },
+    {
+      "id": "in.school.class-8.science",
+      "kind": "subject",
+      "parent": "in.school.class-8",
+      "label": "Science"
+    },
+    {
+      "id": "in.school.class-8.social-studies",
+      "kind": "subject",
+      "parent": "in.school.class-8",
+      "label": "Social Studies"
+    },
+    {
+      "id": "in.school.class-8.telugu",
+      "kind": "subject",
+      "parent": "in.school.class-8",
+      "label": "Telugu"
+    },
+    {
+      "id": "in.school.icse-isc",
+      "kind": "class",
+      "parent": "in.school",
+      "label": "ICSE / ISC"
+    },
+    {
+      "id": "in.school.igcse-ib",
+      "kind": "class",
+      "parent": "in.school",
+      "label": "IGCSE / IB"
+    },
+    {
+      "id": "in.school.nios-open-school",
+      "kind": "class",
+      "parent": "in.school",
+      "label": "NIOS (Open School)"
+    }
+  ]
+}

@@ -51,3 +51,7 @@ android/**/build/
 # the ops/quality logs the admin dashboard reads, sync state. Real user content
 # and none of it belongs in git. .htaccess also 404s these directories.
 */data/
+
+# negative-control.js sidecar: originals held while a checker is cut out.
+# Transient by design; a committed one would mean a run was killed.
+7solve/.negative-control-restore.json

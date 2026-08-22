@@ -1,0 +1,5107 @@
+{
+  "_": "GENERATED from tools/legacy-taxonomy.json by tools/gen-legacy-taxonomy.js. Do not hand-edit — the generator owns these nodes and tools/gate-legacy-taxonomy.js fails the build if they drift. The six mapping decisions are documented in the generator.",
+  "schema": "7solve.taxonomy/1",
+  "version": "2026-08-22",
+  "source": "7solve-legacy",
+  "nodes": [
+    {
+      "id": "in.exam",
+      "kind": "level",
+      "parent": "in",
+      "label": "Competitive & recruitment exams",
+      "aliases": [
+        "competitive exam",
+        "government exam",
+        "recruitment exam"
+      ]
+    },
+    {
+      "id": "in.exam.afcat",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "AFCAT"
+    },
+    {
+      "id": "in.exam.afcat.ekt-technical",
+      "kind": "subject",
+      "parent": "in.exam.afcat",
+      "label": "EKT (Technical)"
+    },
+    {
+      "id": "in.exam.afcat.general-awareness",
+      "kind": "subject",
+      "parent": "in.exam.afcat",
+      "label": "General Awareness"
+    },
+    {
+      "id": "in.exam.afcat.numerical-ability",
+      "kind": "subject",
+      "parent": "in.exam.afcat",
+      "label": "Numerical Ability"
+    },
+    {
+      "id": "in.exam.afcat.reasoning-and-military-aptitude",
+      "kind": "subject",
+      "parent": "in.exam.afcat",
+      "label": "Reasoning & Military Aptitude"
+    },
+    {
+      "id": "in.exam.afcat.verbal-ability-in-english",
+      "kind": "subject",
+      "parent": "in.exam.afcat",
+      "label": "Verbal Ability in English"
+    },
+    {
+      "id": "in.exam.aiapget-ayush",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "AIAPGET (AYUSH)"
+    },
+    {
+      "id": "in.exam.aibe-bar-exam",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "AIBE (Bar Exam)"
+    },
+    {
+      "id": "in.exam.aibe-bar-exam.civil-procedure-code",
+      "kind": "subject",
+      "parent": "in.exam.aibe-bar-exam",
+      "label": "Civil Procedure Code"
+    },
+    {
+      "id": "in.exam.aibe-bar-exam.company-law",
+      "kind": "subject",
+      "parent": "in.exam.aibe-bar-exam",
+      "label": "Company Law"
+    },
+    {
+      "id": "in.exam.aibe-bar-exam.constitutional-law",
+      "kind": "subject",
+      "parent": "in.exam.aibe-bar-exam",
+      "label": "Constitutional Law"
+    },
+    {
+      "id": "in.exam.aibe-bar-exam.contract-law",
+      "kind": "subject",
+      "parent": "in.exam.aibe-bar-exam",
+      "label": "Contract Law"
+    },
+    {
+      "id": "in.exam.aibe-bar-exam.criminal-procedure-code",
+      "kind": "subject",
+      "parent": "in.exam.aibe-bar-exam",
+      "label": "Criminal Procedure Code"
+    },
+    {
+      "id": "in.exam.aibe-bar-exam.evidence-act",
+      "kind": "subject",
+      "parent": "in.exam.aibe-bar-exam",
+      "label": "Evidence Act"
+    },
+    {
+      "id": "in.exam.aibe-bar-exam.family-law",
+      "kind": "subject",
+      "parent": "in.exam.aibe-bar-exam",
+      "label": "Family Law"
+    },
+    {
+      "id": "in.exam.aibe-bar-exam.indian-penal-code",
+      "kind": "subject",
+      "parent": "in.exam.aibe-bar-exam",
+      "label": "Indian Penal Code"
+    },
+    {
+      "id": "in.exam.aibe-bar-exam.professional-ethics",
+      "kind": "subject",
+      "parent": "in.exam.aibe-bar-exam",
+      "label": "Professional Ethics"
+    },
+    {
+      "id": "in.exam.aibe-bar-exam.public-interest-litigation",
+      "kind": "subject",
+      "parent": "in.exam.aibe-bar-exam",
+      "label": "Public Interest Litigation"
+    },
+    {
+      "id": "in.exam.aiims-nursing-norcet",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "AIIMS Nursing / NORCET"
+    },
+    {
+      "id": "in.exam.aiims-nursing-norcet.child-health-nursing",
+      "kind": "subject",
+      "parent": "in.exam.aiims-nursing-norcet",
+      "label": "Child Health Nursing"
+    },
+    {
+      "id": "in.exam.aiims-nursing-norcet.community-health-nursing",
+      "kind": "subject",
+      "parent": "in.exam.aiims-nursing-norcet",
+      "label": "Community Health Nursing"
+    },
+    {
+      "id": "in.exam.aiims-nursing-norcet.general-knowledge-and-aptitude",
+      "kind": "subject",
+      "parent": "in.exam.aiims-nursing-norcet",
+      "label": "General Knowledge & Aptitude"
+    },
+    {
+      "id": "in.exam.aiims-nursing-norcet.medical-surgical-nursing",
+      "kind": "subject",
+      "parent": "in.exam.aiims-nursing-norcet",
+      "label": "Medical Surgical Nursing"
+    },
+    {
+      "id": "in.exam.aiims-nursing-norcet.mental-health-nursing",
+      "kind": "subject",
+      "parent": "in.exam.aiims-nursing-norcet",
+      "label": "Mental Health Nursing"
+    },
+    {
+      "id": "in.exam.aiims-nursing-norcet.nursing-foundation",
+      "kind": "subject",
+      "parent": "in.exam.aiims-nursing-norcet",
+      "label": "Nursing Foundation"
+    },
+    {
+      "id": "in.exam.aiims-nursing-norcet.nursing-management",
+      "kind": "subject",
+      "parent": "in.exam.aiims-nursing-norcet",
+      "label": "Nursing Management"
+    },
+    {
+      "id": "in.exam.aiims-nursing-norcet.obstetrics-and-gynaecology-nursing",
+      "kind": "subject",
+      "parent": "in.exam.aiims-nursing-norcet",
+      "label": "Obstetrics & Gynaecology Nursing"
+    },
+    {
+      "id": "in.exam.ailet",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "AILET"
+    },
+    {
+      "id": "in.exam.ailet.current-affairs-and-general-knowledge",
+      "kind": "subject",
+      "parent": "in.exam.ailet",
+      "label": "Current Affairs & General Knowledge"
+    },
+    {
+      "id": "in.exam.ailet.english-language",
+      "kind": "subject",
+      "parent": "in.exam.ailet",
+      "label": "English Language"
+    },
+    {
+      "id": "in.exam.ailet.logical-reasoning",
+      "kind": "subject",
+      "parent": "in.exam.ailet",
+      "label": "Logical Reasoning"
+    },
+    {
+      "id": "in.exam.amueee",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "AMUEEE"
+    },
+    {
+      "id": "in.exam.andaman-and-nicobar-administration",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Andaman & Nicobar Administration"
+    },
+    {
+      "id": "in.exam.anganwadi-worker-supervisor",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Anganwadi Worker / Supervisor"
+    },
+    {
+      "id": "in.exam.anganwadi-worker-supervisor.basic-mathematics",
+      "kind": "subject",
+      "parent": "in.exam.anganwadi-worker-supervisor",
+      "label": "Basic Mathematics"
+    },
+    {
+      "id": "in.exam.anganwadi-worker-supervisor.child-development-and-nutrition",
+      "kind": "subject",
+      "parent": "in.exam.anganwadi-worker-supervisor",
+      "label": "Child Development & Nutrition"
+    },
+    {
+      "id": "in.exam.anganwadi-worker-supervisor.general-knowledge",
+      "kind": "subject",
+      "parent": "in.exam.anganwadi-worker-supervisor",
+      "label": "General Knowledge"
+    },
+    {
+      "id": "in.exam.anganwadi-worker-supervisor.health-and-hygiene",
+      "kind": "subject",
+      "parent": "in.exam.anganwadi-worker-supervisor",
+      "label": "Health & Hygiene"
+    },
+    {
+      "id": "in.exam.anganwadi-worker-supervisor.icds-schemes",
+      "kind": "subject",
+      "parent": "in.exam.anganwadi-worker-supervisor",
+      "label": "ICDS Schemes"
+    },
+    {
+      "id": "in.exam.anganwadi-worker-supervisor.reasoning",
+      "kind": "subject",
+      "parent": "in.exam.anganwadi-worker-supervisor",
+      "label": "Reasoning"
+    },
+    {
+      "id": "in.exam.anganwadi-worker-supervisor.regional-language",
+      "kind": "subject",
+      "parent": "in.exam.anganwadi-worker-supervisor",
+      "label": "Regional Language"
+    },
+    {
+      "id": "in.exam.anm-gnm-recruitment",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "ANM / GNM Recruitment"
+    },
+    {
+      "id": "in.exam.ap-eapcet-eamcet",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "AP EAPCET (EAMCET)"
+    },
+    {
+      "id": "in.exam.ap-eapcet-eamcet.botany",
+      "kind": "subject",
+      "parent": "in.exam.ap-eapcet-eamcet",
+      "label": "Botany"
+    },
+    {
+      "id": "in.exam.ap-eapcet-eamcet.chemistry",
+      "kind": "subject",
+      "parent": "in.exam.ap-eapcet-eamcet",
+      "label": "Chemistry"
+    },
+    {
+      "id": "in.exam.ap-eapcet-eamcet.mathematics",
+      "kind": "subject",
+      "parent": "in.exam.ap-eapcet-eamcet",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.exam.ap-eapcet-eamcet.physics",
+      "kind": "subject",
+      "parent": "in.exam.ap-eapcet-eamcet",
+      "label": "Physics"
+    },
+    {
+      "id": "in.exam.ap-eapcet-eamcet.zoology",
+      "kind": "subject",
+      "parent": "in.exam.ap-eapcet-eamcet",
+      "label": "Zoology"
+    },
+    {
+      "id": "in.exam.ap-ts-icet",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "AP / TS ICET"
+    },
+    {
+      "id": "in.exam.ap-ts-lawcet",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "AP / TS LAWCET"
+    },
+    {
+      "id": "in.exam.ap-ts-pgecet-pharmacy",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "AP / TS PGECET (Pharmacy)"
+    },
+    {
+      "id": "in.exam.ap-ts-police-si-and-constable",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "AP / TS Police SI & Constable"
+    },
+    {
+      "id": "in.exam.appsc-group-1",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "APPSC Group 1"
+    },
+    {
+      "id": "in.exam.appsc-group-2",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "APPSC Group 2"
+    },
+    {
+      "id": "in.exam.appsc-group-3",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "APPSC Group 3"
+    },
+    {
+      "id": "in.exam.appsc-group-4",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "APPSC Group 4"
+    },
+    {
+      "id": "in.exam.apsc-assam",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "APSC (Assam)"
+    },
+    {
+      "id": "in.exam.apssb-arunachal",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "APSSB (Arunachal)"
+    },
+    {
+      "id": "in.exam.aptet",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "APTET"
+    },
+    {
+      "id": "in.exam.army-public-school-awes",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Army Public School (AWES)"
+    },
+    {
+      "id": "in.exam.army-tes-tgc-jag",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Army TES / TGC / JAG"
+    },
+    {
+      "id": "in.exam.arunachal-pradesh-psc-appsc-ar",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Arunachal Pradesh PSC (APPSC-AR)"
+    },
+    {
+      "id": "in.exam.asha-health-worker",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "ASHA / Health Worker"
+    },
+    {
+      "id": "in.exam.assam-cee",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Assam CEE"
+    },
+    {
+      "id": "in.exam.assam-direct-recruitment-adre",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Assam Direct Recruitment (ADRE)"
+    },
+    {
+      "id": "in.exam.assam-direct-recruitment-adre.assam-gk-and-current-affairs",
+      "kind": "subject",
+      "parent": "in.exam.assam-direct-recruitment-adre",
+      "label": "Assam GK & Current Affairs"
+    },
+    {
+      "id": "in.exam.assam-direct-recruitment-adre.computer-knowledge",
+      "kind": "subject",
+      "parent": "in.exam.assam-direct-recruitment-adre",
+      "label": "Computer Knowledge"
+    },
+    {
+      "id": "in.exam.assam-direct-recruitment-adre.general-english",
+      "kind": "subject",
+      "parent": "in.exam.assam-direct-recruitment-adre",
+      "label": "General English"
+    },
+    {
+      "id": "in.exam.assam-direct-recruitment-adre.general-studies",
+      "kind": "subject",
+      "parent": "in.exam.assam-direct-recruitment-adre",
+      "label": "General Studies"
+    },
+    {
+      "id": "in.exam.assam-direct-recruitment-adre.quantitative-aptitude",
+      "kind": "subject",
+      "parent": "in.exam.assam-direct-recruitment-adre",
+      "label": "Quantitative Aptitude"
+    },
+    {
+      "id": "in.exam.assam-direct-recruitment-adre.reasoning",
+      "kind": "subject",
+      "parent": "in.exam.assam-direct-recruitment-adre",
+      "label": "Reasoning"
+    },
+    {
+      "id": "in.exam.assam-police",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Assam Police"
+    },
+    {
+      "id": "in.exam.assam-rifles",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Assam Rifles"
+    },
+    {
+      "id": "in.exam.assistant-public-prosecutor",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Assistant Public Prosecutor"
+    },
+    {
+      "id": "in.exam.atma",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "ATMA"
+    },
+    {
+      "id": "in.exam.b-ed-entrance-edcet",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "B.Ed Entrance (EDCET)"
+    },
+    {
+      "id": "in.exam.barc-oces",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "BARC OCES"
+    },
+    {
+      "id": "in.exam.barc-oces.chemical-engineering",
+      "kind": "subject",
+      "parent": "in.exam.barc-oces",
+      "label": "Chemical Engineering"
+    },
+    {
+      "id": "in.exam.barc-oces.chemistry",
+      "kind": "subject",
+      "parent": "in.exam.barc-oces",
+      "label": "Chemistry"
+    },
+    {
+      "id": "in.exam.barc-oces.computer-science",
+      "kind": "subject",
+      "parent": "in.exam.barc-oces",
+      "label": "Computer Science"
+    },
+    {
+      "id": "in.exam.barc-oces.electrical-engineering",
+      "kind": "subject",
+      "parent": "in.exam.barc-oces",
+      "label": "Electrical Engineering"
+    },
+    {
+      "id": "in.exam.barc-oces.electronics",
+      "kind": "subject",
+      "parent": "in.exam.barc-oces",
+      "label": "Electronics"
+    },
+    {
+      "id": "in.exam.barc-oces.engineering-mathematics",
+      "kind": "subject",
+      "parent": "in.exam.barc-oces",
+      "label": "Engineering Mathematics"
+    },
+    {
+      "id": "in.exam.barc-oces.mechanical-engineering",
+      "kind": "subject",
+      "parent": "in.exam.barc-oces",
+      "label": "Mechanical Engineering"
+    },
+    {
+      "id": "in.exam.barc-oces.physics",
+      "kind": "subject",
+      "parent": "in.exam.barc-oces",
+      "label": "Physics"
+    },
+    {
+      "id": "in.exam.bcece-bihar",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "BCECE (Bihar)"
+    },
+    {
+      "id": "in.exam.bcece-bihar.agriculture",
+      "kind": "subject",
+      "parent": "in.exam.bcece-bihar",
+      "label": "Agriculture"
+    },
+    {
+      "id": "in.exam.bcece-bihar.biology",
+      "kind": "subject",
+      "parent": "in.exam.bcece-bihar",
+      "label": "Biology"
+    },
+    {
+      "id": "in.exam.bcece-bihar.chemistry",
+      "kind": "subject",
+      "parent": "in.exam.bcece-bihar",
+      "label": "Chemistry"
+    },
+    {
+      "id": "in.exam.bcece-bihar.mathematics",
+      "kind": "subject",
+      "parent": "in.exam.bcece-bihar",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.exam.bcece-bihar.physics",
+      "kind": "subject",
+      "parent": "in.exam.bcece-bihar",
+      "label": "Physics"
+    },
+    {
+      "id": "in.exam.bihar-police",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Bihar Police"
+    },
+    {
+      "id": "in.exam.bitsat",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "BITSAT"
+    },
+    {
+      "id": "in.exam.bitsat.chemistry",
+      "kind": "subject",
+      "parent": "in.exam.bitsat",
+      "label": "Chemistry"
+    },
+    {
+      "id": "in.exam.bitsat.english-proficiency",
+      "kind": "subject",
+      "parent": "in.exam.bitsat",
+      "label": "English Proficiency"
+    },
+    {
+      "id": "in.exam.bitsat.logical-reasoning",
+      "kind": "subject",
+      "parent": "in.exam.bitsat",
+      "label": "Logical Reasoning"
+    },
+    {
+      "id": "in.exam.bitsat.mathematics",
+      "kind": "subject",
+      "parent": "in.exam.bitsat",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.exam.bitsat.physics",
+      "kind": "subject",
+      "parent": "in.exam.bitsat",
+      "label": "Physics"
+    },
+    {
+      "id": "in.exam.bpsc-bihar",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "BPSC (Bihar)"
+    },
+    {
+      "id": "in.exam.bpsc-teacher-tre",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "BPSC Teacher (TRE)"
+    },
+    {
+      "id": "in.exam.bsc-nursing-entrance",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "BSc Nursing Entrance"
+    },
+    {
+      "id": "in.exam.bssc-bihar",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "BSSC (Bihar)"
+    },
+    {
+      "id": "in.exam.btet-bihar",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "BTET (Bihar)"
+    },
+    {
+      "id": "in.exam.capf-bsf-crpf-cisf-itbp-ssb",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "CAPF (BSF / CRPF / CISF / ITBP / SSB)"
+    },
+    {
+      "id": "in.exam.capf-bsf-crpf-cisf-itbp-ssb.current-affairs",
+      "kind": "subject",
+      "parent": "in.exam.capf-bsf-crpf-cisf-itbp-ssb",
+      "label": "Current Affairs"
+    },
+    {
+      "id": "in.exam.capf-bsf-crpf-cisf-itbp-ssb.general-ability-and-intelligence",
+      "kind": "subject",
+      "parent": "in.exam.capf-bsf-crpf-cisf-itbp-ssb",
+      "label": "General Ability & Intelligence"
+    },
+    {
+      "id": "in.exam.capf-bsf-crpf-cisf-itbp-ssb.general-science",
+      "kind": "subject",
+      "parent": "in.exam.capf-bsf-crpf-cisf-itbp-ssb",
+      "label": "General Science"
+    },
+    {
+      "id": "in.exam.capf-bsf-crpf-cisf-itbp-ssb.general-studies-essay-and-comprehension",
+      "kind": "subject",
+      "parent": "in.exam.capf-bsf-crpf-cisf-itbp-ssb",
+      "label": "General Studies, Essay & Comprehension"
+    },
+    {
+      "id": "in.exam.capf-bsf-crpf-cisf-itbp-ssb.indian-polity-and-economy",
+      "kind": "subject",
+      "parent": "in.exam.capf-bsf-crpf-cisf-itbp-ssb",
+      "label": "Indian Polity & Economy"
+    },
+    {
+      "id": "in.exam.cat",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "CAT"
+    },
+    {
+      "id": "in.exam.cat.data-interpretation-and-logical-reasoning-dilr",
+      "kind": "subject",
+      "parent": "in.exam.cat",
+      "label": "Data Interpretation & Logical Reasoning (DILR)"
+    },
+    {
+      "id": "in.exam.cat.quantitative-ability-qa",
+      "kind": "subject",
+      "parent": "in.exam.cat",
+      "label": "Quantitative Ability (QA)"
+    },
+    {
+      "id": "in.exam.cat.verbal-ability-and-reading-comprehension-varc",
+      "kind": "subject",
+      "parent": "in.exam.cat",
+      "label": "Verbal Ability & Reading Comprehension (VARC)"
+    },
+    {
+      "id": "in.exam.cds-ima-ina-afa-ota",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "CDS (IMA / INA / AFA / OTA)"
+    },
+    {
+      "id": "in.exam.cds-ima-ina-afa-ota.elementary-mathematics",
+      "kind": "subject",
+      "parent": "in.exam.cds-ima-ina-afa-ota",
+      "label": "Elementary Mathematics"
+    },
+    {
+      "id": "in.exam.cds-ima-ina-afa-ota.english",
+      "kind": "subject",
+      "parent": "in.exam.cds-ima-ina-afa-ota",
+      "label": "English"
+    },
+    {
+      "id": "in.exam.cds-ima-ina-afa-ota.general-knowledge",
+      "kind": "subject",
+      "parent": "in.exam.cds-ima-ina-afa-ota",
+      "label": "General Knowledge"
+    },
+    {
+      "id": "in.exam.cds-ima-ina-afa-ota.ssb-interview",
+      "kind": "subject",
+      "parent": "in.exam.cds-ima-ina-afa-ota",
+      "label": "SSB Interview"
+    },
+    {
+      "id": "in.exam.ceed",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "CEED"
+    },
+    {
+      "id": "in.exam.cg-pet-chhattisgarh",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "CG PET (Chhattisgarh)"
+    },
+    {
+      "id": "in.exam.cg-vyapam-chhattisgarh",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "CG Vyapam (Chhattisgarh)"
+    },
+    {
+      "id": "in.exam.cgpsc-chhattisgarh",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "CGPSC (Chhattisgarh)"
+    },
+    {
+      "id": "in.exam.cgtet",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "CGTET"
+    },
+    {
+      "id": "in.exam.chandigarh-administration",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Chandigarh Administration"
+    },
+    {
+      "id": "in.exam.clat-pg",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "CLAT PG"
+    },
+    {
+      "id": "in.exam.clat-pg.administrative-law",
+      "kind": "subject",
+      "parent": "in.exam.clat-pg",
+      "label": "Administrative Law"
+    },
+    {
+      "id": "in.exam.clat-pg.company-law",
+      "kind": "subject",
+      "parent": "in.exam.clat-pg",
+      "label": "Company Law"
+    },
+    {
+      "id": "in.exam.clat-pg.constitutional-law",
+      "kind": "subject",
+      "parent": "in.exam.clat-pg",
+      "label": "Constitutional Law"
+    },
+    {
+      "id": "in.exam.clat-pg.criminal-law",
+      "kind": "subject",
+      "parent": "in.exam.clat-pg",
+      "label": "Criminal Law"
+    },
+    {
+      "id": "in.exam.clat-pg.international-law",
+      "kind": "subject",
+      "parent": "in.exam.clat-pg",
+      "label": "International Law"
+    },
+    {
+      "id": "in.exam.clat-pg.jurisprudence",
+      "kind": "subject",
+      "parent": "in.exam.clat-pg",
+      "label": "Jurisprudence"
+    },
+    {
+      "id": "in.exam.clat-pg.law-of-contract",
+      "kind": "subject",
+      "parent": "in.exam.clat-pg",
+      "label": "Law of Contract"
+    },
+    {
+      "id": "in.exam.clat-pg.law-of-torts",
+      "kind": "subject",
+      "parent": "in.exam.clat-pg",
+      "label": "Law of Torts"
+    },
+    {
+      "id": "in.exam.clat-ug",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "CLAT UG"
+    },
+    {
+      "id": "in.exam.clat-ug.current-affairs-and-general-knowledge",
+      "kind": "subject",
+      "parent": "in.exam.clat-ug",
+      "label": "Current Affairs & General Knowledge"
+    },
+    {
+      "id": "in.exam.clat-ug.english-language",
+      "kind": "subject",
+      "parent": "in.exam.clat-ug",
+      "label": "English Language"
+    },
+    {
+      "id": "in.exam.clat-ug.legal-reasoning",
+      "kind": "subject",
+      "parent": "in.exam.clat-ug",
+      "label": "Legal Reasoning"
+    },
+    {
+      "id": "in.exam.clat-ug.logical-reasoning",
+      "kind": "subject",
+      "parent": "in.exam.clat-ug",
+      "label": "Logical Reasoning"
+    },
+    {
+      "id": "in.exam.clat-ug.quantitative-techniques",
+      "kind": "subject",
+      "parent": "in.exam.clat-ug",
+      "label": "Quantitative Techniques"
+    },
+    {
+      "id": "in.exam.cmat",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "CMAT"
+    },
+    {
+      "id": "in.exam.cmat.general-awareness",
+      "kind": "subject",
+      "parent": "in.exam.cmat",
+      "label": "General Awareness"
+    },
+    {
+      "id": "in.exam.cmat.innovation-and-entrepreneurship",
+      "kind": "subject",
+      "parent": "in.exam.cmat",
+      "label": "Innovation & Entrepreneurship"
+    },
+    {
+      "id": "in.exam.cmat.language-comprehension",
+      "kind": "subject",
+      "parent": "in.exam.cmat",
+      "label": "Language Comprehension"
+    },
+    {
+      "id": "in.exam.cmat.logical-reasoning",
+      "kind": "subject",
+      "parent": "in.exam.cmat",
+      "label": "Logical Reasoning"
+    },
+    {
+      "id": "in.exam.cmat.quantitative-techniques-and-data-interpretation",
+      "kind": "subject",
+      "parent": "in.exam.cmat",
+      "label": "Quantitative Techniques & Data Interpretation"
+    },
+    {
+      "id": "in.exam.co-operative-bank-state-bank-exams",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Co-operative Bank / State Bank Exams"
+    },
+    {
+      "id": "in.exam.coast-guard-navik-yantrik",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Coast Guard (Navik / Yantrik)"
+    },
+    {
+      "id": "in.exam.comedk-uget",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "COMEDK UGET"
+    },
+    {
+      "id": "in.exam.csir-net",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "CSIR NET"
+    },
+    {
+      "id": "in.exam.csir-net.chemical-sciences",
+      "kind": "subject",
+      "parent": "in.exam.csir-net",
+      "label": "Chemical Sciences"
+    },
+    {
+      "id": "in.exam.csir-net.earth-sciences",
+      "kind": "subject",
+      "parent": "in.exam.csir-net",
+      "label": "Earth Sciences"
+    },
+    {
+      "id": "in.exam.csir-net.life-sciences",
+      "kind": "subject",
+      "parent": "in.exam.csir-net",
+      "label": "Life Sciences"
+    },
+    {
+      "id": "in.exam.csir-net.mathematical-sciences",
+      "kind": "subject",
+      "parent": "in.exam.csir-net",
+      "label": "Mathematical Sciences"
+    },
+    {
+      "id": "in.exam.csir-net.part-a-general-aptitude",
+      "kind": "subject",
+      "parent": "in.exam.csir-net",
+      "label": "Part A — General Aptitude"
+    },
+    {
+      "id": "in.exam.csir-net.physical-sciences",
+      "kind": "subject",
+      "parent": "in.exam.csir-net",
+      "label": "Physical Sciences"
+    },
+    {
+      "id": "in.exam.ctet",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "CTET"
+    },
+    {
+      "id": "in.exam.ctet.child-development-and-pedagogy",
+      "kind": "subject",
+      "parent": "in.exam.ctet",
+      "label": "Child Development & Pedagogy"
+    },
+    {
+      "id": "in.exam.ctet.environmental-studies-paper-1",
+      "kind": "subject",
+      "parent": "in.exam.ctet",
+      "label": "Environmental Studies (Paper 1)"
+    },
+    {
+      "id": "in.exam.ctet.language-i",
+      "kind": "subject",
+      "parent": "in.exam.ctet",
+      "label": "Language I"
+    },
+    {
+      "id": "in.exam.ctet.language-ii",
+      "kind": "subject",
+      "parent": "in.exam.ctet",
+      "label": "Language II"
+    },
+    {
+      "id": "in.exam.ctet.mathematics",
+      "kind": "subject",
+      "parent": "in.exam.ctet",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.exam.ctet.science-paper-2",
+      "kind": "subject",
+      "parent": "in.exam.ctet",
+      "label": "Science (Paper 2)"
+    },
+    {
+      "id": "in.exam.ctet.social-studies-social-science-paper-2",
+      "kind": "subject",
+      "parent": "in.exam.ctet",
+      "label": "Social Studies / Social Science (Paper 2)"
+    },
+    {
+      "id": "in.exam.cuet-pg",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "CUET PG"
+    },
+    {
+      "id": "in.exam.cuet-pg-mba",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "CUET PG (MBA)"
+    },
+    {
+      "id": "in.exam.cuet-pg.general-aptitude",
+      "kind": "subject",
+      "parent": "in.exam.cuet-pg",
+      "label": "General Aptitude"
+    },
+    {
+      "id": "in.exam.cuet-pg.language-comprehension",
+      "kind": "subject",
+      "parent": "in.exam.cuet-pg",
+      "label": "Language Comprehension"
+    },
+    {
+      "id": "in.exam.cuet-pg.subject-specific-paper",
+      "kind": "subject",
+      "parent": "in.exam.cuet-pg",
+      "label": "Subject-specific Paper"
+    },
+    {
+      "id": "in.exam.cuet-pg.teaching-and-research-aptitude",
+      "kind": "subject",
+      "parent": "in.exam.cuet-pg",
+      "label": "Teaching & Research Aptitude"
+    },
+    {
+      "id": "in.exam.cuet-ug",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "CUET UG"
+    },
+    {
+      "id": "in.exam.cuet-ug.accountancy",
+      "kind": "subject",
+      "parent": "in.exam.cuet-ug",
+      "label": "Accountancy"
+    },
+    {
+      "id": "in.exam.cuet-ug.biology",
+      "kind": "subject",
+      "parent": "in.exam.cuet-ug",
+      "label": "Biology"
+    },
+    {
+      "id": "in.exam.cuet-ug.business-studies",
+      "kind": "subject",
+      "parent": "in.exam.cuet-ug",
+      "label": "Business Studies"
+    },
+    {
+      "id": "in.exam.cuet-ug.chemistry",
+      "kind": "subject",
+      "parent": "in.exam.cuet-ug",
+      "label": "Chemistry"
+    },
+    {
+      "id": "in.exam.cuet-ug.computer-science",
+      "kind": "subject",
+      "parent": "in.exam.cuet-ug",
+      "label": "Computer Science"
+    },
+    {
+      "id": "in.exam.cuet-ug.economics",
+      "kind": "subject",
+      "parent": "in.exam.cuet-ug",
+      "label": "Economics"
+    },
+    {
+      "id": "in.exam.cuet-ug.english",
+      "kind": "subject",
+      "parent": "in.exam.cuet-ug",
+      "label": "English"
+    },
+    {
+      "id": "in.exam.cuet-ug.general-test",
+      "kind": "subject",
+      "parent": "in.exam.cuet-ug",
+      "label": "General Test"
+    },
+    {
+      "id": "in.exam.cuet-ug.geography",
+      "kind": "subject",
+      "parent": "in.exam.cuet-ug",
+      "label": "Geography"
+    },
+    {
+      "id": "in.exam.cuet-ug.hindi",
+      "kind": "subject",
+      "parent": "in.exam.cuet-ug",
+      "label": "Hindi"
+    },
+    {
+      "id": "in.exam.cuet-ug.history",
+      "kind": "subject",
+      "parent": "in.exam.cuet-ug",
+      "label": "History"
+    },
+    {
+      "id": "in.exam.cuet-ug.mathematics-applied-mathematics",
+      "kind": "subject",
+      "parent": "in.exam.cuet-ug",
+      "label": "Mathematics / Applied Mathematics"
+    },
+    {
+      "id": "in.exam.cuet-ug.physics",
+      "kind": "subject",
+      "parent": "in.exam.cuet-ug",
+      "label": "Physics"
+    },
+    {
+      "id": "in.exam.cuet-ug.political-science",
+      "kind": "subject",
+      "parent": "in.exam.cuet-ug",
+      "label": "Political Science"
+    },
+    {
+      "id": "in.exam.cuet-ug.psychology",
+      "kind": "subject",
+      "parent": "in.exam.cuet-ug",
+      "label": "Psychology"
+    },
+    {
+      "id": "in.exam.cuet-ug.sociology",
+      "kind": "subject",
+      "parent": "in.exam.cuet-ug",
+      "label": "Sociology"
+    },
+    {
+      "id": "in.exam.cuet-ug.telugu",
+      "kind": "subject",
+      "parent": "in.exam.cuet-ug",
+      "label": "Telugu"
+    },
+    {
+      "id": "in.exam.delhi-dsssb",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Delhi (DSSSB)"
+    },
+    {
+      "id": "in.exam.delhi-police",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Delhi Police"
+    },
+    {
+      "id": "in.exam.delhi-police.computer-awareness",
+      "kind": "subject",
+      "parent": "in.exam.delhi-police",
+      "label": "Computer Awareness"
+    },
+    {
+      "id": "in.exam.delhi-police.delhi-police-specific-gk",
+      "kind": "subject",
+      "parent": "in.exam.delhi-police",
+      "label": "Delhi Police Specific GK"
+    },
+    {
+      "id": "in.exam.delhi-police.general-knowledge-and-current-affairs",
+      "kind": "subject",
+      "parent": "in.exam.delhi-police",
+      "label": "General Knowledge & Current Affairs"
+    },
+    {
+      "id": "in.exam.delhi-police.numerical-ability",
+      "kind": "subject",
+      "parent": "in.exam.delhi-police",
+      "label": "Numerical Ability"
+    },
+    {
+      "id": "in.exam.delhi-police.reasoning",
+      "kind": "subject",
+      "parent": "in.exam.delhi-police",
+      "label": "Reasoning"
+    },
+    {
+      "id": "in.exam.drdo-ceptam",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "DRDO / CEPTAM"
+    },
+    {
+      "id": "in.exam.drdo-ceptam.general-awareness",
+      "kind": "subject",
+      "parent": "in.exam.drdo-ceptam",
+      "label": "General Awareness"
+    },
+    {
+      "id": "in.exam.drdo-ceptam.general-intelligence-and-reasoning",
+      "kind": "subject",
+      "parent": "in.exam.drdo-ceptam",
+      "label": "General Intelligence & Reasoning"
+    },
+    {
+      "id": "in.exam.drdo-ceptam.general-science",
+      "kind": "subject",
+      "parent": "in.exam.drdo-ceptam",
+      "label": "General Science"
+    },
+    {
+      "id": "in.exam.drdo-ceptam.quantitative-ability",
+      "kind": "subject",
+      "parent": "in.exam.drdo-ceptam",
+      "label": "Quantitative Ability"
+    },
+    {
+      "id": "in.exam.drdo-ceptam.subject-trade-paper",
+      "kind": "subject",
+      "parent": "in.exam.drdo-ceptam",
+      "label": "Subject / Trade Paper"
+    },
+    {
+      "id": "in.exam.dsc-trt-teacher-recruitment",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "DSC / TRT (Teacher Recruitment)"
+    },
+    {
+      "id": "in.exam.dsc-trt-teacher-recruitment.child-development-and-pedagogy",
+      "kind": "subject",
+      "parent": "in.exam.dsc-trt-teacher-recruitment",
+      "label": "Child Development & Pedagogy"
+    },
+    {
+      "id": "in.exam.dsc-trt-teacher-recruitment.content-language",
+      "kind": "subject",
+      "parent": "in.exam.dsc-trt-teacher-recruitment",
+      "label": "Content — Language"
+    },
+    {
+      "id": "in.exam.dsc-trt-teacher-recruitment.content-mathematics",
+      "kind": "subject",
+      "parent": "in.exam.dsc-trt-teacher-recruitment",
+      "label": "Content — Mathematics"
+    },
+    {
+      "id": "in.exam.dsc-trt-teacher-recruitment.content-science",
+      "kind": "subject",
+      "parent": "in.exam.dsc-trt-teacher-recruitment",
+      "label": "Content — Science"
+    },
+    {
+      "id": "in.exam.dsc-trt-teacher-recruitment.content-social-studies",
+      "kind": "subject",
+      "parent": "in.exam.dsc-trt-teacher-recruitment",
+      "label": "Content — Social Studies"
+    },
+    {
+      "id": "in.exam.dsc-trt-teacher-recruitment.general-knowledge-and-current-affairs",
+      "kind": "subject",
+      "parent": "in.exam.dsc-trt-teacher-recruitment",
+      "label": "General Knowledge & Current Affairs"
+    },
+    {
+      "id": "in.exam.dsc-trt-teacher-recruitment.perspectives-in-education",
+      "kind": "subject",
+      "parent": "in.exam.dsc-trt-teacher-recruitment",
+      "label": "Perspectives in Education"
+    },
+    {
+      "id": "in.exam.dsc-trt-teacher-recruitment.teaching-methodology",
+      "kind": "subject",
+      "parent": "in.exam.dsc-trt-teacher-recruitment",
+      "label": "Teaching Methodology"
+    },
+    {
+      "id": "in.exam.duet-university-entrance",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "DUET / University Entrance"
+    },
+    {
+      "id": "in.exam.epfo-ssa-assistant",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "EPFO SSA / Assistant"
+    },
+    {
+      "id": "in.exam.ese-ies",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "ESE / IES"
+    },
+    {
+      "id": "in.exam.esic-udc-mts",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "ESIC UDC / MTS"
+    },
+    {
+      "id": "in.exam.excise-constable",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Excise Constable"
+    },
+    {
+      "id": "in.exam.fashion-and-interior-design-entrance",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Fashion & Interior Design Entrance"
+    },
+    {
+      "id": "in.exam.fireman-fire-services",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Fireman / Fire Services"
+    },
+    {
+      "id": "in.exam.fmge-mci-screening",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "FMGE / MCI Screening"
+    },
+    {
+      "id": "in.exam.forest-guard-forester",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Forest Guard / Forester"
+    },
+    {
+      "id": "in.exam.forest-guard-forester.environment-and-forestry",
+      "kind": "subject",
+      "parent": "in.exam.forest-guard-forester",
+      "label": "Environment & Forestry"
+    },
+    {
+      "id": "in.exam.forest-guard-forester.general-knowledge",
+      "kind": "subject",
+      "parent": "in.exam.forest-guard-forester",
+      "label": "General Knowledge"
+    },
+    {
+      "id": "in.exam.forest-guard-forester.general-science",
+      "kind": "subject",
+      "parent": "in.exam.forest-guard-forester",
+      "label": "General Science"
+    },
+    {
+      "id": "in.exam.forest-guard-forester.mathematics",
+      "kind": "subject",
+      "parent": "in.exam.forest-guard-forester",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.exam.forest-guard-forester.physical-efficiency-test",
+      "kind": "subject",
+      "parent": "in.exam.forest-guard-forester",
+      "label": "Physical Efficiency Test"
+    },
+    {
+      "id": "in.exam.forest-guard-forester.reasoning",
+      "kind": "subject",
+      "parent": "in.exam.forest-guard-forester",
+      "label": "Reasoning"
+    },
+    {
+      "id": "in.exam.forest-guard-forester.state-gk",
+      "kind": "subject",
+      "parent": "in.exam.forest-guard-forester",
+      "label": "State GK"
+    },
+    {
+      "id": "in.exam.forest-range-officer-fro",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Forest Range Officer (FRO)"
+    },
+    {
+      "id": "in.exam.ftii-srfti",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "FTII / SRFTI"
+    },
+    {
+      "id": "in.exam.gate",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "GATE"
+    },
+    {
+      "id": "in.exam.gate.chemical-engineering",
+      "kind": "subject",
+      "parent": "in.exam.gate",
+      "label": "Chemical Engineering"
+    },
+    {
+      "id": "in.exam.gate.chemistry",
+      "kind": "subject",
+      "parent": "in.exam.gate",
+      "label": "Chemistry"
+    },
+    {
+      "id": "in.exam.gate.civil-engineering",
+      "kind": "subject",
+      "parent": "in.exam.gate",
+      "label": "Civil Engineering"
+    },
+    {
+      "id": "in.exam.gate.computer-science-and-it",
+      "kind": "subject",
+      "parent": "in.exam.gate",
+      "label": "Computer Science & IT"
+    },
+    {
+      "id": "in.exam.gate.data-science-and-ai",
+      "kind": "subject",
+      "parent": "in.exam.gate",
+      "label": "Data Science & AI"
+    },
+    {
+      "id": "in.exam.gate.electrical-engineering",
+      "kind": "subject",
+      "parent": "in.exam.gate",
+      "label": "Electrical Engineering"
+    },
+    {
+      "id": "in.exam.gate.electronics-and-communication",
+      "kind": "subject",
+      "parent": "in.exam.gate",
+      "label": "Electronics & Communication"
+    },
+    {
+      "id": "in.exam.gate.engineering-mathematics",
+      "kind": "subject",
+      "parent": "in.exam.gate",
+      "label": "Engineering Mathematics"
+    },
+    {
+      "id": "in.exam.gate.general-aptitude",
+      "kind": "subject",
+      "parent": "in.exam.gate",
+      "label": "General Aptitude"
+    },
+    {
+      "id": "in.exam.gate.instrumentation",
+      "kind": "subject",
+      "parent": "in.exam.gate",
+      "label": "Instrumentation"
+    },
+    {
+      "id": "in.exam.gate.life-sciences",
+      "kind": "subject",
+      "parent": "in.exam.gate",
+      "label": "Life Sciences"
+    },
+    {
+      "id": "in.exam.gate.mathematics",
+      "kind": "subject",
+      "parent": "in.exam.gate",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.exam.gate.mechanical-engineering",
+      "kind": "subject",
+      "parent": "in.exam.gate",
+      "label": "Mechanical Engineering"
+    },
+    {
+      "id": "in.exam.gate.metallurgy",
+      "kind": "subject",
+      "parent": "in.exam.gate",
+      "label": "Metallurgy"
+    },
+    {
+      "id": "in.exam.gate.physics",
+      "kind": "subject",
+      "parent": "in.exam.gate",
+      "label": "Physics"
+    },
+    {
+      "id": "in.exam.gate.production-and-industrial",
+      "kind": "subject",
+      "parent": "in.exam.gate",
+      "label": "Production & Industrial"
+    },
+    {
+      "id": "in.exam.gcet-goa",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "GCET (Goa)"
+    },
+    {
+      "id": "in.exam.goa-psc-gpsc-ga",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Goa PSC (GPSC-GA)"
+    },
+    {
+      "id": "in.exam.gpat-pharmacy",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "GPAT (Pharmacy)"
+    },
+    {
+      "id": "in.exam.gpat-pharmacy.biopharmaceutics",
+      "kind": "subject",
+      "parent": "in.exam.gpat-pharmacy",
+      "label": "Biopharmaceutics"
+    },
+    {
+      "id": "in.exam.gpat-pharmacy.pharmaceutical-analysis",
+      "kind": "subject",
+      "parent": "in.exam.gpat-pharmacy",
+      "label": "Pharmaceutical Analysis"
+    },
+    {
+      "id": "in.exam.gpat-pharmacy.pharmaceutical-chemistry",
+      "kind": "subject",
+      "parent": "in.exam.gpat-pharmacy",
+      "label": "Pharmaceutical Chemistry"
+    },
+    {
+      "id": "in.exam.gpat-pharmacy.pharmaceutical-jurisprudence",
+      "kind": "subject",
+      "parent": "in.exam.gpat-pharmacy",
+      "label": "Pharmaceutical Jurisprudence"
+    },
+    {
+      "id": "in.exam.gpat-pharmacy.pharmaceutics",
+      "kind": "subject",
+      "parent": "in.exam.gpat-pharmacy",
+      "label": "Pharmaceutics"
+    },
+    {
+      "id": "in.exam.gpat-pharmacy.pharmacognosy",
+      "kind": "subject",
+      "parent": "in.exam.gpat-pharmacy",
+      "label": "Pharmacognosy"
+    },
+    {
+      "id": "in.exam.gpat-pharmacy.pharmacology",
+      "kind": "subject",
+      "parent": "in.exam.gpat-pharmacy",
+      "label": "Pharmacology"
+    },
+    {
+      "id": "in.exam.gpsc-gujarat",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "GPSC (Gujarat)"
+    },
+    {
+      "id": "in.exam.gujarat-police",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Gujarat Police"
+    },
+    {
+      "id": "in.exam.gujcet",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "GUJCET"
+    },
+    {
+      "id": "in.exam.gujcet.biology",
+      "kind": "subject",
+      "parent": "in.exam.gujcet",
+      "label": "Biology"
+    },
+    {
+      "id": "in.exam.gujcet.chemistry",
+      "kind": "subject",
+      "parent": "in.exam.gujcet",
+      "label": "Chemistry"
+    },
+    {
+      "id": "in.exam.gujcet.mathematics",
+      "kind": "subject",
+      "parent": "in.exam.gujcet",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.exam.gujcet.physics",
+      "kind": "subject",
+      "parent": "in.exam.gujcet",
+      "label": "Physics"
+    },
+    {
+      "id": "in.exam.haryana-police",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Haryana Police"
+    },
+    {
+      "id": "in.exam.home-guard",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Home Guard"
+    },
+    {
+      "id": "in.exam.hpcet-himachal",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "HPCET (Himachal)"
+    },
+    {
+      "id": "in.exam.hppsc-himachal-pradesh",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "HPPSC (Himachal Pradesh)"
+    },
+    {
+      "id": "in.exam.hpsc-haryana",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "HPSC (Haryana)"
+    },
+    {
+      "id": "in.exam.hpssc-hpsssb-himachal",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "HPSSC / HPSSSB (Himachal)"
+    },
+    {
+      "id": "in.exam.hptet",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "HPTET"
+    },
+    {
+      "id": "in.exam.hssc-hpsc-c-haryana",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "HSSC / HPSC-C (Haryana)"
+    },
+    {
+      "id": "in.exam.htet-haryana",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "HTET (Haryana)"
+    },
+    {
+      "id": "in.exam.ibps-clerk",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "IBPS Clerk"
+    },
+    {
+      "id": "in.exam.ibps-clerk.computer-aptitude",
+      "kind": "subject",
+      "parent": "in.exam.ibps-clerk",
+      "label": "Computer Aptitude"
+    },
+    {
+      "id": "in.exam.ibps-clerk.english-language",
+      "kind": "subject",
+      "parent": "in.exam.ibps-clerk",
+      "label": "English Language"
+    },
+    {
+      "id": "in.exam.ibps-clerk.general-and-financial-awareness",
+      "kind": "subject",
+      "parent": "in.exam.ibps-clerk",
+      "label": "General & Financial Awareness"
+    },
+    {
+      "id": "in.exam.ibps-clerk.quantitative-aptitude",
+      "kind": "subject",
+      "parent": "in.exam.ibps-clerk",
+      "label": "Quantitative Aptitude"
+    },
+    {
+      "id": "in.exam.ibps-clerk.reasoning-ability",
+      "kind": "subject",
+      "parent": "in.exam.ibps-clerk",
+      "label": "Reasoning Ability"
+    },
+    {
+      "id": "in.exam.ibps-po",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "IBPS PO"
+    },
+    {
+      "id": "in.exam.ibps-po.computer-aptitude",
+      "kind": "subject",
+      "parent": "in.exam.ibps-po",
+      "label": "Computer Aptitude"
+    },
+    {
+      "id": "in.exam.ibps-po.data-interpretation-and-analysis",
+      "kind": "subject",
+      "parent": "in.exam.ibps-po",
+      "label": "Data Interpretation & Analysis"
+    },
+    {
+      "id": "in.exam.ibps-po.descriptive-essay-and-letter",
+      "kind": "subject",
+      "parent": "in.exam.ibps-po",
+      "label": "Descriptive (Essay & Letter)"
+    },
+    {
+      "id": "in.exam.ibps-po.english-language",
+      "kind": "subject",
+      "parent": "in.exam.ibps-po",
+      "label": "English Language"
+    },
+    {
+      "id": "in.exam.ibps-po.general-banking-awareness",
+      "kind": "subject",
+      "parent": "in.exam.ibps-po",
+      "label": "General / Banking Awareness"
+    },
+    {
+      "id": "in.exam.ibps-po.quantitative-aptitude",
+      "kind": "subject",
+      "parent": "in.exam.ibps-po",
+      "label": "Quantitative Aptitude"
+    },
+    {
+      "id": "in.exam.ibps-po.reasoning-ability",
+      "kind": "subject",
+      "parent": "in.exam.ibps-po",
+      "label": "Reasoning Ability"
+    },
+    {
+      "id": "in.exam.ibps-rrb-assistant",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "IBPS RRB (Assistant)"
+    },
+    {
+      "id": "in.exam.ibps-rrb-officer",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "IBPS RRB (Officer)"
+    },
+    {
+      "id": "in.exam.ibps-so",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "IBPS SO"
+    },
+    {
+      "id": "in.exam.ibsat",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "IBSAT"
+    },
+    {
+      "id": "in.exam.icar-aieea-agriculture",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "ICAR AIEEA (Agriculture)"
+    },
+    {
+      "id": "in.exam.icar-aieea-agriculture.agricultural-engineering",
+      "kind": "subject",
+      "parent": "in.exam.icar-aieea-agriculture",
+      "label": "Agricultural Engineering"
+    },
+    {
+      "id": "in.exam.icar-aieea-agriculture.agriculture",
+      "kind": "subject",
+      "parent": "in.exam.icar-aieea-agriculture",
+      "label": "Agriculture"
+    },
+    {
+      "id": "in.exam.icar-aieea-agriculture.biology",
+      "kind": "subject",
+      "parent": "in.exam.icar-aieea-agriculture",
+      "label": "Biology"
+    },
+    {
+      "id": "in.exam.icar-aieea-agriculture.chemistry",
+      "kind": "subject",
+      "parent": "in.exam.icar-aieea-agriculture",
+      "label": "Chemistry"
+    },
+    {
+      "id": "in.exam.icar-aieea-agriculture.mathematics",
+      "kind": "subject",
+      "parent": "in.exam.icar-aieea-agriculture",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.exam.icar-aieea-agriculture.physics",
+      "kind": "subject",
+      "parent": "in.exam.icar-aieea-agriculture",
+      "label": "Physics"
+    },
+    {
+      "id": "in.exam.icar-aieea-pg",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "ICAR AIEEA PG"
+    },
+    {
+      "id": "in.exam.iift",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "IIFT"
+    },
+    {
+      "id": "in.exam.iimc-journalism-entrance",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "IIMC / Journalism Entrance"
+    },
+    {
+      "id": "in.exam.iit-jam",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "IIT JAM"
+    },
+    {
+      "id": "in.exam.iit-jam.biotechnology",
+      "kind": "subject",
+      "parent": "in.exam.iit-jam",
+      "label": "Biotechnology"
+    },
+    {
+      "id": "in.exam.iit-jam.chemistry",
+      "kind": "subject",
+      "parent": "in.exam.iit-jam",
+      "label": "Chemistry"
+    },
+    {
+      "id": "in.exam.iit-jam.economics",
+      "kind": "subject",
+      "parent": "in.exam.iit-jam",
+      "label": "Economics"
+    },
+    {
+      "id": "in.exam.iit-jam.geology",
+      "kind": "subject",
+      "parent": "in.exam.iit-jam",
+      "label": "Geology"
+    },
+    {
+      "id": "in.exam.iit-jam.mathematical-statistics",
+      "kind": "subject",
+      "parent": "in.exam.iit-jam",
+      "label": "Mathematical Statistics"
+    },
+    {
+      "id": "in.exam.iit-jam.mathematics",
+      "kind": "subject",
+      "parent": "in.exam.iit-jam",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.exam.iit-jam.physics",
+      "kind": "subject",
+      "parent": "in.exam.iit-jam",
+      "label": "Physics"
+    },
+    {
+      "id": "in.exam.india-post-gds",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "India Post GDS"
+    },
+    {
+      "id": "in.exam.india-post-gds.basic-mathematics",
+      "kind": "subject",
+      "parent": "in.exam.india-post-gds",
+      "label": "Basic Mathematics"
+    },
+    {
+      "id": "in.exam.india-post-gds.class-10-marks-based-no-written-exam",
+      "kind": "subject",
+      "parent": "in.exam.india-post-gds",
+      "label": "Class 10 Marks Based — No Written Exam"
+    },
+    {
+      "id": "in.exam.india-post-gds.computer-knowledge",
+      "kind": "subject",
+      "parent": "in.exam.india-post-gds",
+      "label": "Computer Knowledge"
+    },
+    {
+      "id": "in.exam.india-post-gds.english",
+      "kind": "subject",
+      "parent": "in.exam.india-post-gds",
+      "label": "English"
+    },
+    {
+      "id": "in.exam.india-post-gds.local-language",
+      "kind": "subject",
+      "parent": "in.exam.india-post-gds",
+      "label": "Local Language"
+    },
+    {
+      "id": "in.exam.india-post-postal-assistant-mts",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "India Post Postal Assistant / MTS"
+    },
+    {
+      "id": "in.exam.indian-air-force-agniveer",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Indian Air Force Agniveer"
+    },
+    {
+      "id": "in.exam.indian-army-agniveer",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Indian Army Agniveer"
+    },
+    {
+      "id": "in.exam.indian-navy-agniveer",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Indian Navy Agniveer"
+    },
+    {
+      "id": "in.exam.indian-navy-inet",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Indian Navy INET"
+    },
+    {
+      "id": "in.exam.indian-navy-ssr-aa-mr",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Indian Navy SSR / AA / MR"
+    },
+    {
+      "id": "in.exam.ini-cet",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "INI-CET"
+    },
+    {
+      "id": "in.exam.ini-cet.anatomy",
+      "kind": "subject",
+      "parent": "in.exam.ini-cet",
+      "label": "Anatomy"
+    },
+    {
+      "id": "in.exam.ini-cet.biochemistry",
+      "kind": "subject",
+      "parent": "in.exam.ini-cet",
+      "label": "Biochemistry"
+    },
+    {
+      "id": "in.exam.ini-cet.community-medicine",
+      "kind": "subject",
+      "parent": "in.exam.ini-cet",
+      "label": "Community Medicine"
+    },
+    {
+      "id": "in.exam.ini-cet.medicine",
+      "kind": "subject",
+      "parent": "in.exam.ini-cet",
+      "label": "Medicine"
+    },
+    {
+      "id": "in.exam.ini-cet.microbiology",
+      "kind": "subject",
+      "parent": "in.exam.ini-cet",
+      "label": "Microbiology"
+    },
+    {
+      "id": "in.exam.ini-cet.obstetrics-and-gynaecology",
+      "kind": "subject",
+      "parent": "in.exam.ini-cet",
+      "label": "Obstetrics & Gynaecology"
+    },
+    {
+      "id": "in.exam.ini-cet.paediatrics",
+      "kind": "subject",
+      "parent": "in.exam.ini-cet",
+      "label": "Paediatrics"
+    },
+    {
+      "id": "in.exam.ini-cet.pathology",
+      "kind": "subject",
+      "parent": "in.exam.ini-cet",
+      "label": "Pathology"
+    },
+    {
+      "id": "in.exam.ini-cet.pharmacology",
+      "kind": "subject",
+      "parent": "in.exam.ini-cet",
+      "label": "Pharmacology"
+    },
+    {
+      "id": "in.exam.ini-cet.physiology",
+      "kind": "subject",
+      "parent": "in.exam.ini-cet",
+      "label": "Physiology"
+    },
+    {
+      "id": "in.exam.ini-cet.surgery",
+      "kind": "subject",
+      "parent": "in.exam.ini-cet",
+      "label": "Surgery"
+    },
+    {
+      "id": "in.exam.ipmat",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "IPMAT"
+    },
+    {
+      "id": "in.exam.irdai-assistant-manager",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "IRDAI Assistant Manager"
+    },
+    {
+      "id": "in.exam.isro-scientist",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "ISRO Scientist"
+    },
+    {
+      "id": "in.exam.isro-scientist.computer-science-and-engineering",
+      "kind": "subject",
+      "parent": "in.exam.isro-scientist",
+      "label": "Computer Science & Engineering"
+    },
+    {
+      "id": "in.exam.isro-scientist.electrical-engineering",
+      "kind": "subject",
+      "parent": "in.exam.isro-scientist",
+      "label": "Electrical Engineering"
+    },
+    {
+      "id": "in.exam.isro-scientist.electronics-and-communication",
+      "kind": "subject",
+      "parent": "in.exam.isro-scientist",
+      "label": "Electronics & Communication"
+    },
+    {
+      "id": "in.exam.isro-scientist.engineering-mathematics",
+      "kind": "subject",
+      "parent": "in.exam.isro-scientist",
+      "label": "Engineering Mathematics"
+    },
+    {
+      "id": "in.exam.isro-scientist.general-aptitude",
+      "kind": "subject",
+      "parent": "in.exam.isro-scientist",
+      "label": "General Aptitude"
+    },
+    {
+      "id": "in.exam.isro-scientist.mechanical-engineering",
+      "kind": "subject",
+      "parent": "in.exam.isro-scientist",
+      "label": "Mechanical Engineering"
+    },
+    {
+      "id": "in.exam.jail-warder-prison-officer",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Jail Warder / Prison Officer"
+    },
+    {
+      "id": "in.exam.jee-advanced",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "JEE Advanced"
+    },
+    {
+      "id": "in.exam.jee-advanced.chemistry",
+      "kind": "subject",
+      "parent": "in.exam.jee-advanced",
+      "label": "Chemistry"
+    },
+    {
+      "id": "in.exam.jee-advanced.mathematics",
+      "kind": "subject",
+      "parent": "in.exam.jee-advanced",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.exam.jee-advanced.physics",
+      "kind": "subject",
+      "parent": "in.exam.jee-advanced",
+      "label": "Physics"
+    },
+    {
+      "id": "in.exam.jee-main",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "JEE Main"
+    },
+    {
+      "id": "in.exam.jee-main-paper-2-b-arch",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "JEE Main Paper 2 (B.Arch)"
+    },
+    {
+      "id": "in.exam.jee-main.chemistry",
+      "kind": "subject",
+      "parent": "in.exam.jee-main",
+      "label": "Chemistry"
+    },
+    {
+      "id": "in.exam.jee-main.mathematics",
+      "kind": "subject",
+      "parent": "in.exam.jee-main",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.exam.jee-main.physics",
+      "kind": "subject",
+      "parent": "in.exam.jee-main",
+      "label": "Physics"
+    },
+    {
+      "id": "in.exam.jipmat",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "JIPMAT"
+    },
+    {
+      "id": "in.exam.jkcet-jammu-and-kashmir",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "JKCET (Jammu & Kashmir)"
+    },
+    {
+      "id": "in.exam.jkpsc-jammu-and-kashmir",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "JKPSC (Jammu & Kashmir)"
+    },
+    {
+      "id": "in.exam.jpsc-jharkhand",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "JPSC (Jharkhand)"
+    },
+    {
+      "id": "in.exam.jssc-jharkhand",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "JSSC (Jharkhand)"
+    },
+    {
+      "id": "in.exam.jtet-jharkhand",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "JTET (Jharkhand)"
+    },
+    {
+      "id": "in.exam.judiciary-civil-judge-pcs-j",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Judiciary (Civil Judge / PCS-J)"
+    },
+    {
+      "id": "in.exam.judiciary-civil-judge-pcs-j.civil-procedure-code-cpc",
+      "kind": "subject",
+      "parent": "in.exam.judiciary-civil-judge-pcs-j",
+      "label": "Civil Procedure Code (CPC)"
+    },
+    {
+      "id": "in.exam.judiciary-civil-judge-pcs-j.constitution-of-india",
+      "kind": "subject",
+      "parent": "in.exam.judiciary-civil-judge-pcs-j",
+      "label": "Constitution of India"
+    },
+    {
+      "id": "in.exam.judiciary-civil-judge-pcs-j.criminal-procedure-code-crpc-bnss",
+      "kind": "subject",
+      "parent": "in.exam.judiciary-civil-judge-pcs-j",
+      "label": "Criminal Procedure Code (CrPC / BNSS)"
+    },
+    {
+      "id": "in.exam.judiciary-civil-judge-pcs-j.indian-evidence-act-bsa",
+      "kind": "subject",
+      "parent": "in.exam.judiciary-civil-judge-pcs-j",
+      "label": "Indian Evidence Act (BSA)"
+    },
+    {
+      "id": "in.exam.judiciary-civil-judge-pcs-j.indian-penal-code-ipc-bns",
+      "kind": "subject",
+      "parent": "in.exam.judiciary-civil-judge-pcs-j",
+      "label": "Indian Penal Code (IPC / BNS)"
+    },
+    {
+      "id": "in.exam.judiciary-civil-judge-pcs-j.judgment-writing",
+      "kind": "subject",
+      "parent": "in.exam.judiciary-civil-judge-pcs-j",
+      "label": "Judgment Writing"
+    },
+    {
+      "id": "in.exam.judiciary-civil-judge-pcs-j.language-paper",
+      "kind": "subject",
+      "parent": "in.exam.judiciary-civil-judge-pcs-j",
+      "label": "Language Paper"
+    },
+    {
+      "id": "in.exam.judiciary-civil-judge-pcs-j.law-of-contract",
+      "kind": "subject",
+      "parent": "in.exam.judiciary-civil-judge-pcs-j",
+      "label": "Law of Contract"
+    },
+    {
+      "id": "in.exam.judiciary-civil-judge-pcs-j.limitation-act",
+      "kind": "subject",
+      "parent": "in.exam.judiciary-civil-judge-pcs-j",
+      "label": "Limitation Act"
+    },
+    {
+      "id": "in.exam.judiciary-civil-judge-pcs-j.local-laws",
+      "kind": "subject",
+      "parent": "in.exam.judiciary-civil-judge-pcs-j",
+      "label": "Local Laws"
+    },
+    {
+      "id": "in.exam.judiciary-civil-judge-pcs-j.specific-relief-act",
+      "kind": "subject",
+      "parent": "in.exam.judiciary-civil-judge-pcs-j",
+      "label": "Specific Relief Act"
+    },
+    {
+      "id": "in.exam.judiciary-civil-judge-pcs-j.transfer-of-property-act",
+      "kind": "subject",
+      "parent": "in.exam.judiciary-civil-judge-pcs-j",
+      "label": "Transfer of Property Act"
+    },
+    {
+      "id": "in.exam.junior-assistant-clerk",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Junior Assistant / Clerk"
+    },
+    {
+      "id": "in.exam.junior-engineer-state-pwd-irrigation",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Junior Engineer (State PWD / Irrigation)"
+    },
+    {
+      "id": "in.exam.karnataka-police",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Karnataka Police"
+    },
+    {
+      "id": "in.exam.kartet",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "KARTET"
+    },
+    {
+      "id": "in.exam.kcet",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "KCET"
+    },
+    {
+      "id": "in.exam.kcet.biology",
+      "kind": "subject",
+      "parent": "in.exam.kcet",
+      "label": "Biology"
+    },
+    {
+      "id": "in.exam.kcet.chemistry",
+      "kind": "subject",
+      "parent": "in.exam.kcet",
+      "label": "Chemistry"
+    },
+    {
+      "id": "in.exam.kcet.mathematics",
+      "kind": "subject",
+      "parent": "in.exam.kcet",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.exam.kcet.physics",
+      "kind": "subject",
+      "parent": "in.exam.kcet",
+      "label": "Physics"
+    },
+    {
+      "id": "in.exam.kea-karnataka-examination-authority",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "KEA (Karnataka Examination Authority)"
+    },
+    {
+      "id": "in.exam.keam",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "KEAM"
+    },
+    {
+      "id": "in.exam.keam.chemistry",
+      "kind": "subject",
+      "parent": "in.exam.keam",
+      "label": "Chemistry"
+    },
+    {
+      "id": "in.exam.keam.mathematics",
+      "kind": "subject",
+      "parent": "in.exam.keam",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.exam.keam.physics",
+      "kind": "subject",
+      "parent": "in.exam.keam",
+      "label": "Physics"
+    },
+    {
+      "id": "in.exam.kerala-police",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Kerala Police"
+    },
+    {
+      "id": "in.exam.kerala-psc-kas",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Kerala PSC (KAS)"
+    },
+    {
+      "id": "in.exam.kerala-psc-ldc-lgs",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Kerala PSC LDC / LGS"
+    },
+    {
+      "id": "in.exam.kmat",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "KMAT"
+    },
+    {
+      "id": "in.exam.kpsc-kas-karnataka",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "KPSC / KAS (Karnataka)"
+    },
+    {
+      "id": "in.exam.ktet-kerala",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "KTET (Kerala)"
+    },
+    {
+      "id": "in.exam.kvpy-inspire",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "KVPY / INSPIRE"
+    },
+    {
+      "id": "in.exam.kvs-teacher",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "KVS Teacher"
+    },
+    {
+      "id": "in.exam.lab-technician-recruitment",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Lab Technician Recruitment"
+    },
+    {
+      "id": "in.exam.ladakh-administration",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Ladakh Administration"
+    },
+    {
+      "id": "in.exam.lic-aao",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "LIC AAO"
+    },
+    {
+      "id": "in.exam.lic-aao.english-language",
+      "kind": "subject",
+      "parent": "in.exam.lic-aao",
+      "label": "English Language"
+    },
+    {
+      "id": "in.exam.lic-aao.general-knowledge-and-current-affairs",
+      "kind": "subject",
+      "parent": "in.exam.lic-aao",
+      "label": "General Knowledge & Current Affairs"
+    },
+    {
+      "id": "in.exam.lic-aao.insurance-and-financial-market-awareness",
+      "kind": "subject",
+      "parent": "in.exam.lic-aao",
+      "label": "Insurance & Financial Market Awareness"
+    },
+    {
+      "id": "in.exam.lic-aao.quantitative-aptitude",
+      "kind": "subject",
+      "parent": "in.exam.lic-aao",
+      "label": "Quantitative Aptitude"
+    },
+    {
+      "id": "in.exam.lic-aao.reasoning-ability",
+      "kind": "subject",
+      "parent": "in.exam.lic-aao",
+      "label": "Reasoning Ability"
+    },
+    {
+      "id": "in.exam.lic-ado",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "LIC ADO"
+    },
+    {
+      "id": "in.exam.lic-assistant",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "LIC Assistant"
+    },
+    {
+      "id": "in.exam.lsat-india",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "LSAT India"
+    },
+    {
+      "id": "in.exam.mah-mba-cet",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "MAH MBA CET"
+    },
+    {
+      "id": "in.exam.maha-tet",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "MAHA TET"
+    },
+    {
+      "id": "in.exam.mahapariksha-mpsc-group-c",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "MahaPariksha / MPSC Group C"
+    },
+    {
+      "id": "in.exam.maharashtra-police",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Maharashtra Police"
+    },
+    {
+      "id": "in.exam.manipur-psc-mpsc",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Manipur PSC (MPSC)"
+    },
+    {
+      "id": "in.exam.mat",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "MAT"
+    },
+    {
+      "id": "in.exam.mat.data-analysis-and-sufficiency",
+      "kind": "subject",
+      "parent": "in.exam.mat",
+      "label": "Data Analysis & Sufficiency"
+    },
+    {
+      "id": "in.exam.mat.indian-and-global-environment",
+      "kind": "subject",
+      "parent": "in.exam.mat",
+      "label": "Indian & Global Environment"
+    },
+    {
+      "id": "in.exam.mat.intelligence-and-critical-reasoning",
+      "kind": "subject",
+      "parent": "in.exam.mat",
+      "label": "Intelligence & Critical Reasoning"
+    },
+    {
+      "id": "in.exam.mat.language-comprehension",
+      "kind": "subject",
+      "parent": "in.exam.mat",
+      "label": "Language Comprehension"
+    },
+    {
+      "id": "in.exam.mat.mathematical-skills",
+      "kind": "subject",
+      "parent": "in.exam.mat",
+      "label": "Mathematical Skills"
+    },
+    {
+      "id": "in.exam.meghalaya-psc-mpsc-ml",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Meghalaya PSC (MPSC-ML)"
+    },
+    {
+      "id": "in.exam.met-manipal",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "MET (Manipal)"
+    },
+    {
+      "id": "in.exam.metro-rail-dmrc-bmrcl-hmrl",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Metro Rail (DMRC / BMRCL / HMRL)"
+    },
+    {
+      "id": "in.exam.metro-rail-dmrc-bmrcl-hmrl.english",
+      "kind": "subject",
+      "parent": "in.exam.metro-rail-dmrc-bmrcl-hmrl",
+      "label": "English"
+    },
+    {
+      "id": "in.exam.metro-rail-dmrc-bmrcl-hmrl.general-awareness",
+      "kind": "subject",
+      "parent": "in.exam.metro-rail-dmrc-bmrcl-hmrl",
+      "label": "General Awareness"
+    },
+    {
+      "id": "in.exam.metro-rail-dmrc-bmrcl-hmrl.general-science",
+      "kind": "subject",
+      "parent": "in.exam.metro-rail-dmrc-bmrcl-hmrl",
+      "label": "General Science"
+    },
+    {
+      "id": "in.exam.metro-rail-dmrc-bmrcl-hmrl.quantitative-aptitude",
+      "kind": "subject",
+      "parent": "in.exam.metro-rail-dmrc-bmrcl-hmrl",
+      "label": "Quantitative Aptitude"
+    },
+    {
+      "id": "in.exam.metro-rail-dmrc-bmrcl-hmrl.reasoning",
+      "kind": "subject",
+      "parent": "in.exam.metro-rail-dmrc-bmrcl-hmrl",
+      "label": "Reasoning"
+    },
+    {
+      "id": "in.exam.metro-rail-dmrc-bmrcl-hmrl.technical-trade-paper",
+      "kind": "subject",
+      "parent": "in.exam.metro-rail-dmrc-bmrcl-hmrl",
+      "label": "Technical / Trade Paper"
+    },
+    {
+      "id": "in.exam.mh-cet-law",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "MH CET Law"
+    },
+    {
+      "id": "in.exam.mht-cet",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "MHT-CET"
+    },
+    {
+      "id": "in.exam.mht-cet.biology",
+      "kind": "subject",
+      "parent": "in.exam.mht-cet",
+      "label": "Biology"
+    },
+    {
+      "id": "in.exam.mht-cet.chemistry",
+      "kind": "subject",
+      "parent": "in.exam.mht-cet",
+      "label": "Chemistry"
+    },
+    {
+      "id": "in.exam.mht-cet.mathematics",
+      "kind": "subject",
+      "parent": "in.exam.mht-cet",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.exam.mht-cet.physics",
+      "kind": "subject",
+      "parent": "in.exam.mht-cet",
+      "label": "Physics"
+    },
+    {
+      "id": "in.exam.micat",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "MICAT"
+    },
+    {
+      "id": "in.exam.mizoram-psc-mpsc-mz",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Mizoram PSC (MPSC-MZ)"
+    },
+    {
+      "id": "in.exam.mp-esb-vyapam-madhya-pradesh",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "MP ESB / Vyapam (Madhya Pradesh)"
+    },
+    {
+      "id": "in.exam.mp-police",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "MP Police"
+    },
+    {
+      "id": "in.exam.mppsc-madhya-pradesh",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "MPPSC (Madhya Pradesh)"
+    },
+    {
+      "id": "in.exam.mpsc-combined-maharashtra",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "MPSC Combined (Maharashtra)"
+    },
+    {
+      "id": "in.exam.mpsc-rajyaseva-maharashtra",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "MPSC Rajyaseva (Maharashtra)"
+    },
+    {
+      "id": "in.exam.mptet",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "MPTET"
+    },
+    {
+      "id": "in.exam.nabard-grade-a",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "NABARD Grade A"
+    },
+    {
+      "id": "in.exam.nabard-grade-a.agriculture-and-rural-development-ard",
+      "kind": "subject",
+      "parent": "in.exam.nabard-grade-a",
+      "label": "Agriculture & Rural Development (ARD)"
+    },
+    {
+      "id": "in.exam.nabard-grade-a.computer-knowledge",
+      "kind": "subject",
+      "parent": "in.exam.nabard-grade-a",
+      "label": "Computer Knowledge"
+    },
+    {
+      "id": "in.exam.nabard-grade-a.economic-and-social-issues",
+      "kind": "subject",
+      "parent": "in.exam.nabard-grade-a",
+      "label": "Economic & Social Issues"
+    },
+    {
+      "id": "in.exam.nabard-grade-a.english-language",
+      "kind": "subject",
+      "parent": "in.exam.nabard-grade-a",
+      "label": "English Language"
+    },
+    {
+      "id": "in.exam.nabard-grade-a.general-awareness",
+      "kind": "subject",
+      "parent": "in.exam.nabard-grade-a",
+      "label": "General Awareness"
+    },
+    {
+      "id": "in.exam.nabard-grade-a.quantitative-aptitude",
+      "kind": "subject",
+      "parent": "in.exam.nabard-grade-a",
+      "label": "Quantitative Aptitude"
+    },
+    {
+      "id": "in.exam.nabard-grade-a.reasoning",
+      "kind": "subject",
+      "parent": "in.exam.nabard-grade-a",
+      "label": "Reasoning"
+    },
+    {
+      "id": "in.exam.nabard-grade-b",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "NABARD Grade B"
+    },
+    {
+      "id": "in.exam.nagaland-psc-npsc",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Nagaland PSC (NPSC)"
+    },
+    {
+      "id": "in.exam.nata",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "NATA"
+    },
+    {
+      "id": "in.exam.nata.architectural-awareness",
+      "kind": "subject",
+      "parent": "in.exam.nata",
+      "label": "Architectural Awareness"
+    },
+    {
+      "id": "in.exam.nata.drawing-and-composition",
+      "kind": "subject",
+      "parent": "in.exam.nata",
+      "label": "Drawing & Composition"
+    },
+    {
+      "id": "in.exam.nata.general-aptitude",
+      "kind": "subject",
+      "parent": "in.exam.nata",
+      "label": "General Aptitude"
+    },
+    {
+      "id": "in.exam.nata.mathematics",
+      "kind": "subject",
+      "parent": "in.exam.nata",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.exam.nata.visual-reasoning",
+      "kind": "subject",
+      "parent": "in.exam.nata",
+      "label": "Visual Reasoning"
+    },
+    {
+      "id": "in.exam.navodaya-jnvst",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Navodaya (JNVST)"
+    },
+    {
+      "id": "in.exam.navodaya-jnvst.arithmetic",
+      "kind": "subject",
+      "parent": "in.exam.navodaya-jnvst",
+      "label": "Arithmetic"
+    },
+    {
+      "id": "in.exam.navodaya-jnvst.language-test",
+      "kind": "subject",
+      "parent": "in.exam.navodaya-jnvst",
+      "label": "Language Test"
+    },
+    {
+      "id": "in.exam.navodaya-jnvst.mental-ability-test",
+      "kind": "subject",
+      "parent": "in.exam.navodaya-jnvst",
+      "label": "Mental Ability Test"
+    },
+    {
+      "id": "in.exam.nchmct-jee-hotel-management",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "NCHMCT JEE (Hotel Management)"
+    },
+    {
+      "id": "in.exam.nchmct-jee-hotel-management.aptitude-for-service-sector",
+      "kind": "subject",
+      "parent": "in.exam.nchmct-jee-hotel-management",
+      "label": "Aptitude for Service Sector"
+    },
+    {
+      "id": "in.exam.nchmct-jee-hotel-management.english-language",
+      "kind": "subject",
+      "parent": "in.exam.nchmct-jee-hotel-management",
+      "label": "English Language"
+    },
+    {
+      "id": "in.exam.nchmct-jee-hotel-management.general-knowledge-and-current-affairs",
+      "kind": "subject",
+      "parent": "in.exam.nchmct-jee-hotel-management",
+      "label": "General Knowledge & Current Affairs"
+    },
+    {
+      "id": "in.exam.nchmct-jee-hotel-management.numerical-ability-and-analytical-aptitude",
+      "kind": "subject",
+      "parent": "in.exam.nchmct-jee-hotel-management",
+      "label": "Numerical Ability & Analytical Aptitude"
+    },
+    {
+      "id": "in.exam.nchmct-jee-hotel-management.reasoning-and-logical-deduction",
+      "kind": "subject",
+      "parent": "in.exam.nchmct-jee-hotel-management",
+      "label": "Reasoning & Logical Deduction"
+    },
+    {
+      "id": "in.exam.nda-and-na",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "NDA & NA"
+    },
+    {
+      "id": "in.exam.nda-and-na.chemistry",
+      "kind": "subject",
+      "parent": "in.exam.nda-and-na",
+      "label": "Chemistry"
+    },
+    {
+      "id": "in.exam.nda-and-na.current-events",
+      "kind": "subject",
+      "parent": "in.exam.nda-and-na",
+      "label": "Current Events"
+    },
+    {
+      "id": "in.exam.nda-and-na.english-gat",
+      "kind": "subject",
+      "parent": "in.exam.nda-and-na",
+      "label": "English (GAT)"
+    },
+    {
+      "id": "in.exam.nda-and-na.general-science",
+      "kind": "subject",
+      "parent": "in.exam.nda-and-na",
+      "label": "General Science"
+    },
+    {
+      "id": "in.exam.nda-and-na.geography",
+      "kind": "subject",
+      "parent": "in.exam.nda-and-na",
+      "label": "Geography"
+    },
+    {
+      "id": "in.exam.nda-and-na.history-and-freedom-movement",
+      "kind": "subject",
+      "parent": "in.exam.nda-and-na",
+      "label": "History & Freedom Movement"
+    },
+    {
+      "id": "in.exam.nda-and-na.mathematics",
+      "kind": "subject",
+      "parent": "in.exam.nda-and-na",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.exam.nda-and-na.physics",
+      "kind": "subject",
+      "parent": "in.exam.nda-and-na",
+      "label": "Physics"
+    },
+    {
+      "id": "in.exam.nda-and-na.ssb-interview",
+      "kind": "subject",
+      "parent": "in.exam.nda-and-na",
+      "label": "SSB Interview"
+    },
+    {
+      "id": "in.exam.neet-mds",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "NEET MDS"
+    },
+    {
+      "id": "in.exam.neet-pg",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "NEET PG"
+    },
+    {
+      "id": "in.exam.neet-pg.anaesthesia",
+      "kind": "subject",
+      "parent": "in.exam.neet-pg",
+      "label": "Anaesthesia"
+    },
+    {
+      "id": "in.exam.neet-pg.anatomy",
+      "kind": "subject",
+      "parent": "in.exam.neet-pg",
+      "label": "Anatomy"
+    },
+    {
+      "id": "in.exam.neet-pg.biochemistry",
+      "kind": "subject",
+      "parent": "in.exam.neet-pg",
+      "label": "Biochemistry"
+    },
+    {
+      "id": "in.exam.neet-pg.community-medicine-psm",
+      "kind": "subject",
+      "parent": "in.exam.neet-pg",
+      "label": "Community Medicine (PSM)"
+    },
+    {
+      "id": "in.exam.neet-pg.dermatology",
+      "kind": "subject",
+      "parent": "in.exam.neet-pg",
+      "label": "Dermatology"
+    },
+    {
+      "id": "in.exam.neet-pg.ent",
+      "kind": "subject",
+      "parent": "in.exam.neet-pg",
+      "label": "ENT"
+    },
+    {
+      "id": "in.exam.neet-pg.forensic-medicine",
+      "kind": "subject",
+      "parent": "in.exam.neet-pg",
+      "label": "Forensic Medicine"
+    },
+    {
+      "id": "in.exam.neet-pg.medicine",
+      "kind": "subject",
+      "parent": "in.exam.neet-pg",
+      "label": "Medicine"
+    },
+    {
+      "id": "in.exam.neet-pg.microbiology",
+      "kind": "subject",
+      "parent": "in.exam.neet-pg",
+      "label": "Microbiology"
+    },
+    {
+      "id": "in.exam.neet-pg.obstetrics-and-gynaecology",
+      "kind": "subject",
+      "parent": "in.exam.neet-pg",
+      "label": "Obstetrics & Gynaecology"
+    },
+    {
+      "id": "in.exam.neet-pg.ophthalmology",
+      "kind": "subject",
+      "parent": "in.exam.neet-pg",
+      "label": "Ophthalmology"
+    },
+    {
+      "id": "in.exam.neet-pg.orthopaedics",
+      "kind": "subject",
+      "parent": "in.exam.neet-pg",
+      "label": "Orthopaedics"
+    },
+    {
+      "id": "in.exam.neet-pg.paediatrics",
+      "kind": "subject",
+      "parent": "in.exam.neet-pg",
+      "label": "Paediatrics"
+    },
+    {
+      "id": "in.exam.neet-pg.pathology",
+      "kind": "subject",
+      "parent": "in.exam.neet-pg",
+      "label": "Pathology"
+    },
+    {
+      "id": "in.exam.neet-pg.pharmacology",
+      "kind": "subject",
+      "parent": "in.exam.neet-pg",
+      "label": "Pharmacology"
+    },
+    {
+      "id": "in.exam.neet-pg.physiology",
+      "kind": "subject",
+      "parent": "in.exam.neet-pg",
+      "label": "Physiology"
+    },
+    {
+      "id": "in.exam.neet-pg.psychiatry",
+      "kind": "subject",
+      "parent": "in.exam.neet-pg",
+      "label": "Psychiatry"
+    },
+    {
+      "id": "in.exam.neet-pg.radiology",
+      "kind": "subject",
+      "parent": "in.exam.neet-pg",
+      "label": "Radiology"
+    },
+    {
+      "id": "in.exam.neet-pg.surgery",
+      "kind": "subject",
+      "parent": "in.exam.neet-pg",
+      "label": "Surgery"
+    },
+    {
+      "id": "in.exam.neet-ss",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "NEET SS"
+    },
+    {
+      "id": "in.exam.neet-ug",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "NEET UG"
+    },
+    {
+      "id": "in.exam.neet-ug.botany",
+      "kind": "subject",
+      "parent": "in.exam.neet-ug",
+      "label": "Botany"
+    },
+    {
+      "id": "in.exam.neet-ug.chemistry",
+      "kind": "subject",
+      "parent": "in.exam.neet-ug",
+      "label": "Chemistry"
+    },
+    {
+      "id": "in.exam.neet-ug.physics",
+      "kind": "subject",
+      "parent": "in.exam.neet-ug",
+      "label": "Physics"
+    },
+    {
+      "id": "in.exam.neet-ug.zoology",
+      "kind": "subject",
+      "parent": "in.exam.neet-ug",
+      "label": "Zoology"
+    },
+    {
+      "id": "in.exam.nest-iiser-aptitude",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "NEST / IISER Aptitude"
+    },
+    {
+      "id": "in.exam.niacl-ao",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "NIACL AO"
+    },
+    {
+      "id": "in.exam.niacl-assistant",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "NIACL Assistant"
+    },
+    {
+      "id": "in.exam.nid-dat",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "NID DAT"
+    },
+    {
+      "id": "in.exam.nielit-cdac",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "NIELIT / CDAC"
+    },
+    {
+      "id": "in.exam.nift",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "NIFT"
+    },
+    {
+      "id": "in.exam.nift.analytical-ability",
+      "kind": "subject",
+      "parent": "in.exam.nift",
+      "label": "Analytical Ability"
+    },
+    {
+      "id": "in.exam.nift.communication-ability",
+      "kind": "subject",
+      "parent": "in.exam.nift",
+      "label": "Communication Ability"
+    },
+    {
+      "id": "in.exam.nift.creative-ability-test-cat",
+      "kind": "subject",
+      "parent": "in.exam.nift",
+      "label": "Creative Ability Test (CAT)"
+    },
+    {
+      "id": "in.exam.nift.english-comprehension",
+      "kind": "subject",
+      "parent": "in.exam.nift",
+      "label": "English Comprehension"
+    },
+    {
+      "id": "in.exam.nift.general-ability-test-gat",
+      "kind": "subject",
+      "parent": "in.exam.nift",
+      "label": "General Ability Test (GAT)"
+    },
+    {
+      "id": "in.exam.nift.general-knowledge-and-current-affairs",
+      "kind": "subject",
+      "parent": "in.exam.nift",
+      "label": "General Knowledge & Current Affairs"
+    },
+    {
+      "id": "in.exam.nift.quantitative-ability",
+      "kind": "subject",
+      "parent": "in.exam.nift",
+      "label": "Quantitative Ability"
+    },
+    {
+      "id": "in.exam.nift.situation-test",
+      "kind": "subject",
+      "parent": "in.exam.nift",
+      "label": "Situation Test"
+    },
+    {
+      "id": "in.exam.niper-jee",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "NIPER JEE"
+    },
+    {
+      "id": "in.exam.nmat",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "NMAT"
+    },
+    {
+      "id": "in.exam.nmms-scholarship",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "NMMS Scholarship"
+    },
+    {
+      "id": "in.exam.ntse",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "NTSE"
+    },
+    {
+      "id": "in.exam.ntse.english-language",
+      "kind": "subject",
+      "parent": "in.exam.ntse",
+      "label": "English Language"
+    },
+    {
+      "id": "in.exam.ntse.mental-ability-test-mat",
+      "kind": "subject",
+      "parent": "in.exam.ntse",
+      "label": "Mental Ability Test (MAT)"
+    },
+    {
+      "id": "in.exam.ntse.sat-mathematics",
+      "kind": "subject",
+      "parent": "in.exam.ntse",
+      "label": "SAT — Mathematics"
+    },
+    {
+      "id": "in.exam.ntse.sat-social-science",
+      "kind": "subject",
+      "parent": "in.exam.ntse",
+      "label": "SAT — Social Science"
+    },
+    {
+      "id": "in.exam.ntse.scholastic-aptitude-test-sat-science",
+      "kind": "subject",
+      "parent": "in.exam.ntse",
+      "label": "Scholastic Aptitude Test (SAT) — Science"
+    },
+    {
+      "id": "in.exam.nvs-teacher",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "NVS Teacher"
+    },
+    {
+      "id": "in.exam.ojee-odisha",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "OJEE (Odisha)"
+    },
+    {
+      "id": "in.exam.ojee-odisha.biology",
+      "kind": "subject",
+      "parent": "in.exam.ojee-odisha",
+      "label": "Biology"
+    },
+    {
+      "id": "in.exam.ojee-odisha.chemistry",
+      "kind": "subject",
+      "parent": "in.exam.ojee-odisha",
+      "label": "Chemistry"
+    },
+    {
+      "id": "in.exam.ojee-odisha.engineering-paper",
+      "kind": "subject",
+      "parent": "in.exam.ojee-odisha",
+      "label": "Engineering Paper"
+    },
+    {
+      "id": "in.exam.ojee-odisha.mathematics",
+      "kind": "subject",
+      "parent": "in.exam.ojee-odisha",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.exam.ojee-odisha.physics",
+      "kind": "subject",
+      "parent": "in.exam.ojee-odisha",
+      "label": "Physics"
+    },
+    {
+      "id": "in.exam.olympiads-nso-imo-nsejs-ioqm",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Olympiads (NSO / IMO / NSEJS / IOQM)"
+    },
+    {
+      "id": "in.exam.opsc-oas-odisha",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "OPSC / OAS (Odisha)"
+    },
+    {
+      "id": "in.exam.ossc-osssc-odisha",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "OSSC / OSSSC (Odisha)"
+    },
+    {
+      "id": "in.exam.otet-odisha",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "OTET (Odisha)"
+    },
+    {
+      "id": "in.exam.other-govt-exam",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Other Govt Exam"
+    },
+    {
+      "id": "in.exam.other-state-psc",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Other State PSC"
+    },
+    {
+      "id": "in.exam.other-state-tet",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Other State TET"
+    },
+    {
+      "id": "in.exam.panchayat-secretary-gram-sevak",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Panchayat Secretary / Gram Sevak"
+    },
+    {
+      "id": "in.exam.paramedical-entrance-dmlt-bpt-bmlt",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Paramedical Entrance (DMLT / BPT / BMLT)"
+    },
+    {
+      "id": "in.exam.patwari-lekhpal",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Patwari / Lekhpal"
+    },
+    {
+      "id": "in.exam.patwari-lekhpal.computer-awareness",
+      "kind": "subject",
+      "parent": "in.exam.patwari-lekhpal",
+      "label": "Computer Awareness"
+    },
+    {
+      "id": "in.exam.patwari-lekhpal.general-hindi",
+      "kind": "subject",
+      "parent": "in.exam.patwari-lekhpal",
+      "label": "General Hindi"
+    },
+    {
+      "id": "in.exam.patwari-lekhpal.general-knowledge",
+      "kind": "subject",
+      "parent": "in.exam.patwari-lekhpal",
+      "label": "General Knowledge"
+    },
+    {
+      "id": "in.exam.patwari-lekhpal.land-records-and-revenue",
+      "kind": "subject",
+      "parent": "in.exam.patwari-lekhpal",
+      "label": "Land Records & Revenue"
+    },
+    {
+      "id": "in.exam.patwari-lekhpal.mathematics",
+      "kind": "subject",
+      "parent": "in.exam.patwari-lekhpal",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.exam.patwari-lekhpal.rural-development-and-village-society",
+      "kind": "subject",
+      "parent": "in.exam.patwari-lekhpal",
+      "label": "Rural Development & Village Society"
+    },
+    {
+      "id": "in.exam.pharmacist-recruitment",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Pharmacist Recruitment"
+    },
+    {
+      "id": "in.exam.ppsc-punjab",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "PPSC (Punjab)"
+    },
+    {
+      "id": "in.exam.principal-lecturer-recruitment",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Principal / Lecturer Recruitment"
+    },
+    {
+      "id": "in.exam.psssb-punjab",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "PSSSB (Punjab)"
+    },
+    {
+      "id": "in.exam.pstet-punjab",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "PSTET (Punjab)"
+    },
+    {
+      "id": "in.exam.psu-recruitment-ntpc-ongc-bhel-sail",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "PSU Recruitment (NTPC / ONGC / BHEL / SAIL)"
+    },
+    {
+      "id": "in.exam.psu-recruitment-ntpc-ongc-bhel-sail.company-and-industry-knowledge",
+      "kind": "subject",
+      "parent": "in.exam.psu-recruitment-ntpc-ongc-bhel-sail",
+      "label": "Company & Industry Knowledge"
+    },
+    {
+      "id": "in.exam.psu-recruitment-ntpc-ongc-bhel-sail.english",
+      "kind": "subject",
+      "parent": "in.exam.psu-recruitment-ntpc-ongc-bhel-sail",
+      "label": "English"
+    },
+    {
+      "id": "in.exam.psu-recruitment-ntpc-ongc-bhel-sail.gate-based-technical-paper",
+      "kind": "subject",
+      "parent": "in.exam.psu-recruitment-ntpc-ongc-bhel-sail",
+      "label": "GATE-based Technical Paper"
+    },
+    {
+      "id": "in.exam.psu-recruitment-ntpc-ongc-bhel-sail.general-awareness",
+      "kind": "subject",
+      "parent": "in.exam.psu-recruitment-ntpc-ongc-bhel-sail",
+      "label": "General Awareness"
+    },
+    {
+      "id": "in.exam.psu-recruitment-ntpc-ongc-bhel-sail.quantitative-aptitude",
+      "kind": "subject",
+      "parent": "in.exam.psu-recruitment-ntpc-ongc-bhel-sail",
+      "label": "Quantitative Aptitude"
+    },
+    {
+      "id": "in.exam.psu-recruitment-ntpc-ongc-bhel-sail.reasoning",
+      "kind": "subject",
+      "parent": "in.exam.psu-recruitment-ntpc-ongc-bhel-sail",
+      "label": "Reasoning"
+    },
+    {
+      "id": "in.exam.puducherry-psc",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Puducherry PSC"
+    },
+    {
+      "id": "in.exam.punjab-police",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Punjab Police"
+    },
+    {
+      "id": "in.exam.rajasthan-police",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Rajasthan Police"
+    },
+    {
+      "id": "in.exam.rbi-assistant",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "RBI Assistant"
+    },
+    {
+      "id": "in.exam.rbi-grade-b",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "RBI Grade B"
+    },
+    {
+      "id": "in.exam.rbi-grade-b.economic-and-social-issues-esi",
+      "kind": "subject",
+      "parent": "in.exam.rbi-grade-b",
+      "label": "Economic & Social Issues (ESI)"
+    },
+    {
+      "id": "in.exam.rbi-grade-b.english-writing-skills",
+      "kind": "subject",
+      "parent": "in.exam.rbi-grade-b",
+      "label": "English Writing Skills"
+    },
+    {
+      "id": "in.exam.rbi-grade-b.finance-and-management-f-and-m",
+      "kind": "subject",
+      "parent": "in.exam.rbi-grade-b",
+      "label": "Finance & Management (F&M)"
+    },
+    {
+      "id": "in.exam.rbi-grade-b.general-awareness",
+      "kind": "subject",
+      "parent": "in.exam.rbi-grade-b",
+      "label": "General Awareness"
+    },
+    {
+      "id": "in.exam.rbi-grade-b.quantitative-aptitude",
+      "kind": "subject",
+      "parent": "in.exam.rbi-grade-b",
+      "label": "Quantitative Aptitude"
+    },
+    {
+      "id": "in.exam.rbi-grade-b.reasoning",
+      "kind": "subject",
+      "parent": "in.exam.rbi-grade-b",
+      "label": "Reasoning"
+    },
+    {
+      "id": "in.exam.reet-rajasthan",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "REET (Rajasthan)"
+    },
+    {
+      "id": "in.exam.reet-rajasthan.child-development-and-pedagogy",
+      "kind": "subject",
+      "parent": "in.exam.reet-rajasthan",
+      "label": "Child Development & Pedagogy"
+    },
+    {
+      "id": "in.exam.reet-rajasthan.environmental-studies",
+      "kind": "subject",
+      "parent": "in.exam.reet-rajasthan",
+      "label": "Environmental Studies"
+    },
+    {
+      "id": "in.exam.reet-rajasthan.language-i-hindi-english",
+      "kind": "subject",
+      "parent": "in.exam.reet-rajasthan",
+      "label": "Language I (Hindi / English)"
+    },
+    {
+      "id": "in.exam.reet-rajasthan.language-ii",
+      "kind": "subject",
+      "parent": "in.exam.reet-rajasthan",
+      "label": "Language II"
+    },
+    {
+      "id": "in.exam.reet-rajasthan.mathematics",
+      "kind": "subject",
+      "parent": "in.exam.reet-rajasthan",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.exam.reet-rajasthan.rajasthan-gk",
+      "kind": "subject",
+      "parent": "in.exam.reet-rajasthan",
+      "label": "Rajasthan GK"
+    },
+    {
+      "id": "in.exam.reet-rajasthan.science",
+      "kind": "subject",
+      "parent": "in.exam.reet-rajasthan",
+      "label": "Science"
+    },
+    {
+      "id": "in.exam.reet-rajasthan.social-studies",
+      "kind": "subject",
+      "parent": "in.exam.reet-rajasthan",
+      "label": "Social Studies"
+    },
+    {
+      "id": "in.exam.rimc-rms",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "RIMC / RMS"
+    },
+    {
+      "id": "in.exam.rpf-constable-si",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "RPF Constable / SI"
+    },
+    {
+      "id": "in.exam.rpf-constable-si.arithmetic",
+      "kind": "subject",
+      "parent": "in.exam.rpf-constable-si",
+      "label": "Arithmetic"
+    },
+    {
+      "id": "in.exam.rpf-constable-si.general-awareness",
+      "kind": "subject",
+      "parent": "in.exam.rpf-constable-si",
+      "label": "General Awareness"
+    },
+    {
+      "id": "in.exam.rpf-constable-si.general-intelligence-and-reasoning",
+      "kind": "subject",
+      "parent": "in.exam.rpf-constable-si",
+      "label": "General Intelligence & Reasoning"
+    },
+    {
+      "id": "in.exam.rpsc-ras-rajasthan",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "RPSC / RAS (Rajasthan)"
+    },
+    {
+      "id": "in.exam.rrb-alp-and-technician",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "RRB ALP & Technician"
+    },
+    {
+      "id": "in.exam.rrb-alp-and-technician.general-awareness",
+      "kind": "subject",
+      "parent": "in.exam.rrb-alp-and-technician",
+      "label": "General Awareness"
+    },
+    {
+      "id": "in.exam.rrb-alp-and-technician.general-intelligence-and-reasoning",
+      "kind": "subject",
+      "parent": "in.exam.rrb-alp-and-technician",
+      "label": "General Intelligence & Reasoning"
+    },
+    {
+      "id": "in.exam.rrb-alp-and-technician.general-science",
+      "kind": "subject",
+      "parent": "in.exam.rrb-alp-and-technician",
+      "label": "General Science"
+    },
+    {
+      "id": "in.exam.rrb-alp-and-technician.mathematics",
+      "kind": "subject",
+      "parent": "in.exam.rrb-alp-and-technician",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.exam.rrb-alp-and-technician.trade-technical-ability",
+      "kind": "subject",
+      "parent": "in.exam.rrb-alp-and-technician",
+      "label": "Trade / Technical Ability"
+    },
+    {
+      "id": "in.exam.rrb-group-d",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "RRB Group D"
+    },
+    {
+      "id": "in.exam.rrb-group-d.general-awareness-and-current-affairs",
+      "kind": "subject",
+      "parent": "in.exam.rrb-group-d",
+      "label": "General Awareness & Current Affairs"
+    },
+    {
+      "id": "in.exam.rrb-group-d.general-intelligence-and-reasoning",
+      "kind": "subject",
+      "parent": "in.exam.rrb-group-d",
+      "label": "General Intelligence & Reasoning"
+    },
+    {
+      "id": "in.exam.rrb-group-d.general-science",
+      "kind": "subject",
+      "parent": "in.exam.rrb-group-d",
+      "label": "General Science"
+    },
+    {
+      "id": "in.exam.rrb-group-d.mathematics",
+      "kind": "subject",
+      "parent": "in.exam.rrb-group-d",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.exam.rrb-je",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "RRB JE"
+    },
+    {
+      "id": "in.exam.rrb-ministerial-and-isolated",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "RRB Ministerial & Isolated"
+    },
+    {
+      "id": "in.exam.rrb-ntpc",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "RRB NTPC"
+    },
+    {
+      "id": "in.exam.rrb-ntpc.current-affairs",
+      "kind": "subject",
+      "parent": "in.exam.rrb-ntpc",
+      "label": "Current Affairs"
+    },
+    {
+      "id": "in.exam.rrb-ntpc.general-awareness",
+      "kind": "subject",
+      "parent": "in.exam.rrb-ntpc",
+      "label": "General Awareness"
+    },
+    {
+      "id": "in.exam.rrb-ntpc.general-intelligence-and-reasoning",
+      "kind": "subject",
+      "parent": "in.exam.rrb-ntpc",
+      "label": "General Intelligence & Reasoning"
+    },
+    {
+      "id": "in.exam.rrb-ntpc.general-science",
+      "kind": "subject",
+      "parent": "in.exam.rrb-ntpc",
+      "label": "General Science"
+    },
+    {
+      "id": "in.exam.rrb-ntpc.mathematics",
+      "kind": "subject",
+      "parent": "in.exam.rrb-ntpc",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.exam.rrb-paramedical",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "RRB Paramedical"
+    },
+    {
+      "id": "in.exam.rsmssb-rssb-rajasthan",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "RSMSSB / RSSB (Rajasthan)"
+    },
+    {
+      "id": "in.exam.sainik-military-school-entrance",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Sainik / Military School Entrance"
+    },
+    {
+      "id": "in.exam.sainik-school-aissee",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Sainik School (AISSEE)"
+    },
+    {
+      "id": "in.exam.sainik-school-aissee.general-knowledge",
+      "kind": "subject",
+      "parent": "in.exam.sainik-school-aissee",
+      "label": "General Knowledge"
+    },
+    {
+      "id": "in.exam.sainik-school-aissee.intelligence-test",
+      "kind": "subject",
+      "parent": "in.exam.sainik-school-aissee",
+      "label": "Intelligence Test"
+    },
+    {
+      "id": "in.exam.sainik-school-aissee.language-english-hindi",
+      "kind": "subject",
+      "parent": "in.exam.sainik-school-aissee",
+      "label": "Language (English / Hindi)"
+    },
+    {
+      "id": "in.exam.sainik-school-aissee.mathematics",
+      "kind": "subject",
+      "parent": "in.exam.sainik-school-aissee",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.exam.sainik-school-aissee.science",
+      "kind": "subject",
+      "parent": "in.exam.sainik-school-aissee",
+      "label": "Science"
+    },
+    {
+      "id": "in.exam.sainik-school-aissee.social-studies",
+      "kind": "subject",
+      "parent": "in.exam.sainik-school-aissee",
+      "label": "Social Studies"
+    },
+    {
+      "id": "in.exam.sbi-apprentice",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "SBI Apprentice"
+    },
+    {
+      "id": "in.exam.sbi-clerk",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "SBI Clerk"
+    },
+    {
+      "id": "in.exam.sbi-clerk.computer-aptitude",
+      "kind": "subject",
+      "parent": "in.exam.sbi-clerk",
+      "label": "Computer Aptitude"
+    },
+    {
+      "id": "in.exam.sbi-clerk.english-language",
+      "kind": "subject",
+      "parent": "in.exam.sbi-clerk",
+      "label": "English Language"
+    },
+    {
+      "id": "in.exam.sbi-clerk.general-and-financial-awareness",
+      "kind": "subject",
+      "parent": "in.exam.sbi-clerk",
+      "label": "General & Financial Awareness"
+    },
+    {
+      "id": "in.exam.sbi-clerk.quantitative-aptitude",
+      "kind": "subject",
+      "parent": "in.exam.sbi-clerk",
+      "label": "Quantitative Aptitude"
+    },
+    {
+      "id": "in.exam.sbi-clerk.reasoning-ability",
+      "kind": "subject",
+      "parent": "in.exam.sbi-clerk",
+      "label": "Reasoning Ability"
+    },
+    {
+      "id": "in.exam.sbi-po",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "SBI PO"
+    },
+    {
+      "id": "in.exam.sbi-po.data-analysis-and-interpretation",
+      "kind": "subject",
+      "parent": "in.exam.sbi-po",
+      "label": "Data Analysis & Interpretation"
+    },
+    {
+      "id": "in.exam.sbi-po.descriptive-paper",
+      "kind": "subject",
+      "parent": "in.exam.sbi-po",
+      "label": "Descriptive Paper"
+    },
+    {
+      "id": "in.exam.sbi-po.english-language",
+      "kind": "subject",
+      "parent": "in.exam.sbi-po",
+      "label": "English Language"
+    },
+    {
+      "id": "in.exam.sbi-po.general-economy-banking-awareness",
+      "kind": "subject",
+      "parent": "in.exam.sbi-po",
+      "label": "General / Economy / Banking Awareness"
+    },
+    {
+      "id": "in.exam.sbi-po.quantitative-aptitude",
+      "kind": "subject",
+      "parent": "in.exam.sbi-po",
+      "label": "Quantitative Aptitude"
+    },
+    {
+      "id": "in.exam.sbi-po.reasoning-and-computer-aptitude",
+      "kind": "subject",
+      "parent": "in.exam.sbi-po",
+      "label": "Reasoning & Computer Aptitude"
+    },
+    {
+      "id": "in.exam.sbi-so",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "SBI SO"
+    },
+    {
+      "id": "in.exam.sebi-grade-a",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "SEBI Grade A"
+    },
+    {
+      "id": "in.exam.set-slet",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "SET / SLET"
+    },
+    {
+      "id": "in.exam.sidbi-grade-a",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "SIDBI Grade A"
+    },
+    {
+      "id": "in.exam.sikkim-psc-spsc",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Sikkim PSC (SPSC)"
+    },
+    {
+      "id": "in.exam.snap",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "SNAP"
+    },
+    {
+      "id": "in.exam.srmjeee",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "SRMJEEE"
+    },
+    {
+      "id": "in.exam.ssc-capf-delhi-police-hc",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "SSC CAPF / Delhi Police HC"
+    },
+    {
+      "id": "in.exam.ssc-cgl",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "SSC CGL"
+    },
+    {
+      "id": "in.exam.ssc-cgl.descriptive-paper-essay-letter",
+      "kind": "subject",
+      "parent": "in.exam.ssc-cgl",
+      "label": "Descriptive Paper (Essay / Letter)"
+    },
+    {
+      "id": "in.exam.ssc-cgl.english-comprehension",
+      "kind": "subject",
+      "parent": "in.exam.ssc-cgl",
+      "label": "English Comprehension"
+    },
+    {
+      "id": "in.exam.ssc-cgl.general-awareness",
+      "kind": "subject",
+      "parent": "in.exam.ssc-cgl",
+      "label": "General Awareness"
+    },
+    {
+      "id": "in.exam.ssc-cgl.general-intelligence-and-reasoning",
+      "kind": "subject",
+      "parent": "in.exam.ssc-cgl",
+      "label": "General Intelligence & Reasoning"
+    },
+    {
+      "id": "in.exam.ssc-cgl.general-studies-finance-and-economics-aao",
+      "kind": "subject",
+      "parent": "in.exam.ssc-cgl",
+      "label": "General Studies — Finance & Economics (AAO)"
+    },
+    {
+      "id": "in.exam.ssc-cgl.quantitative-aptitude",
+      "kind": "subject",
+      "parent": "in.exam.ssc-cgl",
+      "label": "Quantitative Aptitude"
+    },
+    {
+      "id": "in.exam.ssc-cgl.statistics-jso",
+      "kind": "subject",
+      "parent": "in.exam.ssc-cgl",
+      "label": "Statistics (JSO)"
+    },
+    {
+      "id": "in.exam.ssc-chsl",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "SSC CHSL"
+    },
+    {
+      "id": "in.exam.ssc-chsl.descriptive-paper",
+      "kind": "subject",
+      "parent": "in.exam.ssc-chsl",
+      "label": "Descriptive Paper"
+    },
+    {
+      "id": "in.exam.ssc-chsl.english-language",
+      "kind": "subject",
+      "parent": "in.exam.ssc-chsl",
+      "label": "English Language"
+    },
+    {
+      "id": "in.exam.ssc-chsl.general-awareness",
+      "kind": "subject",
+      "parent": "in.exam.ssc-chsl",
+      "label": "General Awareness"
+    },
+    {
+      "id": "in.exam.ssc-chsl.general-intelligence",
+      "kind": "subject",
+      "parent": "in.exam.ssc-chsl",
+      "label": "General Intelligence"
+    },
+    {
+      "id": "in.exam.ssc-chsl.quantitative-aptitude",
+      "kind": "subject",
+      "parent": "in.exam.ssc-chsl",
+      "label": "Quantitative Aptitude"
+    },
+    {
+      "id": "in.exam.ssc-chsl.typing-skill-test",
+      "kind": "subject",
+      "parent": "in.exam.ssc-chsl",
+      "label": "Typing / Skill Test"
+    },
+    {
+      "id": "in.exam.ssc-cpo-si",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "SSC CPO (SI)"
+    },
+    {
+      "id": "in.exam.ssc-cpo-si.english-language-and-comprehension",
+      "kind": "subject",
+      "parent": "in.exam.ssc-cpo-si",
+      "label": "English Language & Comprehension"
+    },
+    {
+      "id": "in.exam.ssc-cpo-si.general-awareness",
+      "kind": "subject",
+      "parent": "in.exam.ssc-cpo-si",
+      "label": "General Awareness"
+    },
+    {
+      "id": "in.exam.ssc-cpo-si.general-intelligence-and-reasoning",
+      "kind": "subject",
+      "parent": "in.exam.ssc-cpo-si",
+      "label": "General Intelligence & Reasoning"
+    },
+    {
+      "id": "in.exam.ssc-cpo-si.quantitative-aptitude",
+      "kind": "subject",
+      "parent": "in.exam.ssc-cpo-si",
+      "label": "Quantitative Aptitude"
+    },
+    {
+      "id": "in.exam.ssc-gd-constable",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "SSC GD Constable"
+    },
+    {
+      "id": "in.exam.ssc-gd-constable.elementary-mathematics",
+      "kind": "subject",
+      "parent": "in.exam.ssc-gd-constable",
+      "label": "Elementary Mathematics"
+    },
+    {
+      "id": "in.exam.ssc-gd-constable.english-hindi",
+      "kind": "subject",
+      "parent": "in.exam.ssc-gd-constable",
+      "label": "English / Hindi"
+    },
+    {
+      "id": "in.exam.ssc-gd-constable.general-intelligence-and-reasoning",
+      "kind": "subject",
+      "parent": "in.exam.ssc-gd-constable",
+      "label": "General Intelligence & Reasoning"
+    },
+    {
+      "id": "in.exam.ssc-gd-constable.general-knowledge-and-awareness",
+      "kind": "subject",
+      "parent": "in.exam.ssc-gd-constable",
+      "label": "General Knowledge & Awareness"
+    },
+    {
+      "id": "in.exam.ssc-je-junior-engineer",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "SSC JE (Junior Engineer)"
+    },
+    {
+      "id": "in.exam.ssc-je-junior-engineer.civil-and-structural-engineering",
+      "kind": "subject",
+      "parent": "in.exam.ssc-je-junior-engineer",
+      "label": "Civil & Structural Engineering"
+    },
+    {
+      "id": "in.exam.ssc-je-junior-engineer.electrical-engineering",
+      "kind": "subject",
+      "parent": "in.exam.ssc-je-junior-engineer",
+      "label": "Electrical Engineering"
+    },
+    {
+      "id": "in.exam.ssc-je-junior-engineer.general-awareness",
+      "kind": "subject",
+      "parent": "in.exam.ssc-je-junior-engineer",
+      "label": "General Awareness"
+    },
+    {
+      "id": "in.exam.ssc-je-junior-engineer.general-intelligence-and-reasoning",
+      "kind": "subject",
+      "parent": "in.exam.ssc-je-junior-engineer",
+      "label": "General Intelligence & Reasoning"
+    },
+    {
+      "id": "in.exam.ssc-je-junior-engineer.mechanical-engineering",
+      "kind": "subject",
+      "parent": "in.exam.ssc-je-junior-engineer",
+      "label": "Mechanical Engineering"
+    },
+    {
+      "id": "in.exam.ssc-mts",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "SSC MTS"
+    },
+    {
+      "id": "in.exam.ssc-mts.english-language",
+      "kind": "subject",
+      "parent": "in.exam.ssc-mts",
+      "label": "English Language"
+    },
+    {
+      "id": "in.exam.ssc-mts.general-awareness",
+      "kind": "subject",
+      "parent": "in.exam.ssc-mts",
+      "label": "General Awareness"
+    },
+    {
+      "id": "in.exam.ssc-mts.numerical-and-mathematical-ability",
+      "kind": "subject",
+      "parent": "in.exam.ssc-mts",
+      "label": "Numerical & Mathematical Ability"
+    },
+    {
+      "id": "in.exam.ssc-mts.reasoning-ability-and-problem-solving",
+      "kind": "subject",
+      "parent": "in.exam.ssc-mts",
+      "label": "Reasoning Ability & Problem Solving"
+    },
+    {
+      "id": "in.exam.ssc-selection-post",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "SSC Selection Post"
+    },
+    {
+      "id": "in.exam.ssc-stenographer",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "SSC Stenographer"
+    },
+    {
+      "id": "in.exam.staff-nurse-recruitment",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Staff Nurse Recruitment"
+    },
+    {
+      "id": "in.exam.staff-nurse-recruitment.anatomy-and-physiology",
+      "kind": "subject",
+      "parent": "in.exam.staff-nurse-recruitment",
+      "label": "Anatomy & Physiology"
+    },
+    {
+      "id": "in.exam.staff-nurse-recruitment.child-health-nursing",
+      "kind": "subject",
+      "parent": "in.exam.staff-nurse-recruitment",
+      "label": "Child Health Nursing"
+    },
+    {
+      "id": "in.exam.staff-nurse-recruitment.community-health-nursing",
+      "kind": "subject",
+      "parent": "in.exam.staff-nurse-recruitment",
+      "label": "Community Health Nursing"
+    },
+    {
+      "id": "in.exam.staff-nurse-recruitment.general-knowledge",
+      "kind": "subject",
+      "parent": "in.exam.staff-nurse-recruitment",
+      "label": "General Knowledge"
+    },
+    {
+      "id": "in.exam.staff-nurse-recruitment.medical-surgical-nursing",
+      "kind": "subject",
+      "parent": "in.exam.staff-nurse-recruitment",
+      "label": "Medical Surgical Nursing"
+    },
+    {
+      "id": "in.exam.staff-nurse-recruitment.mental-health-nursing",
+      "kind": "subject",
+      "parent": "in.exam.staff-nurse-recruitment",
+      "label": "Mental Health Nursing"
+    },
+    {
+      "id": "in.exam.staff-nurse-recruitment.nursing-foundation",
+      "kind": "subject",
+      "parent": "in.exam.staff-nurse-recruitment",
+      "label": "Nursing Foundation"
+    },
+    {
+      "id": "in.exam.staff-nurse-recruitment.nursing-management",
+      "kind": "subject",
+      "parent": "in.exam.staff-nurse-recruitment",
+      "label": "Nursing Management"
+    },
+    {
+      "id": "in.exam.staff-nurse-recruitment.obstetrics-and-gynaecology-nursing",
+      "kind": "subject",
+      "parent": "in.exam.staff-nurse-recruitment",
+      "label": "Obstetrics & Gynaecology Nursing"
+    },
+    {
+      "id": "in.exam.staff-nurse-recruitment.pharmacology",
+      "kind": "subject",
+      "parent": "in.exam.staff-nurse-recruitment",
+      "label": "Pharmacology"
+    },
+    {
+      "id": "in.exam.state-police-constable",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "State Police Constable"
+    },
+    {
+      "id": "in.exam.state-police-constable.arithmetic",
+      "kind": "subject",
+      "parent": "in.exam.state-police-constable",
+      "label": "Arithmetic"
+    },
+    {
+      "id": "in.exam.state-police-constable.english-regional-language",
+      "kind": "subject",
+      "parent": "in.exam.state-police-constable",
+      "label": "English / Regional Language"
+    },
+    {
+      "id": "in.exam.state-police-constable.general-knowledge-and-current-affairs",
+      "kind": "subject",
+      "parent": "in.exam.state-police-constable",
+      "label": "General Knowledge & Current Affairs"
+    },
+    {
+      "id": "in.exam.state-police-constable.reasoning",
+      "kind": "subject",
+      "parent": "in.exam.state-police-constable",
+      "label": "Reasoning"
+    },
+    {
+      "id": "in.exam.state-police-si",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "State Police SI"
+    },
+    {
+      "id": "in.exam.state-police-si.arithmetic-and-numerical-ability",
+      "kind": "subject",
+      "parent": "in.exam.state-police-si",
+      "label": "Arithmetic & Numerical Ability"
+    },
+    {
+      "id": "in.exam.state-police-si.english-regional-language",
+      "kind": "subject",
+      "parent": "in.exam.state-police-si",
+      "label": "English / Regional Language"
+    },
+    {
+      "id": "in.exam.state-police-si.general-intelligence-and-reasoning",
+      "kind": "subject",
+      "parent": "in.exam.state-police-si",
+      "label": "General Intelligence & Reasoning"
+    },
+    {
+      "id": "in.exam.state-police-si.general-knowledge-and-current-affairs",
+      "kind": "subject",
+      "parent": "in.exam.state-police-si",
+      "label": "General Knowledge & Current Affairs"
+    },
+    {
+      "id": "in.exam.state-police-si.indian-constitution-and-laws",
+      "kind": "subject",
+      "parent": "in.exam.state-police-si",
+      "label": "Indian Constitution & Laws"
+    },
+    {
+      "id": "in.exam.tancet",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "TANCET"
+    },
+    {
+      "id": "in.exam.telangana-ap-grama-sachivalayam",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Telangana / AP Grama Sachivalayam"
+    },
+    {
+      "id": "in.exam.territorial-army",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Territorial Army"
+    },
+    {
+      "id": "in.exam.tet-assam",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "TET Assam"
+    },
+    {
+      "id": "in.exam.tissnet",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "TISSNET"
+    },
+    {
+      "id": "in.exam.tnpsc-group-1",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "TNPSC Group 1"
+    },
+    {
+      "id": "in.exam.tnpsc-group-2",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "TNPSC Group 2"
+    },
+    {
+      "id": "in.exam.tnpsc-group-2a",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "TNPSC Group 2A"
+    },
+    {
+      "id": "in.exam.tnpsc-group-4",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "TNPSC Group 4"
+    },
+    {
+      "id": "in.exam.tnpsc-group-8",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "TNPSC Group 8"
+    },
+    {
+      "id": "in.exam.tntet",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "TNTET"
+    },
+    {
+      "id": "in.exam.tnusrb-tamil-nadu-police",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "TNUSRB (Tamil Nadu Police)"
+    },
+    {
+      "id": "in.exam.tripura-psc-tpsc",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Tripura PSC (TPSC)"
+    },
+    {
+      "id": "in.exam.ts-ap-ecet",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "TS / AP ECET"
+    },
+    {
+      "id": "in.exam.ts-ap-ecet.chemistry",
+      "kind": "subject",
+      "parent": "in.exam.ts-ap-ecet",
+      "label": "Chemistry"
+    },
+    {
+      "id": "in.exam.ts-ap-ecet.engineering-paper-branch",
+      "kind": "subject",
+      "parent": "in.exam.ts-ap-ecet",
+      "label": "Engineering Paper (Branch)"
+    },
+    {
+      "id": "in.exam.ts-ap-ecet.mathematics",
+      "kind": "subject",
+      "parent": "in.exam.ts-ap-ecet",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.exam.ts-ap-ecet.pharmacy-paper",
+      "kind": "subject",
+      "parent": "in.exam.ts-ap-ecet",
+      "label": "Pharmacy Paper"
+    },
+    {
+      "id": "in.exam.ts-ap-ecet.physics",
+      "kind": "subject",
+      "parent": "in.exam.ts-ap-ecet",
+      "label": "Physics"
+    },
+    {
+      "id": "in.exam.ts-ap-pgecet",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "TS / AP PGECET"
+    },
+    {
+      "id": "in.exam.ts-ap-pglcet",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "TS / AP PGLCET"
+    },
+    {
+      "id": "in.exam.ts-ap-polycet",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "TS / AP POLYCET"
+    },
+    {
+      "id": "in.exam.ts-ap-polycet.biology",
+      "kind": "subject",
+      "parent": "in.exam.ts-ap-polycet",
+      "label": "Biology"
+    },
+    {
+      "id": "in.exam.ts-ap-polycet.chemistry",
+      "kind": "subject",
+      "parent": "in.exam.ts-ap-polycet",
+      "label": "Chemistry"
+    },
+    {
+      "id": "in.exam.ts-ap-polycet.mathematics",
+      "kind": "subject",
+      "parent": "in.exam.ts-ap-polycet",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.exam.ts-ap-polycet.physics",
+      "kind": "subject",
+      "parent": "in.exam.ts-ap-polycet",
+      "label": "Physics"
+    },
+    {
+      "id": "in.exam.ts-eamcet",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "TS EAMCET"
+    },
+    {
+      "id": "in.exam.ts-eamcet.botany",
+      "kind": "subject",
+      "parent": "in.exam.ts-eamcet",
+      "label": "Botany"
+    },
+    {
+      "id": "in.exam.ts-eamcet.chemistry",
+      "kind": "subject",
+      "parent": "in.exam.ts-eamcet",
+      "label": "Chemistry"
+    },
+    {
+      "id": "in.exam.ts-eamcet.mathematics",
+      "kind": "subject",
+      "parent": "in.exam.ts-eamcet",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.exam.ts-eamcet.physics",
+      "kind": "subject",
+      "parent": "in.exam.ts-eamcet",
+      "label": "Physics"
+    },
+    {
+      "id": "in.exam.ts-eamcet.zoology",
+      "kind": "subject",
+      "parent": "in.exam.ts-eamcet",
+      "label": "Zoology"
+    },
+    {
+      "id": "in.exam.tspsc-group-1",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "TSPSC Group 1"
+    },
+    {
+      "id": "in.exam.tspsc-group-2",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "TSPSC Group 2"
+    },
+    {
+      "id": "in.exam.tspsc-group-3",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "TSPSC Group 3"
+    },
+    {
+      "id": "in.exam.tspsc-group-4",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "TSPSC Group 4"
+    },
+    {
+      "id": "in.exam.tstet",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "TSTET"
+    },
+    {
+      "id": "in.exam.uceed",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "UCEED"
+    },
+    {
+      "id": "in.exam.uceed.analytical-and-logical-reasoning",
+      "kind": "subject",
+      "parent": "in.exam.uceed",
+      "label": "Analytical & Logical Reasoning"
+    },
+    {
+      "id": "in.exam.uceed.design-thinking-and-problem-solving",
+      "kind": "subject",
+      "parent": "in.exam.uceed",
+      "label": "Design Thinking & Problem Solving"
+    },
+    {
+      "id": "in.exam.uceed.environmental-and-social-awareness",
+      "kind": "subject",
+      "parent": "in.exam.uceed",
+      "label": "Environmental & Social Awareness"
+    },
+    {
+      "id": "in.exam.uceed.language-and-creativity",
+      "kind": "subject",
+      "parent": "in.exam.uceed",
+      "label": "Language & Creativity"
+    },
+    {
+      "id": "in.exam.uceed.observation-and-design-sensitivity",
+      "kind": "subject",
+      "parent": "in.exam.uceed",
+      "label": "Observation & Design Sensitivity"
+    },
+    {
+      "id": "in.exam.uceed.visualisation-and-spatial-ability",
+      "kind": "subject",
+      "parent": "in.exam.uceed",
+      "label": "Visualisation & Spatial Ability"
+    },
+    {
+      "id": "in.exam.ugc-net-jrf",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "UGC NET / JRF"
+    },
+    {
+      "id": "in.exam.ugc-net-jrf.paper-1-communication",
+      "kind": "subject",
+      "parent": "in.exam.ugc-net-jrf",
+      "label": "Paper 1 — Communication"
+    },
+    {
+      "id": "in.exam.ugc-net-jrf.paper-1-comprehension",
+      "kind": "subject",
+      "parent": "in.exam.ugc-net-jrf",
+      "label": "Paper 1 — Comprehension"
+    },
+    {
+      "id": "in.exam.ugc-net-jrf.paper-1-data-interpretation",
+      "kind": "subject",
+      "parent": "in.exam.ugc-net-jrf",
+      "label": "Paper 1 — Data Interpretation"
+    },
+    {
+      "id": "in.exam.ugc-net-jrf.paper-1-higher-education-system",
+      "kind": "subject",
+      "parent": "in.exam.ugc-net-jrf",
+      "label": "Paper 1 — Higher Education System"
+    },
+    {
+      "id": "in.exam.ugc-net-jrf.paper-1-ict",
+      "kind": "subject",
+      "parent": "in.exam.ugc-net-jrf",
+      "label": "Paper 1 — ICT"
+    },
+    {
+      "id": "in.exam.ugc-net-jrf.paper-1-logical-reasoning",
+      "kind": "subject",
+      "parent": "in.exam.ugc-net-jrf",
+      "label": "Paper 1 — Logical Reasoning"
+    },
+    {
+      "id": "in.exam.ugc-net-jrf.paper-1-people-development-and-environment",
+      "kind": "subject",
+      "parent": "in.exam.ugc-net-jrf",
+      "label": "Paper 1 — People, Development & Environment"
+    },
+    {
+      "id": "in.exam.ugc-net-jrf.paper-1-research-aptitude",
+      "kind": "subject",
+      "parent": "in.exam.ugc-net-jrf",
+      "label": "Paper 1 — Research Aptitude"
+    },
+    {
+      "id": "in.exam.ugc-net-jrf.paper-1-teaching-aptitude",
+      "kind": "subject",
+      "parent": "in.exam.ugc-net-jrf",
+      "label": "Paper 1 — Teaching Aptitude"
+    },
+    {
+      "id": "in.exam.ugc-net-jrf.paper-2-subject-paper",
+      "kind": "subject",
+      "parent": "in.exam.ugc-net-jrf",
+      "label": "Paper 2 — Subject Paper"
+    },
+    {
+      "id": "in.exam.uiic-gic-assistant",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "UIIC / GIC Assistant"
+    },
+    {
+      "id": "in.exam.ukpsc-uttarakhand",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "UKPSC (Uttarakhand)"
+    },
+    {
+      "id": "in.exam.uksee-uttarakhand",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "UKSEE (Uttarakhand)"
+    },
+    {
+      "id": "in.exam.uksssc-uttarakhand",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "UKSSSC (Uttarakhand)"
+    },
+    {
+      "id": "in.exam.up-police",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "UP Police"
+    },
+    {
+      "id": "in.exam.upcet-jeecup",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "UPCET / JEECUP"
+    },
+    {
+      "id": "in.exam.uppsc-pcs-uttar-pradesh",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "UPPSC PCS (Uttar Pradesh)"
+    },
+    {
+      "id": "in.exam.uppsc-ro-aro",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "UPPSC RO / ARO"
+    },
+    {
+      "id": "in.exam.upsc-capf-ac",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "UPSC CAPF (AC)"
+    },
+    {
+      "id": "in.exam.upsc-cds",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "UPSC CDS"
+    },
+    {
+      "id": "in.exam.upsc-cisf-ac-ldce",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "UPSC CISF AC (LDCE)"
+    },
+    {
+      "id": "in.exam.upsc-civil-services-mains",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "UPSC Civil Services (Mains)"
+    },
+    {
+      "id": "in.exam.upsc-civil-services-mains.compulsory-english",
+      "kind": "subject",
+      "parent": "in.exam.upsc-civil-services-mains",
+      "label": "Compulsory English"
+    },
+    {
+      "id": "in.exam.upsc-civil-services-mains.compulsory-indian-language",
+      "kind": "subject",
+      "parent": "in.exam.upsc-civil-services-mains",
+      "label": "Compulsory Indian Language"
+    },
+    {
+      "id": "in.exam.upsc-civil-services-mains.essay",
+      "kind": "subject",
+      "parent": "in.exam.upsc-civil-services-mains",
+      "label": "Essay"
+    },
+    {
+      "id": "in.exam.upsc-civil-services-mains.gs-paper-1-heritage-history-geography-society",
+      "kind": "subject",
+      "parent": "in.exam.upsc-civil-services-mains",
+      "label": "GS Paper 1 — Heritage, History, Geography, Society"
+    },
+    {
+      "id": "in.exam.upsc-civil-services-mains.gs-paper-2-governance-polity-ir-social-justice",
+      "kind": "subject",
+      "parent": "in.exam.upsc-civil-services-mains",
+      "label": "GS Paper 2 — Governance, Polity, IR, Social Justice"
+    },
+    {
+      "id": "in.exam.upsc-civil-services-mains.gs-paper-3-economy-environment-sci-tech-security",
+      "kind": "subject",
+      "parent": "in.exam.upsc-civil-services-mains",
+      "label": "GS Paper 3 — Economy, Environment, Sci-Tech, Security"
+    },
+    {
+      "id": "in.exam.upsc-civil-services-mains.gs-paper-4-ethics-integrity-and-aptitude",
+      "kind": "subject",
+      "parent": "in.exam.upsc-civil-services-mains",
+      "label": "GS Paper 4 — Ethics, Integrity & Aptitude"
+    },
+    {
+      "id": "in.exam.upsc-civil-services-mains.optional-paper-1",
+      "kind": "subject",
+      "parent": "in.exam.upsc-civil-services-mains",
+      "label": "Optional Paper 1"
+    },
+    {
+      "id": "in.exam.upsc-civil-services-mains.optional-paper-2",
+      "kind": "subject",
+      "parent": "in.exam.upsc-civil-services-mains",
+      "label": "Optional Paper 2"
+    },
+    {
+      "id": "in.exam.upsc-civil-services-prelims",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "UPSC Civil Services (Prelims)"
+    },
+    {
+      "id": "in.exam.upsc-civil-services-prelims.csat-basic-numeracy",
+      "kind": "subject",
+      "parent": "in.exam.upsc-civil-services-prelims",
+      "label": "CSAT — Basic Numeracy"
+    },
+    {
+      "id": "in.exam.upsc-civil-services-prelims.csat-comprehension",
+      "kind": "subject",
+      "parent": "in.exam.upsc-civil-services-prelims",
+      "label": "CSAT — Comprehension"
+    },
+    {
+      "id": "in.exam.upsc-civil-services-prelims.csat-logical-reasoning",
+      "kind": "subject",
+      "parent": "in.exam.upsc-civil-services-prelims",
+      "label": "CSAT — Logical Reasoning"
+    },
+    {
+      "id": "in.exam.upsc-civil-services-prelims.gs-paper-1-current-affairs",
+      "kind": "subject",
+      "parent": "in.exam.upsc-civil-services-prelims",
+      "label": "GS Paper 1 — Current Affairs"
+    },
+    {
+      "id": "in.exam.upsc-civil-services-prelims.gs-paper-1-economy",
+      "kind": "subject",
+      "parent": "in.exam.upsc-civil-services-prelims",
+      "label": "GS Paper 1 — Economy"
+    },
+    {
+      "id": "in.exam.upsc-civil-services-prelims.gs-paper-1-environment-and-ecology",
+      "kind": "subject",
+      "parent": "in.exam.upsc-civil-services-prelims",
+      "label": "GS Paper 1 — Environment & Ecology"
+    },
+    {
+      "id": "in.exam.upsc-civil-services-prelims.gs-paper-1-general-science",
+      "kind": "subject",
+      "parent": "in.exam.upsc-civil-services-prelims",
+      "label": "GS Paper 1 — General Science"
+    },
+    {
+      "id": "in.exam.upsc-civil-services-prelims.gs-paper-1-geography",
+      "kind": "subject",
+      "parent": "in.exam.upsc-civil-services-prelims",
+      "label": "GS Paper 1 — Geography"
+    },
+    {
+      "id": "in.exam.upsc-civil-services-prelims.gs-paper-1-history",
+      "kind": "subject",
+      "parent": "in.exam.upsc-civil-services-prelims",
+      "label": "GS Paper 1 — History"
+    },
+    {
+      "id": "in.exam.upsc-civil-services-prelims.gs-paper-1-polity-and-governance",
+      "kind": "subject",
+      "parent": "in.exam.upsc-civil-services-prelims",
+      "label": "GS Paper 1 — Polity & Governance"
+    },
+    {
+      "id": "in.exam.upsc-cms",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "UPSC CMS"
+    },
+    {
+      "id": "in.exam.upsc-economic-service-ies-eco",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "UPSC Economic Service (IES-Eco)"
+    },
+    {
+      "id": "in.exam.upsc-epfo-apfc",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "UPSC EPFO / APFC"
+    },
+    {
+      "id": "in.exam.upsc-epfo-apfc.current-events-and-developmental-issues",
+      "kind": "subject",
+      "parent": "in.exam.upsc-epfo-apfc",
+      "label": "Current Events & Developmental Issues"
+    },
+    {
+      "id": "in.exam.upsc-epfo-apfc.general-accounting-principles",
+      "kind": "subject",
+      "parent": "in.exam.upsc-epfo-apfc",
+      "label": "General Accounting Principles"
+    },
+    {
+      "id": "in.exam.upsc-epfo-apfc.general-english",
+      "kind": "subject",
+      "parent": "in.exam.upsc-epfo-apfc",
+      "label": "General English"
+    },
+    {
+      "id": "in.exam.upsc-epfo-apfc.general-mental-ability-and-quantitative-aptitude",
+      "kind": "subject",
+      "parent": "in.exam.upsc-epfo-apfc",
+      "label": "General Mental Ability & Quantitative Aptitude"
+    },
+    {
+      "id": "in.exam.upsc-epfo-apfc.general-science-and-computer-applications",
+      "kind": "subject",
+      "parent": "in.exam.upsc-epfo-apfc",
+      "label": "General Science & Computer Applications"
+    },
+    {
+      "id": "in.exam.upsc-epfo-apfc.indian-freedom-struggle",
+      "kind": "subject",
+      "parent": "in.exam.upsc-epfo-apfc",
+      "label": "Indian Freedom Struggle"
+    },
+    {
+      "id": "in.exam.upsc-epfo-apfc.indian-polity-and-economy",
+      "kind": "subject",
+      "parent": "in.exam.upsc-epfo-apfc",
+      "label": "Indian Polity & Economy"
+    },
+    {
+      "id": "in.exam.upsc-epfo-apfc.industrial-relations-and-labour-laws",
+      "kind": "subject",
+      "parent": "in.exam.upsc-epfo-apfc",
+      "label": "Industrial Relations & Labour Laws"
+    },
+    {
+      "id": "in.exam.upsc-epfo-apfc.social-security-in-india",
+      "kind": "subject",
+      "parent": "in.exam.upsc-epfo-apfc",
+      "label": "Social Security in India"
+    },
+    {
+      "id": "in.exam.upsc-ese-ies",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "UPSC ESE / IES"
+    },
+    {
+      "id": "in.exam.upsc-ese-ies.civil-engineering",
+      "kind": "subject",
+      "parent": "in.exam.upsc-ese-ies",
+      "label": "Civil Engineering"
+    },
+    {
+      "id": "in.exam.upsc-ese-ies.electrical-engineering",
+      "kind": "subject",
+      "parent": "in.exam.upsc-ese-ies",
+      "label": "Electrical Engineering"
+    },
+    {
+      "id": "in.exam.upsc-ese-ies.electronics-and-telecommunication",
+      "kind": "subject",
+      "parent": "in.exam.upsc-ese-ies",
+      "label": "Electronics & Telecommunication"
+    },
+    {
+      "id": "in.exam.upsc-ese-ies.general-studies-and-engineering-aptitude",
+      "kind": "subject",
+      "parent": "in.exam.upsc-ese-ies",
+      "label": "General Studies & Engineering Aptitude"
+    },
+    {
+      "id": "in.exam.upsc-ese-ies.mechanical-engineering",
+      "kind": "subject",
+      "parent": "in.exam.upsc-ese-ies",
+      "label": "Mechanical Engineering"
+    },
+    {
+      "id": "in.exam.upsc-geologist",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "UPSC Geologist"
+    },
+    {
+      "id": "in.exam.upsc-ifs-forest-service",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "UPSC IFS (Forest Service)"
+    },
+    {
+      "id": "in.exam.upsc-ifs-forest-service.agriculture",
+      "kind": "subject",
+      "parent": "in.exam.upsc-ifs-forest-service",
+      "label": "Agriculture"
+    },
+    {
+      "id": "in.exam.upsc-ifs-forest-service.botany",
+      "kind": "subject",
+      "parent": "in.exam.upsc-ifs-forest-service",
+      "label": "Botany"
+    },
+    {
+      "id": "in.exam.upsc-ifs-forest-service.chemistry",
+      "kind": "subject",
+      "parent": "in.exam.upsc-ifs-forest-service",
+      "label": "Chemistry"
+    },
+    {
+      "id": "in.exam.upsc-ifs-forest-service.civil-engineering",
+      "kind": "subject",
+      "parent": "in.exam.upsc-ifs-forest-service",
+      "label": "Civil Engineering"
+    },
+    {
+      "id": "in.exam.upsc-ifs-forest-service.forestry",
+      "kind": "subject",
+      "parent": "in.exam.upsc-ifs-forest-service",
+      "label": "Forestry"
+    },
+    {
+      "id": "in.exam.upsc-ifs-forest-service.general-english",
+      "kind": "subject",
+      "parent": "in.exam.upsc-ifs-forest-service",
+      "label": "General English"
+    },
+    {
+      "id": "in.exam.upsc-ifs-forest-service.general-knowledge",
+      "kind": "subject",
+      "parent": "in.exam.upsc-ifs-forest-service",
+      "label": "General Knowledge"
+    },
+    {
+      "id": "in.exam.upsc-ifs-forest-service.geology",
+      "kind": "subject",
+      "parent": "in.exam.upsc-ifs-forest-service",
+      "label": "Geology"
+    },
+    {
+      "id": "in.exam.upsc-ifs-forest-service.mathematics",
+      "kind": "subject",
+      "parent": "in.exam.upsc-ifs-forest-service",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.exam.upsc-ifs-forest-service.physics",
+      "kind": "subject",
+      "parent": "in.exam.upsc-ifs-forest-service",
+      "label": "Physics"
+    },
+    {
+      "id": "in.exam.upsc-ifs-forest-service.statistics",
+      "kind": "subject",
+      "parent": "in.exam.upsc-ifs-forest-service",
+      "label": "Statistics"
+    },
+    {
+      "id": "in.exam.upsc-ifs-forest-service.zoology",
+      "kind": "subject",
+      "parent": "in.exam.upsc-ifs-forest-service",
+      "label": "Zoology"
+    },
+    {
+      "id": "in.exam.upsc-nda",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "UPSC NDA"
+    },
+    {
+      "id": "in.exam.upsc-statistical-service-iss",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "UPSC Statistical Service (ISS)"
+    },
+    {
+      "id": "in.exam.upsssc-uttar-pradesh",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "UPSSSC (Uttar Pradesh)"
+    },
+    {
+      "id": "in.exam.uptet",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "UPTET"
+    },
+    {
+      "id": "in.exam.uptet.child-development-and-pedagogy",
+      "kind": "subject",
+      "parent": "in.exam.uptet",
+      "label": "Child Development & Pedagogy"
+    },
+    {
+      "id": "in.exam.uptet.environmental-studies",
+      "kind": "subject",
+      "parent": "in.exam.uptet",
+      "label": "Environmental Studies"
+    },
+    {
+      "id": "in.exam.uptet.language-i-hindi",
+      "kind": "subject",
+      "parent": "in.exam.uptet",
+      "label": "Language I (Hindi)"
+    },
+    {
+      "id": "in.exam.uptet.language-ii-english-sanskrit-urdu",
+      "kind": "subject",
+      "parent": "in.exam.uptet",
+      "label": "Language II (English / Sanskrit / Urdu)"
+    },
+    {
+      "id": "in.exam.uptet.mathematics",
+      "kind": "subject",
+      "parent": "in.exam.uptet",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.exam.uptet.science",
+      "kind": "subject",
+      "parent": "in.exam.uptet",
+      "label": "Science"
+    },
+    {
+      "id": "in.exam.uptet.social-studies",
+      "kind": "subject",
+      "parent": "in.exam.uptet",
+      "label": "Social Studies"
+    },
+    {
+      "id": "in.exam.utet-uttarakhand",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "UTET (Uttarakhand)"
+    },
+    {
+      "id": "in.exam.veterinary-entrance-aipvt",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "Veterinary Entrance (AIPVT)"
+    },
+    {
+      "id": "in.exam.viteee",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "VITEEE"
+    },
+    {
+      "id": "in.exam.vro-vra-village-revenue",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "VRO / VRA (Village Revenue)"
+    },
+    {
+      "id": "in.exam.vro-vra-village-revenue.arithmetic-and-numerical-ability",
+      "kind": "subject",
+      "parent": "in.exam.vro-vra-village-revenue",
+      "label": "Arithmetic & Numerical Ability"
+    },
+    {
+      "id": "in.exam.vro-vra-village-revenue.computer-basics",
+      "kind": "subject",
+      "parent": "in.exam.vro-vra-village-revenue",
+      "label": "Computer Basics"
+    },
+    {
+      "id": "in.exam.vro-vra-village-revenue.general-studies",
+      "kind": "subject",
+      "parent": "in.exam.vro-vra-village-revenue",
+      "label": "General Studies"
+    },
+    {
+      "id": "in.exam.vro-vra-village-revenue.logical-reasoning",
+      "kind": "subject",
+      "parent": "in.exam.vro-vra-village-revenue",
+      "label": "Logical Reasoning"
+    },
+    {
+      "id": "in.exam.vro-vra-village-revenue.revenue-and-land-records",
+      "kind": "subject",
+      "parent": "in.exam.vro-vra-village-revenue",
+      "label": "Revenue & Land Records"
+    },
+    {
+      "id": "in.exam.vro-vra-village-revenue.rural-development-and-problems",
+      "kind": "subject",
+      "parent": "in.exam.vro-vra-village-revenue",
+      "label": "Rural Development & Problems"
+    },
+    {
+      "id": "in.exam.vro-vra-village-revenue.state-gk-and-current-affairs",
+      "kind": "subject",
+      "parent": "in.exam.vro-vra-village-revenue",
+      "label": "State GK & Current Affairs"
+    },
+    {
+      "id": "in.exam.wb-tet",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "WB TET"
+    },
+    {
+      "id": "in.exam.wbjee",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "WBJEE"
+    },
+    {
+      "id": "in.exam.wbjee.chemistry",
+      "kind": "subject",
+      "parent": "in.exam.wbjee",
+      "label": "Chemistry"
+    },
+    {
+      "id": "in.exam.wbjee.mathematics",
+      "kind": "subject",
+      "parent": "in.exam.wbjee",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.exam.wbjee.physics",
+      "kind": "subject",
+      "parent": "in.exam.wbjee",
+      "label": "Physics"
+    },
+    {
+      "id": "in.exam.wbpsc-wbcs-west-bengal",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "WBPSC / WBCS (West Bengal)"
+    },
+    {
+      "id": "in.exam.wbssc-west-bengal",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "WBSSC (West Bengal)"
+    },
+    {
+      "id": "in.exam.west-bengal-police",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "West Bengal Police"
+    },
+    {
+      "id": "in.exam.xat",
+      "kind": "exam",
+      "parent": "in.exam",
+      "label": "XAT"
+    },
+    {
+      "id": "in.exam.xat.decision-making",
+      "kind": "subject",
+      "parent": "in.exam.xat",
+      "label": "Decision Making"
+    },
+    {
+      "id": "in.exam.xat.essay-writing",
+      "kind": "subject",
+      "parent": "in.exam.xat",
+      "label": "Essay Writing"
+    },
+    {
+      "id": "in.exam.xat.general-knowledge",
+      "kind": "subject",
+      "parent": "in.exam.xat",
+      "label": "General Knowledge"
+    },
+    {
+      "id": "in.exam.xat.quantitative-ability-and-data-interpretation",
+      "kind": "subject",
+      "parent": "in.exam.xat",
+      "label": "Quantitative Ability & Data Interpretation"
+    },
+    {
+      "id": "in.exam.xat.verbal-and-logical-ability",
+      "kind": "subject",
+      "parent": "in.exam.xat",
+      "label": "Verbal & Logical Ability"
+    }
+  ]
+}

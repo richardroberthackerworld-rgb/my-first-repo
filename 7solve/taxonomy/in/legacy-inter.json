@@ -1,0 +1,296 @@
+{
+  "_": "GENERATED from tools/legacy-taxonomy.json by tools/gen-legacy-taxonomy.js. Do not hand-edit — the generator owns these nodes and tools/gate-legacy-taxonomy.js fails the build if they drift. The six mapping decisions are documented in the generator.",
+  "schema": "7solve.taxonomy/1",
+  "version": "2026-08-22",
+  "source": "7solve-legacy",
+  "nodes": [
+    {
+      "id": "in.inter",
+      "kind": "level",
+      "parent": "in",
+      "label": "Intermediate (11th–12th)",
+      "aliases": [
+        "intermediate",
+        "inter",
+        "+2",
+        "junior college"
+      ]
+    },
+    {
+      "id": "in.inter.arts-humanities-class-11",
+      "kind": "program",
+      "parent": "in.inter",
+      "label": "Arts / Humanities (Class 11)"
+    },
+    {
+      "id": "in.inter.arts-humanities-class-12",
+      "kind": "program",
+      "parent": "in.inter",
+      "label": "Arts / Humanities (Class 12)"
+    },
+    {
+      "id": "in.inter.bipc-biology-physics-chemistry",
+      "kind": "program",
+      "parent": "in.inter",
+      "label": "BiPC (Biology, Physics, Chemistry)"
+    },
+    {
+      "id": "in.inter.bipc-biology-physics-chemistry.botany",
+      "kind": "subject",
+      "parent": "in.inter.bipc-biology-physics-chemistry",
+      "label": "Botany"
+    },
+    {
+      "id": "in.inter.bipc-biology-physics-chemistry.chemistry",
+      "kind": "subject",
+      "parent": "in.inter.bipc-biology-physics-chemistry",
+      "label": "Chemistry"
+    },
+    {
+      "id": "in.inter.bipc-biology-physics-chemistry.english",
+      "kind": "subject",
+      "parent": "in.inter.bipc-biology-physics-chemistry",
+      "label": "English"
+    },
+    {
+      "id": "in.inter.bipc-biology-physics-chemistry.physics",
+      "kind": "subject",
+      "parent": "in.inter.bipc-biology-physics-chemistry",
+      "label": "Physics"
+    },
+    {
+      "id": "in.inter.bipc-biology-physics-chemistry.sanskrit-second-language",
+      "kind": "subject",
+      "parent": "in.inter.bipc-biology-physics-chemistry",
+      "label": "Sanskrit / Second Language"
+    },
+    {
+      "id": "in.inter.bipc-biology-physics-chemistry.zoology",
+      "kind": "subject",
+      "parent": "in.inter.bipc-biology-physics-chemistry",
+      "label": "Zoology"
+    },
+    {
+      "id": "in.inter.cec-civics-economics-commerce",
+      "kind": "program",
+      "parent": "in.inter",
+      "label": "CEC (Civics, Economics, Commerce)"
+    },
+    {
+      "id": "in.inter.cec-civics-economics-commerce.accountancy",
+      "kind": "subject",
+      "parent": "in.inter.cec-civics-economics-commerce",
+      "label": "Accountancy"
+    },
+    {
+      "id": "in.inter.cec-civics-economics-commerce.civics-political-science",
+      "kind": "subject",
+      "parent": "in.inter.cec-civics-economics-commerce",
+      "label": "Civics / Political Science"
+    },
+    {
+      "id": "in.inter.cec-civics-economics-commerce.commerce",
+      "kind": "subject",
+      "parent": "in.inter.cec-civics-economics-commerce",
+      "label": "Commerce"
+    },
+    {
+      "id": "in.inter.cec-civics-economics-commerce.economics",
+      "kind": "subject",
+      "parent": "in.inter.cec-civics-economics-commerce",
+      "label": "Economics"
+    },
+    {
+      "id": "in.inter.cec-civics-economics-commerce.english",
+      "kind": "subject",
+      "parent": "in.inter.cec-civics-economics-commerce",
+      "label": "English"
+    },
+    {
+      "id": "in.inter.cec-civics-economics-commerce.second-language",
+      "kind": "subject",
+      "parent": "in.inter.cec-civics-economics-commerce",
+      "label": "Second Language"
+    },
+    {
+      "id": "in.inter.commerce-stream-class-11",
+      "kind": "program",
+      "parent": "in.inter",
+      "label": "Commerce Stream (Class 11)"
+    },
+    {
+      "id": "in.inter.commerce-stream-class-12",
+      "kind": "program",
+      "parent": "in.inter",
+      "label": "Commerce Stream (Class 12)"
+    },
+    {
+      "id": "in.inter.hec-history-economics-civics",
+      "kind": "program",
+      "parent": "in.inter",
+      "label": "HEC (History, Economics, Civics)"
+    },
+    {
+      "id": "in.inter.hec-history-economics-civics.civics-political-science",
+      "kind": "subject",
+      "parent": "in.inter.hec-history-economics-civics",
+      "label": "Civics / Political Science"
+    },
+    {
+      "id": "in.inter.hec-history-economics-civics.economics",
+      "kind": "subject",
+      "parent": "in.inter.hec-history-economics-civics",
+      "label": "Economics"
+    },
+    {
+      "id": "in.inter.hec-history-economics-civics.english",
+      "kind": "subject",
+      "parent": "in.inter.hec-history-economics-civics",
+      "label": "English"
+    },
+    {
+      "id": "in.inter.hec-history-economics-civics.history",
+      "kind": "subject",
+      "parent": "in.inter.hec-history-economics-civics",
+      "label": "History"
+    },
+    {
+      "id": "in.inter.hec-history-economics-civics.second-language",
+      "kind": "subject",
+      "parent": "in.inter.hec-history-economics-civics",
+      "label": "Second Language"
+    },
+    {
+      "id": "in.inter.iti-trades",
+      "kind": "program",
+      "parent": "in.inter",
+      "label": "ITI Trades"
+    },
+    {
+      "id": "in.inter.mbipc-maths-bio-physics-chemistry",
+      "kind": "program",
+      "parent": "in.inter",
+      "label": "MBiPC (Maths, Bio, Physics, Chemistry)"
+    },
+    {
+      "id": "in.inter.mec-maths-economics-commerce",
+      "kind": "program",
+      "parent": "in.inter",
+      "label": "MEC (Maths, Economics, Commerce)"
+    },
+    {
+      "id": "in.inter.mec-maths-economics-commerce.accountancy",
+      "kind": "subject",
+      "parent": "in.inter.mec-maths-economics-commerce",
+      "label": "Accountancy"
+    },
+    {
+      "id": "in.inter.mec-maths-economics-commerce.commerce",
+      "kind": "subject",
+      "parent": "in.inter.mec-maths-economics-commerce",
+      "label": "Commerce"
+    },
+    {
+      "id": "in.inter.mec-maths-economics-commerce.economics",
+      "kind": "subject",
+      "parent": "in.inter.mec-maths-economics-commerce",
+      "label": "Economics"
+    },
+    {
+      "id": "in.inter.mec-maths-economics-commerce.english",
+      "kind": "subject",
+      "parent": "in.inter.mec-maths-economics-commerce",
+      "label": "English"
+    },
+    {
+      "id": "in.inter.mec-maths-economics-commerce.mathematics",
+      "kind": "subject",
+      "parent": "in.inter.mec-maths-economics-commerce",
+      "label": "Mathematics"
+    },
+    {
+      "id": "in.inter.mec-maths-economics-commerce.second-language",
+      "kind": "subject",
+      "parent": "in.inter.mec-maths-economics-commerce",
+      "label": "Second Language"
+    },
+    {
+      "id": "in.inter.mpc-maths-physics-chemistry",
+      "kind": "program",
+      "parent": "in.inter",
+      "label": "MPC (Maths, Physics, Chemistry)"
+    },
+    {
+      "id": "in.inter.mpc-maths-physics-chemistry.chemistry",
+      "kind": "subject",
+      "parent": "in.inter.mpc-maths-physics-chemistry",
+      "label": "Chemistry"
+    },
+    {
+      "id": "in.inter.mpc-maths-physics-chemistry.english",
+      "kind": "subject",
+      "parent": "in.inter.mpc-maths-physics-chemistry",
+      "label": "English"
+    },
+    {
+      "id": "in.inter.mpc-maths-physics-chemistry.mathematics-ia",
+      "kind": "subject",
+      "parent": "in.inter.mpc-maths-physics-chemistry",
+      "label": "Mathematics IA"
+    },
+    {
+      "id": "in.inter.mpc-maths-physics-chemistry.mathematics-ib",
+      "kind": "subject",
+      "parent": "in.inter.mpc-maths-physics-chemistry",
+      "label": "Mathematics IB"
+    },
+    {
+      "id": "in.inter.mpc-maths-physics-chemistry.mathematics-iia",
+      "kind": "subject",
+      "parent": "in.inter.mpc-maths-physics-chemistry",
+      "label": "Mathematics IIA"
+    },
+    {
+      "id": "in.inter.mpc-maths-physics-chemistry.mathematics-iib",
+      "kind": "subject",
+      "parent": "in.inter.mpc-maths-physics-chemistry",
+      "label": "Mathematics IIB"
+    },
+    {
+      "id": "in.inter.mpc-maths-physics-chemistry.physics",
+      "kind": "subject",
+      "parent": "in.inter.mpc-maths-physics-chemistry",
+      "label": "Physics"
+    },
+    {
+      "id": "in.inter.mpc-maths-physics-chemistry.sanskrit-second-language",
+      "kind": "subject",
+      "parent": "in.inter.mpc-maths-physics-chemistry",
+      "label": "Sanskrit / Second Language"
+    },
+    {
+      "id": "in.inter.polytechnic-diploma",
+      "kind": "program",
+      "parent": "in.inter",
+      "label": "Polytechnic / Diploma"
+    },
+    {
+      "id": "in.inter.science-stream-class-11",
+      "kind": "program",
+      "parent": "in.inter",
+      "label": "Science Stream (Class 11)"
+    },
+    {
+      "id": "in.inter.science-stream-class-12",
+      "kind": "program",
+      "parent": "in.inter",
+      "label": "Science Stream (Class 12)"
+    },
+    {
+      "id": "in.inter.vocational-m-and-at-cet-others",
+      "kind": "program",
+      "parent": "in.inter",
+      "label": "Vocational (M&AT / CET / Others)"
+    }
+  ]
+}
