@@ -65,243 +65,219 @@
       "label": "M.Pharm"
     },
     {
-      "id": "in.pg.mba-business-analytics",
-      "kind": "program",
-      "parent": "in.pg",
+      "id": "in.pg.mba.business-analytics",
+      "kind": "branch",
+      "parent": "in.pg.mba",
       "label": "MBA (Business Analytics)"
     },
     {
-      "id": "in.pg.mba-finance",
-      "kind": "program",
-      "parent": "in.pg",
+      "id": "in.pg.mba.finance",
+      "kind": "branch",
+      "parent": "in.pg.mba",
       "label": "MBA (Finance)"
     },
     {
-      "id": "in.pg.mba-finance.business-research-methods",
+      "id": "in.pg.mba.finance.business-research-methods",
       "kind": "subject",
-      "parent": "in.pg.mba-finance",
+      "parent": "in.pg.mba.finance",
       "label": "Business Research Methods"
     },
     {
-      "id": "in.pg.mba-finance.corporate-finance",
+      "id": "in.pg.mba.finance.corporate-finance",
       "kind": "subject",
-      "parent": "in.pg.mba-finance",
+      "parent": "in.pg.mba.finance",
       "label": "Corporate Finance"
     },
     {
-      "id": "in.pg.mba-finance.derivatives-and-risk-management",
+      "id": "in.pg.mba.finance.derivatives-and-risk-management",
       "kind": "subject",
-      "parent": "in.pg.mba-finance",
+      "parent": "in.pg.mba.finance",
       "label": "Derivatives & Risk Management"
     },
     {
-      "id": "in.pg.mba-finance.financial-management",
+      "id": "in.pg.mba.finance.financial-management",
       "kind": "subject",
-      "parent": "in.pg.mba-finance",
+      "parent": "in.pg.mba.finance",
       "label": "Financial Management"
     },
     {
-      "id": "in.pg.mba-finance.financial-markets-and-services",
+      "id": "in.pg.mba.finance.financial-markets-and-services",
       "kind": "subject",
-      "parent": "in.pg.mba-finance",
+      "parent": "in.pg.mba.finance",
       "label": "Financial Markets & Services"
     },
     {
-      "id": "in.pg.mba-finance.financial-modelling",
+      "id": "in.pg.mba.finance.financial-modelling",
       "kind": "subject",
-      "parent": "in.pg.mba-finance",
+      "parent": "in.pg.mba.finance",
       "label": "Financial Modelling"
     },
     {
-      "id": "in.pg.mba-finance.international-finance",
+      "id": "in.pg.mba.finance.international-finance",
       "kind": "subject",
-      "parent": "in.pg.mba-finance",
+      "parent": "in.pg.mba.finance",
       "label": "International Finance"
     },
     {
-      "id": "in.pg.mba-finance.investment-analysis-and-portfolio-management",
+      "id": "in.pg.mba.finance.investment-analysis-and-portfolio-management",
       "kind": "subject",
-      "parent": "in.pg.mba-finance",
+      "parent": "in.pg.mba.finance",
       "label": "Investment Analysis & Portfolio Management"
     },
     {
-      "id": "in.pg.mba-finance.management-accounting",
+      "id": "in.pg.mba.finance.management-accounting",
       "kind": "subject",
-      "parent": "in.pg.mba-finance",
+      "parent": "in.pg.mba.finance",
       "label": "Management Accounting"
     },
     {
-      "id": "in.pg.mba-finance.mergers-and-acquisitions",
+      "id": "in.pg.mba.finance.mergers-and-acquisitions",
       "kind": "subject",
-      "parent": "in.pg.mba-finance",
+      "parent": "in.pg.mba.finance",
       "label": "Mergers & Acquisitions"
     },
     {
-      "id": "in.pg.mba-finance.strategic-management",
+      "id": "in.pg.mba.finance.strategic-management",
       "kind": "subject",
-      "parent": "in.pg.mba-finance",
+      "parent": "in.pg.mba.finance",
       "label": "Strategic Management"
     },
     {
-      "id": "in.pg.mba-finance.taxation",
+      "id": "in.pg.mba.finance.taxation",
       "kind": "subject",
-      "parent": "in.pg.mba-finance",
+      "parent": "in.pg.mba.finance",
       "label": "Taxation"
     },
     {
-      "id": "in.pg.mba-hr",
-      "kind": "program",
-      "parent": "in.pg",
-      "label": "MBA (HR)"
-    },
-    {
-      "id": "in.pg.mba-hr.compensation-management",
+      "id": "in.pg.mba.hr.compensation-management",
       "kind": "subject",
-      "parent": "in.pg.mba-hr",
+      "parent": "in.pg.mba.hr",
       "label": "Compensation Management"
     },
     {
-      "id": "in.pg.mba-hr.hr-analytics",
+      "id": "in.pg.mba.hr.hr-analytics",
       "kind": "subject",
-      "parent": "in.pg.mba-hr",
+      "parent": "in.pg.mba.hr",
       "label": "HR Analytics"
     },
     {
-      "id": "in.pg.mba-hr.human-resource-management",
+      "id": "in.pg.mba.hr.human-resource-management",
       "kind": "subject",
-      "parent": "in.pg.mba-hr",
+      "parent": "in.pg.mba.hr",
       "label": "Human Resource Management"
     },
     {
-      "id": "in.pg.mba-hr.industrial-relations",
+      "id": "in.pg.mba.hr.industrial-relations",
       "kind": "subject",
-      "parent": "in.pg.mba-hr",
+      "parent": "in.pg.mba.hr",
       "label": "Industrial Relations"
     },
     {
-      "id": "in.pg.mba-hr.labour-laws",
+      "id": "in.pg.mba.hr.labour-laws",
       "kind": "subject",
-      "parent": "in.pg.mba-hr",
+      "parent": "in.pg.mba.hr",
       "label": "Labour Laws"
     },
     {
-      "id": "in.pg.mba-hr.organisational-behaviour",
+      "id": "in.pg.mba.hr.organisational-development",
       "kind": "subject",
-      "parent": "in.pg.mba-hr",
-      "label": "Organisational Behaviour"
-    },
-    {
-      "id": "in.pg.mba-hr.organisational-development",
-      "kind": "subject",
-      "parent": "in.pg.mba-hr",
+      "parent": "in.pg.mba.hr",
       "label": "Organisational Development"
     },
     {
-      "id": "in.pg.mba-hr.performance-management",
+      "id": "in.pg.mba.hr.performance-management",
       "kind": "subject",
-      "parent": "in.pg.mba-hr",
+      "parent": "in.pg.mba.hr",
       "label": "Performance Management"
     },
     {
-      "id": "in.pg.mba-hr.strategic-management",
+      "id": "in.pg.mba.hr.strategic-management",
       "kind": "subject",
-      "parent": "in.pg.mba-hr",
+      "parent": "in.pg.mba.hr",
       "label": "Strategic Management"
     },
     {
-      "id": "in.pg.mba-hr.talent-acquisition",
+      "id": "in.pg.mba.hr.talent-acquisition",
       "kind": "subject",
-      "parent": "in.pg.mba-hr",
+      "parent": "in.pg.mba.hr",
       "label": "Talent Acquisition"
     },
     {
-      "id": "in.pg.mba-hr.training-and-development",
+      "id": "in.pg.mba.hr.training-and-development",
       "kind": "subject",
-      "parent": "in.pg.mba-hr",
+      "parent": "in.pg.mba.hr",
       "label": "Training & Development"
     },
     {
-      "id": "in.pg.mba-marketing",
-      "kind": "program",
-      "parent": "in.pg",
-      "label": "MBA (Marketing)"
-    },
-    {
-      "id": "in.pg.mba-marketing.advertising-and-promotion",
+      "id": "in.pg.mba.marketing.advertising-and-promotion",
       "kind": "subject",
-      "parent": "in.pg.mba-marketing",
+      "parent": "in.pg.mba.marketing",
       "label": "Advertising & Promotion"
     },
     {
-      "id": "in.pg.mba-marketing.brand-management",
+      "id": "in.pg.mba.marketing.brand-management",
       "kind": "subject",
-      "parent": "in.pg.mba-marketing",
+      "parent": "in.pg.mba.marketing",
       "label": "Brand Management"
     },
     {
-      "id": "in.pg.mba-marketing.business-analytics",
+      "id": "in.pg.mba.marketing.business-analytics",
       "kind": "subject",
-      "parent": "in.pg.mba-marketing",
+      "parent": "in.pg.mba.marketing",
       "label": "Business Analytics"
     },
     {
-      "id": "in.pg.mba-marketing.consumer-behaviour",
+      "id": "in.pg.mba.marketing.consumer-behaviour",
       "kind": "subject",
-      "parent": "in.pg.mba-marketing",
+      "parent": "in.pg.mba.marketing",
       "label": "Consumer Behaviour"
     },
     {
-      "id": "in.pg.mba-marketing.digital-marketing",
+      "id": "in.pg.mba.marketing.digital-marketing",
       "kind": "subject",
-      "parent": "in.pg.mba-marketing",
+      "parent": "in.pg.mba.marketing",
       "label": "Digital Marketing"
     },
     {
-      "id": "in.pg.mba-marketing.international-marketing",
+      "id": "in.pg.mba.marketing.international-marketing",
       "kind": "subject",
-      "parent": "in.pg.mba-marketing",
+      "parent": "in.pg.mba.marketing",
       "label": "International Marketing"
     },
     {
-      "id": "in.pg.mba-marketing.market-research",
+      "id": "in.pg.mba.marketing.market-research",
       "kind": "subject",
-      "parent": "in.pg.mba-marketing",
+      "parent": "in.pg.mba.marketing",
       "label": "Market Research"
     },
     {
-      "id": "in.pg.mba-marketing.marketing-management",
+      "id": "in.pg.mba.marketing.retail-management",
       "kind": "subject",
-      "parent": "in.pg.mba-marketing",
-      "label": "Marketing Management"
-    },
-    {
-      "id": "in.pg.mba-marketing.retail-management",
-      "kind": "subject",
-      "parent": "in.pg.mba-marketing",
+      "parent": "in.pg.mba.marketing",
       "label": "Retail Management"
     },
     {
-      "id": "in.pg.mba-marketing.sales-and-distribution-management",
+      "id": "in.pg.mba.marketing.sales-and-distribution-management",
       "kind": "subject",
-      "parent": "in.pg.mba-marketing",
+      "parent": "in.pg.mba.marketing",
       "label": "Sales & Distribution Management"
     },
     {
-      "id": "in.pg.mba-marketing.services-marketing",
+      "id": "in.pg.mba.marketing.services-marketing",
       "kind": "subject",
-      "parent": "in.pg.mba-marketing",
+      "parent": "in.pg.mba.marketing",
       "label": "Services Marketing"
     },
     {
-      "id": "in.pg.mba-marketing.strategic-management",
+      "id": "in.pg.mba.marketing.strategic-management",
       "kind": "subject",
-      "parent": "in.pg.mba-marketing",
+      "parent": "in.pg.mba.marketing",
       "label": "Strategic Management"
     },
     {
-      "id": "in.pg.mba-operations",
-      "kind": "program",
-      "parent": "in.pg",
+      "id": "in.pg.mba.operations",
+      "kind": "branch",
+      "parent": "in.pg.mba",
       "label": "MBA (Operations)"
     },
     {

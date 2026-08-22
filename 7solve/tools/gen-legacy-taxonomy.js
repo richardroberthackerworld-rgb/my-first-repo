@@ -88,7 +88,15 @@ const UG_FALLBACK = true;
 const seedIndex = JSON.parse(fs.readFileSync(path.join(HERE, 'taxonomy', 'index.json'), 'utf8'));
 const seedNodes = [...seedIndex.nodes];
 for (const s of seedIndex.shards) {
-  seedNodes.push(...JSON.parse(fs.readFileSync(path.join(HERE, 'taxonomy', s), 'utf8')).nodes);
+  /* Skip this generator's OWN output. Reading it back would make the tool
+     treat last run's nodes as hand-authored, so a changed decision could
+     never take effect — the old nodes would look like seed and be preserved.
+     It also makes the run work from a clean tree, which is what a generator
+     should always do. */
+  if (/(^|\/)legacy-/.test(s)) continue;
+  const f = path.join(HERE, 'taxonomy', s);
+  if (!fs.existsSync(f)) continue;
+  seedNodes.push(...JSON.parse(fs.readFileSync(f, 'utf8')).nodes);
 }
 const seedIds = new Set(seedNodes.map((n) => n.id));
 const seedLabels = new Map();
@@ -145,6 +153,47 @@ for (const lv of legacy.levels) {
     const hit = seedLabels.get(norm(course));
     if (hit) { courseNodeFor.set(course, hit.id); reused++; continue; }
 
+    /* DECISION 7 — "Programme (Specialisation)" IS A BRANCH, NOT A RIVAL.
+       The seed match above compares whole labels, so "B.Tech (Aeronautical)"
+       never matched "B.Tech / BE" and became its own programme sitting beside
+       it. That produced 47 sibling "programmes" that are really
+       specialisations: a student browsing would see "B.Tech / BE" and then
+       "B.Tech (Aeronautical)" as unrelated peers, and Thermodynamics appeared
+       twice under two different shapes of the same degree.
+
+       So a label of the form "X (Y)" whose X names a programme the seed
+       already models becomes a BRANCH of it. The seed keeps its depth, the
+       legacy list contributes its breadth, and the tree has one B.Tech. */
+    const spec = /^(.+?)\s*\((.+)\)\s*$/.exec(course);
+    if (spec) {
+      const host = seedLabels.get(norm(spec[1]));
+      if (host && host.kind === 'program') {
+        /* Does the seed already model this specialisation? "B.Tech (CSE)" and
+           "B.Tech (Mechanical)" name branches the seed authored by hand as
+           "Computer Science & Engineering" and "Mechanical Engineering". Left
+           unchecked they became in.ug.btech.mechanical beside
+           in.ug.btech.mech, and Thermodynamics appeared twice under one
+           degree. The seed branch wins, exactly as the seed programme does. */
+        /* Look among the HOST'S OWN children, not the global label map. That
+           map is first-wins across the whole tree, so "Mechanical" resolved to
+           the Diploma branch — whose parent is not B.Tech — and the check fell
+           through, leaving in.ug.btech.mechanical beside in.ug.btech.mech.
+           A branch name is only meaningful relative to its programme. */
+        const existing = seedNodes.find((n) =>
+          n.kind === 'branch' && n.parent === host.id &&
+          [n.label, ...(n.aliases || [])].some((x) => norm(x) === norm(spec[2])));
+        if (existing) {
+          courseNodeFor.set(course, existing.id);
+          reused++;
+          continue;
+        }
+        const id = host.id + '.' + slug(spec[2]);
+        if (addNode({ id, kind: 'branch', parent: host.id, label: course })) generated++;
+        courseNodeFor.set(course, id);
+        continue;
+      }
+    }
+
     let parent, kind;
     if (lv.id === 'degree') {
       const isPG = PG_PREFIX.some((re) => re.test(course));
@@ -170,7 +219,7 @@ for (const lv of legacy.levels) {
 }
 
 /* ---- subjects (decision 6) --------------------------------------- */
-let subjNodes = 0, inherited = 0;
+let subjNodes = 0, inherited = 0, deduped = 0;
 for (const lv of legacy.levels) {
   if (EXCLUDED_LEVELS.includes(lv.id)) continue;
   for (const course of lv.courses) {
@@ -179,6 +228,16 @@ for (const lv of legacy.levels) {
     const own = legacy.course_subjects[course];
     if (!own) { inherited++; continue; }              // inherits the level list, as the app does
     for (const subject of own) {
+      /* Does the seed already carry this subject ANYWHERE below this node?
+         The seed models B.Tech Mechanical as branch → Semester 3 →
+         Thermodynamics; the legacy list knows only "B.Tech (Mechanical) has
+         Thermodynamics", with no semester. Adding it flat put the same subject
+         in the tree twice and a search showed both. The seed node is strictly
+         more informative — it knows the semester — so the flat one is dropped
+         and nothing is lost. */
+      if (seedNodes.some((n) => n.kind === 'subject' &&
+            typeof n.id === 'string' && n.id.startsWith(parentId + '.') &&
+            norm(n.label) === norm(subject))) { deduped++; continue; }
       const id = parentId + '.' + slug(subject);
       if (addNode({ id, kind: 'subject', parent: parentId, label: subject })) subjNodes++;
     }
@@ -205,6 +264,23 @@ for (const [root, nodes] of Object.entries(byParentLevel)) {
   };
 }
 
+/* The mapping the gate verifies against. A gate that re-derives it by label
+   cannot see a course that legitimately collapsed onto a seed node with a
+   different label — "B.Tech (CSE)" onto "Computer Science & Engineering" —
+   and would report four false losses. The generator knows; it should say. */
+const MAP = path.join(HERE, 'tools', 'legacy-node-map.json');
+if (!CHECK) {
+  const mapping = {};
+  for (const [course, id] of courseNodeFor) mapping[course] = id;
+  fs.writeFileSync(MAP, JSON.stringify({
+    _: 'GENERATED. Which taxonomy node each legacy course resolved to. Read by ' +
+       'tools/gate-legacy-coverage.js so a course that collapsed onto a seed node ' +
+       'with a different label is not mistaken for a lost one.',
+    excluded_levels: EXCLUDED_LEVELS,
+    courses: mapping,
+  }, null, 2) + '\n', 'utf8');
+}
+
 /* ---- report ------------------------------------------------------ */
 console.log('');
 console.log('  legacy courses seen     : ' + legacy.levels.reduce((n, l) => n + l.courses.length, 0));
@@ -213,6 +289,7 @@ console.log('    matched a seed node     : ' + reused);
 console.log('    generated               : ' + generated);
 console.log('  subject nodes generated : ' + subjNodes);
 console.log('    courses inheriting level list: ' + inherited);
+console.log('    subjects the seed already had  : ' + deduped);
 console.log('  TOTAL generated nodes   : ' + out.size);
 console.log('  shards                  : ' + Object.keys(files).length);
 Object.entries(files).forEach(([f, d]) => console.log('    ' + f.padEnd(30) + d.nodes.length + ' nodes'));

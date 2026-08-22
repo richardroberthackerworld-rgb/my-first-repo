@@ -52,13 +52,36 @@ if (JSON.stringify(generatorExcluded) !== JSON.stringify(DECLARED_EXCLUDED)) {
              '] — an exclusion changed without the gate changing with it');
 }
 
-let covered = 0, missing = [], excluded = 0;
+/* The generator's own mapping, course → node id.
+
+   Matching by LABEL alone is not enough and reported four false losses:
+   "B.Tech (CSE)" legitimately collapses onto the seed's hand-authored
+   in.ug.btech.cse, whose label is "Computer Science & Engineering". The node
+   is right there; only the name differs. So the generator records where each
+   course went and this verifies THAT — and then checks the id really exists,
+   which is the stronger claim anyway. */
+const mapPath = path.join(HERE, 'tools', 'legacy-node-map.json');
+const nodeMap = fs.existsSync(mapPath)
+  ? JSON.parse(fs.readFileSync(mapPath, 'utf8')).courses || {}
+  : {};
+const byId = new Map(nodes.map((n) => [n.id, n]));
+
+let covered = 0, missing = [], excluded = 0, danglingMap = [];
 for (const lv of legacy.levels) {
   if (DECLARED_EXCLUDED.includes(lv.id)) { excluded += lv.courses.length; continue; }
   for (const course of lv.courses) {
+    const mapped = nodeMap[course];
+    if (mapped) {
+      if (byId.has(mapped)) { covered++; continue; }
+      danglingMap.push(course + ' → ' + mapped + ' (no such node)');
+      continue;
+    }
     if (byLabel.has(norm(course))) covered++;
     else missing.push(lv.id + ' / ' + course);
   }
+}
+if (danglingMap.length) {
+  fails.push(danglingMap.length + ' course(s) map to a node id that does not exist');
 }
 if (missing.length) {
   fails.push(missing.length + ' legacy course(s) have no node');
@@ -77,7 +100,7 @@ if (leaked.length) fails.push(leaked.length + ' excluded course(s) are in the ta
    level's list, exactly as the app resolves them today */
 let ownSets = 0, ownSubjectsOk = 0, ownSubjectsMissing = [];
 for (const [course, subs] of Object.entries(legacy.course_subjects)) {
-  const node = byLabel.get(norm(course));
+  const node = nodeMap[course] ? byId.get(nodeMap[course]) : byLabel.get(norm(course));
   if (!node) continue;                       // orphan key, reported by the extractor
   ownSets++;
   const kids = nodes.filter((n) => n.parent === node.id && n.kind === 'subject').map((n) => norm(n.label));
@@ -100,6 +123,11 @@ console.log('    reachable               : ' + ownSubjectsOk);
 console.log('    unreachable             : ' + ownSubjectsMissing.length);
 console.log('  taxonomy nodes total      : ' + nodes.length);
 console.log('');
+if (danglingMap.length) {
+  console.log('  DANGLING MAP ENTRIES (first 6):');
+  danglingMap.slice(0,6).forEach((x)=>console.log('    '+x));
+  console.log('');
+}
 if (missing.length) {
   console.log('  MISSING (first 10):');
   missing.slice(0, 10).forEach((x) => console.log('    ' + x));

@@ -238,6 +238,31 @@ final class Capability
        prose — can put a kind in this set. Adding one is a manifest edit
        that the negative-control suite immediately demands a control for.
        ------------------------------------------------------------------ */
+    /**
+     * Which subject, if any, declares each of these problem types.
+     *
+     * The taxonomy names problem types; this file decides what may be done
+     * about them. Keeping the lookup here rather than letting the taxonomy
+     * reader interpret the manifest is the same boundary Release A drew: a
+     * node existing in the tree must never be able to imply a capability.
+     * Unmatched types map to null, which the caller reports as unknown — not
+     * as unsupported, because those are different sentences.
+     *
+     * @param string[] $types
+     * @return array<string, array|null>
+     */
+    public static function subjectsForProblemTypes(array $types): array
+    {
+        $out = [];
+        foreach ($types as $t) {
+            $out[$t] = null;
+            foreach (self::manifest()['subjects'] as $s) {
+                if (in_array($t, $s['problem_types'] ?? [], true)) { $out[$t] = $s; break; }
+            }
+        }
+        return $out;
+    }
+
     public static function certifyingKinds(): array
     {
         $out = [];
