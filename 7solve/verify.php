@@ -41,6 +41,8 @@ require_once __DIR__ . '/capability.php';
 require_once __DIR__ . '/sampling.php';
 require_once __DIR__ . '/deriv.php';
 require_once __DIR__ . '/checkers-phase1.php';
+require_once __DIR__ . '/checkers-band-b.php';
+require_once __DIR__ . '/checkers-band-b2.php';
 require_once __DIR__ . '/calculus-phase1.php';
 
 final class Algebra
@@ -1926,7 +1928,29 @@ final class Checks
             Phase1::systemCheck($question, $body),
             Phase1::identityCheck($body),
             Phase1Calculus::derivativeCheck($question, $body),
-            Phase1Calculus::integralCheck($question, $body)
+            Phase1Calculus::integralCheck($question, $body),
+            /* Band B — four checkers the website could certify on and this API
+               could not, because they were only ever written in JavaScript.
+               Never a safety hole: /v1 said `unverified` where the site said
+               `checked`, which is honest. It was a CAPABILITY gap, and an API
+               customer was getting a strictly weaker verifier than a student.
+
+               chemistry and checkDivisibility read the ANSWER only — a reaction
+               or a divisibility claim carries its own subject. bounds and
+               conditionCheck need the question too, because "is this a
+               probability" and "what condition was set" are its to answer. */
+            BandB::chemistry($body),
+            BandB::bounds($question, $body),
+            BandB::checkDivisibility($body),
+            BandB::conditionCheck($question, $body),
+            /* Band B part 2 — the last three the API could not run.
+               extremumCheck sweeps 44,000 points; that was measured before it
+               shipped (~225k node evaluations a second here, so ~0.2–0.5s) and
+               the sweep is NOT thinned to save time: a sparser scan finds a
+               worse extreme and would certify a wrong answer as correct. */
+            BandB2::transformCheck($question, $body),
+            BandB2::uniqueness($question, $body),
+            BandB2::extremumCheck($question, $body)
         );
 
         /* A soft check is advisory: it reports something worth telling the
