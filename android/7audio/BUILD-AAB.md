@@ -7,31 +7,61 @@ structure as the 7Stem app that already passed Play review, reconfigured for
 
 ## Status — read this first
 
-**The `.aab` has not been built, and cannot be built on the machine this project
-was prepared on.** There is no JDK, no Gradle and no Android SDK installed:
+**The bundle is built.** `7audio-release-unsigned.aab`, 1.5 MB, at the repo
+root, copied from `app/build/outputs/bundle/release/app-release.aab`.
 
-```
-java        not installed
-gradle      not installed
-sdkmanager  not installed
-keytool     not installed
-```
+It is **unsigned**, and Play will not accept it that way. Signing needs a
+keystore password, which belongs to you and to a password manager. Everything
+up to that point is done and verified.
 
-The project itself is complete and correct. What follows is exactly what to run
-on a machine that has the toolchain. I have not run any of it, and I am not
-claiming the bundle works until you have built it and installed it once.
+An earlier version of this file said the bundle "cannot be built on the machine
+this project was prepared on" because there was no JDK, Gradle or Android SDK.
+That was wrong. All of it is installed:
+
+    JDK          21.0.10   C:/Program Files/Android/Android Studio/jbr
+    Android SDK            C:/Users/chint/AppData/Local/Android/Sdk
+    platforms              android-33 … android-36.1
+    build-tools            34.0.0 … 37.0.0
+    Gradle       8.11.1    via ./gradlew (downloads itself)
+
+Verified in the built bundle:
+
+    applicationId    in.sevenby.audio
+    versionCode      1          versionName 1.0.0
+    minSdk           23         targetSdk   35
+    host             7audio.7by.in
+    launchUrl        https://7audio.7by.in/
+    webManifestUrl   https://7audio.7by.in/manifest.webmanifest
+
+### Two bugs fixed to get here
+
+**`webManifestUrl` pointed at `/manifest.json`.** The site serves
+`/manifest.webmanifest`. Chrome OS and Meta Quest use this URL to open the web
+version instead of the TWA, so it would have resolved to nothing on exactly the
+platforms that rely on it. Fixed in `app/build.gradle` and `twa-manifest.json`.
+
+**`jcenter()` was still in `build.gradle`.** JCenter has been shut down. Left
+in, it makes dependency resolution fail or hang against a dead host, with an
+error that blames the dependency. Now `mavenCentral()`.
 
 ---
 
 ## What you need
 
-- **JDK 17** — Temurin or Oracle. Gradle 8.x requires 17.
-- **Android SDK** with platform 35 and build-tools 35. Easiest via Android
-  Studio; otherwise the command-line tools plus:
+Already installed on this machine — listed for a different one:
+
+- **JDK 17 or later.** Gradle 8.11 works with 21, which is what is here.
+- **Android SDK** with platform 35+ and build-tools 35+.
+- `local.properties` in `android/7audio/` pointing at the SDK:
+  ```properties
+  sdk.dir=C:/Users/chint/AppData/Local/Android/Sdk
   ```
-  sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
-  ```
-- `ANDROID_HOME` (or `ANDROID_SDK_ROOT`) pointing at the SDK.
+  **Forward slashes.** This is a Java `.properties` file where backslash is the
+  escape character, so a Windows path with single backslashes mangles silently
+  and AGP fails with `Invalid file path` from `SdkLocator` — an error that says
+  nothing about this file. That cost a build cycle here.
+
+  It is gitignored: the path is specific to one computer.
 
 ---
 
@@ -40,67 +70,54 @@ claiming the bundle works until you have built it and installed it once.
 **Once, ever.** If you lose this key you cannot update the app on Play — you
 would have to publish a new listing under a new package name.
 
+`android/7by-apps.keystore` already exists on this machine, alias `7by`, and is
+gitignored. Use it, or make a dedicated one:
+
 ```bash
-keytool -genkeypair -v \
-  -keystore 7audio-release.jks \
-  -alias 7audio \
-  -keyalg RSA -keysize 2048 -validity 10000
+"C:/Program Files/Android/Android Studio/jbr/bin/keytool.exe" -genkeypair -v -keystore 7audio-release.jks -alias 7audio -keyalg RSA -keysize 4096 -validity 10000
 ```
 
-Store the keystore and its passwords in a password manager. **Do not commit the
-keystore, and do not commit the passwords.** `android/*/*.jks` should be in
-`.gitignore` before you create it.
+It prompts for the password rather than taking it on the command line, which
+keeps it out of your shell history. Put it in a password manager.
+
+**Do not write the password into any tracked file.** That is not hypothetical
+here: the 7Pay signing key was published exactly that way — keystore committed,
+password in plain text in `build.sh` and `README.md` — and had to be retired.
 
 ## 2. Point the build at the key
 
-Create `android/7audio/keystore.properties` — **untracked**:
+`app/build.gradle` already reads `keystore.properties` and is wired up. You only
+need to create the file — `android/7audio/keystore.properties`, gitignored:
 
 ```properties
-storeFile=../7audio-release.jks
+storeFile=../7by-apps.keystore
 storePassword=<your store password>
-keyAlias=7audio
+keyAlias=7by
 keyPassword=<your key password>
 ```
 
-Then confirm `app/build.gradle` reads it rather than containing the passwords
-inline. If the signing block is not present, add:
-
-```gradle
-def keystoreProperties = new Properties()
-def keystorePropertiesFile = rootProject.file('keystore.properties')
-if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
-}
-
-android {
-    signingConfigs {
-        release {
-            storeFile file(keystoreProperties['storeFile'])
-            storePassword keystoreProperties['storePassword']
-            keyAlias keystoreProperties['keyAlias']
-            keyPassword keystoreProperties['keyPassword']
-        }
-    }
-    buildTypes {
-        release { signingConfig signingConfigs.release }
-    }
-}
-```
+If the file is absent the build still succeeds and produces an unsigned bundle,
+so a missing password is never a broken build — just one Play will refuse.
 
 ## 3. Build
 
 ```bash
-cd "U:/New folder/android/7audio"
-./gradlew bundleRelease
+cd "U:/New folder/android/7audio" && JAVA_HOME="C:/Program Files/Android/Android Studio/jbr" ./gradlew bundleRelease
 ```
 
 Output: `app/build/outputs/bundle/release/app-release.aab`
 
-To test on a device before uploading, build an APK instead:
+Confirm it is actually signed before uploading — this lists the signature block,
+and prints nothing at all for an unsigned bundle:
 
 ```bash
-./gradlew assembleRelease
-adb install -r app/build/outputs/apk/release/app-release.apk
+unzip -l "U:/New folder/android/7audio/app/build/outputs/bundle/release/app-release.aab" | grep -E "META-INF/.*\.(RSA|EC|DSA)"
+```
+
+To test on a device first:
+
+```bash
+cd "U:/New folder/android/7audio" && JAVA_HOME="C:/Program Files/Android/Android Studio/jbr" ./gradlew assembleRelease
 ```
 
 ---

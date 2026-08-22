@@ -372,9 +372,13 @@ credits, orders or the email log.
 
 ## What is not deployed by any of this
 
-- **The Android app.** No JDK, Gradle or Android SDK exists on the machine this
-  was built on, so no `.aab` was produced. The project is ready at
-  `android/7audio` — see `android/7audio/BUILD-AAB.md`.
+- **The Android app.** The bundle IS built —
+  `7audio-release-unsigned.aab`, 1.5 MB, at the repo root — but it is unsigned,
+  and Play will not accept it that way. Signing needs a keystore password, so
+  it is a step for you: see `android/7audio/BUILD-AAB.md`.
+
+  (An earlier version of this file said no JDK, Gradle or Android SDK existed
+  here. That was wrong — JDK 21 and the full SDK are installed.)
 - **`assetlinks.json` still has a placeholder fingerprint.** It ships, but the
   Android app will show an address bar until you replace it with your Play App
   Signing SHA-256.

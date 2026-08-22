@@ -16,11 +16,17 @@
 
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
+/*
+ * jcenter() was replaced with mavenCentral() throughout. JCenter stopped
+ * serving new artifacts and has since been shut down; leaving it in makes a
+ * build either fail to resolve or hang on a dead host, and the error points at
+ * the dependency rather than the repository.
+ */
 buildscript {
 
     repositories {
         google()
-        jcenter()
+        mavenCentral()
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:8.9.1'
@@ -33,7 +39,7 @@ buildscript {
 allprojects {
     repositories {
         google()
-        jcenter()
+        mavenCentral()
     }
 }
 

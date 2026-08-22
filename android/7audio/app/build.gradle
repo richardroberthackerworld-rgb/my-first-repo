@@ -76,7 +76,7 @@ android {
             // The URL the Web Manifest for the Progressive Web App that the TWA points to. This
             // is used by Chrome OS and Meta Quest to open the Web version of the PWA instead of
             // the TWA, as it will probably give a better user experience for non-mobile devices.
-            resValue "string", "webManifestUrl", 'https://7audio.7by.in/manifest.json'
+            resValue "string", "webManifestUrl", 'https://7audio.7by.in/manifest.webmanifest'
         
 
         
@@ -150,9 +150,46 @@ android {
 
         
     }
+    /*
+     * Signing is optional and OFF unless keystore.properties exists.
+     *
+     * Without it, "gradlew bundleRelease" still produces a valid unsigned
+     * bundle — useful for checking the build — and Play simply will not accept
+     * the upload. With it, the same command produces an upload-ready bundle.
+     *
+     * The password is NEVER written here. A password in a tracked build file is
+     * how the previous signing key on this project was lost, so keystore.properties
+     * is gitignored and the real values belong in a password manager:
+     *
+     *   android/7audio/keystore.properties
+     *     storeFile=../7by-apps.keystore
+     *     storePassword=...
+     *     keyAlias=7by
+     *     keyPassword=...
+     */
+    def keystorePropsFile = rootProject.file('keystore.properties')
+    def keystoreProps = new Properties()
+    if (keystorePropsFile.exists()) {
+        keystorePropsFile.withInputStream { keystoreProps.load(it) }
+    }
+
+    signingConfigs {
+        release {
+            if (keystorePropsFile.exists()) {
+                storeFile rootProject.file(keystoreProps['storeFile'])
+                storePassword keystoreProps['storePassword']
+                keyAlias keystoreProps['keyAlias']
+                keyPassword keystoreProps['keyPassword']
+            }
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled true
+            if (keystorePropsFile.exists()) {
+                signingConfig signingConfigs.release
+            }
         }
     }
     compileOptions {

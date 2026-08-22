@@ -87,3 +87,12 @@ paylistener/config.php
 # email log. Never belongs in a repo, public or not.
 db.json
 */db.json
+
+# Gradle machine-local SDK path. Absolute and specific to one computer, so it
+# must never be committed — it breaks the build for everyone else.
+local.properties
+android/**/local.properties
+
+# Built app bundles at the repo root. Build artifacts, reproducible from
+# android/7audio via "gradlew bundleRelease".
+*.aab
