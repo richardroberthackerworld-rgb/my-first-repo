@@ -200,8 +200,16 @@ const add = (fix, role, name, q, a, want, prov) => C.push({ fix, role, name, q, 
      a value proves it is A root, never THE solution set. Certifying here would
      mean weakening that rule, which Release B does not do. Moving a correct
      answer from "you are wrong" to "not checked" is the honest gain. */
-  add(5, 'positive', 'transcendental root to 3 s.f. — no longer disputed',
-      'Solve x + e^x = 0', A('x = -0.567'), 'unverified');
+  /* These two were `unverified` because Release B could move a correct decimal
+     out of "you are wrong" but not into a badge: completeness could not run on
+     a non-polynomial, so evidenceOnly refused. The monotonicity argument
+     supplies the missing half — x + eˣ is strictly increasing, so at most one
+     root exists, and the sign change across the student's own rounding
+     interval proves one does. At most one plus at least one is exactly one.
+     The boundary controls below are unchanged and still disputed, which is
+     what shows the precision policy itself was not loosened. */
+  add(5, 'positive', 'transcendental root to 3 s.f. — now certified by monotonicity',
+      'Solve x + e^x = 0', A('x = -0.567'), 'verified');
   add(5, 'positive', 'quintic root to 5 s.f. — no longer disputed',
       'Solve x^5 - x + 1 = 0', A('x = -1.1673'), 'unverified');
   /* BOUNDARY PAIR. -0.567 denotes [-0.5675, -0.5665] and the root
@@ -209,7 +217,7 @@ const add = (fix, role, name, q, a, want, prov) => C.push({ fix, role, name, q, 
   add(5, 'control', 'boundary: one ulp low is refused', 'Solve x + e^x = 0', A('x = -0.568'), 'disputed');
   add(5, 'control', 'boundary: one ulp high is refused', 'Solve x + e^x = 0', A('x = -0.566'), 'disputed');
   add(5, 'control', 'two ulp out is refused', 'Solve x + e^x = 0', A('x = -0.569'), 'disputed');
-  add(5, 'positive', 'coarser precision, honestly stated', 'Solve x + e^x = 0', A('x = -0.57'), 'unverified');
+  add(5, 'positive', 'coarser precision, honestly stated', 'Solve x + e^x = 0', A('x = -0.57'), 'verified');
   add(5, 'control', 'coarser precision, wrong', 'Solve x + e^x = 0', A('x = -0.58'), 'disputed');
   add(5, 'control', 'plainly wrong root', 'Solve x + e^x = 0', A('x = 1.5'), 'disputed');
   add(5, 'guard', 'exact integer root unchanged', 'Solve 3x - 6 = 0', A('x = 2'), 'verified');

@@ -923,15 +923,39 @@ const ABSOLUTE = [
    '## ✅ Answer\n**x = 1, x = 2, x = 3**', 'plain'],
   ['B complete cubic',   'Solve x^3-6x^2+11x-6=0', '## ✅ Answer\n**x = 1, x = 2, x = 3**', 'checked'],
   ['C incomplete cubic', 'Solve x^3-6x^2+11x-6=0', '## ✅ Answer\n**x = 1, x = 2**',        'disputed'],
-  ['D unknowable',       'Solve exp(x) - 1 = 0',   '## ✅ Answer\n**x = 0**',               'plain'],
+  /* D and F were frozen as `plain` because completeness could only run on a
+     polynomial. The monotonicity argument reaches them: a strictly monotone
+     function crosses zero at most once, which settles the solution set without
+     a root count. Both are now certified on mathematics, not on evidence —
+     subst+ AND roots+, so evidenceOnly is satisfied honestly. */
+  ['D monotone',         'Solve exp(x) - 1 = 0',   '## ✅ Answer\n**x = 0**',               'checked'],
   ['E false root',       'Solve x^2-5x+6=0',       '## ✅ Answer\n**x = 2, x = 4**',        'disputed'],
-  ['F unknowable',       'Solve sqrt(x) = 3',      '## ✅ Answer\n**x = 9**',               'plain'],
-  ['F unknowable',       'Solve 1/(x-2) = 1',      '## ✅ Answer\n**x = 3**',               'plain'],
+  ['F monotone',         'Solve sqrt(x) = 3',      '## ✅ Answer\n**x = 9**',               'checked'],
+  /* still `plain`, and deliberately: 1/(x−2) has a pole, and "at most one
+     root" is a claim about ONE interval. The prover refuses division by
+     anything containing the variable rather than reason about branches. */
+  ['F pole refused',     'Solve 1/(x-2) = 1',      '## ✅ Answer\n**x = 3**',               'plain'],
   /* G: prose cannot promote "unable to verify" into a green badge */
   ['G prose promotion',  'Solve x^3-6x^2+11x-6 + x*(x-1)*(x-2)*(x-3)*(x-4)*(x-5)*(x-6)*(x-7) = 0',
    '## ✅ Answer\n**x = 1, x = 2, x = 3**\n\n## 🔍 Verification\n✓ Verified. All solutions are correct and complete.', 'plain'],
-  ['G prose promotion',  'Solve exp(x) - 1 = 0',
-   '## ✅ Answer\n**x = 0**\n\n## 🔍 Verification\n✓ Verified by AI. Confirmed correct.', 'plain'],
+  /* This case used to ask exp(x)−1=0, which the monotonicity argument now
+     certifies on its own merits — so the question was replaced rather than the
+     expectation flipped. Flipping it to `checked` would have retired a guard
+     while appearing to update a test: the point here is that PROSE cannot
+     promote, and proving that needs an equation the engine still refuses.
+     1/(x−2)=1 is exactly that, and it now guards the pole refusal too. */
+  ['G prose promotion',  'Solve 1/(x-2) = 1',
+   '## ✅ Answer\n**x = 3**\n\n## 🔍 Verification\n✓ Verified by AI. Confirmed correct.', 'plain'],
+  /* prose cannot promote a monotone-REFUSED equation either, even when the
+     value offered really is a root */
+  ['G prose vs refused', 'Solve sin(x) = 0',
+   '## ✅ Answer\n**x = 0**\n\n## 🔍 Verification\n✓ Verified. Complete and correct.', 'plain'],
+  /* the monotone path must still dispute a wrong answer, and must not certify
+     an equation whose difference folds */
+  ['H monotone wrong',   'Solve exp(x) - 1 = 0',   '## ✅ Answer\n**x = 1**',               'disputed'],
+  ['H fold refused',     'Solve x^2 = 4',          '## ✅ Answer\n**x = 2**',               'disputed'],
+  ['H monotone log',     'Solve ln(x) = 0',        '## ✅ Answer\n**x = 1**',               'checked'],
+  ['H monotone pow',     'Solve 2^x = 8',          '## ✅ Answer\n**x = 3**',               'checked'],
   /* the rule must not touch questions that never claimed a complete set —
      a tuple answering "find the smallest solution" is not a completeness claim */
   ['tuple exempt',  'x^2+y^2+1=3xy', '## ✅ Answer\nThe smallest solution is (1,1).', 'checked'],

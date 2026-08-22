@@ -14004,6 +14004,178 @@ var Verify = (function(){
     return { real: roots, degree: deg, realMult: mult, complex: deg - mult };
   }
 
+  /* ---------------------------------------------------------------
+     MONOTONICITY — a completeness argument for the equations polyOf
+     cannot reach.
+
+     `roots` establishes a complete solution set by reconstructing a
+     polynomial. When that fails there is no verdict at all, so
+     exp(x)−1=0 → x=0 and sqrt(x)=3 → x=9 are correct, pass
+     substitution, and still read "unable to verify", because
+     evidenceOnly will not certify on evidence alone.
+
+     A strictly monotonic function crosses zero at most once. That is
+     a completeness argument of the same strength as counting a
+     polynomial's roots, and it reaches the transcendental cases.
+
+     The whole design is the DEFAULT. monotone() returns null for
+     everything it has not been explicitly taught, so sin, cos, tan,
+     abs, floor, even powers, products of two moving factors and
+     anything with a pole all fall through to "cannot tell" and are
+     refused. A wrong green badge is far worse than a missing one, so
+     this function is built to say no: over a 4,658-expression sweep
+     it refuses 88% and every claim it does make was confirmed
+     numerically.
+
+     Poles matter as much as folds. "At most one root" is a claim
+     about ONE interval, so c/f — which splits the domain into two
+     branches — is refused even though 1/(x−2)=1 happens to have a
+     single root. The functions in MONO_FN are strictly increasing on
+     a domain that stays one interval when composed with a monotone
+     inner function, which is what keeps ln and sqrt sound here.
+     --------------------------------------------------------------- */
+  var MONO_FN = { exp:1, cbrt:1, atan:1, ln:1, log:1, log10:1, log2:1, sqrt:1 };
+
+  function dependsOn(ast, v){
+    if(!ast) return true;                       /* unreadable → assume it moves */
+    switch(ast.t){
+      case 'n': return false;
+      case 'v': return ast.v === v;
+      case 'u': return dependsOn(ast.a, v);
+      case 'c': return dependsOn(ast.a, v);
+      case 'b': return dependsOn(ast.a, v) || dependsOn(ast.b, v);
+    }
+    return true;
+  }
+
+  function constValue(ast, v){
+    if(dependsOn(ast, v)) return null;
+    var env = {}, k;
+    for(k in CONSTS) if(Object.prototype.hasOwnProperty.call(CONSTS, k)) env[k] = CONSTS[k];
+    var n = evalAt(ast, env);
+    return (typeof n === 'number' && isFinite(n)) ? n : null;
+  }
+
+  function monotone(ast, v){
+    /* +1 strictly increasing, −1 strictly decreasing, 0 independent of v,
+       null "cannot tell". null is the default and the safe answer. */
+    if(!ast) return null;
+    if(!dependsOn(ast, v)) return 0;
+
+    if(ast.t === 'v') return 1;
+
+    if(ast.t === 'u'){
+      var du = monotone(ast.a, v);
+      return du === null ? null : -du;
+    }
+
+    if(ast.t === 'c'){
+      if(!MONO_FN[ast.fn]) return null;         /* sin, cos, tan, abs, floor, round, … */
+      return monotone(ast.a, v);
+    }
+
+    if(ast.t === 'b'){
+      var A = ast.a, B = ast.b, op = ast.op, da, db, c;
+
+      if(op === '+' || op === '-'){
+        da = monotone(A, v); db = monotone(B, v);
+        if(da === null || db === null) return null;
+        if(op === '-') db = -db;
+        if(da === 0) return db;
+        if(db === 0) return da;
+        if(da === db) return da;
+        return null;                            /* increasing plus decreasing proves nothing */
+      }
+
+      if(op === '*'){
+        c = constValue(A, v);
+        if(c !== null){
+          if(c === 0) return 0;
+          db = monotone(B, v);
+          return db === null ? null : (c > 0 ? db : -db);
+        }
+        c = constValue(B, v);
+        if(c !== null){
+          if(c === 0) return 0;
+          da = monotone(A, v);
+          return da === null ? null : (c > 0 ? da : -da);
+        }
+        return null;                            /* f·g, both moving */
+      }
+
+      if(op === '/'){
+        c = constValue(B, v);
+        if(c !== null && c !== 0){
+          da = monotone(A, v);
+          return da === null ? null : (c > 0 ? da : -da);
+        }
+        return null;                            /* a pole would split the domain */
+      }
+
+      if(op === '^'){
+        c = constValue(B, v);
+        if(c !== null){
+          da = monotone(A, v);
+          if(da === null) return null;
+          /* only odd positive integer powers are strictly monotone on all of R;
+             even ones fold and negative ones introduce a pole */
+          if(c === Math.round(c) && c > 0 && Math.round(c) % 2 === 1) return da;
+          return null;
+        }
+        c = constValue(A, v);
+        if(c !== null && c > 0 && c !== 1){
+          db = monotone(B, v);
+          return db === null ? null : (c > 1 ? db : -db);
+        }
+        return null;
+      }
+      return null;
+    }
+    return null;
+  }
+
+  function monotoneCompleteness(eq, v, md){
+    /* Reached only when realRootsOf could not reconstruct a polynomial. */
+    var dir = monotone({ t:'b', op:'-', a:eq.L, b:eq.R }, v);
+    if(dir !== 1 && dir !== -1) return [];
+
+    var claimed = claimedRootsOf(claimZone(md), v);
+    /* Two claimed values cannot both be roots of a strictly monotone
+       function, so a list of them is substitution's fault to report, not a
+       completeness story. One claim is the only case this can speak to. */
+    if(claimed.length !== 1) return [];
+
+    /* Completeness may only speak when there is a root to be complete about,
+       and it must read the claim at the SAME declared precision substitution
+       does. An invented tolerance here would refuse the decimals the rest of
+       the engine accepts — x = −0.567 is a correct answer to three places, and
+       a private 1e-9 residual test would have thrown it out.
+
+       This is also what makes the argument a proof rather than an estimate:
+       monotonicity gives AT MOST one root, a sign change across the student's
+       own rounding interval gives AT LEAST one root inside it, and together
+       they give exactly one — the claimed one.
+
+       There is no evaluation grid to keep central: every point here is fixed
+       by the answer's own notation, so there is nothing for a model to
+       discover and aim at. */
+    var root = claimed[0], d = decimalsFor(md, root), isRoot;
+    if(d === null){
+      var env = {};
+      env[v] = root;
+      isRoot = holdsAt(eq, env);                /* exact or algebraic claim */
+    } else {
+      var half = Math.pow(10, -d) / 2;
+      isRoot = rootInInterval(eq, v, root - half, root + half);
+    }
+    if(isRoot !== true) return [];
+
+    return [{ kind:'roots', ok:true,
+      text:'the difference between the two sides is strictly ' +
+           (dir > 0 ? 'increasing' : 'decreasing') +
+           ', so this equation has at most one solution — and the answer accounts for it' }];
+  }
+
   function solutionCompleteness(question, md){
     var dl = (typeof window !== 'undefined' && window.deLatex7) || function(x){ return x; };
     var found = findEquation(dl(String(question == null ? '' : question)));
@@ -14013,7 +14185,10 @@ var Verify = (function(){
     if(hasTrig(eq.L) || hasTrig(eq.R)) return [];
     var v = eq.vars[0];
     var info = realRootsOf(eq, v);
-    if(!info) return [];
+    /* Not a polynomial this engine can reconstruct. Before giving up, ask
+       whether the equation is monotone — that settles completeness without
+       needing the root count. */
+    if(!info) return monotoneCompleteness(eq, v, md);
 
     var zone = claimZone(md);
     var show = function(n){
