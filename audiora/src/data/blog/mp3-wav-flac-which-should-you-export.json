@@ -1,0 +1,314 @@
+{
+  "slug": "mp3-wav-flac-which-should-you-export",
+  "title": "MP3, WAV or FLAC: which should you export?",
+  "excerpt": "Six formats, what each one throws away, what it costs you in size, and a straight answer for every situation you are likely to be in.",
+  "category": "Formats",
+  "date": "2026-08-12",
+  "accent": "var(--a-blue)",
+  "body": [
+    {
+      "type": "p",
+      "text": "The export dialog offers six formats and most people pick the one they recognise. That is usually fine and occasionally expensive — either in quality you did not need to lose, or in file size you did not need to carry. This article explains what each format does, what the settings alongside it actually change, and gives a direct recommendation for each common situation."
+    },
+    {
+      "type": "h2",
+      "text": "The only distinction that really matters"
+    },
+    {
+      "type": "p",
+      "text": "Everything divides into two groups: formats that keep every sample exactly, and formats that throw some away."
+    },
+    {
+      "type": "p",
+      "text": "Lossless — WAV and FLAC — reproduce the audio bit for bit. Decode either one and you get back precisely the numbers that went in. You can convert between them endlessly without any degradation at all."
+    },
+    {
+      "type": "p",
+      "text": "Lossy — MP3, AAC, M4A and OGG — analyse the audio and discard what a psychoacoustic model predicts you will not notice: frequencies masked by louder ones nearby, content above the range most adults hear, detail in passages too busy for the ear to resolve. The result can sound identical while being a fraction of the size. But what is discarded is gone, and every subsequent re-encode discards more."
+    },
+    {
+      "type": "p",
+      "text": "That second point is the one worth internalising. Lossy compression is not a setting you can turn back off."
+    },
+    {
+      "type": "h2",
+      "text": "The six formats"
+    },
+    {
+      "type": "h3",
+      "text": "WAV — the working format"
+    },
+    {
+      "type": "p",
+      "text": "Uncompressed, lossless, and understood by literally everything since about 1993. A WAV file is essentially the raw samples with a short header on the front, which is why it is both perfectly reliable and very large: roughly 10 MB per minute in stereo at CD resolution, more at 24-bit."
+    },
+    {
+      "type": "p",
+      "text": "Its size is not a flaw so much as a trade. There is no decoding work, nothing to go wrong, and no compatibility question ever. It is what you want while you are still working."
+    },
+    {
+      "type": "p",
+      "text": "24-bit versus 16-bit is worth a word. The bit depth sets how finely each sample is measured, which in practice determines the noise floor. For a finished file that nobody will process further, 16-bit is transparent. For something you are going to edit, apply gain to, or process again, 24-bit gives you headroom to make those moves without the noise floor becoming audible. Exporting stems for further production is exactly that case."
+    },
+    {
+      "type": "h3",
+      "text": "FLAC — lossless, at half the size"
+    },
+    {
+      "type": "p",
+      "text": "FLAC compresses losslessly, in the same sense that a zip file does. It typically reaches 50–60% of the WAV size, and decoding returns the identical samples. It is free, open, and supported by most modern software, though not by every piece of hardware."
+    },
+    {
+      "type": "p",
+      "text": "If you are archiving, FLAC is the obvious answer: identical quality, half the storage. The only reasons to prefer WAV are compatibility with something old and the very slight decoding cost, which matters only in unusual circumstances."
+    },
+    {
+      "type": "h3",
+      "text": "MP3 — the one everything can play"
+    },
+    {
+      "type": "p",
+      "text": "Thirty years old, technically superseded, and still the safest choice when you do not know what will open the file. Every phone, every car, every browser, every cheap player handles MP3."
+    },
+    {
+      "type": "p",
+      "text": "At 320kbps the great majority of listeners cannot distinguish it from lossless on the great majority of material. At 128kbps most people can hear it, especially on cymbals, applause and reverb tails, which is where MP3's weaknesses concentrate."
+    },
+    {
+      "type": "p",
+      "text": "MP3 also has two quirks worth knowing. It cannot represent frequencies above about 20 kHz at all, and it adds a small amount of silence at the start and end of the file as a side effect of how it frames audio — which matters if you are trying to loop something seamlessly."
+    },
+    {
+      "type": "h3",
+      "text": "AAC and M4A — better than MP3, nearly as universal"
+    },
+    {
+      "type": "p",
+      "text": "AAC is the successor to MP3 and is genuinely better at the same bitrate — the difference is clearest below 192kbps, where AAC holds together while MP3 starts to smear. It is what streaming services, YouTube and Apple use."
+    },
+    {
+      "type": "p",
+      "text": "M4A is not a different codec. It is a container — an MP4 wrapper that usually holds AAC audio. When you choose M4A here you are getting AAC in the container Apple software expects. Choose plain AAC and you get the raw stream, which some tools prefer."
+    },
+    {
+      "type": "p",
+      "text": "If you know your audience is on modern software, AAC at 192kbps will beat MP3 at 256kbps for a smaller file."
+    },
+    {
+      "type": "h3",
+      "text": "OGG — technically excellent, patchily supported"
+    },
+    {
+      "type": "p",
+      "text": "Ogg Vorbis is free of patents and performs very well, particularly at low and middle bitrates. It is standard in game development and on the open-source side of the world, well supported in browsers, and largely absent from consumer hardware."
+    },
+    {
+      "type": "p",
+      "text": "Pick it when you know the destination supports it. Do not pick it for a file you are emailing to somebody whose setup you cannot see."
+    },
+    {
+      "type": "h2",
+      "text": "The settings next to the format"
+    },
+    {
+      "type": "h3",
+      "text": "Bitrate"
+    },
+    {
+      "type": "p",
+      "text": "How many bits per second the encoder is allowed. More bits, less thrown away, larger file. For MP3 the useful range runs from 128 to 320kbps; 320 is effectively transparent for most listeners and 192 is a reasonable compromise where size matters."
+    },
+    {
+      "type": "p",
+      "text": "The one situation where a high bitrate is wasted is speech. A spoken-word recording at 320kbps is spending most of those bits describing silence and room tone. 96–128kbps mono is entirely adequate for an interview and a fraction of the size."
+    },
+    {
+      "type": "h3",
+      "text": "Sample rate"
+    },
+    {
+      "type": "p",
+      "text": "How many measurements per second. 44.1 kHz is the CD standard and captures everything up to about 22 kHz, which comfortably exceeds human hearing. 48 kHz is the video standard. Higher rates exist and are useful during production, for reasons to do with how processing behaves, but deliver no audible benefit in a finished file."
+    },
+    {
+      "type": "p",
+      "text": "Reducing the sample rate reduces the file proportionally and is a legitimate choice for speech — 22.05 kHz is fine for a voice and halves the data. It is not a good idea for music, where you will hear the top end disappear."
+    },
+    {
+      "type": "p",
+      "text": "Never raise the sample rate above the source. Converting a 22 kHz recording to 48 kHz produces a bigger file containing exactly the same audio."
+    },
+    {
+      "type": "h3",
+      "text": "Channels"
+    },
+    {
+      "type": "p",
+      "text": "Stereo or mono. Mono halves the size and is the right answer for anything that was mono to begin with — most spoken word, most single-microphone recordings. It is the wrong answer for music, where you lose the stereo image entirely."
+    },
+    {
+      "type": "h2",
+      "text": "Straight answers"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Stems going into a DAW: WAV, 24-bit, at the source sample rate. Do not compress something you are about to process.",
+        "An instrumental for karaoke on a phone: MP3 320kbps. Universal, small enough, indistinguishable in that context.",
+        "Long-term archive: FLAC. Identical to WAV at roughly half the size.",
+        "A podcast episode: MP3 or AAC, 96–128kbps, mono. Speech does not need more, and your listeners' data allowance will thank you.",
+        "Something for an Apple device or app: M4A.",
+        "A game asset or a web page: OGG, if you control the environment. MP3 if you do not.",
+        "You genuinely do not know where it is going: MP3 320kbps. Nothing will refuse it."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Three mistakes that are easy to make"
+    },
+    {
+      "type": "p",
+      "text": "Converting a lossy file to a lossless one and believing you have improved it. Turning a 128kbps MP3 into a 24-bit WAV produces a file forty times larger containing exactly the same audio, damage included. The only thing you have gained is storage cost."
+    },
+    {
+      "type": "p",
+      "text": "Re-encoding repeatedly. Every lossy encode discards more. Downloading an MP3, editing it, exporting as MP3, sending it to someone who exports it again — each step compounds. Keep a lossless master and export lossy copies from it each time, rather than editing the copies."
+    },
+    {
+      "type": "p",
+      "text": "Assuming a renamed file has been converted. Changing an extension from .wav to .mp3 does nothing at all to the contents; it just misleads whatever tries to open it. Real conversion runs an encoder and produces a file with the correct internal structure — which is what happens when you use the converter here."
+    },
+    {
+      "type": "h2",
+      "text": "What each format costs you in size"
+    },
+    {
+      "type": "p",
+      "text": "Concrete numbers make the trade obvious. For a four-minute stereo song at 44.1 kHz:"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "WAV, 24-bit: about 60 MB.",
+        "WAV, 16-bit: about 40 MB.",
+        "FLAC: about 20–28 MB depending on how dense the music is.",
+        "MP3 at 320kbps: about 9.5 MB.",
+        "MP3 at 192kbps: about 5.7 MB.",
+        "AAC at 256kbps: about 7.5 MB.",
+        "MP3 at 128kbps: about 3.8 MB."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "The interesting part is where the curve bends. Going from WAV to FLAC halves the file for nothing at all. Going from FLAC to 320kbps MP3 halves it again for a difference almost nobody can hear. Going from 320 to 128 saves another two thirds and costs you audible quality."
+    },
+    {
+      "type": "p",
+      "text": "So the sensible operating points are FLAC for storage and 320 or 256 for delivery. The savings below that are real and so is the cost."
+    },
+    {
+      "type": "h2",
+      "text": "Choosing for the destination, not the source"
+    },
+    {
+      "type": "p",
+      "text": "A useful reframing: the question is never \"what format is my audio\", it is \"what will happen to this file next\"."
+    },
+    {
+      "type": "h3",
+      "text": "It will be listened to and discarded"
+    },
+    {
+      "type": "p",
+      "text": "A reference mix, a rough share, something sent for approval. Lossy, moderate bitrate. Nobody is archiving it and the quality only has to support a judgement."
+    },
+    {
+      "type": "h3",
+      "text": "It will be listened to and kept"
+    },
+    {
+      "type": "p",
+      "text": "A finished release, a podcast episode. Lossy at a generous bitrate — 320kbps MP3 or 256kbps AAC. Transparent, and small enough that nobody thinks about it."
+    },
+    {
+      "type": "h3",
+      "text": "It will be processed again"
+    },
+    {
+      "type": "p",
+      "text": "Stems, a master you might revisit, a recording you will edit. Lossless, always. Every lossy step in a chain compounds, and the storage saving is trivial next to the cost of degrading a source."
+    },
+    {
+      "type": "h3",
+      "text": "It will be stored and rarely touched"
+    },
+    {
+      "type": "p",
+      "text": "An archive. FLAC — half the size of WAV, verifiable, properly tagged."
+    },
+    {
+      "type": "h3",
+      "text": "It will be uploaded to a platform that re-encodes"
+    },
+    {
+      "type": "p",
+      "text": "Give the platform the best you have, because its encoder works from what you send. This is the opposite of the messaging-app case, where the recipient gets the app's version regardless."
+    },
+    {
+      "type": "h2",
+      "text": "The 24-bit question, answered plainly"
+    },
+    {
+      "type": "p",
+      "text": "Bit depth confuses people because the specification and the practice point in different directions."
+    },
+    {
+      "type": "p",
+      "text": "Specification: 16-bit provides about 96 dB of dynamic range, which exceeds any real listening environment. For a finished file it is transparent, and 24-bit adds nothing you can hear."
+    },
+    {
+      "type": "p",
+      "text": "Practice: while working, you leave headroom so nothing clips, and that headroom eats into your available range. Record at 16-bit peaking at −18 dBFS and you are effectively using 13 bits. At 24-bit the same headroom leaves you far more precision than you need."
+    },
+    {
+      "type": "p",
+      "text": "So the rule is: 24-bit while anything might still happen to the file, 16-bit for delivery. This is also why exported stems should be 24-bit — a stem is quieter than the mix it came from, and you are going to apply gain to it."
+    },
+    {
+      "type": "h2",
+      "text": "One thing worth being sceptical about"
+    },
+    {
+      "type": "p",
+      "text": "Any claim that a format sounds better than another lossless format. WAV and FLAC decode to identical samples; if two files produce the same numbers, they cannot sound different."
+    },
+    {
+      "type": "p",
+      "text": "That is a testable claim rather than an opinion: encode, decode, compare byte by byte. They match. Any perceived difference is coming from playback software, level, or expectation — and expectation is powerful enough that everybody is subject to it, which is precisely why blind comparison exists as a technique."
+    },
+    {
+      "type": "h2",
+      "text": "A note on what the tool exports"
+    },
+    {
+      "type": "p",
+      "text": "All six formats here are genuinely encoded rather than renamed: each goes through its own encoder and comes out with the correct internal structure for that format."
+    },
+    {
+      "type": "p",
+      "text": "That is worth stating because it is not universal. Some tools offer a long list of formats and produce a renamed file for several of them, which then fails to open in whatever needed that format in the first place. If you are ever unsure with any tool, the file size tells you — a real conversion between a lossless and a lossy format changes it by roughly a factor of four."
+    },
+    {
+      "type": "h2",
+      "text": "The rule that covers most cases"
+    },
+    {
+      "type": "p",
+      "text": "Keep a lossless master. Export lossy copies for delivery. Never work forwards from a compressed file if a better one exists."
+    },
+    {
+      "type": "p",
+      "text": "Do that and none of the individual decisions above can hurt you very much, because you can always go back and export again."
+    }
+  ]
+}

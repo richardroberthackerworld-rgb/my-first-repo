@@ -1,0 +1,197 @@
+# Audiora — Apache / cPanel configuration
+# Upload the CONTENTS of this folder to your domain root (e.g. public_html/).
+
+# --------------------------------------------------------- Moved articles
+# An article that was rewritten and retitled. The old URL is in search results
+# and in other people's links, so it 301s to the new one rather than 404ing.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^blog/why-your-audio-should-never-be-uploaded/?$ /blog/keeping-your-audio-private-online [R=301,L]
+</IfModule>
+
+# ------------------------------------------------------- Digital Asset Links
+# The Android app is a Trusted Web Activity: it only runs without a browser
+# address bar if this file is reachable. Some Apache configurations block
+# dot-directories outright, which makes the app ship with a visible URL bar
+# and no obvious cause — so /.well-known/ is allowed through explicitly.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^\.well-known/ - [L]
+</IfModule>
+
+<FilesMatch "^assetlinks\.json$">
+  ForceType application/json
+  <IfModule mod_headers.c>
+    Header set Cache-Control "public, max-age=3600, must-revalidate"
+    Header set Access-Control-Allow-Origin "*"
+  </IfModule>
+</FilesMatch>
+
+# ------------------------------------------------------------ Short tool URLs
+# /vocal-remover and friends are shorter to type and to print, but the page
+# lives at /tools/vocal-remover. A 301 — not a rewrite — is what tells a
+# crawler these are the same page and that the /tools/ one is the original,
+# so the two never compete for the same search.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^vocal-remover/?$ /tools/vocal-remover [R=301,L]
+  RewriteRule ^stem-splitter/?$ /tools/stem-splitter [R=301,L]
+  RewriteRule ^noise-remover/?$ /tools/noise-remover [R=301,L]
+  RewriteRule ^audio-cutter/?$ /tools/audio-cutter [R=301,L]
+  RewriteRule ^song-joiner/?$ /tools/song-joiner [R=301,L]
+  RewriteRule ^pitch-shifter/?$ /tools/pitch-shifter [R=301,L]
+  RewriteRule ^audio-converter/?$ /tools/audio-converter [R=301,L]
+</IfModule>
+
+# ---------------------------------------------------------------- SPA routing
+# Audiora routes on the client. Without this, a direct hit or refresh on
+# /tools/audio-cutter, /pricing, /blog/... returns a 404 from Apache because no
+# such file exists on disk. Anything that is not a real file or directory is
+# handed to index.html so React Router can resolve it.
+# Each route is pre-rendered to <route>/index.html with its own title and
+# description. Naming the index explicitly means a host with a different
+# default still serves them instead of falling through to the SPA rewrite.
+DirectoryIndex index.html
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # Leave real files and directories alone — this is what keeps /workers/*.js
+  # and the hashed assets reachable.
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+# ------------------------------------------------------------------- caching
+# Asset filenames are content-hashed by the build, so they can be cached hard.
+# index.html must NOT be, or visitors keep loading a stale app shell.
+# The workers are NOT hashed, so they get a short cache and revalidate.
+#
+# NOTE on FilesMatch: Apache matches it against the FILENAME only, never the
+# path. A pattern like "^assets/.*\.js$" therefore matches nothing at all.
+# Everything below keys off the filename itself, which is why the hashed
+# bundles are matched by their -aBcD1234 suffix rather than by their folder.
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/svg+xml           "access plus 1 year"
+  ExpiresByType font/woff2              "access plus 1 year"
+  ExpiresByType image/png               "access plus 1 month"
+</IfModule>
+
+<IfModule mod_headers.c>
+  # Vite writes name-<8+ char hash>.js / .css. A changed file gets a changed
+  # name, so these can be pinned forever without ever going stale.
+  <FilesMatch "-[A-Za-z0-9_-]{8,}\.(js|css)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+
+  <FilesMatch "\.(svg|woff2)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# The worker and worklet filenames are stable, so they must revalidate rather
+# than being pinned — otherwise a fixed separation bug would not reach anyone.
+<IfModule mod_headers.c>
+  <FilesMatch "^(.*-worker|pitch-processor)\.js$">
+    Header set Cache-Control "public, max-age=3600, must-revalidate"
+  </FilesMatch>
+</IfModule>
+
+# The worker and worklet filenames also carry a ?v= build stamp (see the
+# isolation note below), so the revalidation above is a second line of defence
+# rather than the only one.
+#
+# The ffmpeg ES modules under /ffmpeg/esm/ are the one part of the runtime that
+# CANNOT carry that stamp: worker.js imports its siblings by relative path,
+# inside vendor code, so the stamp on worker.js does not reach them. Under COEP
+# a copy cached from before isolation was enabled would be rejected with an
+# opaque error, so the fix is to keep them out of the HTTP cache entirely.
+#
+# The cost is about 20 KB on the first request of a session and nothing after
+# that, because the service worker holds them in Cache Storage, which does not
+# consult Cache-Control. ffmpeg-core.wasm is 31 MB and is deliberately NOT
+# covered here — it carries the stamp, so it caches normally.
+#
+# FilesMatch cannot express a directory, so this matches on the request path.
+<IfModule mod_headers.c>
+  <IfModule mod_setenvif.c>
+    SetEnvIf Request_URI "^/ffmpeg/esm/" FFMPEG_ESM_MODULE
+    Header set Cache-Control "no-store" env=FFMPEG_ESM_MODULE
+  </IfModule>
+</IfModule>
+
+# ------------------------------------------------------------- installable
+# The manifest needs its own media type; without it some browsers refuse the
+# install prompt entirely.
+AddType application/manifest+json .webmanifest
+
+<IfModule mod_headers.c>
+  # sw.js decides what every visitor caches. If IT is cached, a bad worker
+  # cannot be replaced — so this one file is always revalidated.
+  <FilesMatch "^sw\.js$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Service-Worker-Allowed "/"
+  </FilesMatch>
+
+  <FilesMatch "\.webmanifest$">
+    Header set Cache-Control "public, max-age=3600, must-revalidate"
+  </FilesMatch>
+</IfModule>
+
+# ------------------------------------------------- cross-origin isolation ON
+# These two headers give the page SharedArrayBuffer, which is what lets the
+# separation engine run on several CPU threads instead of one. Measured on a
+# 12-core machine: 11 threads against 1 without them.
+#
+# Enabled 2026-08-22 after debugging. Two earlier notes here claimed isolation
+# broke things — first the audio encoder, then the separation engine. Both were
+# wrong, and both were the same misdiagnosis:
+#
+#   COEP refuses an HTTP-cache entry that was stored BEFORE the policy applied,
+#   and reports it as a worker error with no message, no filename and no line.
+#   The code was never at fault. Proven by loading the identical file at a
+#   cache-busted URL, which ran perfectly.
+#
+# THAT IS WHY THE VERSION QUERY EXISTS. The workers, the worklet and the ffmpeg
+# core keep stable filenames, so a returning visitor could hold a pre-isolation
+# copy of them. src/services/assetVersion.ts stamps every one of those URLs
+# with the build id, so the first request after an upgrade is for a URL that
+# has never been cached and the failure cannot happen.
+#
+# DO NOT enable these headers without that stamping in place, and do not remove
+# the stamping while these headers are set. They are one change.
+#
+# "credentialless" is not an alternative: it failed to activate isolation in
+# Chrome 148 and Safari does not support it. require-corp works, and both
+# cross-origin dependencies already satisfy it — jsdelivr sends CORP and the
+# huggingface model is CORS-clean.
+#
+# If a future change breaks separation, test it at a cache-busted URL before
+# assuming isolation is the cause.
+<IfModule mod_headers.c>
+  Header always set Cross-Origin-Opener-Policy "same-origin"
+  Header always set Cross-Origin-Embedder-Policy "require-corp"
+</IfModule>
+
+# --------------------------------------------------------------- compression
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/plain text/xml
+  AddOutputFilterByType DEFLATE application/javascript application/json
+  AddOutputFilterByType DEFLATE image/svg+xml
+</IfModule>
+
+# ------------------------------------------------------------------- charset
+AddDefaultCharset UTF-8

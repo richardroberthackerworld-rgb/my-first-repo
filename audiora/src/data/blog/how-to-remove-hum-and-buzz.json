@@ -1,0 +1,292 @@
+{
+  "slug": "how-to-remove-hum-and-buzz",
+  "title": "How to remove hum and buzz from a recording",
+  "excerpt": "Mains hum is the most fixable noise there is, once you know whether you have 50 Hz or 60 Hz — how to identify it, remove it cleanly, and stop it happening again.",
+  "category": "Guides",
+  "date": "2026-07-23",
+  "accent": "var(--a-orange)",
+  "body": [
+    {
+      "type": "p",
+      "text": "Of all the ways a recording can be spoiled, mains hum is the most annoying and the most completely fixable. It is a steady tone sitting underneath everything, and unlike hiss or room noise it lives at exactly known frequencies — which means it can be removed almost surgically, with far less collateral damage than any other kind of noise reduction."
+    },
+    {
+      "type": "p",
+      "text": "It is also the noise most worth preventing, because the cause is usually a cable in the wrong place and the fix takes thirty seconds."
+    },
+    {
+      "type": "h2",
+      "text": "What hum actually is"
+    },
+    {
+      "type": "p",
+      "text": "Mains electricity alternates. In most of Europe, Asia, Africa and Australia it alternates 50 times a second; in North America and parts of South America and Japan, 60 times a second. That alternation radiates from every cable, transformer and power supply in the building."
+    },
+    {
+      "type": "p",
+      "text": "Audio equipment is designed to reject it, but rejection is never perfect. When a small amount finds its way into the signal path, you get a tone at the mains frequency — 50 Hz or 60 Hz — sitting under your recording."
+    },
+    {
+      "type": "p",
+      "text": "It rarely arrives alone. The waveform is not a pure sine, and the ways it couples into equipment generate harmonics, so you typically get energy at the fundamental plus 100, 150, 200 Hz and upwards. That harmonic stack is why hum can sound like a low drone or a harsh buzz depending on which harmonics dominate: a soft hum is mostly fundamental; a buzz has strong upper harmonics, and is usually a sign of a dimmer switch, a fluorescent light or a cheap switching power supply."
+    },
+    {
+      "type": "h2",
+      "text": "Fifty or sixty?"
+    },
+    {
+      "type": "p",
+      "text": "Getting this right matters, because removing 60 Hz from a 50 Hz problem does nothing at all while still damaging your audio at 60 Hz."
+    },
+    {
+      "type": "p",
+      "text": "The reliable answer is geography. If you are in the UK, Europe, most of Asia, Africa, Australia or New Zealand, you have 50 Hz. If you are in North America, most of South America, or Japan, you have 60 Hz."
+    },
+    {
+      "type": "p",
+      "text": "If the recording came from somewhere else, or you simply do not know, listen. 50 Hz is roughly G one octave below the bass clef; 60 Hz is roughly B flat. Both are very low. A more practical test is to try both settings and keep whichever one makes the hum disappear rather than merely quieten."
+    },
+    {
+      "type": "h2",
+      "text": "Removing it"
+    },
+    {
+      "type": "p",
+      "text": "Because hum occupies a handful of exact frequencies, it can be targeted specifically rather than treated as generalised background."
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Open the Noise Remover and load your recording.",
+        "Choose the Hum noise type. This targets the mains fundamental and its harmonics rather than pulling down the whole spectrum.",
+        "Set the strength. Hum tolerates a higher setting than other noise types because it is so narrowly targeted — you can often go to 90% without hearing any effect on the voice.",
+        "Listen to a quiet passage with headphones. That is where hum is audible and where any over-processing will show first.",
+        "Export."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "The reason you can push harder on hum than on hiss is that a notch at 50 Hz removes very little that a voice or most instruments were using. A general noise reduction at 90% strips the quiet detail out of everything; a hum removal at 90% takes out a set of narrow slices most sources barely occupy."
+    },
+    {
+      "type": "h2",
+      "text": "When it is not really hum"
+    },
+    {
+      "type": "p",
+      "text": "Three things get mistaken for mains hum, and treating them as hum will not work."
+    },
+    {
+      "type": "h3",
+      "text": "Air conditioning or fan noise"
+    },
+    {
+      "type": "p",
+      "text": "Broadband low-mid rumble rather than a pitched tone. If you cannot hum along with it, it is not hum. Use the General setting instead."
+    },
+    {
+      "type": "h3",
+      "text": "Digital interference"
+    },
+    {
+      "type": "p",
+      "text": "A phone near an unbalanced cable produces a rhythmic, chirping buzz — the famous GSM stutter — rather than a steady tone. Noise reduction handles this badly because it is neither constant nor harmonically simple. Move the phone and re-record if you possibly can."
+    },
+    {
+      "type": "h3",
+      "text": "Ground loop with an audible pattern"
+    },
+    {
+      "type": "p",
+      "text": "A hum that changes when you touch equipment, or that varies with what else is switched on, is a ground loop. The Hum setting will reduce it, but the real fix is electrical and worth doing properly."
+    },
+    {
+      "type": "h2",
+      "text": "Preventing it"
+    },
+    {
+      "type": "p",
+      "text": "Every one of these takes less time than fixing the recording afterwards, and unlike the fix, none of them costs you any audio quality."
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Keep audio cables away from power cables. If they must cross, cross them at a right angle rather than running them alongside each other.",
+        "Plug everything into the same outlet or power strip. Ground loops form when two pieces of connected equipment sit on different circuits at slightly different ground potentials.",
+        "Turn off dimmer switches. They are one of the most reliable sources of buzz, and turning the light fully on or fully off often solves it instantly.",
+        "Turn off fluorescent and cheap LED lighting while recording. Both use switching supplies that radiate enthusiastically.",
+        "Use balanced cables where your equipment supports them. Balanced connections reject interference by design, which is precisely what they exist for.",
+        "Move phones away from the signal path, and put them in airplane mode."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "The single most effective diagnostic: before you record anything important, record thirty seconds of silence and listen to it in headphones with the level turned up. Hum that is inaudible at normal volume in a quiet room becomes obvious, and you find out now rather than after the session."
+    },
+    {
+      "type": "h2",
+      "text": "Working order"
+    },
+    {
+      "type": "p",
+      "text": "If a recording has more than one problem, sequence matters."
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Cut out anything you are going to discard. There is no point processing audio you are about to delete.",
+        "Remove the hum first. It is narrowband and targeted, so doing it early does not interfere with anything that follows.",
+        "Then treat any remaining broadband noise with the General or Hiss setting, at a much lower strength than you would have needed with the hum still present.",
+        "Level and export last."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "Doing hum first is not arbitrary. General noise reduction measures the noise floor, and a strong hum skews that measurement — it will try to treat the hum as part of the broad background and over-process everything else in the attempt."
+    },
+    {
+      "type": "h2",
+      "text": "What cannot be fixed"
+    },
+    {
+      "type": "p",
+      "text": "If the hum is louder than the thing you recorded, no amount of processing will produce a usable result. Removing it will leave you with what was underneath, which in that case is very little."
+    },
+    {
+      "type": "p",
+      "text": "The same applies if the hum was recorded into a distorted signal. Once the input clipped, the hum and the wanted audio are interleaved in the damage, and separating them afterwards is not possible."
+    },
+    {
+      "type": "p",
+      "text": "Both cases have the same answer, and it is an unwelcome one: re-record, having fixed the cable."
+    },
+    {
+      "type": "h2",
+      "text": "Finding the source before you process anything"
+    },
+    {
+      "type": "p",
+      "text": "Ten minutes of diagnosis beats any amount of processing, because a hum removed at source costs you nothing in audio quality while a hum removed afterwards always costs something."
+    },
+    {
+      "type": "p",
+      "text": "The method is to change one thing at a time and listen."
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Record thirty seconds of silence and listen on headphones with the level up. You now have a reference.",
+        "Unplug everything except the microphone and the interface. If the hum goes, it came from something you just unplugged — plug things back one at a time.",
+        "Touch the metal body of the microphone. If the hum changes, you have a grounding problem rather than interference.",
+        "Turn off the lights. Dimmers and fluorescent fittings are the two commonest buzz sources in a domestic room, and this test takes two seconds.",
+        "Move the microphone cable away from any power cable it runs alongside. If the hum changes with position, it is induced interference and moving the cable is the actual fix.",
+        "Try a different outlet, ideally on a different circuit. If that changes it, you have a ground loop."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "Write down what changed what. If it recurs in a month you will not remember, and you will do all of this again."
+    },
+    {
+      "type": "h2",
+      "text": "Why a ground loop hums"
+    },
+    {
+      "type": "p",
+      "text": "Worth understanding because the fix is counterintuitive otherwise."
+    },
+    {
+      "type": "p",
+      "text": "Two pieces of equipment are connected by an audio cable, and both are also connected to mains earth through their power supplies. If those two earth points sit at even slightly different voltages — which they do, because they are at different points in the building's wiring — a small current flows through the audio cable's shield to equalise them."
+    },
+    {
+      "type": "p",
+      "text": "That current is at mains frequency, and it appears in your signal as hum. The signal itself is fine; the reference it is measured against is moving."
+    },
+    {
+      "type": "p",
+      "text": "So the fix is to remove one of the two paths, not to fight the symptom. Plugging everything into the same outlet means both devices share one earth point, and there is no difference to equalise. This is why the advice sounds too simple to work, and why it usually does."
+    },
+    {
+      "type": "p",
+      "text": "What you should not do is defeat the earth pin on a plug. It cures the hum and removes a safety feature that exists to stop equipment faults becoming electrocutions."
+    },
+    {
+      "type": "h2",
+      "text": "Balanced cables, and what they actually do"
+    },
+    {
+      "type": "p",
+      "text": "The other real fix, and the reason professional equipment uses them."
+    },
+    {
+      "type": "p",
+      "text": "An unbalanced cable carries the signal on one conductor with a shield around it. Interference induced into that conductor is simply added to your audio."
+    },
+    {
+      "type": "p",
+      "text": "A balanced cable carries the signal twice, on two conductors, one of them inverted. Interference is induced equally into both. At the far end the receiving equipment inverts one back and adds them: the signal doubles, and the interference — being identical in both and now opposite in phase — cancels."
+    },
+    {
+      "type": "p",
+      "text": "This is why a balanced run of twenty metres can be quieter than an unbalanced run of two. If your interface has XLR or TRS balanced inputs and you are using an unbalanced cable into them, changing the cable may solve a hum problem outright."
+    },
+    {
+      "type": "h2",
+      "text": "Hum in a recording you cannot re-make"
+    },
+    {
+      "type": "p",
+      "text": "Sometimes the recording is all there is — an interview, a live performance, an old tape. Here processing is the only option, and it is worth being methodical."
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Identify the fundamental exactly. Try both 50 Hz and 60 Hz and keep whichever makes the hum vanish rather than merely quieten. If neither is right, the source may not be mains at all.",
+        "Treat the hum before anything else. Broadband noise reduction measures the noise floor, and a strong hum skews that measurement badly.",
+        "Push the strength higher than you would for other noise. Hum removal targets a handful of narrow frequencies; unlike broadband reduction it takes very little of the wanted signal with it.",
+        "Check a passage where someone is speaking quietly, not a loud passage. Over-processing shows up in the quiet parts.",
+        "Then apply light broadband reduction if anything remains, at a much lower strength than you would have needed with the hum still present."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "One warning specific to music: if the recording is in a key whose bass notes sit near the hum frequency, aggressive hum removal will take some of the bass with it. A song in B flat with 60 Hz hum is the awkward case, because a low B flat is close to 58 Hz. Back the strength off and accept a little residue."
+    },
+    {
+      "type": "h2",
+      "text": "What hum tells you about a recording"
+    },
+    {
+      "type": "p",
+      "text": "A small piece of forensic trivia that is occasionally useful."
+    },
+    {
+      "type": "p",
+      "text": "Mains hum is present in almost every recording made near mains power, and its exact frequency wanders very slightly as grid load changes through the day. That wander is the same across a whole electrical grid at any given moment."
+    },
+    {
+      "type": "p",
+      "text": "Which means the hum in a recording is a timestamp. Forensic laboratories keep continuous recordings of grid frequency and can match the pattern in a file against them to establish when it was made — and to detect edits, because a spliced recording shows a discontinuity in the hum pattern that no amount of careful crossfading hides."
+    },
+    {
+      "type": "p",
+      "text": "Nothing to do with making your podcast sound better. Worth knowing that the thing you are removing is carrying information."
+    },
+    {
+      "type": "h2",
+      "text": "The short version"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Hum is at 50 Hz or 60 Hz depending on where you are, plus harmonics above it.",
+        "Buzz is the same thing with strong upper harmonics — usually a dimmer, a fluorescent light or a cheap supply.",
+        "Use the Hum setting, and you can push the strength much higher than with other noise types.",
+        "If you cannot hum along with it, it is not hum — use General instead.",
+        "Remove hum before any broadband noise reduction.",
+        "Record thirty seconds of silence before every session and listen to it. It is the cheapest insurance there is."
+      ]
+    }
+  ]
+}

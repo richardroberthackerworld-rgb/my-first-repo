@@ -1,0 +1,238 @@
+{
+  "slug": "how-to-remove-vocals-from-a-song",
+  "title": "How to remove vocals from a song: a complete guide",
+  "excerpt": "Every method that claims to strip a vocal, what each one actually does to your audio, and how to choose between them for karaoke, remixing or practice.",
+  "category": "Guides",
+  "date": "2026-08-18",
+  "accent": "var(--a-violet)",
+  "body": [
+    {
+      "type": "p",
+      "text": "\"Remove the vocals\" sounds like a single operation, the audio equivalent of deleting a layer in Photoshop. It is not. A finished song is one stereo file in which every instrument and every voice has already been summed together into two channels of numbers. Nothing in that file marks where the singing is. Taking the vocal out means working out which parts of a mixed signal belonged to a voice and then reconstructing what the rest would have sounded like without it — which is closer to un-baking a cake than to hiding a layer."
+    },
+    {
+      "type": "p",
+      "text": "That is worth understanding before you start, because it explains why results vary so wildly between tools, why some songs come out clean and others come out hollow, and why the advice you find online contradicts itself. This guide covers every method in general use, what each one is actually doing, where each one falls apart, and how to get the best result from whichever you end up using."
+    },
+    {
+      "type": "h2",
+      "text": "The four methods, in order of how well they work"
+    },
+    {
+      "type": "p",
+      "text": "There are only four approaches in common use. Every tool you will encounter is doing one of these, whatever it calls itself in its marketing."
+    },
+    {
+      "type": "h3",
+      "text": "1. Centre-channel cancellation"
+    },
+    {
+      "type": "p",
+      "text": "The oldest trick, and the one still buried inside a lot of free tools. In most stereo mixes the lead vocal is panned dead centre, which means the identical signal appears in both the left and the right channel. Subtract one channel from the other and anything identical in both cancels to silence. The vocal disappears."
+    },
+    {
+      "type": "p",
+      "text": "It costs almost nothing to compute, which is why it survives. It also destroys the record. The kick drum, the snare and the bass are usually centred too, so they vanish along with the voice. What is left is the reverb tails, the wide guitars and the stereo keys — a thin, hollow, phasey shell of a song. And because the output is a difference between two channels, it is mono by definition, so you lose the stereo image as well."
+    },
+    {
+      "type": "p",
+      "text": "There is a further catch that catches people out constantly: it needs a genuine stereo mix. Feed it a mono recording, where left and right are identical, and every single thing cancels. You get silence. Perfect vocal removal, no song."
+    },
+    {
+      "type": "p",
+      "text": "Use it for: nothing, in 2026. It is a party trick from an era before anything better existed."
+    },
+    {
+      "type": "h3",
+      "text": "2. Band rejection, or \"karaoke EQ\""
+    },
+    {
+      "type": "p",
+      "text": "The slightly more sophisticated version notices that most of a lead vocal's energy sits between roughly 300 Hz and 4 kHz, and cuts hard in that range. Sometimes it combines this with centre cancellation so it only cuts the centred portion of that band."
+    },
+    {
+      "type": "p",
+      "text": "The problem is that the same band holds the snare, the guitars, the piano, the strings and the top end of the bass. Removing a range of frequencies does not distinguish between a voice and a Telecaster occupying the same range. You end up with a mix that sounds like it is playing through a wall, and the vocal is still faintly there, because a voice also has energy above and below the band you cut."
+    },
+    {
+      "type": "p",
+      "text": "Use it for: a rough guide track where quality does not matter."
+    },
+    {
+      "type": "h3",
+      "text": "3. Spectral masking"
+    },
+    {
+      "type": "p",
+      "text": "A real step up. Instead of working on the waveform, the audio is converted into a spectrogram — a picture of which frequencies are present at which moments — and an algorithm decides, cell by cell, whether each point in that picture is more likely to be voice or accompaniment. The cells judged to be vocal are attenuated and the audio is converted back."
+    },
+    {
+      "type": "p",
+      "text": "This handles a lot of cases the earlier methods cannot: a vocal that is not perfectly centred, a mono recording, a mix where the bass shares the centre. Where it struggles is anywhere voice and instrument genuinely overlap in the same time and the same frequency, which in a dense mix is most of the time. The classic artefact is a watery, warbling quality on sustained notes, and reverb tails that survive after the voice that caused them has gone."
+    },
+    {
+      "type": "p",
+      "text": "Use it for: material where a source-separation model is unavailable, or where speed matters more than fidelity."
+    },
+    {
+      "type": "h3",
+      "text": "4. Source separation with a trained model"
+    },
+    {
+      "type": "p",
+      "text": "The current state of the art, and what 7 Audio's Vocal Remover uses. Rather than a rule about frequencies or panning, a neural network is trained on many thousands of songs for which both the finished mix and the original separate tracks are known. It learns what a voice looks like in a mix — not just its frequency range, but its harmonic structure, how it moves, how vibrato behaves, how consonants differ from a hi-hat — and it learns to reconstruct the parts of the accompaniment that the voice was covering up."
+    },
+    {
+      "type": "p",
+      "text": "That last part is the important one and the reason results are so much better. The earlier methods can only take away. A trained model can infer what should be underneath. When a singer holds a note over a piano chord, spectral masking has to choose between keeping the note and keeping the chord. A separation model can produce both, because it has heard enough pianos to know what the chord was doing behind the voice."
+    },
+    {
+      "type": "p",
+      "text": "Use it for: essentially everything. The only costs are that it needs to download a model the first time and that it takes real computation to run."
+    },
+    {
+      "type": "h2",
+      "text": "How to actually do it"
+    },
+    {
+      "type": "p",
+      "text": "With 7 Audio the process is four steps, and the choices you make in steps one and two matter far more than most people expect."
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Open the Vocal Remover and load your song. MP3, WAV, FLAC, M4A, OGG and AAC all work, up to 500 MB.",
+        "Choose Standard or High quality. Standard is a four-source model and handles most songs quickly. High quality is a six-source model that separates guitar and piano as well, gives a cleaner split, and takes noticeably longer both to set up the first time and to run.",
+        "Choose your export format. WAV if the result is going into a DAW or a further edit. 320kbps MP3 if it is going to a phone or an email.",
+        "Process, then download the instrumental, the isolated vocal, or both. You get both files from one run — it is not two separate jobs."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Start from the best file you have"
+    },
+    {
+      "type": "p",
+      "text": "This is the single biggest thing under your control, and it is the one most people skip."
+    },
+    {
+      "type": "p",
+      "text": "A separation model reconstructs what it can identify. Information that was thrown away when the file was compressed is not there to identify. A 128kbps MP3 has already discarded most of the content above about 15 kHz and has smeared fine detail in the process of encoding. Feed that to any separation tool and the cymbals in your instrumental will sound like static and the vocal will have a metallic edge, no matter how good the model is."
+    },
+    {
+      "type": "p",
+      "text": "In practical order of preference: a WAV or FLAC copy is best, a 320kbps MP3 is fine, a 192kbps MP3 is workable, and anything below about 160kbps will show. If your only copy came from a video site, expect the ceiling to be lower than the model is capable of. Re-downloading the same song at a higher quality does more for your result than any setting in any tool."
+    },
+    {
+      "type": "p",
+      "text": "One thing that does not help: converting a low-bitrate MP3 to WAV before you start. The file gets bigger; the missing information does not come back."
+    },
+    {
+      "type": "h2",
+      "text": "Which songs are hard"
+    },
+    {
+      "type": "p",
+      "text": "Some material separates almost perfectly and some fights back. It is useful to know in advance which you have."
+    },
+    {
+      "type": "p",
+      "text": "Easy: a clear lead vocal, moderate reverb, arrangements with space in them. Most pop, folk, country, singer-songwriter, hip-hop with a spoken-word delivery."
+    },
+    {
+      "type": "p",
+      "text": "Harder: heavy reverb and long delays, because the tail of a word is still the voice but sounds increasingly like an instrument the longer it rings. Doubled and stacked vocals, where four takes of the same line panned across the stereo field behave differently from one voice in the middle. Screamed or heavily distorted vocals, whose harmonic structure looks more like a guitar than like singing."
+    },
+    {
+      "type": "p",
+      "text": "Hardest: dense mixes with a lot of midrange saturation, live recordings where the vocal bleeds into every drum microphone, and anything mastered extremely loudly, where compression has glued every element together into a single moving block."
+    },
+    {
+      "type": "p",
+      "text": "None of these fail outright. They simply produce more bleed — a ghost of the vocal in the instrumental, or a hint of guitar in the acapella."
+    },
+    {
+      "type": "h2",
+      "text": "What to do about bleed"
+    },
+    {
+      "type": "p",
+      "text": "If your instrumental still has a trace of vocal in it, there are three things worth trying, in this order."
+    },
+    {
+      "type": "p",
+      "text": "First, switch to High quality. The six-source model resolves overlapping material better, and on a dense mix the difference is often obvious rather than marginal."
+    },
+    {
+      "type": "p",
+      "text": "Second, check your source file. If it was an MP3 below 192kbps, find a better copy before you blame the tool."
+    },
+    {
+      "type": "p",
+      "text": "Third, accept it and mix around it. This is what professionals do. A faint vocal ghost sitting under a full band at performance volume is inaudible. It only sounds obvious when you solo the instrumental in headphones and listen for the thing you already know is there."
+    },
+    {
+      "type": "p",
+      "text": "What is not worth doing is running the output through a second pass of separation. Each pass reconstructs, and reconstructing a reconstruction compounds the artefacts rather than cancelling them."
+    },
+    {
+      "type": "h2",
+      "text": "What you can do with the two files"
+    },
+    {
+      "type": "p",
+      "text": "It is worth remembering that you get both halves, because people often come for one and find the other more useful."
+    },
+    {
+      "type": "p",
+      "text": "The instrumental is a backing track. That covers karaoke, live performance when your singer wants to front a record, practice for an instrumentalist who wants to play along without the vocal cue, and a bed for a video or a podcast intro."
+    },
+    {
+      "type": "p",
+      "text": "The isolated vocal — the acapella — is the raw material for a remix, a mashup, or a sample. It is also the single best tool for transcription: lyrics that are unintelligible under a full mix are usually obvious once the band is gone, and the same is true of a melody you are trying to learn by ear."
+    },
+    {
+      "type": "p",
+      "text": "If you want more than two parts — the drums on their own, or the bass line by itself — that is the Stem Splitter rather than the Vocal Remover. Same underlying idea, more outputs."
+    },
+    {
+      "type": "h2",
+      "text": "A note on what you are allowed to do with the result"
+    },
+    {
+      "type": "p",
+      "text": "Separating a song does not change who owns it. An instrumental derived from a commercial recording is still a derivative of that recording, and an acapella is still the artist's performance. Using either for private practice, for learning a part or for a performance covered by a venue's licence is ordinarily fine. Publishing a remix built on an extracted acapella is a different matter and generally needs permission from whoever controls the master and the composition."
+    },
+    {
+      "type": "p",
+      "text": "This is not legal advice and the details vary by country and by what you intend to do. It is simply worth knowing that the technical ease of extraction has no bearing on the legal position."
+    },
+    {
+      "type": "h2",
+      "text": "One thing worth doing before you start"
+    },
+    {
+      "type": "p",
+      "text": "Listen to the song once, properly, and decide which section matters. If you only need the chorus for a ringtone or the second verse for a practice loop, cut that section out first and separate only that."
+    },
+    {
+      "type": "p",
+      "text": "A thirty-second extract separates in a fraction of the time a four-minute track does, costs proportionally fewer credits, and gives you exactly the same quality on the part you cared about."
+    },
+    {
+      "type": "h2",
+      "text": "The short version"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Centre cancellation and karaoke EQ are obsolete; they damage the song more than they help.",
+        "Source separation with a trained model is what you want, and it is what 7 Audio uses.",
+        "The quality of your source file sets the ceiling on your result — start from the best copy you have.",
+        "High quality resolves dense mixes better than Standard, at the cost of time.",
+        "Expect some bleed on reverb-heavy, doubled or very loud material, and mix around it rather than re-processing.",
+        "One run gives you both the instrumental and the acapella."
+      ]
+    }
+  ]
+}

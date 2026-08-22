@@ -1,0 +1,314 @@
+{
+  "slug": "wav-vs-flac",
+  "title": "WAV vs FLAC: which lossless format should you use?",
+  "excerpt": "Both are bit-perfect, so the choice is about size, metadata and compatibility rather than sound quality — and there is a clear answer for each situation.",
+  "category": "Formats",
+  "date": "2026-07-21",
+  "accent": "var(--a-blue)",
+  "body": [
+    {
+      "type": "p",
+      "text": "The first thing to settle, because it comes up constantly in forum arguments: WAV and FLAC sound identical. Not similar, not close — identical. Decode a FLAC file and you get back exactly the same samples that went in, bit for bit. Anyone who claims to hear a difference between a WAV and a FLAC made from it is describing something other than the audio."
+    },
+    {
+      "type": "p",
+      "text": "So the choice is not about quality. It is about size, metadata, compatibility and what you are about to do next — and on those grounds there is usually a right answer."
+    },
+    {
+      "type": "h2",
+      "text": "How each one works"
+    },
+    {
+      "type": "h3",
+      "text": "WAV"
+    },
+    {
+      "type": "p",
+      "text": "A WAV file is, essentially, the raw samples with a short header describing how to interpret them: sample rate, bit depth, channel count. That is nearly all there is to it. Introduced by Microsoft and IBM in 1991, and unchanged in its essentials since."
+    },
+    {
+      "type": "p",
+      "text": "There is no compression. A minute of 16-bit stereo audio at 44.1 kHz is about 10 MB, and that figure follows directly from the arithmetic: 44,100 samples per second, two bytes each, two channels."
+    },
+    {
+      "type": "p",
+      "text": "The simplicity is the point. Nothing has to be decoded, nothing can be misinterpreted, and every piece of audio software written in the last thirty years reads it."
+    },
+    {
+      "type": "h3",
+      "text": "FLAC"
+    },
+    {
+      "type": "p",
+      "text": "FLAC — Free Lossless Audio Codec — compresses in the way a zip file does: it finds structure in the data and describes it more efficiently, in a way that can be reversed exactly. Audio has a great deal of structure, so it does well, typically reaching 50–60% of the WAV size."
+    },
+    {
+      "type": "p",
+      "text": "The mechanism, briefly: it predicts each sample from the ones before it and stores only the difference between prediction and reality. For a smoothly varying waveform those differences are small numbers that compress well. Nothing is discarded — the prediction plus the difference reconstructs the original exactly."
+    },
+    {
+      "type": "p",
+      "text": "How much you save depends on the material. Quiet, sparse acoustic recordings can drop below 50%. Dense, loud, heavily compressed modern masters may only reach 70%, because loud noisy audio is closer to random and random data does not compress."
+    },
+    {
+      "type": "h2",
+      "text": "Where they actually differ"
+    },
+    {
+      "type": "h3",
+      "text": "Size"
+    },
+    {
+      "type": "p",
+      "text": "FLAC wins, by roughly half. On a single file this is uninteresting. Across a library of a few thousand albums it is the difference between one drive and two."
+    },
+    {
+      "type": "h3",
+      "text": "Metadata"
+    },
+    {
+      "type": "p",
+      "text": "FLAC wins clearly, and this is underrated. FLAC has a proper tagging system — artist, album, track number, cover art, comments — that every player understands."
+    },
+    {
+      "type": "p",
+      "text": "WAV's metadata support is an afterthought bolted on decades later, implemented inconsistently, and frequently stripped by software that does not expect it. In practice a WAV file's only reliable metadata is its filename."
+    },
+    {
+      "type": "p",
+      "text": "If you are archiving music you want to browse later, this alone decides it."
+    },
+    {
+      "type": "h3",
+      "text": "Compatibility"
+    },
+    {
+      "type": "p",
+      "text": "WAV wins. Not by as much as it used to, but the gap has not closed entirely."
+    },
+    {
+      "type": "p",
+      "text": "Every DAW, every editor, every browser, every operating system handles WAV. FLAC is supported by all modern DAWs, all major operating systems, most browsers and most modern hardware players — but you will still meet the occasional car stereo, older device, or piece of industrial software that does not know what to do with it."
+    },
+    {
+      "type": "p",
+      "text": "If you are handing a file to somebody whose setup you cannot see, WAV removes a question."
+    },
+    {
+      "type": "h3",
+      "text": "Processing overhead"
+    },
+    {
+      "type": "p",
+      "text": "WAV wins, marginally and usually irrelevantly. FLAC has to be decoded before it can be played or edited, which costs a small amount of processor time. On any machine made this century this is invisible for playback."
+    },
+    {
+      "type": "p",
+      "text": "It becomes marginally relevant if you are running a large project with dozens of simultaneous tracks, which is why many engineers keep session files as WAV and archive as FLAC."
+    },
+    {
+      "type": "h3",
+      "text": "Integrity checking"
+    },
+    {
+      "type": "p",
+      "text": "FLAC wins, and it is worth knowing about. Each FLAC frame carries a checksum, and the file carries a hash of the original audio. That means corruption can be detected — a tool can tell you a file has been damaged."
+    },
+    {
+      "type": "p",
+      "text": "A corrupted WAV simply plays, with whatever the corruption sounds like. For long-term archiving, being able to verify that a file is still what you stored is a real advantage."
+    },
+    {
+      "type": "h2",
+      "text": "Straight answers"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Working in a DAW right now: WAV. No decoding, universal support, and you are going to export something else at the end anyway.",
+        "Archiving a music library: FLAC. Half the size, proper tags, and it can tell you if it has been damaged.",
+        "Sending a file to somebody: WAV if you do not know their setup, FLAC if you do and the file is large.",
+        "Stems for a collaborator: WAV. It is the format every studio expects, and the size is the collaborator's problem rather than a compatibility risk.",
+        "Storing masters of your own work: FLAC, with a WAV working copy if you are actively editing.",
+        "Anything going to a phone or a car: neither — export a lossy format for that. Lossless on a phone speaker is storage spent on nothing."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Bit depth and sample rate"
+    },
+    {
+      "type": "p",
+      "text": "Both formats carry these identically, so the decision is the same either way — but it is worth stating because people conflate it with the format choice."
+    },
+    {
+      "type": "p",
+      "text": "Bit depth determines the noise floor. 16-bit gives about 96 dB of dynamic range, which is more than any listening environment provides. 24-bit gives about 144 dB and exists to provide headroom during production, not to sound better at the end. For a finished file, 16-bit is transparent; for stems you are going to process, 24-bit gives you room to make gain changes without the noise floor becoming audible."
+    },
+    {
+      "type": "p",
+      "text": "Sample rate determines the highest frequency that can be represented. 44.1 kHz covers up to about 22 kHz, comfortably beyond human hearing. Higher rates are useful in production for reasons to do with how certain processing behaves, and deliver no audible benefit in a delivered file."
+    },
+    {
+      "type": "p",
+      "text": "Choosing 24-bit at 96 kHz for a finished archive triples your storage in exchange for nothing you can hear. Choose it during production if your workflow calls for it; do not choose it out of caution."
+    },
+    {
+      "type": "h2",
+      "text": "Converting between them"
+    },
+    {
+      "type": "p",
+      "text": "This is completely safe and can be repeated indefinitely. WAV to FLAC to WAV to FLAC, a hundred times, and the final file is bit-identical to the first. There is no generation loss, because nothing is being discarded at any step."
+    },
+    {
+      "type": "p",
+      "text": "This is exactly what makes lossless formats different from lossy ones, and it is why a lossless master is worth keeping even if everything you deliver is an MP3."
+    },
+    {
+      "type": "h2",
+      "text": "The one genuinely wrong move"
+    },
+    {
+      "type": "p",
+      "text": "Converting a lossy file to a lossless one and treating the result as high quality."
+    },
+    {
+      "type": "p",
+      "text": "A 128kbps MP3 turned into a 24-bit WAV is a file roughly forty times larger containing exactly the same damaged audio. Nothing has been recovered. The only thing that has changed is how much space it occupies and how misleading its name is."
+    },
+    {
+      "type": "p",
+      "text": "There is one legitimate reason to do it — you are about to process the file further and want to avoid a second generation of lossy compression — but that is a working decision, not an improvement in quality."
+    },
+    {
+      "type": "h2",
+      "text": "How much FLAC actually saves, by material"
+    },
+    {
+      "type": "p",
+      "text": "The \"about half\" figure is an average across a lot of music, and the variance is worth knowing because it tells you something about your audio."
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Solo acoustic, sparse arrangements, spoken word: often 40–50% of the WAV size. Quiet, predictable waveforms compress well.",
+        "Typical rock and pop, moderately mastered: 55–65%.",
+        "Heavily compressed modern masters: 70–80%. Loud, dense audio is closer to random, and random data does not compress.",
+        "Pure silence: almost nothing. A minute of digital silence in FLAC is a few kilobytes.",
+        "White noise: essentially no saving at all — it is incompressible by definition."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "So if your FLAC files are barely smaller than the WAVs, that is not a fault in the encoder. It is telling you the material is very dense, which usually means heavily limited."
+    },
+    {
+      "type": "p",
+      "text": "FLAC also has compression levels, typically 0 to 8. Higher levels take longer to encode and produce slightly smaller files — the difference between level 5 and level 8 is usually two or three percent for several times the encoding time. Decoding speed is unaffected by the level, so there is no playback penalty either way. Level 5 is the sensible default and there is little reason to change it."
+    },
+    {
+      "type": "h2",
+      "text": "The integrity check nobody uses"
+    },
+    {
+      "type": "p",
+      "text": "FLAC stores an MD5 hash of the original uncompressed audio in its header. That is a genuinely useful property and almost nobody takes advantage of it."
+    },
+    {
+      "type": "p",
+      "text": "It means a FLAC file can be verified: decode it, hash the result, compare against what was stored. If they match, the file is bit-for-bit what was encoded. If they do not, it has been damaged."
+    },
+    {
+      "type": "p",
+      "text": "A corrupted WAV cannot tell you this. It just plays, with whatever the corruption sounds like — a click, a burst of noise, or a section of silence. You find out when you listen, which for an archive might be years later."
+    },
+    {
+      "type": "p",
+      "text": "For anything you are storing long-term, that difference matters more than the size saving. Bit rot on consumer drives is real, and a format that can detect it is worth having."
+    },
+    {
+      "type": "h2",
+      "text": "The bit-perfect argument, settled"
+    },
+    {
+      "type": "p",
+      "text": "Since this comes up in every discussion, it is worth being concrete about how you can check it yourself rather than taking anyone's word."
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Take a WAV file.",
+        "Encode it to FLAC.",
+        "Decode that FLAC back to a new WAV.",
+        "Compare the audio data of the two WAVs byte by byte."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "They are identical. Not close — identical, every sample. Any checksum tool will confirm it. This is what \"lossless\" means, and it is a testable claim rather than a marketing one."
+    },
+    {
+      "type": "p",
+      "text": "It follows that a difference in how a FLAC and a WAV sound cannot come from the file. If two files produce identical samples, any perceived difference is coming from elsewhere: different playback software, a different volume, or expectation. That last one is powerful and it is not a criticism — everybody is subject to it, which is exactly why blind comparison exists."
+    },
+    {
+      "type": "h2",
+      "text": "What about ALAC, WavPack and the rest"
+    },
+    {
+      "type": "p",
+      "text": "FLAC is not the only lossless format, and the alternatives are worth a paragraph."
+    },
+    {
+      "type": "p",
+      "text": "ALAC — Apple Lossless — is technically comparable to FLAC and compresses to within a few percent of it. Its advantage is native support across Apple software and hardware. Its disadvantage is weaker support everywhere else. If your world is entirely Apple, it is a reasonable choice; otherwise FLAC has broader reach."
+    },
+    {
+      "type": "p",
+      "text": "WavPack is capable and rarely encountered. AIFF is Apple's equivalent of WAV — uncompressed, with better metadata support than WAV, and the same size. Monkey's Audio compresses slightly harder than FLAC at the cost of much slower decoding and poor support."
+    },
+    {
+      "type": "p",
+      "text": "None of these is wrong. FLAC is the recommendation because it is free, open, well supported, and the one your future self is most likely to be able to open."
+    },
+    {
+      "type": "h2",
+      "text": "A practical storage strategy"
+    },
+    {
+      "type": "p",
+      "text": "If you are keeping audio for years rather than weeks, the format is only part of it."
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Archive in FLAC. Half the space, verifiable, properly tagged.",
+        "Keep the working copy as WAV while a project is active, then archive and delete the WAV when it is finished.",
+        "Store the highest-quality version you ever had. Never archive a derived, converted or normalised copy in place of the original.",
+        "Keep two copies in two places. A format that can detect corruption is only useful if you have something to restore from.",
+        "Name files so that they still make sense to someone who has forgotten the project — including you, in three years."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "A note on streaming your own library"
+    },
+    {
+      "type": "p",
+      "text": "If you keep a FLAC library and stream it to a phone, the phone does not need lossless. Most self-hosted music servers will transcode on the fly, sending a compressed version over the network while keeping the lossless original at home."
+    },
+    {
+      "type": "p",
+      "text": "That is the arrangement worth aiming for: lossless where you store, lossy where you listen on the move. It costs nothing in quality that anybody can hear and saves both bandwidth and battery."
+    },
+    {
+      "type": "h2",
+      "text": "In one line"
+    },
+    {
+      "type": "p",
+      "text": "Use WAV while you are working. Use FLAC when you are storing. Never use either as an excuse to believe a compressed file got better."
+    }
+  ]
+}

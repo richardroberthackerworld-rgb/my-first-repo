@@ -1,0 +1,369 @@
+{
+  "slug": "podcast-audio-checklist",
+  "title": "A podcast audio checklist that actually helps",
+  "excerpt": "The handful of things that decide whether an episode sounds professional — most of them before you press record, and none of them requiring expensive equipment.",
+  "category": "Practice",
+  "date": "2026-07-17",
+  "accent": "var(--a-orange)",
+  "body": [
+    {
+      "type": "p",
+      "text": "Listeners forgive a great deal in a podcast. They will forgive a stumble, a tangent, a joke that does not land. What they do not forgive is audio that is tiring to listen to — and the difference between tiring and comfortable is mostly a short list of unglamorous decisions, very few of which involve buying anything."
+    },
+    {
+      "type": "p",
+      "text": "This is that list, in the order the decisions arise."
+    },
+    {
+      "type": "h2",
+      "text": "Before you record"
+    },
+    {
+      "type": "h3",
+      "text": "Get close to the microphone"
+    },
+    {
+      "type": "p",
+      "text": "The single highest-impact thing on this page, and it is free."
+    },
+    {
+      "type": "p",
+      "text": "Sound falls off with distance while the room's reverberation does not, so halving the distance between your mouth and the microphone roughly doubles the level of your voice relative to the room. A speaker at 15 cm sounds present and intimate. The same speaker, same microphone, same room at 60 cm sounds distant and boxy, and no amount of processing afterwards recovers the difference."
+    },
+    {
+      "type": "p",
+      "text": "About a hand's width, slightly off to one side so plosives pass by rather than into the capsule. That is the whole technique."
+    },
+    {
+      "type": "h3",
+      "text": "Fix the room, not the gear"
+    },
+    {
+      "type": "p",
+      "text": "A cheap microphone in a treated space beats an expensive one in a bare room, every time. Reverberation is the hardest problem to fix afterwards — it follows the voice exactly, so noise reduction cannot separate it out."
+    },
+    {
+      "type": "p",
+      "text": "You do not need acoustic panels. Soft furnishings, curtains, a rug, a bookshelf, a bed. Recording in a wardrobe full of clothes is a genuine technique and it genuinely works. Avoid kitchens, bathrooms and empty rooms with hard parallel walls."
+    },
+    {
+      "type": "h3",
+      "text": "Turn things off"
+    },
+    {
+      "type": "p",
+      "text": "The fan, the air conditioning, the fridge in the next room, the dishwasher. Notifications on every device in the building. Sixty seconds of walking around before you start beats an hour of noise reduction later, and unlike noise reduction it costs you nothing in quality."
+    },
+    {
+      "type": "h3",
+      "text": "Set your level properly"
+    },
+    {
+      "type": "p",
+      "text": "Aim for peaks between −12 and −6 dBFS while speaking normally. Then say your loudest thing — the laugh, the exclamation — and make sure that still fits."
+    },
+    {
+      "type": "p",
+      "text": "Too quiet buries you in the noise floor, and raising it later raises the noise too. Too loud clips, and clipping cannot be repaired: the peaks are flattened and the information in them is destroyed. If you must err, err quiet."
+    },
+    {
+      "type": "h3",
+      "text": "Record thirty seconds of silence"
+    },
+    {
+      "type": "p",
+      "text": "Before every session. Nobody speaks, nothing moves, and you capture the room. This gives any noise reduction a clean picture of what to remove, and it tells you immediately if you have a hum problem while you can still fix the cable."
+    },
+    {
+      "type": "h3",
+      "text": "Record each person separately"
+    },
+    {
+      "type": "p",
+      "text": "If you have more than one voice, separate tracks are worth far more than any piece of equipment. You can fix one person's level without touching the other, cut a cough without cutting the reply on top of it, and remove one person's keyboard noise while leaving the other alone."
+    },
+    {
+      "type": "p",
+      "text": "For remote guests, ask them to record their own side locally and send it. Connection quality varies through a call; a local recording does not."
+    },
+    {
+      "type": "h2",
+      "text": "Editing, in order"
+    },
+    {
+      "type": "p",
+      "text": "Sequence matters, because each step changes what the next one sees."
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Cut first. False starts, long silences, the dog, the courier. Do this before anything else, because there is no sense in processing audio you are about to delete — and a loud one-off event skews the noise floor measurement of anything that follows.",
+        "Denoise second, lightly. Around 70–80% strength. The goal is a natural-sounding background, not silence.",
+        "Level third. With the noise down, bring the overall level up to where it should be. Doing this first would have raised the noise with it.",
+        "Assemble last. Join the intro, the body and the outro with short crossfades — 100 to 200 milliseconds between speech segments, longer where music meets speech."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "The noise reduction mistake"
+    },
+    {
+      "type": "p",
+      "text": "Everyone makes it once: turn the strength to maximum, because the goal is to remove the noise."
+    },
+    {
+      "type": "p",
+      "text": "What you get is a voice that sounds like it is underwater, surrounded by a silence that swells and collapses between words. The reason is that noise reduction removes what sits near the noise floor — and the quiet parts of speech, the breaths, the tails of words, the air in consonants, all live there. Take them and you are left with only the loud middle of every sound."
+    },
+    {
+      "type": "p",
+      "text": "70–80% leaves a trace of room tone underneath, and that trace is what makes it sound like a person in a room rather than a synthesiser. The test is not \"is the noise gone\". It is \"does this sound like a human being\"."
+    },
+    {
+      "type": "h2",
+      "text": "Export settings"
+    },
+    {
+      "type": "p",
+      "text": "Speech and music want completely different answers here, and defaults are usually set for music."
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Mono, not stereo. One person talking into one microphone has no stereo information. Stereo doubles the file for nothing.",
+        "96 to 128kbps. A voice does not need more. At 320kbps you are spending three quarters of the file describing silence and room tone.",
+        "MP3 or AAC. MP3 if you want zero compatibility questions.",
+        "Normalise so every episode lands at the same level. A listener who has to reach for the volume between episodes notices."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "A one-hour episode at 96kbps mono is about 43 MB. The same episode at 320kbps stereo is about 144 MB. Over a hundred episodes that is a meaningful amount of your hosting bill and your listeners' data, bought for no audible benefit."
+    },
+    {
+      "type": "h2",
+      "text": "Problems and what to do"
+    },
+    {
+      "type": "h3",
+      "text": "One guest is much quieter than the other"
+    },
+    {
+      "type": "p",
+      "text": "Normalise each person's track separately before assembling. If they were recorded on one track together, this is much harder — which is the argument for separate tracks."
+    },
+    {
+      "type": "h3",
+      "text": "There is a hum under everything"
+    },
+    {
+      "type": "p",
+      "text": "Use the Hum setting rather than General, and pick 50 Hz or 60 Hz to match your country. Hum tolerates a much higher strength than broadband noise because it is so narrowly targeted."
+    },
+    {
+      "type": "h3",
+      "text": "Someone was typing"
+    },
+    {
+      "type": "p",
+      "text": "Cut the individual keystrokes if they are in gaps. If they are under speech, they are extremely hard to remove — noise reduction handles constant background, not sharp events. Ask people to stop typing next time, which is the real fix."
+    },
+    {
+      "type": "h3",
+      "text": "It sounds boxy and distant"
+    },
+    {
+      "type": "p",
+      "text": "That is room reverberation, and there is no good fix afterwards. Get closer to the microphone and soften the room, then re-record if the episode matters enough."
+    },
+    {
+      "type": "h3",
+      "text": "The recording is distorted"
+    },
+    {
+      "type": "p",
+      "text": "Clipping. Nothing recovers it. Re-record with the input level lower."
+    },
+    {
+      "type": "h2",
+      "text": "The check that catches everything"
+    },
+    {
+      "type": "p",
+      "text": "Before publishing, listen to the finished episode the way your audience will: on a phone, through earbuds, ideally while walking somewhere with traffic."
+    },
+    {
+      "type": "p",
+      "text": "This catches things studio monitors hide. Passages too quiet to hear over background noise. A guest who disappears in a noisy environment. Music that is too loud under speech. Level jumps between segments."
+    },
+    {
+      "type": "p",
+      "text": "It takes one listen and it is the single most reliable quality check on this page."
+    },
+    {
+      "type": "h2",
+      "text": "Recording remote guests"
+    },
+    {
+      "type": "p",
+      "text": "The commonest podcast format and the one with the most ways to go wrong, because you control none of the other end."
+    },
+    {
+      "type": "h3",
+      "text": "Ask for a local recording"
+    },
+    {
+      "type": "p",
+      "text": "The single most valuable thing you can do. Connection quality varies through a call — bandwidth drops, packets are lost, the codec adapts — and none of that affects a recording made on the guest's own machine."
+    },
+    {
+      "type": "p",
+      "text": "The technique is called a double-ender: both sides record locally, both send their file afterwards, and you sync them in the edit. It is a small imposition on the guest and it is the difference between a guest who sounds like they are in the room and one who sounds like they are on a phone."
+    },
+    {
+      "type": "p",
+      "text": "Sync using a countdown and a clap at the start, or simply align on the first word both files contain."
+    },
+    {
+      "type": "h3",
+      "text": "Brief the guest before the day"
+    },
+    {
+      "type": "p",
+      "text": "Most guests want to sound good and have no idea what affects it. A short message beforehand covers almost everything:"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Use wired headphones — any wired headphones. This prevents your voice echoing back into their microphone, which is the single commonest remote-recording problem.",
+        "Sit closer to the microphone than feels natural.",
+        "Choose a room with soft furnishings rather than a kitchen or an office with hard walls.",
+        "Close other applications and turn off notifications.",
+        "If using a laptop microphone, do not type during the interview."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "That message takes two minutes to write and saves an hour of editing."
+    },
+    {
+      "type": "h3",
+      "text": "Record a backup of the call anyway"
+    },
+    {
+      "type": "p",
+      "text": "Even with local recordings, record the call itself. Local recordings get lost, get overwritten, or turn out to have been silently muted. The call recording is worse quality and it is better than nothing, which is what you have if the guest's file does not arrive."
+    },
+    {
+      "type": "h2",
+      "text": "The intro and outro"
+    },
+    {
+      "type": "p",
+      "text": "Where music meets speech, and where amateur productions most often give themselves away."
+    },
+    {
+      "type": "h3",
+      "text": "Duck the music, do not stop it"
+    },
+    {
+      "type": "p",
+      "text": "Music that plays and then abruptly stops when the speech begins sounds like two files joined together, which is exactly what it is. Fade it down under the first words and let it continue quietly for a few seconds before fading out."
+    },
+    {
+      "type": "p",
+      "text": "A useful rule: the music should be about 15 to 20 decibels below the speech once someone is talking. Quiet enough not to compete, present enough to feel intentional."
+    },
+    {
+      "type": "h3",
+      "text": "Keep it short"
+    },
+    {
+      "type": "p",
+      "text": "Listeners hear your intro every single episode. What feels like a reasonable thirty seconds to you is thirty seconds they skip. Ten to fifteen is plenty."
+    },
+    {
+      "type": "h3",
+      "text": "Use the same intro every time"
+    },
+    {
+      "type": "p",
+      "text": "Consistency signals that a show is produced. Re-recording the intro each episode also means the level and tone shift slightly from week to week, which listeners notice as a vague unevenness even if they cannot say why."
+    },
+    {
+      "type": "h2",
+      "text": "Levels across an episode"
+    },
+    {
+      "type": "p",
+      "text": "Two problems that look the same and are not."
+    },
+    {
+      "type": "p",
+      "text": "The first is level differences between speakers — one guest quieter than the host throughout. Normalise each person's track separately before assembling, which is much easier if you recorded them separately."
+    },
+    {
+      "type": "p",
+      "text": "The second is level differences within one person — a speaker who is animated in one section and quiet in another. Normalising does not fix this, because it only moves the whole file. What helps is gentle compression, which reduces the range between loud and quiet so that everything sits in a usable band."
+    },
+    {
+      "type": "p",
+      "text": "Do not overdo it. Heavy compression on speech makes every breath and mouth noise as loud as the words, which is exhausting to listen to and is the sound of a podcast that has been processed too hard."
+    },
+    {
+      "type": "h2",
+      "text": "Publishing consistency"
+    },
+    {
+      "type": "p",
+      "text": "Small things that make a show feel professional across a run rather than episode by episode."
+    },
+    {
+      "type": "ul",
+      "items": [
+        "The same export settings every week. Write them down. A single episode in stereo at 320kbps among a hundred mono ones at 96 is a jarring download for a subscriber.",
+        "The same target loudness. Most podcast platforms expect around −16 LUFS for stereo or −19 for mono; the specifics matter less than being consistent with yourself.",
+        "The same intro and outro placement, so listeners know when the content starts.",
+        "Consistent file naming, with the episode number zero-padded so files sort correctly past episode nine.",
+        "Tags filled in — title, episode number, artwork. Some apps show them prominently and a blank field looks abandoned."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "The recovery kit"
+    },
+    {
+      "type": "p",
+      "text": "Things that will happen, and what to do when they do."
+    },
+    {
+      "type": "ul",
+      "items": [
+        "The guest's recording never arrives. Use your call backup. This is why you made one.",
+        "One channel is silent. If the recording is stereo and only one side has audio, convert to mono — it takes what is there rather than half of nothing.",
+        "The guest was on speakerphone. Almost nothing helps. Light noise reduction, accept it, and ask for headphones next time.",
+        "Someone clipped throughout. Unrecoverable. If the episode matters, re-record; if not, publish it with a brief apology and move on.",
+        "The whole file is quiet. Normalise, then reduce noise — in that order, because the noise came up with everything else."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "The whole thing, compressed"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Get close. Soften the room. Turn things off.",
+        "Peaks between −12 and −6 dBFS, and record thirty seconds of silence first.",
+        "Separate tracks per person, always.",
+        "Cut, then denoise lightly, then level, then assemble.",
+        "Export mono at 96–128kbps, normalised.",
+        "Listen back on a phone before you publish."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "None of this requires better equipment. All of it requires about ten minutes of attention, and it is the difference between an episode people finish and one they do not."
+    }
+  ]
+}

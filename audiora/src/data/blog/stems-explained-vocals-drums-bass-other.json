@@ -1,0 +1,288 @@
+{
+  "slug": "stems-explained-vocals-drums-bass-other",
+  "title": "Stems explained: what they are and what to do with them",
+  "excerpt": "Vocals, drums, bass, guitar, piano and everything else — what a stem actually is, how separation reconstructs one from a finished mix, and how producers, DJs and teachers use them.",
+  "category": "Explainers",
+  "date": "2026-08-16",
+  "accent": "var(--a-green)",
+  "body": [
+    {
+      "type": "p",
+      "text": "A stem is one part of a song on its own. The drums with nothing else. The bass with nothing else. Ask ten people what the word means and you will get three different answers, because the term has been quietly redefined twice — once by the mixing world and once by DJ software — and the two meanings have now collided with a third that only exists because of machine learning."
+    },
+    {
+      "type": "p",
+      "text": "Getting the definitions straight is genuinely useful, because it tells you what to expect from a stem you did not make yourself."
+    },
+    {
+      "type": "h2",
+      "text": "Three meanings of one word"
+    },
+    {
+      "type": "h3",
+      "text": "The studio meaning"
+    },
+    {
+      "type": "p",
+      "text": "In a recording studio, a stem is a submix. A record might have eighty individual tracks — twelve of them drum microphones, six of them backing vocals — and mixing that many at once is unwieldy. So the engineer groups them: all the drums to one bus, all the vocals to another, everything orchestral to a third. Each of those groups, bounced out as its own audio file, is a stem."
+    },
+    {
+      "type": "p",
+      "text": "Stems in this sense are a mixing convenience, and they are exact. They are the real, original audio, with the real processing on it. When a mastering engineer asks for stems, this is what they mean."
+    },
+    {
+      "type": "h3",
+      "text": "The DJ meaning"
+    },
+    {
+      "type": "p",
+      "text": "DJ software popularised a narrower version: a track split into four fixed parts — vocals, drums, bass and \"other\" — so that a performer can drop the vocal out of one record and run it over the drums of another. The four-part split is a convention rather than a law, but it has become so standard that most people now hear \"stems\" and think of exactly those four."
+    },
+    {
+      "type": "h3",
+      "text": "The separated meaning"
+    },
+    {
+      "type": "p",
+      "text": "The third meaning is the one that concerns anybody using a tool like this. It is a stem that never existed as a separate file at all — it has been reconstructed from a finished stereo mix by a model trained to recognise what each instrument looks like inside a mixed signal."
+    },
+    {
+      "type": "p",
+      "text": "This is the important distinction. A studio stem is the original. A separated stem is an inference about the original. It is often extremely close, and for most purposes the difference does not matter. But it explains every artefact you will ever hear in a separated stem, so it is worth holding on to."
+    },
+    {
+      "type": "h2",
+      "text": "How separation actually reconstructs a part"
+    },
+    {
+      "type": "p",
+      "text": "A stereo file is two long lists of numbers describing air pressure over time. Every instrument in the song has been added into those same numbers. There is no marker saying where the drums are."
+    },
+    {
+      "type": "p",
+      "text": "A separation model is trained on a large collection of songs where both the mix and the original separate parts are known. It learns the statistical fingerprint of each kind of source: how a snare's energy appears and decays, how a bass note's harmonics stack up, how a voice's formants move as a word is sung, how a piano's attack differs from a guitar's."
+    },
+    {
+      "type": "p",
+      "text": "Given a new mix it has never heard, it estimates how much of every moment and every frequency belongs to each source. Crucially, it does not simply mute what it thinks is not the drums — it reconstructs what the drums alone would have sounded like, including the parts of them that were partly hidden underneath a loud vocal."
+    },
+    {
+      "type": "p",
+      "text": "That reconstruction is why separated stems are so much better than the older subtraction tricks, and it is also why they can go subtly wrong. When the model is uncertain, it invents something plausible. Usually it is right. Occasionally you hear the guess."
+    },
+    {
+      "type": "h2",
+      "text": "The stems you get"
+    },
+    {
+      "type": "p",
+      "text": "7 Audio's Stem Splitter offers two models."
+    },
+    {
+      "type": "p",
+      "text": "Standard produces four: vocals, drums, bass, and other. That last one is a catch-all — guitars, keys, strings, horns, synths, anything that is not a voice, a drum or a bass all end up together. It is quick, and for a great many jobs it is all you need."
+    },
+    {
+      "type": "p",
+      "text": "High quality produces six: vocals, drums, bass, guitar, piano, and other. It pulls guitar and piano out of that catch-all, and the overall separation is cleaner across the board, not just on the two extra parts. The cost is a much larger one-time setup and a slower run."
+    },
+    {
+      "type": "p",
+      "text": "A rule of thumb: if what you want is one of vocals, drums or bass, Standard is usually enough. If what you want is a guitar part, a piano part, or the best possible quality on a dense mix, it is worth the wait."
+    },
+    {
+      "type": "h2",
+      "text": "What each stem is good for"
+    },
+    {
+      "type": "h3",
+      "text": "Vocals"
+    },
+    {
+      "type": "p",
+      "text": "The acapella. Used for remixes and mashups, for transcribing lyrics that are buried in the mix, and for studying a performance — phrasing, vibrato, where a singer breathes. Removing it instead gives you the karaoke or practice track."
+    },
+    {
+      "type": "h3",
+      "text": "Drums"
+    },
+    {
+      "type": "p",
+      "text": "The most immediately useful stem for producers, because a drum part lifted from a record carries the groove and the room sound of the original. It is also the easiest stem to separate cleanly, since percussion is transient and broadband and does not look much like anything else."
+    },
+    {
+      "type": "p",
+      "text": "For a drummer, the opposite is more useful: mute the drum stem and play along with the rest of the band."
+    },
+    {
+      "type": "h3",
+      "text": "Bass"
+    },
+    {
+      "type": "p",
+      "text": "Bass separates well because it lives almost alone at the bottom of the spectrum. Bass players use it to learn lines by ear, and producers use it to work out what a record is doing harmonically — the bass note usually tells you the chord."
+    },
+    {
+      "type": "p",
+      "text": "One caveat: a kick drum and a bass note overlap heavily below 100 Hz, and that is the one place where separation regularly leaves a trace of one in the other."
+    },
+    {
+      "type": "h3",
+      "text": "Guitar and piano"
+    },
+    {
+      "type": "p",
+      "text": "The two hardest sources, and the reason they only appear in the six-source model. Both cover a wide frequency range that overlaps almost everything, and an electric guitar under heavy distortion can genuinely resemble a synth or even a vocal to a model. Expect these two to be the least clean of the six — and still far more useful than not having them."
+    },
+    {
+      "type": "h3",
+      "text": "Other"
+    },
+    {
+      "type": "p",
+      "text": "Whatever is left. Worth listening to rather than discarding: it often holds the strings, the pads and the incidental production details that give a record its character."
+    },
+    {
+      "type": "h2",
+      "text": "Five things people actually do with stems"
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Remixing. Take the acapella, build a new track underneath it. This is the single commonest use, and the reason separation tools exist in the numbers they do.",
+        "DJ edits. Make an intro out of just the drums, drop the vocal out for a transition, or run one record's vocal over another's rhythm.",
+        "Learning an instrument. Solo the bass and play along with it, then mute it and take its place. This is far more effective than slowing the whole mix down.",
+        "Transcription and analysis. Working out a chord voicing or a horn line is dramatically easier when you can hear it without the rest of the arrangement on top.",
+        "Re-balancing an old mix. A record where the vocal was buried can be brought back into line by separating and re-summing with different levels. It is not the same as a real remix, but it can rescue a recording nothing else will fix."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "How to judge a separation"
+    },
+    {
+      "type": "p",
+      "text": "Listen for these three things, in this order."
+    },
+    {
+      "type": "p",
+      "text": "Bleed. Can you hear one instrument in another's stem? Solo the drums and listen for a ghost of the vocal. Some is normal; a lot means either a dense mix or a low-quality source."
+    },
+    {
+      "type": "p",
+      "text": "Smearing. Do transients still snap? A snare that has gone soft, or a piano attack that sounds smudged, is the signature of a model working hard on material where sources overlap."
+    },
+    {
+      "type": "p",
+      "text": "Holes. Does anything drop out entirely for a moment? This is rarer and usually happens where a source was almost completely masked by something louder for a beat or two."
+    },
+    {
+      "type": "p",
+      "text": "Then apply the only test that matters: does it sound acceptable in the context you are going to use it in? A stem that sounds rough in solo headphones is frequently perfect underneath a full arrangement."
+    },
+    {
+      "type": "h2",
+      "text": "Getting the best result"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Use the highest-quality source you can find. A 128kbps MP3 caps what any model can recover.",
+        "Choose the six-source model for dense material, or when you specifically want guitar or piano.",
+        "Export as WAV if the stems are going into a DAW; there is no reason to compress something you are about to process further.",
+        "Take only the stems you need — you are not obliged to download all six.",
+        "Judge the result in context, not in solo."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Working with stems in a project"
+    },
+    {
+      "type": "p",
+      "text": "Some practical points that come up the first time you load separated stems into a DAW."
+    },
+    {
+      "type": "ul",
+      "items": [
+        "They are all the same length as the original, and all start at zero. Drop them in at the project start and they are in sync — no alignment needed.",
+        "Summing all the stems together reproduces something very close to the original mix. If it does not, you are missing one.",
+        "Export at 24-bit. Stems are quieter than the mix they came from and you will apply gain.",
+        "Expect to high-pass. Stems frequently carry a little low-frequency residue from other sources; a filter at 80–100 Hz on anything that is not bass or kick cleans this up instantly.",
+        "Do not normalise each stem separately. That destroys the balance between them, which was the one thing the separation got right for free."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "The re-balancing trick"
+    },
+    {
+      "type": "p",
+      "text": "A use that is not remixing and is genuinely valuable: changing the mix of a record without remixing it."
+    },
+    {
+      "type": "p",
+      "text": "Separate a track into stems, adjust their relative levels, and sum them back together. A vocal that was buried comes forward. A snare that was harsh comes down. The result is not a new arrangement — every part is playing exactly what it played — but the balance is yours."
+    },
+    {
+      "type": "p",
+      "text": "This works surprisingly well on old recordings where the mixing conventions of the time no longer suit modern listening, and on live recordings where one instrument dominated. It is also the only way to rescue a recording whose original multitrack no longer exists."
+    },
+    {
+      "type": "p",
+      "text": "The limit is that any artefacts become more audible as you move a stem away from its original level. Bringing something up 3 dB is usually invisible; bringing it up 12 dB exposes everything the model guessed at."
+    },
+    {
+      "type": "h2",
+      "text": "Stems for practice, in more detail"
+    },
+    {
+      "type": "p",
+      "text": "The educational use deserves more than a line, because it is what most people actually do with them."
+    },
+    {
+      "type": "h3",
+      "text": "For a rhythm section player"
+    },
+    {
+      "type": "p",
+      "text": "Mute your instrument and play with the rest of the band. A bassist playing along with drums, guitar and vocals from a record they love gets something no backing track app provides: a real drummer's feel, with all its small imperfections."
+    },
+    {
+      "type": "h3",
+      "text": "For a soloist"
+    },
+    {
+      "type": "p",
+      "text": "Keep drums and bass, drop everything else, and improvise. You now have a rhythm section that responds to nothing you do, which is a limitation — and you have their groove, which no metronome has."
+    },
+    {
+      "type": "h3",
+      "text": "For a singer"
+    },
+    {
+      "type": "p",
+      "text": "Remove the vocal to sing over the arrangement; isolate the vocal to study the performance. Doing both on the same song, in that order, teaches more than either alone."
+    },
+    {
+      "type": "h3",
+      "text": "For an arranger"
+    },
+    {
+      "type": "p",
+      "text": "Listening to the \"other\" stem alone is unexpectedly instructive. It contains the pads, the counter-melodies and the production details that you never notice in the mix and that are doing most of the work of making the record sound like itself."
+    },
+    {
+      "type": "h2",
+      "text": "One thing separated stems will never be"
+    },
+    {
+      "type": "p",
+      "text": "They will never be the original multitrack. No amount of model improvement changes that, because the information genuinely is not in the file — once a mix is summed, some of what went into it is unrecoverable in principle, not just in practice."
+    },
+    {
+      "type": "p",
+      "text": "That is not a reason to be disappointed. Being able to pull a usable drum part out of a finished record would have looked like magic to anyone working in music twenty years ago. It is worth being clear-eyed about what you are getting: an extremely good reconstruction, not a recovery."
+    }
+  ]
+}

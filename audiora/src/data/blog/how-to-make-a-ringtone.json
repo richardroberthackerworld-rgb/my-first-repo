@@ -1,0 +1,323 @@
+{
+  "slug": "how-to-make-a-ringtone",
+  "title": "How to make a ringtone from any song",
+  "excerpt": "Picking the right thirty seconds, cutting it so it does not click, and exporting in the format your phone will actually accept.",
+  "category": "Guides",
+  "date": "2026-07-11",
+  "accent": "var(--a-pink)",
+  "body": [
+    {
+      "type": "p",
+      "text": "Making a ringtone is a small job that people do badly for predictable reasons: they start the clip at the beginning of the song, they cut it wherever the thirty seconds happen to end, and they export it in a format their phone refuses. All three are easy to avoid."
+    },
+    {
+      "type": "h2",
+      "text": "Choose the right part of the song"
+    },
+    {
+      "type": "p",
+      "text": "A ringtone has about three seconds to be recognisable before somebody answers the phone or gets annoyed. That is the whole design constraint, and it rules out most of the song."
+    },
+    {
+      "type": "p",
+      "text": "The opening of a track is almost always the wrong choice. Intros are designed to set up an arrival — an atmospheric pad, a slow build, a drum fill leading somewhere. As a ringtone this is twenty seconds of nothing followed by a hang-up."
+    },
+    {
+      "type": "p",
+      "text": "What you want is the most immediately identifiable moment: the chorus hook, the main riff, the horn stab, the vocal line everybody knows. Start the clip a beat or two before it so it has somewhere to land, not fifteen seconds before."
+    },
+    {
+      "type": "p",
+      "text": "Twenty to thirty seconds is the practical length. Most phones will cut you off around thirty anyway, and nobody hears past the first ten."
+    },
+    {
+      "type": "h2",
+      "text": "Cutting it cleanly"
+    },
+    {
+      "type": "p",
+      "text": "Three details separate a ringtone that sounds deliberate from one that sounds like a clumsy edit."
+    },
+    {
+      "type": "h3",
+      "text": "Start on the beat"
+    },
+    {
+      "type": "p",
+      "text": "Actually, start just before it. A drum hit has a transient that begins fractionally ahead of the moment you perceive as the beat, and cutting exactly on the beat slices the front off that transient — the result sounds soft and late in a way people notice without being able to say why."
+    },
+    {
+      "type": "h3",
+      "text": "Fade both ends"
+    },
+    {
+      "type": "p",
+      "text": "A very short fade at each end, a few milliseconds, prevents the click that occurs when audio starts or stops at a non-zero value. At the end you may want a longer fade — half a second or so — so the clip resolves rather than being chopped off mid-phrase."
+    },
+    {
+      "type": "p",
+      "text": "This is the difference between a ringtone that sounds like a product and one that sounds like a file somebody trimmed."
+    },
+    {
+      "type": "h3",
+      "text": "End somewhere sensible"
+    },
+    {
+      "type": "p",
+      "text": "Ending on a downbeat, or at the end of a phrase, sounds finished. Ending mid-word or mid-bar sounds broken. If the natural phrase runs to thirty-four seconds, use thirty-four seconds rather than cutting at exactly thirty."
+    },
+    {
+      "type": "h2",
+      "text": "The instrumental option"
+    },
+    {
+      "type": "p",
+      "text": "Worth considering, and rarely considered."
+    },
+    {
+      "type": "p",
+      "text": "A ringtone with a vocal competes with the room — the conversation you are in, the person talking to you — and vocals are exactly what human attention locks onto. An instrumental version of the same hook is often more pleasant to live with and just as recognisable, because the riff is usually what identifies the song rather than the words."
+    },
+    {
+      "type": "p",
+      "text": "Run the track through the Vocal Remover first if you want to try it. It costs one extra step and the result is frequently better."
+    },
+    {
+      "type": "p",
+      "text": "The opposite trick also works: an acapella ringtone, using just the isolated vocal, cuts through background noise extremely well because there is nothing else in the file competing with it."
+    },
+    {
+      "type": "h2",
+      "text": "Format and settings"
+    },
+    {
+      "type": "p",
+      "text": "This is where most attempts fail, and the rules differ by platform."
+    },
+    {
+      "type": "h3",
+      "text": "Android"
+    },
+    {
+      "type": "p",
+      "text": "MP3 works everywhere. Export at 192kbps or higher — there is no reason to go lower for a thirty-second file, since the whole thing is under a megabyte either way. Copy it into the Ringtones folder on the device, and it appears in the sound settings."
+    },
+    {
+      "type": "h3",
+      "text": "iPhone"
+    },
+    {
+      "type": "p",
+      "text": "iOS wants M4A, and specifically expects the .m4r extension for ringtones. Export as M4A here, rename the extension from .m4a to .m4r, and add it through Finder or iTunes. The audio inside is identical; iOS simply insists on the naming."
+    },
+    {
+      "type": "p",
+      "text": "iOS also enforces the thirty-second limit strictly. A longer file will be rejected rather than truncated, so trim before you transfer."
+    },
+    {
+      "type": "h3",
+      "text": "Notification sounds"
+    },
+    {
+      "type": "p",
+      "text": "Different job, different length. Two to four seconds, and pick something with a fast attack — a stab, a hit, a short vocal phrase. A notification that fades in gently is a notification you miss."
+    },
+    {
+      "type": "h2",
+      "text": "The whole process"
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Optionally run the song through the Vocal Remover if you want an instrumental version.",
+        "Open the Audio Cutter and load the file.",
+        "Find the hook. Mark from just before the beat where it starts to the end of the phrase.",
+        "Preview it. Listen to the start specifically — that is what people hear.",
+        "Export as MP3 for Android, or M4A for iPhone.",
+        "For iPhone, rename the extension to .m4r before transferring."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "Ten minutes, including changing your mind twice about which part of the song to use."
+    },
+    {
+      "type": "h2",
+      "text": "Two things worth knowing"
+    },
+    {
+      "type": "p",
+      "text": "Normalise if the clip is quiet. A ringtone competing with a busy street needs to be at a healthy level, and a quiet section of a song lifted verbatim may not be. The Audio Converter's normalise option handles this."
+    },
+    {
+      "type": "p",
+      "text": "Test it in the real world before committing. Play it at the volume your phone actually rings at, in a room with other noise. A hook that is unmistakable on headphones can be surprisingly hard to identify through a phone speaker across a room."
+    },
+    {
+      "type": "h2",
+      "text": "Ringtone, notification, alarm: three different jobs"
+    },
+    {
+      "type": "p",
+      "text": "A phone has at least three alert sounds and people usually make one file and use it for everything. They have opposite requirements, and getting them confused is why a ringtone makes a bad notification and a notification makes a maddening alarm."
+    },
+    {
+      "type": "h3",
+      "text": "A ringtone has to survive a pocket"
+    },
+    {
+      "type": "p",
+      "text": "It plays for up to thirty seconds, competing with a coat, a bag, a bus. It needs to start immediately, be recognisable within about two seconds, and hold up when reproduced by a speaker the size of a fingernail."
+    },
+    {
+      "type": "p",
+      "text": "That last constraint is the one people forget. A phone speaker produces almost nothing below about 500 Hz. A hook that lives on a bass line simply will not be there. Choose a section carried by voice, guitar, brass or synth in the midrange, and check it on the actual phone rather than on headphones."
+    },
+    {
+      "type": "h3",
+      "text": "A notification has to be short and distinct"
+    },
+    {
+      "type": "p",
+      "text": "Two to four seconds, with a fast attack. A notification that fades in gently is a notification you miss, and a long one is one you resent by the tenth time."
+    },
+    {
+      "type": "p",
+      "text": "Distinctiveness matters more than beauty here: the point is that you know it was your phone and you know what kind of alert it was, without looking. A short percussive hit or a two-note motif does that. A snatch of melody does not, because it sounds like everyone else's snatch of melody."
+    },
+    {
+      "type": "h3",
+      "text": "An alarm has to be unpleasant enough to work"
+    },
+    {
+      "type": "p",
+      "text": "An alarm needs to wake you, so it should build rather than start at full volume, and it should be something you do not love — pick a favourite song and you will train yourself to hate it within a fortnight. This is a real effect and it is worth avoiding deliberately."
+    },
+    {
+      "type": "h2",
+      "text": "Choosing the hook, properly"
+    },
+    {
+      "type": "p",
+      "text": "The instinct is to pick the part of the song you like most. The better test is different: which two seconds of this song would a stranger recognise?"
+    },
+    {
+      "type": "p",
+      "text": "That is usually one of three things — the vocal hook, the instrumental riff, or a distinctive production moment such as a horn stab or a synth arpeggio. It is almost never the first two seconds of the track, and it is almost never the emotional high point, which tends to be a sustained note rather than something rhythmically identifiable."
+    },
+    {
+      "type": "p",
+      "text": "A practical method: play the song and hit pause at random points. Wherever you can name the song from what you just heard, you have found a candidate. Do that three or four times and you will have the section worth using."
+    },
+    {
+      "type": "p",
+      "text": "One more consideration: a ringtone starts from silence. A section that begins mid-phrase sounds like a mistake even if the audio is technically clean. Look for a moment that has a natural entry — a downbeat, a breath, the start of a bar."
+    },
+    {
+      "type": "h2",
+      "text": "The instrumental and acapella versions, in detail"
+    },
+    {
+      "type": "p",
+      "text": "Both are worth trying, and they solve different problems."
+    },
+    {
+      "type": "h3",
+      "text": "Instrumental"
+    },
+    {
+      "type": "p",
+      "text": "Vocals are what human attention locks onto, so a ringtone with singing in it competes with whatever conversation you are having when it goes off. An instrumental version of the same hook is often just as recognisable — because the riff usually identifies the song, not the words — and much less intrusive to live with."
+    },
+    {
+      "type": "p",
+      "text": "Run the track through the Vocal Remover first, then cut the instrumental. It is one extra step and it frequently produces the better result."
+    },
+    {
+      "type": "h3",
+      "text": "Acapella"
+    },
+    {
+      "type": "p",
+      "text": "The opposite trick, and surprisingly effective in noisy places. An isolated vocal has nothing else in the file competing with it, so it cuts through background noise far better than a full mix at the same volume. If you keep missing calls in a busy environment, this is worth trying before you simply turn the volume up."
+    },
+    {
+      "type": "p",
+      "text": "Rap and spoken-word deliveries work particularly well here, because consonants are exactly the kind of sharp, broadband sound a small speaker reproduces well."
+    },
+    {
+      "type": "h2",
+      "text": "Making it loud enough without making it harsh"
+    },
+    {
+      "type": "p",
+      "text": "A section lifted verbatim from a quiet part of a song will be a quiet ringtone, and a quiet ringtone is a missed call."
+    },
+    {
+      "type": "p",
+      "text": "Normalise it — the Audio Converter's normalise option lifts the loudest peak to just below full scale. That is usually enough. What it does not do is match perceived loudness: a dynamic passage and a compressed one can peak identically and sound very different, so trust your ears over the meter."
+    },
+    {
+      "type": "p",
+      "text": "What to avoid is pushing the level in the hope of more volume. A phone will already be playing this as loud as its speaker can manage; adding gain beyond full scale just clips, and clipping through a tiny speaker sounds like distortion rather than loudness."
+    },
+    {
+      "type": "h2",
+      "text": "When it will not install"
+    },
+    {
+      "type": "p",
+      "text": "Almost every failure is one of four things."
+    },
+    {
+      "type": "ul",
+      "items": [
+        "iPhone rejects the file. It is longer than thirty seconds, or the extension is still .m4a. Trim it and rename to .m4r — iOS is strict about both.",
+        "Android does not list it. It is in the wrong folder. It needs to be in Ringtones (or Notifications, or Alarms — they are separate), not Music or Downloads.",
+        "It plays but sounds thin. The hook lives in the bass, which the phone speaker cannot reproduce. Choose a different section.",
+        "It clicks at the start or end. There is no fade. Add a few milliseconds at each edge and it disappears."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "One further quirk worth knowing: MP3 adds a small amount of padding at the start and end of the file as a side effect of how the format frames audio. For a ringtone this is harmless. For anything that has to loop seamlessly, use WAV or M4A instead."
+    },
+    {
+      "type": "h2",
+      "text": "A worked example"
+    },
+    {
+      "type": "p",
+      "text": "Say you want a thirty-second ringtone from a four-minute pop song whose chorus starts at 1:12."
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Optionally run the whole track through the Vocal Remover and keep the instrumental.",
+        "Open the Audio Cutter and load the file.",
+        "Find the bar before the chorus — roughly 1:10 — and set the start just before that downbeat, not on it.",
+        "Set the end at the natural close of the chorus phrase, even if that lands at thirty-four seconds rather than thirty. Ending mid-phrase sounds broken; four extra seconds does not.",
+        "Add a very short fade in and a half-second fade out.",
+        "Preview it. Listen specifically to the first two seconds — that is all anyone hears.",
+        "Normalise, then export: MP3 for Android, M4A renamed to .m4r for iPhone.",
+        "Copy it to the device, set it, and phone yourself from another phone with the handset in your pocket."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "That last step is the one people skip and it is the only real test. A ringtone that is obvious on a desk can be unidentifiable through a coat."
+    },
+    {
+      "type": "h2",
+      "text": "A note on the legal side"
+    },
+    {
+      "type": "p",
+      "text": "Making a ringtone from a song you own, for your own phone, is personal use and is not the sort of thing anybody objects to."
+    },
+    {
+      "type": "p",
+      "text": "Distributing ringtones made from commercial recordings is a different matter — ringtones were a licensed commercial product for a reason, and the rights involved are the same ones that apply to any use of somebody else's master recording. Keep it to your own device and there is nothing to think about."
+    }
+  ]
+}

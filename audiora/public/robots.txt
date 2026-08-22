@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+
+# Account surfaces. Nothing here is useful in a search result: it is either
+# personal to one signed-in visitor or a sign-in form. Each of these also
+# carries a noindex tag, which is what actually keeps them out of the index —
+# a Disallow only stops the crawl.
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /settings
+Disallow: /signin
+Disallow: /signup
+Disallow: /forgot-password
+
+# /credits is deliberately NOT listed. It explains what credits cost and what
+# each plan includes, which is a page people search for.
+
+Sitemap: https://7audio.7by.in/sitemap.xml

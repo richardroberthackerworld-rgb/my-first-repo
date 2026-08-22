@@ -1,0 +1,324 @@
+{
+  "slug": "how-to-slow-down-a-song-to-learn-it",
+  "title": "How to slow down a song to learn it",
+  "excerpt": "The most effective practice tool there is — slowing music without dropping the key, choosing the right tempo, and combining it with stem separation for a private lesson.",
+  "category": "Practice",
+  "date": "2026-07-27",
+  "accent": "var(--a-orange)",
+  "body": [
+    {
+      "type": "p",
+      "text": "Every teacher tells you to practise slowly. Almost nobody does it with recorded music, because until recently slowing a record down meant dropping its pitch, which made it useless for learning — you would be practising in the wrong key, against a bass that had sagged a semitone and a half."
+    },
+    {
+      "type": "p",
+      "text": "That constraint is gone. Time and pitch can be changed independently, which means you can play a solo at 60% speed in the original key and everything you learn transfers directly to full tempo. It is the single most effective practice tool available to a musician working from recordings, and it is still underused."
+    },
+    {
+      "type": "h2",
+      "text": "Why slow practice works"
+    },
+    {
+      "type": "p",
+      "text": "This is worth understanding, because it changes how you use the tool."
+    },
+    {
+      "type": "p",
+      "text": "When you play something at a tempo you cannot manage, you are not practising the passage. You are practising an approximation of it — some notes right, some missed, some fudged. Repetition makes that approximation more automatic, which is the opposite of what you want. The old line about practice making permanent rather than perfect is describing exactly this."
+    },
+    {
+      "type": "p",
+      "text": "At a tempo you can manage, every note is correct, every finger is where it should be, and the repetition is building the thing you actually want. Speed then comes from gradually raising the tempo while keeping accuracy intact, which is a very different process from trying to play fast and gradually making fewer mistakes."
+    },
+    {
+      "type": "p",
+      "text": "The recording matters here too. Practising a fast passage from a record at half speed lets you hear what the player actually did, rather than what you assumed they did. Ornaments, ghost notes, the exact placement behind the beat — all of it becomes audible."
+    },
+    {
+      "type": "h2",
+      "text": "How to do it"
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Open the Pitch Shifter and load the track.",
+        "Leave the pitch control at zero. You want the original key.",
+        "Reduce the tempo. Start at 75% and adjust from there using the live preview.",
+        "Export if you want a file to practise with, or just work from the preview."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "If you only want a short passage, cut it out first with the Audio Cutter. Practising a four-bar phrase is much more efficient than waiting through a whole song for it to come round, and a short loop is easier to internalise."
+    },
+    {
+      "type": "h2",
+      "text": "Choosing the tempo"
+    },
+    {
+      "type": "p",
+      "text": "There is a right answer and it is more specific than \"slower\"."
+    },
+    {
+      "type": "p",
+      "text": "The correct tempo is the fastest one at which you can play the passage perfectly — every note clean, no hesitation, no recovery. Not \"almost perfectly\". If you are correcting mistakes, it is still too fast."
+    },
+    {
+      "type": "p",
+      "text": "For most people learning most things this lands between 50% and 75%. Below about 50% music starts to lose its shape: you can no longer feel the phrase as a phrase, and you end up practising a series of individual notes rather than a musical line. If you need to go below 50%, the passage is probably too hard for your current level and you would be better served by an easier piece for a while."
+    },
+    {
+      "type": "p",
+      "text": "Then raise it in small steps — 5% at a time. Play the passage three times cleanly before you increase. If you make a mistake at the new tempo, drop back and stay there longer. This is slower than most people have patience for and it works far better than the alternative."
+    },
+    {
+      "type": "h2",
+      "text": "Combining it with stem separation"
+    },
+    {
+      "type": "p",
+      "text": "This is where it becomes genuinely powerful, and it is what most people have not tried."
+    },
+    {
+      "type": "p",
+      "text": "Run the track through the Stem Splitter first. Now you can do three things you could not do with the full mix."
+    },
+    {
+      "type": "h3",
+      "text": "Isolate the part you are learning"
+    },
+    {
+      "type": "p",
+      "text": "Take the bass stem and slow it down and you have the bass line alone, in the original key, at whatever tempo you can manage. Every note is audible. There is no guitar covering the tricky bit. For learning by ear this is the difference between hours and minutes."
+    },
+    {
+      "type": "h3",
+      "text": "Remove the part you are playing"
+    },
+    {
+      "type": "p",
+      "text": "Mute the stem for your instrument and play along with the rest of the band. This is much better practice than playing along with the full record, because you have to actually produce the part rather than being carried by it — and any mistake is immediately obvious because nothing is covering it."
+    },
+    {
+      "type": "p",
+      "text": "It is also the closest thing to playing with other musicians that you can do alone."
+    },
+    {
+      "type": "h3",
+      "text": "Practise against just the rhythm section"
+    },
+    {
+      "type": "p",
+      "text": "Keep drums and bass, drop everything else, and improvise. A soloist gets far more out of a real rhythm section from a record they love than from a metronome or a backing track app, because the feel is a real band's feel."
+    },
+    {
+      "type": "h2",
+      "text": "How far you can slow before it degrades"
+    },
+    {
+      "type": "p",
+      "text": "Time-stretching works by cutting audio into short grains and repeating or skipping them, choosing overlap points where the waveform matches so the joins are inaudible. It works well within limits."
+    },
+    {
+      "type": "p",
+      "text": "Down to about 70%, most material is essentially transparent. Between 70% and 50% you will hear a slight softening of transients — cymbals and snares lose a little of their snap. Below 50% artefacts become clearly audible on a full mix, though a single instrument holds together considerably further."
+    },
+    {
+      "type": "p",
+      "text": "That last point is useful: a separated stem stretches better than a full mix, because there is only one source to keep coherent rather than several with different transient behaviour. If you need to go very slow, separate first."
+    },
+    {
+      "type": "p",
+      "text": "Percussion is always the first thing to suffer. If you are learning a drum part, you may find that 65% is your practical floor before the hits stop sounding like hits."
+    },
+    {
+      "type": "h2",
+      "text": "The other direction"
+    },
+    {
+      "type": "p",
+      "text": "Speeding up is worth mentioning because it has two legitimate uses."
+    },
+    {
+      "type": "p",
+      "text": "The first is overspeed practice: once you can play a passage cleanly at tempo, practise it at 105–110%. When you drop back to normal, it feels comfortable rather than at your limit. This is standard practice in classical training and works just as well elsewhere."
+    },
+    {
+      "type": "p",
+      "text": "The second is for listening rather than playing — reviewing a long recording of your own rehearsal at 125% to find the sections worth working on."
+    },
+    {
+      "type": "h2",
+      "text": "Changing the key as well"
+    },
+    {
+      "type": "p",
+      "text": "Sometimes what you want is not slower but different. Two cases come up regularly."
+    },
+    {
+      "type": "p",
+      "text": "A singer needs the song moved to fit their range. Shift the pitch down two or three semitones and leave the tempo alone."
+    },
+    {
+      "type": "p",
+      "text": "A horn player needs a transposing instrument to line up, or a guitarist wants to play a piece in a friendlier key without a capo. Same operation, different reason."
+    },
+    {
+      "type": "p",
+      "text": "Both controls are independent, so you can slow a track down and move it to a different key at the same time. Within five semitones and above 70% tempo, doing both at once is still clean."
+    },
+    {
+      "type": "h2",
+      "text": "A practice routine that works"
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Cut out the passage you are working on — four to eight bars is ideal.",
+        "Separate the stems if you want to isolate or remove an instrument.",
+        "Find the fastest tempo at which you play it perfectly, and start there.",
+        "Play it three times cleanly, then raise by 5%.",
+        "When you hit a wall, drop 10% and spend longer there rather than pushing.",
+        "Finish each session at a tempo you can play comfortably, not at your ceiling."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "That last point matters more than it looks. Ending a session on repeated failure teaches your hands the failure. Ending on something clean, even if it is slower than you would like, is what you want to carry into tomorrow."
+    },
+    {
+      "type": "h2",
+      "text": "Choosing what to practise"
+    },
+    {
+      "type": "p",
+      "text": "Slowing down helps most when you are precise about what you are working on. \"The whole song, slower\" is much less effective than four bars at the right tempo."
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Play the piece at tempo once and note where it falls apart. Those places, not the piece, are your practice material.",
+        "Cut the hardest one out with the Audio Cutter — four to eight bars, ending on a resolution rather than mid-phrase.",
+        "Work that section until it is clean at your starting tempo.",
+        "Only then join it back to what comes before and after, because playing into and out of a passage is a separate skill from playing the passage."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "The last step is the one people skip, and it is why a passage that is perfect in isolation falls apart in context."
+    },
+    {
+      "type": "h2",
+      "text": "Tempo laddering"
+    },
+    {
+      "type": "p",
+      "text": "A specific method that works better than gradual creeping."
+    },
+    {
+      "type": "p",
+      "text": "Rather than raising by 5% each time until you fail, set three tempos: comfortable, target, and one above target. Rotate between them rather than climbing steadily."
+    },
+    {
+      "type": "p",
+      "text": "Play the passage at comfortable, then at target, then above target, then back to comfortable. The return to comfortable feels effortless, and that feeling is what you are training — the sensation of having room to spare."
+    },
+    {
+      "type": "p",
+      "text": "Going above target is the part that does the work. When you drop back to performance tempo it feels slow, which is exactly the state you want to be in on stage."
+    },
+    {
+      "type": "h2",
+      "text": "What to listen for while you play along"
+    },
+    {
+      "type": "p",
+      "text": "Playing along with a recording is only useful if you are listening to the right thing."
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Where you are relative to the beat. Most people rush the hard parts and drag the easy ones. Slowing down makes this obvious in a way that full tempo hides.",
+        "Whether your note lengths match. Playing the right notes for the wrong duration is the commonest thing that makes a part sound not-quite-right.",
+        "Dynamics. A recording has them; practice usually flattens them out. At slow tempo you have the attention to spare.",
+        "Articulation. Where the original player slurs, staccatos or accents. This is what makes a transcription sound like the record rather than like the notes."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Practising with the part removed"
+    },
+    {
+      "type": "p",
+      "text": "The most underused technique available, and it takes one extra step."
+    },
+    {
+      "type": "p",
+      "text": "Separate the stems and mute the instrument you play. Now you are not playing along with the record; you are playing in the band. Every mistake is exposed because nothing is covering it, and every good decision is audible."
+    },
+    {
+      "type": "p",
+      "text": "This is harder than playing along with the full mix, and that is the point. Playing along with a recording that includes your part is largely an illusion of competence — the recording carries you, and you can be substantially wrong without noticing."
+    },
+    {
+      "type": "p",
+      "text": "Do both: full mix to learn it, part removed to test it."
+    },
+    {
+      "type": "h2",
+      "text": "How long to spend"
+    },
+    {
+      "type": "p",
+      "text": "Short and frequent beats long and occasional, and this is one of the better-established findings about motor learning."
+    },
+    {
+      "type": "p",
+      "text": "Twenty minutes a day on one passage will outperform two hours once a week, because consolidation happens between sessions rather than during them. Sleep in particular does a substantial amount of the work."
+    },
+    {
+      "type": "p",
+      "text": "So a practical shape: fifteen to twenty minutes on the hard passage, ending on something clean, then stop — even if it felt like it was going well. Especially if it felt like it was going well, because the temptation to keep pushing is how people end a session on failure."
+    },
+    {
+      "type": "h2",
+      "text": "Recording yourself against it"
+    },
+    {
+      "type": "p",
+      "text": "The step that turns practice into improvement, and the one almost nobody does."
+    },
+    {
+      "type": "p",
+      "text": "Record thirty seconds of yourself playing along at practice tempo and listen back. You will hear things you cannot hear while playing, because playing occupies the attention that listening needs — rushing, uneven note lengths, a phrase that sits consistently behind the beat."
+    },
+    {
+      "type": "p",
+      "text": "It is uncomfortable the first few times and it is the single fastest way to find what to work on next."
+    },
+    {
+      "type": "h2",
+      "text": "Do not stay slow forever"
+    },
+    {
+      "type": "p",
+      "text": "The failure mode at the other end: getting comfortable at 70% and staying there because it feels good."
+    },
+    {
+      "type": "p",
+      "text": "A passage played cleanly at 70% is not learned. Fingerings that work at slow tempo sometimes do not work at speed, and you will only discover that by going there. Set a deadline for each passage — reach performance tempo within a week, or change the fingering rather than practising the same one slower for longer."
+    },
+    {
+      "type": "h2",
+      "text": "Why this beats a metronome"
+    },
+    {
+      "type": "p",
+      "text": "A metronome gives you a pulse. A slowed recording gives you the pulse plus the harmony, the arrangement, the feel and the context — where the phrase sits against the chord, how the drummer places the backbeat, what the bass is doing underneath you."
+    },
+    {
+      "type": "p",
+      "text": "Both have their place, and a metronome is better for pure timing work. But for learning a piece of music, playing along with the actual music at a tempo you can handle is closer to the real thing than any click will ever be."
+    }
+  ]
+}

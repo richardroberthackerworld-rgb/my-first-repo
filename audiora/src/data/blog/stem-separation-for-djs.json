@@ -1,0 +1,303 @@
+{
+  "slug": "stem-separation-for-djs",
+  "title": "Stem separation for DJs: what it changes and what it does not",
+  "excerpt": "Acapella-outs, drum-only intros and key-matched blends from records that were never released as stems — plus the artefacts that only show up on a big system.",
+  "category": "Practice",
+  "date": "2026-07-19",
+  "accent": "var(--a-green)",
+  "body": [
+    {
+      "type": "p",
+      "text": "For most of DJ history, what you could do with a record was determined by what the label chose to press. If they put an acapella on the B-side, you could run the vocal over something else. If they did not, you could not — and a large proportion of the records people most wanted to work with never had one."
+    },
+    {
+      "type": "p",
+      "text": "Separation removes that constraint entirely. Any record can now yield a vocal, a drum track, a bass line or an instrumental. This article is about what that actually enables in a set, and — just as importantly — where it does not deliver what people expect."
+    },
+    {
+      "type": "h2",
+      "text": "The four moves it unlocks"
+    },
+    {
+      "type": "h3",
+      "text": "The acapella out"
+    },
+    {
+      "type": "p",
+      "text": "Bring the vocal of the outgoing record over the incoming one. This has always been the most effective transition in the book, and it used to depend on the acapella existing. Now it always does."
+    },
+    {
+      "type": "p",
+      "text": "Practical note: extract the vocal in advance and trim it to the phrase you want, rather than relying on separating it live. A prepared eight-bar vocal that starts exactly on the downbeat is worth ten seconds of on-the-fly separation."
+    },
+    {
+      "type": "h3",
+      "text": "The drum-only intro"
+    },
+    {
+      "type": "p",
+      "text": "Records with a short intro are hard to mix. Extract the drum stem, loop eight or sixteen bars of it, and you have manufactured the long DJ-friendly intro the label should have pressed."
+    },
+    {
+      "type": "p",
+      "text": "Drums are also the easiest source to separate cleanly — percussion is transient and broadband and does not look much like anything else — so this is the move most likely to sound perfect."
+    },
+    {
+      "type": "h3",
+      "text": "The instrumental bed"
+    },
+    {
+      "type": "p",
+      "text": "Drop the vocal out of a record that a room knows, and let them fill in the words. Bring it back on the chorus. It works because the audience does the work, and it only requires an instrumental — which every separation gives you for free alongside whatever else you asked for."
+    },
+    {
+      "type": "h3",
+      "text": "The layered blend"
+    },
+    {
+      "type": "p",
+      "text": "Two records playing at once is usually a mess because both have full-range content competing. Take the bass out of one and it works: one record supplies the low end, the other supplies everything above it. The mix stays clean because nothing is fighting for the same space."
+    },
+    {
+      "type": "h2",
+      "text": "Prepare, do not improvise"
+    },
+    {
+      "type": "p",
+      "text": "The strongest recommendation in this article, and the one most likely to be ignored."
+    },
+    {
+      "type": "p",
+      "text": "Live separation in DJ software is impressive and it is not as good as offline separation. It has to produce output in real time on whatever laptop you brought, which means a smaller model and less processing. Offline separation can take ninety seconds and use a much better model."
+    },
+    {
+      "type": "p",
+      "text": "On headphones in a bedroom the difference is modest. On a large system in a room, where the low end is enormous and the top end is loud enough to hurt, artefacts that were subtle become obvious. Separation artefacts live mostly in the high mids and the top — exactly where a club PA is most revealing."
+    },
+    {
+      "type": "p",
+      "text": "So: separate at home, export as WAV, load the files. Use live separation as a safety net for a record you did not plan for, not as your primary method."
+    },
+    {
+      "type": "h2",
+      "text": "Key matters more once you are layering"
+    },
+    {
+      "type": "p",
+      "text": "Playing two records at once means their harmony has to agree, and this becomes much more exposed when one of them is a bare vocal."
+    },
+    {
+      "type": "p",
+      "text": "A vocal over a track in the wrong key is unpleasant in a way that a full record over a full record is not — there is nothing else to mask the clash. Tracks a fifth or a fourth apart blend comfortably. A semitone apart is the worst possible relationship and sounds actively wrong."
+    },
+    {
+      "type": "p",
+      "text": "The bass stem is the fastest way to find a record's key by ear, because the bass note usually is the root. And if two records you want to combine are a semitone apart, the Pitch Shifter will move one to meet the other — spread the change across both by a smaller amount each and any artefacts stay below notice."
+    },
+    {
+      "type": "h2",
+      "text": "Which records separate well"
+    },
+    {
+      "type": "p",
+      "text": "Worth knowing before you build a transition around a record that will not cooperate."
+    },
+    {
+      "type": "p",
+      "text": "Excellent: hip-hop and rap, because spoken and rhythmic delivery is very unlike any instrument. Most pop and soul with a clear single lead vocal. Anything with space in the arrangement."
+    },
+    {
+      "type": "p",
+      "text": "Good: house and techno with vocal hooks, funk, disco. The drums separate beautifully even where the vocal is harder."
+    },
+    {
+      "type": "p",
+      "text": "Harder: drum and bass and anything else where the low end is a designed, complex sound rather than a bass instrument — separating a Reese bass from a sub is not a distinction the model was trained to make. Heavily reverberant vocals. Dense, loudly mastered modern productions."
+    },
+    {
+      "type": "p",
+      "text": "Hardest: live recordings, where vocal bleeds into every microphone on stage; and anything you sourced as a low-bitrate rip, which caps what any model can recover."
+    },
+    {
+      "type": "h2",
+      "text": "A preparation routine"
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Start from the best file you can get. A 320kbps purchase or a lossless download; not a low-quality rip.",
+        "Run the Stem Splitter at High quality. You are doing this once, at home, so the extra time costs you nothing.",
+        "Export as WAV. Do not compress something you are about to play on a large system.",
+        "Trim each stem to the useful section — the eight bars of vocal, the sixteen of drums — rather than carrying full-length files.",
+        "Cut on the beat and leave the reverb tails intact.",
+        "Name files so they sort usefully and include the key. You will not remember at 1 a.m.",
+        "Audition on the biggest system you have access to before you rely on it."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "What to listen for"
+    },
+    {
+      "type": "p",
+      "text": "Three artefacts show up on a big system that do not in headphones."
+    },
+    {
+      "type": "p",
+      "text": "Low-end residue. Kick and bass overlap heavily below 100 Hz and separation regularly leaves a trace of one in the other. In a club, where the sub is enormous, a trace becomes a rumble. Check bass and drum stems specifically for this, and high-pass a stem that is carrying something it should not."
+    },
+    {
+      "type": "p",
+      "text": "Top-end smear. Cymbals and hi-hats in a separated stem can develop a watery quality that is inaudible on small speakers and obvious through a good PA."
+    },
+    {
+      "type": "p",
+      "text": "Vocal ghosting in the instrumental. Usually masked in a busy mix, and audible during a breakdown — which is precisely when you were planning to use the instrumental."
+    },
+    {
+      "type": "h2",
+      "text": "What it does not change"
+    },
+    {
+      "type": "p",
+      "text": "Separation gives you material. It does not give you a set."
+    },
+    {
+      "type": "p",
+      "text": "The taste to know which vocal belongs over which track, the timing to bring it in on the right bar, and the judgement to do it twice in an hour rather than every transition — none of that is affected by the technology. A set where every mix is an acapella-out becomes exhausting by the third one."
+    },
+    {
+      "type": "p",
+      "text": "The tools have made a technique that used to be rare and impressive into something anyone can do. What remains scarce is knowing when."
+    },
+    {
+      "type": "h2",
+      "text": "Preparing a set, practically"
+    },
+    {
+      "type": "p",
+      "text": "The difference between separation being useful and being a gimmick is almost entirely preparation. A workflow that scales to a whole set:"
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Pick the ten or fifteen records you actually intend to work with. Separating your whole library is a waste — most tracks you will play straight.",
+        "For each, decide in advance what you want: the acapella, the drums, the instrumental, or the track minus bass.",
+        "Separate at High quality, at home, and export WAV.",
+        "Trim each stem to the useful section. An eight-bar vocal phrase is more useful in a set than a four-minute vocal stem you have to find your way around.",
+        "Name files so they sort and so you can read them in the dark: artist, key, BPM, what it is.",
+        "Load them into your software as a separate folder or playlist, not mixed in with your normal tracks."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "That last point matters more than it sounds. Stems and full tracks want different treatment, and finding out mid-transition that you have loaded a bare acapella where you expected a record is a bad way to learn the difference."
+    },
+    {
+      "type": "h2",
+      "text": "Naming and keys"
+    },
+    {
+      "type": "p",
+      "text": "A stem with no key in its name is a stem you will not use, because working out the key of an acapella under pressure is not realistic."
+    },
+    {
+      "type": "p",
+      "text": "Two systems are in use. Standard musical keys — A minor, F major — are precise and require you to think. Camelot notation maps each key to a number and letter, arranged so that anything adjacent on the wheel mixes comfortably; 8A and 8B are relative minor and major, and 7A or 9A are a fifth away either side."
+    },
+    {
+      "type": "p",
+      "text": "Camelot is popular precisely because it removes the theory from the decision. Whichever you use, put it in the filename along with the tempo, and be consistent. A folder where half the files say \"Am\" and half say \"8A\" is worse than either alone."
+    },
+    {
+      "type": "h2",
+      "text": "Layering without a mess"
+    },
+    {
+      "type": "p",
+      "text": "Two full records at once rarely works. Stems make it work, and there is a principle behind it: one source per frequency range."
+    },
+    {
+      "type": "ul",
+      "items": [
+        "One track supplies the low end. Take the bass out of the other, or high-pass it. Two basses fighting is the single commonest reason a layered mix sounds muddy.",
+        "One track supplies the rhythm. Two drum patterns at once is only ever good if they were designed to interlock.",
+        "The vocal sits on top and belongs to whichever record you want the audience to recognise.",
+        "Everything else is decoration and should be quieter than you think."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "The mistake is treating layering as addition. It is substitution: you are replacing part of one record with part of another, not stacking them."
+    },
+    {
+      "type": "h2",
+      "text": "Live separation, honestly"
+    },
+    {
+      "type": "p",
+      "text": "Modern DJ software can separate in real time and it is genuinely impressive. It is also a compromise, and knowing where the compromise lies tells you when to rely on it."
+    },
+    {
+      "type": "p",
+      "text": "Real-time separation must produce output continuously, on the laptop you brought, while that laptop is also decoding audio, driving a display and running the rest of the software. It therefore uses a smaller, faster model and less processing per second than an offline separation that can take ninety seconds and use everything available."
+    },
+    {
+      "type": "p",
+      "text": "The audible consequence is more bleed and more smearing in the high mids — precisely the range a large PA reproduces most clearly and most loudly. What sounds acceptable on headphones in a bedroom can sound obviously processed through a club system."
+    },
+    {
+      "type": "p",
+      "text": "So the sensible position: prepare the transitions you have planned, and keep live separation for the record somebody requests that you had not prepared. It is a safety net, not the method."
+    },
+    {
+      "type": "h2",
+      "text": "Checking your stems on a real system"
+    },
+    {
+      "type": "p",
+      "text": "If you can get twenty minutes on the system you will actually play on, spend it on this rather than on rehearsing the set."
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Play each drum stem alone with the sub up. Listen for bass residue that should not be there — kick and bass overlap heavily below 100 Hz and separation regularly leaves a trace.",
+        "Play each acapella alone. Vocal stems are the most exposed thing you will play; anything wrong with them will be heard.",
+        "Play each instrumental through a breakdown. Vocal ghosting hides under a busy arrangement and appears the moment the arrangement thins out — which is exactly when you were planning to use it.",
+        "High-pass anything carrying low end it should not have. A stem that is 95% right and has rumble in it is fixed with one filter."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "What to avoid"
+    },
+    {
+      "type": "p",
+      "text": "Three habits that make separation obvious in the wrong way."
+    },
+    {
+      "type": "p",
+      "text": "Using it every transition. An acapella-out is a strong move and it stops being strong the third time in an hour. Technique that is always deployed reads as a crutch."
+    },
+    {
+      "type": "p",
+      "text": "Playing stems from low-quality sources. A 128kbps rip separates badly and the artefacts are amplified by a large system. If you cannot get a good source, play the record whole."
+    },
+    {
+      "type": "p",
+      "text": "Trusting a stem you have not heard loud. This is the one that catches people out, because everything sounds fine on headphones and the room is where you find out otherwise."
+    },
+    {
+      "type": "h2",
+      "text": "One legal note"
+    },
+    {
+      "type": "p",
+      "text": "Extracting stems does not change who owns the recording. Playing them in a venue is covered by the venue's public performance licence in the same way as playing the record would be."
+    },
+    {
+      "type": "p",
+      "text": "Publishing a recorded mix, or releasing an edit built on someone else's master, is a different question and generally needs clearance. This is not legal advice, and the rules vary by country and by platform — but it is worth knowing that the ease of making something has no bearing on the right to distribute it."
+    }
+  ]
+}

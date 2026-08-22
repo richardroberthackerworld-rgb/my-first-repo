@@ -1,0 +1,316 @@
+{
+  "slug": "aac-vs-mp3",
+  "title": "AAC vs MP3: which should you actually pick?",
+  "excerpt": "AAC is technically better at every bitrate, MP3 opens everywhere, and M4A is not a third codec — what the difference means in practice.",
+  "category": "Formats",
+  "date": "2026-07-09",
+  "accent": "var(--a-blue)",
+  "body": [
+    {
+      "type": "p",
+      "text": "AAC is better than MP3. That is not controversial — it was designed as MP3's successor by many of the same people, with the benefit of another decade of research, and it does the same job more efficiently."
+    },
+    {
+      "type": "p",
+      "text": "MP3 is nevertheless still the right answer a lot of the time, for reasons that have nothing to do with audio quality. This article covers where the technical difference actually shows up, where it does not, and how to choose without thinking about it too hard."
+    },
+    {
+      "type": "h2",
+      "text": "Clearing up M4A first"
+    },
+    {
+      "type": "p",
+      "text": "The commonest confusion, and it is worth two paragraphs because it derails the whole discussion."
+    },
+    {
+      "type": "p",
+      "text": "M4A is not a codec. It is a container — an MP4 file that holds audio only. What is inside it is almost always AAC. So \"AAC vs M4A\" is not a meaningful comparison; it is like asking whether you prefer wine or bottles."
+    },
+    {
+      "type": "p",
+      "text": "In practical terms: choosing M4A gives you AAC audio in the container Apple software expects and handles smoothly. Choosing AAC gives you the raw stream, which some tools and workflows prefer. The audio is the same. If you are unsure, M4A is the safer of the two, because more software recognises the extension."
+    },
+    {
+      "type": "h2",
+      "text": "Why AAC is more efficient"
+    },
+    {
+      "type": "p",
+      "text": "Both formats work the same way in outline: split the signal into frequency bands, decide what a listener will not miss, and spend the available bits on what remains. AAC simply does each part of that better."
+    },
+    {
+      "type": "p",
+      "text": "It uses finer frequency resolution, so it can be more precise about what to discard. It handles transients better, because it can switch to shorter analysis windows when something sudden happens — this is why cymbals and percussion survive better at low bitrates. Its stereo coding is more flexible, so it can exploit the similarity between channels where MP3 has to be cruder. And it has no fixed upper frequency limit, where MP3 effectively stops around 20 kHz."
+    },
+    {
+      "type": "p",
+      "text": "The cumulative effect is that AAC at a given bitrate sounds like MP3 at a somewhat higher one."
+    },
+    {
+      "type": "h2",
+      "text": "Where the difference is audible"
+    },
+    {
+      "type": "p",
+      "text": "The gap is not constant. It depends entirely on how tight the bit budget is."
+    },
+    {
+      "type": "p",
+      "text": "At 96kbps and below, the difference is large and obvious. MP3 at 96kbps sounds noticeably degraded on music — swishy cymbals, a veiled top end. AAC at 96kbps is entirely usable. If you must go low, AAC is not optional."
+    },
+    {
+      "type": "p",
+      "text": "At 128kbps, the difference is clear on demanding material. AAC at 128 is roughly comparable to MP3 at 160–192."
+    },
+    {
+      "type": "p",
+      "text": "At 192kbps, the difference is small and mostly matters on the hardest content — applause, harpsichord, heavily reverberant recordings."
+    },
+    {
+      "type": "p",
+      "text": "At 256kbps and above, both are effectively transparent for almost all listeners on almost all material. The technical superiority is real and you cannot hear it, because there is nothing left to hear."
+    },
+    {
+      "type": "p",
+      "text": "So the practical rule: the lower the bitrate you need, the more AAC matters. At high bitrates the choice is about compatibility, not quality."
+    },
+    {
+      "type": "h2",
+      "text": "Where MP3 still wins"
+    },
+    {
+      "type": "p",
+      "text": "One thing, and it is decisive when it applies: MP3 opens everywhere."
+    },
+    {
+      "type": "p",
+      "text": "Every phone, every laptop, every browser, every car stereo made since the late nineties, every cheap media player, every piece of embedded software with an audio feature. There is essentially no device that plays audio at all and cannot play an MP3."
+    },
+    {
+      "type": "p",
+      "text": "AAC support is very good and not universal. Modern systems all handle it. Older car head units, some budget hardware, some older embedded players and the occasional piece of industrial software do not — or handle it inconsistently depending on the container."
+    },
+    {
+      "type": "p",
+      "text": "If you are sending a file to somebody whose setup you cannot see, MP3 removes a category of problem entirely, and at 320kbps the quality question does not arise."
+    },
+    {
+      "type": "h2",
+      "text": "The patent question, briefly"
+    },
+    {
+      "type": "p",
+      "text": "MP3's patents expired in 2017, which means the format is now entirely free to use, implement and distribute. This is why it appears in essentially all open-source software without complication."
+    },
+    {
+      "type": "p",
+      "text": "AAC is still encumbered in some jurisdictions and for some uses, which for an end user changes nothing — you can play and create AAC files freely — but does affect which software ships an encoder by default."
+    },
+    {
+      "type": "p",
+      "text": "If patent-freedom matters to you as a principle, Ogg Vorbis and Opus are worth knowing about. Opus in particular is technically excellent and is what most modern voice and video calling uses."
+    },
+    {
+      "type": "h2",
+      "text": "Choosing"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Sending a file to somebody you do not know: MP3, 320kbps. No questions arise.",
+        "Music for your own library on modern devices: AAC 256kbps. Smaller than MP3 320 and indistinguishable.",
+        "Podcast: AAC at 96kbps mono, or MP3 at 128kbps mono if your host or audience is conservative.",
+        "Something for an iPhone or Apple software: M4A.",
+        "Low bitrate is a hard requirement: AAC, without hesitation.",
+        "A file that has to work on a car stereo of unknown vintage: MP3.",
+        "Anything going back into editing: neither — use WAV or FLAC."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "The point that matters more than the format"
+    },
+    {
+      "type": "p",
+      "text": "Do not convert between lossy formats. Turning an MP3 into an AAC does not upgrade it — it decodes audio that has already been damaged and then discards more of it, with the second encoder making its own decisions about what to remove, including things the first one kept."
+    },
+    {
+      "type": "p",
+      "text": "The result is worse than either format at that bitrate would have been from a clean source. Two generations of loss is always worse than one, regardless of which format is technically superior."
+    },
+    {
+      "type": "p",
+      "text": "If you need a file in a different lossy format, go back to the lossless master and encode from there. If you do not have a lossless master, keep the file you have rather than converting it and hoping."
+    },
+    {
+      "type": "h2",
+      "text": "What both formats actually throw away"
+    },
+    {
+      "type": "p",
+      "text": "Understanding this makes every other decision easier, and it takes two minutes."
+    },
+    {
+      "type": "p",
+      "text": "Both codecs rely on psychoacoustic masking — measurable facts about what human hearing does and does not register."
+    },
+    {
+      "type": "h3",
+      "text": "Simultaneous masking"
+    },
+    {
+      "type": "p",
+      "text": "A loud sound makes quieter sounds at nearby frequencies inaudible, immediately. A cymbal crash covers the quiet detail around it in the same range. The encoder measures how loud each frequency band is, calculates what that band masks, and stops spending bits on anything below the resulting threshold."
+    },
+    {
+      "type": "p",
+      "text": "This is where most of the saving comes from, and it is why dense music compresses better than sparse music: the more is going on, the more is masked, and the less has to be stored."
+    },
+    {
+      "type": "h3",
+      "text": "Temporal masking"
+    },
+    {
+      "type": "p",
+      "text": "Masking also works in time. For a few milliseconds before a loud sound and rather longer after it, quieter sounds are inaudible. The \"after\" part is intuitive; the \"before\" part is a genuine quirk of how hearing processes onsets."
+    },
+    {
+      "type": "p",
+      "text": "Temporal masking is also where the classic low-bitrate artefact comes from. Encoders analyse audio in blocks, and if a sharp transient falls inside a block, the encoder's error gets spread across the whole block — including the quiet part before the transient. You hear that as a faint smear preceding a snare hit. It is called pre-echo, and it is the single thing AAC handles better than MP3."
+    },
+    {
+      "type": "h3",
+      "text": "The audible ceiling"
+    },
+    {
+      "type": "p",
+      "text": "Both formats discard content above the range most listeners can hear. MP3 effectively stops around 20 kHz regardless of bitrate. AAC has no fixed limit and will keep higher content if the budget allows."
+    },
+    {
+      "type": "p",
+      "text": "In practice this matters far less than people think. Adult hearing typically rolls off well before 18 kHz, and it drops further with age. The difference between codecs at 320kbps is not about the top octave."
+    },
+    {
+      "type": "h2",
+      "text": "Why AAC handles transients better"
+    },
+    {
+      "type": "p",
+      "text": "The specific mechanism is worth knowing because it predicts exactly which material shows the difference."
+    },
+    {
+      "type": "p",
+      "text": "Both codecs use a fixed analysis window most of the time. AAC can switch to a much shorter window when it detects a transient, which confines the encoding error to a shorter span of time and prevents the smear from spreading backwards."
+    },
+    {
+      "type": "p",
+      "text": "So the material where AAC pulls ahead is anything with sharp attacks and quiet space around them: castanets, applause, harpsichord, solo percussion, plucked strings. On a dense, loud, continuous mix the difference is far smaller, because there is no quiet space for a smear to be audible in."
+    },
+    {
+      "type": "p",
+      "text": "If you want to hear it for yourself, that is the test material to use — not a rock record."
+    },
+    {
+      "type": "h2",
+      "text": "Variable bitrate, and why it matters more than the number"
+    },
+    {
+      "type": "p",
+      "text": "A bitrate figure describes an average, and how the encoder distributes that average around the file is a real quality decision."
+    },
+    {
+      "type": "p",
+      "text": "Constant bitrate spends the same on every second, whether that second is silence or an orchestra. Predictable size, easy to seek, wasteful."
+    },
+    {
+      "type": "p",
+      "text": "Variable bitrate targets a consistent quality instead, spending more where the music is complex. This is almost always the better choice for music, and it is why a well-encoded VBR file at an average of 190kbps can beat a CBR file at 256."
+    },
+    {
+      "type": "p",
+      "text": "Both formats support both modes. The practical guidance is the same for each: use VBR unless something downstream specifically needs a predictable data rate, which in practice means streaming over an unreliable link."
+    },
+    {
+      "type": "h2",
+      "text": "HE-AAC, and where the low-bitrate magic comes from"
+    },
+    {
+      "type": "p",
+      "text": "There is a variant worth knowing about because you have certainly heard it without realising."
+    },
+    {
+      "type": "p",
+      "text": "HE-AAC — High Efficiency AAC — adds spectral band replication. Rather than encoding the high frequencies at all, it encodes the lower ones properly and stores a compact description of how to synthesise the top end from them. The decoder reconstructs the highs rather than reproducing them."
+    },
+    {
+      "type": "p",
+      "text": "This is how digital radio and low-bitrate streams sound as full as they do at 48–64kbps. It is genuinely clever and it has a cost: the reconstructed top end is plausible rather than accurate, and on cymbals it can sound slightly synthetic."
+    },
+    {
+      "type": "p",
+      "text": "For anything above about 128kbps it is not used, and not needed."
+    },
+    {
+      "type": "h2",
+      "text": "Opus, briefly"
+    },
+    {
+      "type": "p",
+      "text": "Worth mentioning because it beats both formats and you cannot always use it."
+    },
+    {
+      "type": "p",
+      "text": "Opus is newer, patent-free, and better than AAC at essentially every bitrate — dramatically so below 64kbps. It is what most voice and video calling runs on, and it is well supported in browsers."
+    },
+    {
+      "type": "p",
+      "text": "Its weakness is hardware. Car stereos, older phones and most standalone players do not know what to do with an Opus file. So it is an excellent choice when you control both ends and a poor one when you do not — which is the same trade as OGG, for the same reason."
+    },
+    {
+      "type": "h2",
+      "text": "Testing your own ears honestly"
+    },
+    {
+      "type": "p",
+      "text": "Almost everything written online about codec quality is people describing what they expected to hear. If you want to know what you can actually distinguish, the method is straightforward."
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Take one lossless file.",
+        "Export two versions from it: one at the bitrate you are considering, one at a much higher setting or lossless.",
+        "Have someone else — or a tool — play them in a random order without telling you which is which.",
+        "Guess. Do it ten times.",
+        "Count. Around five out of ten means you are guessing, and that is the honest answer."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "Two things make this harder than it sounds. Level differences bias the result enormously — the louder file almost always sounds \"better\", so match the levels first. And you must not know which is which, because knowing is enough to hear a difference that is not there."
+    },
+    {
+      "type": "p",
+      "text": "Most people who try this discover that their threshold is considerably lower than they assumed, which is useful: it means you can use smaller files with a clear conscience."
+    },
+    {
+      "type": "h2",
+      "text": "One practical warning about extensions"
+    },
+    {
+      "type": "p",
+      "text": "Because M4A is a container, the same file can legitimately be named .m4a, .mp4 or .aac depending on what put it there, and different software will accept different names for identical bytes."
+    },
+    {
+      "type": "p",
+      "text": "If a program refuses your AAC file, try renaming between .m4a and .mp4 before assuming the conversion failed. This is the one case where renaming a file is a reasonable thing to try — not because it changes anything, but because you are correcting a label that was wrong rather than pretending the contents are something they are not."
+    },
+    {
+      "type": "h2",
+      "text": "In one line"
+    },
+    {
+      "type": "p",
+      "text": "AAC when you control the destination and want efficiency. MP3 when you do not and want certainty. And never convert one to the other."
+    }
+  ]
+}

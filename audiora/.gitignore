@@ -1,0 +1,14 @@
+node_modules
+dist
+*.tsbuildinfo
+.DS_Store
+
+# Local environment — never committed. Real values live only on the machine.
+.env
+.env.local
+.env.*.local
+
+# The ffmpeg runtime is a byte-for-byte copy of two npm packages, and the wasm
+# alone is 31 MB. scripts/sync-ffmpeg-core.mjs rebuilds it from node_modules
+# before every build, so it never needs to enter the repository.
+public/ffmpeg/

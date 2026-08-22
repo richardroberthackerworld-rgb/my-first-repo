@@ -1,0 +1,295 @@
+{
+  "slug": "pitch-shifting-without-chipmunks",
+  "title": "Pitch shifting without chipmunks",
+  "excerpt": "Why speeding a record up makes it squeaky, how modern shifting separates pitch from tempo, and how far you can push it before anyone notices.",
+  "category": "Explainers",
+  "date": "2026-08-08",
+  "accent": "var(--a-pink)",
+  "body": [
+    {
+      "type": "p",
+      "text": "Everyone has heard the chipmunk effect: play a record faster and it goes up in pitch, play it slower and everything sags. For most of recorded history this was simply a fact of physics, because pitch and speed were the same knob. Digitally they can be separated, and the technique that does it is worth understanding — partly because it explains where its limits are, and partly because knowing the limits is how you avoid hitting them."
+    },
+    {
+      "type": "h2",
+      "text": "Why they used to be locked together"
+    },
+    {
+      "type": "p",
+      "text": "Pitch is frequency: how many times per second a waveform repeats. The A above middle C is 440 cycles per second."
+    },
+    {
+      "type": "p",
+      "text": "Play a tape at twice the speed and every cycle arrives in half the time, so every frequency doubles. The A becomes an A an octave up. Everything else doubles too, including the resonances of the singer's throat and mouth — and that is what produces the cartoon voice, not the raised pitch itself."
+    },
+    {
+      "type": "p",
+      "text": "Those resonances are called formants. They are a property of the body making the sound, not of the note being sung, and they barely move when a person sings higher. A soprano and a bass singing the same note sound different largely because their formants sit in different places. Move the formants and the ear immediately concludes the body has changed size — which is exactly what \"chipmunk\" means. A small creature."
+    },
+    {
+      "type": "h2",
+      "text": "Separating the two"
+    },
+    {
+      "type": "p",
+      "text": "The trick is to notice that changing tempo without changing pitch, and changing pitch without changing tempo, are the same problem approached from two sides."
+    },
+    {
+      "type": "p",
+      "text": "Time-stretching comes first. The audio is cut into short overlapping grains, a few tens of milliseconds each. To make something longer, grains are repeated; to make it shorter, some are skipped. Each grain still contains cycles at their original frequency, so the pitch is untouched — there are simply more or fewer of them in a given stretch of time."
+    },
+    {
+      "type": "p",
+      "text": "The naive version of this sounds terrible. Butt two grains together at arbitrary points and the waveform jumps discontinuously, which the ear hears as a click. Do it hundreds of times a second and you get a metallic buzz."
+    },
+    {
+      "type": "p",
+      "text": "The fix is to choose where to overlap rather than doing it blindly. WSOLA — waveform similarity overlap-add, which is what runs here — searches a small window around each intended splice for the position where the two grains most resemble each other, and joins them there. The waveform stays continuous, and the buzz disappears."
+    },
+    {
+      "type": "p",
+      "text": "Once you can stretch time without touching pitch, pitch shifting follows immediately: stretch the audio by the ratio you want, then resample it back to the original length. Resampling changes both pitch and duration; the stretch has already cancelled the duration change; what is left is a pure pitch shift."
+    },
+    {
+      "type": "h2",
+      "text": "Where it starts to show"
+    },
+    {
+      "type": "p",
+      "text": "This works well within limits and audibly less well beyond them."
+    },
+    {
+      "type": "p",
+      "text": "Within about five semitones either way, most music holds up so well that a listener who does not know will not notice. This covers the overwhelming majority of real uses — moving a song into a comfortable key is usually two or three semitones."
+    },
+    {
+      "type": "p",
+      "text": "Between five semitones and an octave, artefacts become audible on demanding material. Percussion suffers first: a snare is a very short event, and any grain-based process smears short events slightly. Cymbals and hi-hats develop a faint flanging quality."
+    },
+    {
+      "type": "p",
+      "text": "Beyond an octave everything shows. There is only so much information in the original recording, and asking for a large shift means generating a great deal that was never there."
+    },
+    {
+      "type": "p",
+      "text": "Material matters as much as amount. A solo voice or a single instrument shifts cleanly. A dense full mix — many sources with different transient behaviour all being stretched by the same process — is the hardest case, and a heavily compressed modern master is the hardest version of that."
+    },
+    {
+      "type": "h2",
+      "text": "The formant question"
+    },
+    {
+      "type": "p",
+      "text": "Basic pitch shifting moves the formants along with the pitch, which is why a shifted voice sounds slightly wrong even when there is no obvious artefact. A few semitones up and the singer sounds younger and smaller; a few down and they sound larger and slower."
+    },
+    {
+      "type": "p",
+      "text": "Correcting for this — moving the pitch while leaving the formants where they were — requires estimating the spectral envelope separately from the harmonic content and reapplying it after shifting. It is a phase-vocoder technique and a genuinely different piece of engineering."
+    },
+    {
+      "type": "p",
+      "text": "7 Audio does not include formant correction. The control appears disabled with the reason attached, rather than presented as a toggle that quietly does nothing. In practice, at the shift amounts most people use, the formant movement is subtle enough that it reads as a slightly different singer rather than as a defect."
+    },
+    {
+      "type": "h2",
+      "text": "What people actually use it for"
+    },
+    {
+      "type": "h3",
+      "text": "Singing in your own key"
+    },
+    {
+      "type": "p",
+      "text": "The commonest reason by far. A song sits two semitones above where your voice is comfortable, so you move the backing track down two semitones instead of straining. Do this on the instrumental rather than the full mix — you are not fighting the original singer, and any artefacts hide under the band."
+    },
+    {
+      "type": "h3",
+      "text": "Learning a difficult part"
+    },
+    {
+      "type": "p",
+      "text": "Slow a solo to 70% and the notes separate enough to hear individually, while staying in the original key so what you learn transfers directly to playing at speed. This is the single most useful practice tool that exists and it is astonishing how many people still do it by ear at full tempo."
+    },
+    {
+      "type": "p",
+      "text": "Combining it with the Stem Splitter is better still: isolate the instrument you are learning, slow that stem down, and you have a private lesson."
+    },
+    {
+      "type": "h3",
+      "text": "Matching two records"
+    },
+    {
+      "type": "p",
+      "text": "For a mashup, both tracks need to agree on key and tempo. Small adjustments to both, spread across the two records rather than forced onto one, keep the artefacts below the threshold of notice."
+    },
+    {
+      "type": "h3",
+      "text": "Working around a fixed instrument"
+    },
+    {
+      "type": "p",
+      "text": "A piano that is a quarter-tone flat and cannot be tuned before the session. Shift the backing track to meet it rather than making everyone else play out of tune."
+    },
+    {
+      "type": "h2",
+      "text": "Getting the best result"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Use the live preview. The right amount of shift is something you find by ear, and guessing then exporting wastes time.",
+        "Shift the smallest amount that solves your problem. Three semitones that work beat five that nearly do.",
+        "Start from a lossless or high-bitrate source. Grain-based processing amplifies compression artefacts that were previously inaudible.",
+        "Shift a stem rather than a full mix where you can — fewer competing sources means fewer compromises.",
+        "Split large changes between two tracks rather than applying all of it to one."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Finding the right key for a voice"
+    },
+    {
+      "type": "p",
+      "text": "The commonest use of pitch shifting deserves a method rather than trial and error."
+    },
+    {
+      "type": "p",
+      "text": "The mistake is to shift until the song feels comfortable overall. What matters is the hardest phrase — usually the highest sustained note in the chorus. A song that is comfortable in the verse and impossible at the top of the chorus is in the wrong key, however pleasant most of it feels."
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Find the highest note you can sing well — not the highest you can reach, the highest that sounds good and that you could hold for a bar.",
+        "Play the song and identify its highest sustained note.",
+        "Shift down until that note sits at or just below your comfortable ceiling.",
+        "Now check the bottom. Moving down puts the low notes lower, and a song can fall off the bottom of your range while you were fixing the top.",
+        "If both ends cannot be satisfied, the song has a wider range than your voice and no amount of shifting fixes that. Choose a different song, or change the melody in the difficult phrase."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "Two or three semitones covers most cases. If you find yourself needing seven, something else is wrong."
+    },
+    {
+      "type": "h2",
+      "text": "Tempo and pitch as separate tools"
+    },
+    {
+      "type": "p",
+      "text": "Because they are independent, four combinations are available, and each has its use."
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Pitch down, tempo unchanged — the karaoke case. Move a song into your range without it dragging.",
+        "Tempo down, pitch unchanged — the practice case. Slow a passage to learn it in the original key.",
+        "Both down — a lower, more relaxed version, useful when a song is fast and high and you want it neither.",
+        "Pitch unchanged, tempo up — reviewing a long recording quickly, or overspeed practice once a passage is solid."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "The combination worth being careful with is a large shift in both at once. Each is a compromise, and the artefacts compound rather than cancel."
+    },
+    {
+      "type": "h2",
+      "text": "Why percussion suffers first"
+    },
+    {
+      "type": "p",
+      "text": "Every grain-based process has the same weakness, and knowing it tells you what to check."
+    },
+    {
+      "type": "p",
+      "text": "A snare hit is a very short event — a sharp onset and a fast decay, a few milliseconds of the important part. Time-stretching works by repeating or skipping grains of a few tens of milliseconds. When a grain containing a transient is repeated, you get a flam: the hit is very slightly doubled. When one is skipped, the attack softens."
+    },
+    {
+      "type": "p",
+      "text": "At small stretch amounts the algorithm can usually place its splices to avoid transients entirely, which is exactly what the waveform-similarity search is for. At larger amounts there are not enough safe places to splice, and the compromises become audible."
+    },
+    {
+      "type": "p",
+      "text": "So when you are judging a stretch, listen to the drums, not the vocal. If the snare still snaps, everything else will be fine."
+    },
+    {
+      "type": "h2",
+      "text": "Stretching a stem instead of a mix"
+    },
+    {
+      "type": "p",
+      "text": "The single most effective trick in this article, and it takes one extra step."
+    },
+    {
+      "type": "p",
+      "text": "A full mix contains many sources with different transient behaviour, all being stretched by one process making one set of compromises. What suits the vocal does not suit the hi-hat."
+    },
+    {
+      "type": "p",
+      "text": "A separated stem contains one kind of material. The algorithm has a much easier problem and the result is correspondingly cleaner — a single voice or a single bass line holds together at stretch amounts where a full mix would obviously break."
+    },
+    {
+      "type": "p",
+      "text": "So for anything demanding: run the track through the Stem Splitter, stretch the stem you actually need, and work with that. It is more useful than any setting."
+    },
+    {
+      "type": "h2",
+      "text": "Common problems"
+    },
+    {
+      "type": "h3",
+      "text": "It sounds watery or phasey"
+    },
+    {
+      "type": "p",
+      "text": "Too much stretch for the material. Reduce the amount, or separate first and stretch a single stem."
+    },
+    {
+      "type": "h3",
+      "text": "The drums have lost their punch"
+    },
+    {
+      "type": "p",
+      "text": "Transient smearing. Below about 70% tempo this is expected on a full mix. Separate the drums out and leave them at the original tempo if you only need the harmony slowed."
+    },
+    {
+      "type": "h3",
+      "text": "The voice sounds like a different person"
+    },
+    {
+      "type": "p",
+      "text": "Formant movement, which is expected — a basic pitch shift moves the singer's resonances along with the note. At two or three semitones it reads as a different singer rather than as a fault. There is no formant correction in this tool, and the control is shown disabled with the reason attached rather than pretending otherwise."
+    },
+    {
+      "type": "h3",
+      "text": "It was already slightly out of tune"
+    },
+    {
+      "type": "p",
+      "text": "Older recordings and tape transfers are frequently a little sharp or flat of concert pitch. If every note seems to sit between two notes, shift the whole thing by a fraction of a semitone to bring it into tune before doing anything else."
+    },
+    {
+      "type": "h2",
+      "text": "A quick way to sanity-check a shift"
+    },
+    {
+      "type": "p",
+      "text": "Before exporting a large change, listen to one bar at the original setting and the same bar shifted, back to back."
+    },
+    {
+      "type": "p",
+      "text": "Comparing against the original rather than judging the shifted version alone is the only reliable way to hear what the process cost you — in isolation the ear adapts within seconds and stops noticing artefacts that are perfectly obvious in comparison."
+    },
+    {
+      "type": "h2",
+      "text": "One note on the preview"
+    },
+    {
+      "type": "p",
+      "text": "The live preview and the exported file are produced by two different paths. The preview has to keep up in real time as you move a control, so it uses a lighter-weight process. The export is rendered offline with the higher-quality version."
+    },
+    {
+      "type": "p",
+      "text": "The practical consequence is that the export will, if anything, sound slightly better than what you auditioned. That is the right way round — but it is worth knowing, so that a small artefact you hear while adjusting does not stop you from committing."
+    }
+  ]
+}

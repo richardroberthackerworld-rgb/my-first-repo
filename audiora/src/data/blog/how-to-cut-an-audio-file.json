@@ -1,0 +1,345 @@
+{
+  "slug": "how-to-cut-an-audio-file",
+  "title": "How to cut an audio file properly",
+  "excerpt": "Trimming, cropping and splitting audio without clicks at the edges — where to place a cut, why zero crossings matter, and how to take several pieces out in one pass.",
+  "category": "Guides",
+  "date": "2026-07-31",
+  "accent": "var(--a-pink)",
+  "body": [
+    {
+      "type": "p",
+      "text": "Cutting audio looks like the simplest possible operation: pick a start, pick an end, keep what is between them. In practice a badly placed cut announces itself with a click, an abrupt entry or a truncated reverb tail, and those three problems account for almost every edit that sounds amateurish."
+    },
+    {
+      "type": "p",
+      "text": "All three are avoidable, and none of the fixes are difficult once you know what causes them."
+    },
+    {
+      "type": "h2",
+      "text": "Why cuts click"
+    },
+    {
+      "type": "p",
+      "text": "Audio is a continuously varying pressure value. At any instant that value might be anywhere between its extremes — a loud passage spends most of its time nowhere near zero."
+    },
+    {
+      "type": "p",
+      "text": "When you cut, the file stops at whatever value it happened to be at, and then there is silence, which is zero. If the last sample was well away from zero, the signal jumps instantaneously from that value to nothing. An instantaneous jump contains energy at every frequency, and your speaker reproduces it as a click."
+    },
+    {
+      "type": "p",
+      "text": "The same thing happens at the start of a cut in reverse: silence, then an abrupt jump to a non-zero value."
+    },
+    {
+      "type": "p",
+      "text": "There are two standard solutions. The first is to cut at a zero crossing — a moment when the waveform is passing through zero anyway, so there is no jump. The second is to apply a very short fade, a few milliseconds, at each edge. The fade means the signal reaches zero smoothly rather than abruptly, and at that length it is completely inaudible as a fade while entirely eliminating the click."
+    },
+    {
+      "type": "p",
+      "text": "The short fade is more reliable, because a stereo file has two channels whose zero crossings rarely coincide."
+    },
+    {
+      "type": "h2",
+      "text": "Where to place a cut musically"
+    },
+    {
+      "type": "p",
+      "text": "Avoiding a click gets you a technically clean edit. Placing it well gets you an edit nobody notices."
+    },
+    {
+      "type": "h3",
+      "text": "Cut on the beat"
+    },
+    {
+      "type": "p",
+      "text": "For music this matters more than anything else. An edit that lands a fraction early or late is obvious to listeners who could not tell you why — the brain tracks the pulse continuously and notices when something interrupts it."
+    },
+    {
+      "type": "p",
+      "text": "Cut just before a downbeat rather than exactly on it. A drum hit has a transient that begins fractionally before the moment you perceive as \"the beat\", and cutting exactly on the beat can slice the front off that transient, leaving a hit that sounds soft and late."
+    },
+    {
+      "type": "h3",
+      "text": "Watch the reverb tail"
+    },
+    {
+      "type": "p",
+      "text": "The commonest mistake in cutting music. A chord ends, and you cut immediately after — but the chord's reverb was still ringing, so the space stops dead. It sounds like the room was switched off."
+    },
+    {
+      "type": "p",
+      "text": "Let a tail breathe. Extend the cut past where the note ends, into the decay, and fade out over that decay rather than truncating it."
+    },
+    {
+      "type": "h3",
+      "text": "For speech, cut in the pauses"
+    },
+    {
+      "type": "p",
+      "text": "Never mid-word, and rarely mid-breath. A pause between sentences is invisible; a cut that removes half a breath sounds like the speaker was startled."
+    },
+    {
+      "type": "p",
+      "text": "Leave a little air. Removing every scrap of silence from speech produces a relentless, airless delivery that is exhausting to listen to, even though each individual edit is technically clean."
+    },
+    {
+      "type": "h2",
+      "text": "Taking several pieces out at once"
+    },
+    {
+      "type": "p",
+      "text": "The workflow that saves the most time, and the one people most often do the hard way."
+    },
+    {
+      "type": "p",
+      "text": "If you need four separate clips from one long recording, you do not have to load the file four times, cut once, export, and start again. Mark all four sections, preview each one, and export them together. Each becomes its own file."
+    },
+    {
+      "type": "p",
+      "text": "This is the difference between a five-minute job and a thirty-minute one when you are pulling samples out of a long recording, or splitting an interview into topic segments."
+    },
+    {
+      "type": "p",
+      "text": "The habit worth forming: mark everything first, then review, then export. Reviewing all your marks together catches inconsistencies — one clip that starts too tight, another that runs on — that you would not notice doing them one at a time."
+    },
+    {
+      "type": "h2",
+      "text": "Cutting compressed audio"
+    },
+    {
+      "type": "p",
+      "text": "Something to be aware of if you are working from an MP3, AAC or OGG file."
+    },
+    {
+      "type": "p",
+      "text": "Lossy formats do not store individual samples. They store blocks — an MP3 frame covers 1,152 samples, about 26 milliseconds. To cut at an arbitrary point, the file has to be decoded to samples, cut, and re-encoded. That re-encode is a second generation of lossy compression, and it costs a little quality."
+    },
+    {
+      "type": "p",
+      "text": "Usually this is inaudible, especially at 320kbps. It becomes noticeable if you repeat it — cut, export, cut again, export again, four or five times over."
+    },
+    {
+      "type": "p",
+      "text": "Two ways to avoid it. Export as WAV or FLAC if the result is going to be processed further; there is no generation loss in a lossless format. Or do all your cuts in one pass rather than iteratively, so there is only ever one re-encode."
+    },
+    {
+      "type": "p",
+      "text": "There is also a quirk of MP3 worth knowing: the format adds a small amount of padding at the start and end of a file. If you are trying to make something loop seamlessly, that padding will produce an audible gap. Use WAV for anything that has to loop."
+    },
+    {
+      "type": "h2",
+      "text": "Common jobs"
+    },
+    {
+      "type": "h3",
+      "text": "Making a ringtone"
+    },
+    {
+      "type": "p",
+      "text": "Find the most recognisable thirty seconds — usually the chorus or a distinctive hook — and cut there rather than starting from the beginning of the song. A ringtone that opens with twenty seconds of atmospheric intro is a bad ringtone."
+    },
+    {
+      "type": "p",
+      "text": "Add a short fade at both ends so it does not click when it starts and stops, and export as MP3 for Android or M4A for iPhone."
+    },
+    {
+      "type": "h3",
+      "text": "Trimming a recording's top and tail"
+    },
+    {
+      "type": "p",
+      "text": "Cut the fumbling at the start and the reach for the stop button at the end. Leave about half a second of room tone at each end rather than cutting to absolute silence — an abrupt transition from room to nothing is audible, and that half-second of air makes the recording sound deliberate."
+    },
+    {
+      "type": "h3",
+      "text": "Splitting a long recording into parts"
+    },
+    {
+      "type": "p",
+      "text": "A lecture into topics, a rehearsal into songs, an interview into questions. Mark every section in one pass and export together. Name them so the order is obvious — a numeric prefix does this, and it is much less annoying than working out later which of five files came first."
+    },
+    {
+      "type": "h3",
+      "text": "Removing a mistake from the middle"
+    },
+    {
+      "type": "p",
+      "text": "Cut the recording into the section before the mistake and the section after, then join them back together with a short crossfade using the Song Joiner. The crossfade is what makes the join invisible; butting the two ends together is what makes it audible."
+    },
+    {
+      "type": "h2",
+      "text": "Practical checklist"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Preview every section before exporting. It takes seconds and catches the cut that was a beat out.",
+        "Cut just before the beat, not on it, so transients survive intact.",
+        "Let reverb tails finish rather than truncating them.",
+        "In speech, cut in pauses and leave a little air.",
+        "Mark everything, then export once — both for speed and to avoid repeated re-encoding.",
+        "Export lossless if anything else is going to happen to the file afterwards.",
+        "Use WAV for anything that needs to loop."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Finding the right cut point quickly"
+    },
+    {
+      "type": "p",
+      "text": "Scrubbing back and forth looking for an edit is slow. There are faster ways to find the exact spot."
+    },
+    {
+      "type": "h3",
+      "text": "Use the waveform shape"
+    },
+    {
+      "type": "p",
+      "text": "The picture tells you more than people use it for. Drum hits are sharp vertical spikes. Speech is a series of blobs with clear gaps. Silence is a flat line, but rarely perfectly flat — a genuinely flat line usually means a dropout rather than a quiet moment."
+    },
+    {
+      "type": "p",
+      "text": "For music, the regular spikes of the kick and snare give you the grid. Once you can see the beat, cutting on it is a matter of aiming rather than hunting."
+    },
+    {
+      "type": "h3",
+      "text": "Zoom in for the last few milliseconds"
+    },
+    {
+      "type": "p",
+      "text": "Find the region at a wide zoom, then zoom right in to place the edge. At a wide zoom a pixel can be a tenth of a second, which is more than enough to be audibly late."
+    },
+    {
+      "type": "h3",
+      "text": "Listen to the edit, not the file"
+    },
+    {
+      "type": "p",
+      "text": "When checking a cut, play from two seconds before to two seconds after. Playing the whole file from the start wastes time and, worse, your attention has usually wandered by the time the edit arrives."
+    },
+    {
+      "type": "h2",
+      "text": "Fades, in more detail"
+    },
+    {
+      "type": "p",
+      "text": "The short fade that prevents clicks is one use. Fades do more than that."
+    },
+    {
+      "type": "h3",
+      "text": "Length changes the character"
+    },
+    {
+      "type": "p",
+      "text": "Under about 10 milliseconds a fade is inaudible as a fade — it exists purely to avoid the click. Between 10 and 100 milliseconds it softens an attack, which can be useful for taming a harsh entry. Above about half a second it becomes a musical gesture that the listener notices."
+    },
+    {
+      "type": "p",
+      "text": "Choose deliberately. A quarter-second fade at the end of a ringtone sounds finished; the same fade in the middle of a speech edit sounds like a fault."
+    },
+    {
+      "type": "h3",
+      "text": "Fade shape matters at longer lengths"
+    },
+    {
+      "type": "p",
+      "text": "A linear fade drops the amplitude in a straight line, which the ear hears as fading fast at first and then lingering — because perceived loudness is not linear in amplitude. For anything longer than a fraction of a second, a curved fade sounds more even."
+    },
+    {
+      "type": "p",
+      "text": "This is the same reasoning behind equal-power crossfades, and it is why a long linear crossfade seems to dip in the middle."
+    },
+    {
+      "type": "h3",
+      "text": "Fading in from silence"
+    },
+    {
+      "type": "p",
+      "text": "When a recording starts, a fade of 20 to 50 milliseconds from true silence sounds deliberate. Starting instantly at full level sounds like the recording was already running and you joined late — which, of course, is exactly what happened."
+    },
+    {
+      "type": "h2",
+      "text": "Editing speech without it sounding edited"
+    },
+    {
+      "type": "p",
+      "text": "Speech is the most common thing people cut and the easiest to make sound wrong."
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Cut in pauses, never mid-word. A cut inside a word is audible even when the waveform looks clean, because the ear tracks the shape of a syllable.",
+        "Keep the breath. Removing every breath produces an inhumanly relentless delivery. Breaths are punctuation.",
+        "Match the room. If you join two takes recorded an hour apart, the background will have changed slightly and the join will be audible as a shift in the room tone rather than as a click. A short crossfade smooths it.",
+        "Leave the rhythm intact. People speak with a natural cadence; tightening every gap to the minimum destroys it and makes the speaker sound anxious.",
+        "Cut on the consonant, not the vowel. The start of a hard consonant is a natural boundary; the middle of a vowel is not."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "The test for a speech edit is simple: play it to someone who has not heard the original and watch whether they react at the join. If they do not notice, it worked."
+    },
+    {
+      "type": "h2",
+      "text": "Cutting for a specific purpose"
+    },
+    {
+      "type": "h3",
+      "text": "For a loop"
+    },
+    {
+      "type": "p",
+      "text": "The hardest cut there is, because the end has to meet the beginning. Cut on the beat at both ends, use WAV rather than MP3 — MP3 adds padding that produces an audible gap — and test the loop by playing it four times in a row rather than once."
+    },
+    {
+      "type": "h3",
+      "text": "For a sample"
+    },
+    {
+      "type": "p",
+      "text": "Start just before the transient, not on it, so the attack survives intact. Include a little of the decay at the end even if you intend to cut it later; you can always trim further, and you cannot add back what you did not take."
+    },
+    {
+      "type": "h3",
+      "text": "For a quotation"
+    },
+    {
+      "type": "p",
+      "text": "Take enough context that the meaning is not changed by the edit. This is an editorial responsibility rather than a technical one, and it is the one that matters most."
+    },
+    {
+      "type": "h2",
+      "text": "When the file is too long to handle"
+    },
+    {
+      "type": "p",
+      "text": "Very long recordings — a three-hour rehearsal, a full album side — can exhaust the memory available to a browser tab, particularly on a phone."
+    },
+    {
+      "type": "p",
+      "text": "The symptoms are recognisable: it works up to a point and then the tab becomes unresponsive, or the export produces a file that plays perfectly and stops halfway."
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Use a laptop rather than a phone. The difference in available memory is large.",
+        "Close other tabs, particularly anything with video in it.",
+        "Split the job. Cut the first hour, export it, then start again with the rest.",
+        "Work from a compressed source. A 500 MB WAV occupies far more memory decoded than a 50 MB MP3 of the same recording."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "One habit worth having"
+    },
+    {
+      "type": "p",
+      "text": "Keep the original. Cutting is destructive in the sense that the discarded parts are gone from the new file, and the moment you decide the intro should have been four bars longer is invariably after you have deleted the source."
+    },
+    {
+      "type": "p",
+      "text": "Storage is cheap. Re-recording is not."
+    }
+  ]
+}

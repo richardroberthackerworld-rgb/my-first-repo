@@ -1,0 +1,325 @@
+{
+  "slug": "what-bitrate-should-you-use",
+  "title": "What bitrate should you actually use?",
+  "excerpt": "128, 192, 256 or 320 — what the number means, where the audible threshold really sits, and why speech and music deserve completely different answers.",
+  "category": "Formats",
+  "date": "2026-07-25",
+  "accent": "var(--a-blue)",
+  "body": [
+    {
+      "type": "p",
+      "text": "Bitrate is the setting people most often get wrong in both directions: exporting a spoken-word interview at 320kbps and wasting three quarters of the file, or exporting music at 128kbps and permanently damaging it to save a few megabytes."
+    },
+    {
+      "type": "p",
+      "text": "The number itself is simple. What it does to your audio, and where the point of diminishing returns actually sits, is worth twenty minutes of understanding — because unlike most settings, this one cannot be undone afterwards."
+    },
+    {
+      "type": "h2",
+      "text": "What the number means"
+    },
+    {
+      "type": "p",
+      "text": "Bitrate is how many bits of data are used to describe one second of audio. 128kbps means 128,000 bits — 16 kilobytes — per second, so a four-minute song comes to about 3.8 MB."
+    },
+    {
+      "type": "p",
+      "text": "For lossy formats, that budget is a constraint the encoder has to work within. It analyses the audio, decides what matters least, and discards enough of it to fit. A larger budget means less discarding."
+    },
+    {
+      "type": "p",
+      "text": "What gets discarded is not arbitrary. Psychoacoustic models predict what a listener will not notice: a quiet sound immediately after a loud one at a similar frequency, content above the range most adults hear, detail in passages so busy the ear cannot resolve it. At a generous bitrate the encoder discards only things genuinely below the threshold of perception. At a tight one it has to start removing things you can hear."
+    },
+    {
+      "type": "h2",
+      "text": "Where the threshold sits"
+    },
+    {
+      "type": "p",
+      "text": "The honest answer, based on how these formats behave rather than on audiophile folklore."
+    },
+    {
+      "type": "h3",
+      "text": "320kbps: transparent"
+    },
+    {
+      "type": "p",
+      "text": "For essentially all listeners on essentially all music, indistinguishable from the source in a properly controlled comparison. This is the top of the MP3 range and it is where you go when you do not want to think about it."
+    },
+    {
+      "type": "h3",
+      "text": "256kbps: transparent for practical purposes"
+    },
+    {
+      "type": "p",
+      "text": "Very few people can reliably tell 256 from lossless, and those who can generally need careful listening on good equipment with material they know well."
+    },
+    {
+      "type": "h3",
+      "text": "192kbps: good, occasionally audible"
+    },
+    {
+      "type": "p",
+      "text": "A sensible compromise. On most material most people will hear nothing. On demanding material — solo piano, harpsichord, applause, cymbal-heavy recordings, anything with a lot of reverb — an attentive listener may notice a slight smearing."
+    },
+    {
+      "type": "h3",
+      "text": "128kbps: audible on music"
+    },
+    {
+      "type": "p",
+      "text": "The old default, and the reason MP3 acquired a reputation for sounding thin. Cymbals develop a swishing quality, reverb tails become grainy, and the top end sounds slightly veiled. Perfectly acceptable for a rough reference; not what you want for anything you care about."
+    },
+    {
+      "type": "h3",
+      "text": "Below 128kbps: fine for speech, poor for music"
+    },
+    {
+      "type": "p",
+      "text": "96kbps mono is entirely adequate for a spoken voice. The same rate on music is obviously compromised."
+    },
+    {
+      "type": "h2",
+      "text": "Speech and music are different problems"
+    },
+    {
+      "type": "p",
+      "text": "This is the single most useful thing in this article, and it is the distinction most often ignored."
+    },
+    {
+      "type": "p",
+      "text": "A spoken voice occupies a narrow range — roughly 80 Hz to 8 kHz covers everything that matters for intelligibility, and most of the energy sits in a much tighter band than that. It is usually mono, since one person speaking into one microphone has no meaningful stereo image. And it is punctuated by silence, which compresses to almost nothing."
+    },
+    {
+      "type": "p",
+      "text": "Music covers the full audible range, is genuinely stereo, and rarely stops."
+    },
+    {
+      "type": "p",
+      "text": "So a one-hour podcast at 320kbps stereo is about 144 MB, and the same podcast at 96kbps mono is about 43 MB — a third of the size, with no perceptible difference to a listener, because the extra bits were describing an empty stereo field and frequencies a voice does not produce."
+    },
+    {
+      "type": "p",
+      "text": "Over a series of a hundred episodes that is a meaningful amount of bandwidth, storage and listener data allowance, bought for nothing."
+    },
+    {
+      "type": "h2",
+      "text": "Constant, variable and average"
+    },
+    {
+      "type": "p",
+      "text": "The three encoding modes, and when each is right."
+    },
+    {
+      "type": "p",
+      "text": "Constant bitrate spends the same number of bits on every second, whether that second is a dense orchestral tutti or a silence. Predictable file size, easy to seek within, slightly wasteful."
+    },
+    {
+      "type": "p",
+      "text": "Variable bitrate lets the encoder spend more on complex passages and less on simple ones, targeting a consistent quality rather than a consistent size. This gives better quality per megabyte, and it is what you want for music in most circumstances. The file size becomes an estimate rather than a guarantee."
+    },
+    {
+      "type": "p",
+      "text": "Average bitrate sits between the two: variable within the file, but constrained to hit a target average."
+    },
+    {
+      "type": "p",
+      "text": "The one case where constant is worth choosing deliberately is streaming over an unreliable connection, where a predictable data rate matters more than the last few percent of efficiency."
+    },
+    {
+      "type": "h2",
+      "text": "The codec matters as much as the number"
+    },
+    {
+      "type": "p",
+      "text": "A bitrate is not comparable across formats."
+    },
+    {
+      "type": "p",
+      "text": "AAC at 192kbps sounds better than MP3 at 192kbps — noticeably so, because AAC is a more modern design with better tools for the same job. Ogg Vorbis is similar to AAC and both pull further ahead of MP3 as the bitrate drops. At 96kbps the gap is large; at 320kbps it barely exists, because all three are transparent by then."
+    },
+    {
+      "type": "p",
+      "text": "Practically: if you know your audience is on modern software, AAC at 192 gives you a better result in a smaller file than MP3 at 256. If you need something that will open anywhere without question, MP3 at 320 is the safe answer."
+    },
+    {
+      "type": "h2",
+      "text": "Generation loss"
+    },
+    {
+      "type": "p",
+      "text": "The one genuinely dangerous property of lossy compression, and the reason bitrate deserves thought rather than a default."
+    },
+    {
+      "type": "p",
+      "text": "Every lossy encode discards. When you decode a 192kbps MP3 and re-encode it at 192kbps, the second encoder is working on audio that has already been damaged, and it makes its own decisions about what to discard — including things the first encoder kept. The result is worse than either single pass."
+    },
+    {
+      "type": "p",
+      "text": "Do it four or five times and the degradation is unmistakable. This is how a file that started out fine ends up sounding like a bad phone recording after passing through several people's editing."
+    },
+    {
+      "type": "p",
+      "text": "The rule that prevents it entirely: keep a lossless master, and export lossy copies from that master every time. Never edit a lossy file and re-export it as the new master."
+    },
+    {
+      "type": "h2",
+      "text": "Recommendations"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Music you care about, going to a listener: MP3 320kbps, or AAC 256kbps.",
+        "Music for reference or a rough share: 192kbps is plenty.",
+        "Podcast or interview: 96–128kbps, mono. Do not use stereo for one person talking.",
+        "Anything going back into a DAW: do not use a lossy format at all. WAV or FLAC.",
+        "Archive: FLAC. Lossless, and about half the size of WAV.",
+        "Audiobook: 64–96kbps mono is entirely adequate and keeps a long book manageable."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Two things that do not work"
+    },
+    {
+      "type": "p",
+      "text": "Raising the bitrate of an existing lossy file. Re-encoding a 128kbps MP3 at 320kbps produces a file two and a half times larger containing exactly the same damaged audio, plus a small amount of new damage from the second encode. The information is gone; the container is just bigger."
+    },
+    {
+      "type": "p",
+      "text": "Converting lossy to lossless and calling it restored. A 128kbps MP3 turned into a 24-bit WAV is a forty-times-larger file with identical audible content. There is one legitimate reason to do it — you are about to process the file further and want to avoid another generation of loss — but it is not an improvement in itself."
+    },
+    {
+      "type": "h2",
+      "text": "What a bitrate has to pay for"
+    },
+    {
+      "type": "p",
+      "text": "It helps to know where the bits actually go, because it explains why the same number sounds different on different material."
+    },
+    {
+      "type": "p",
+      "text": "An encoder spends its budget on whatever is not masked. Dense, loud music masks a great deal, so relatively little needs describing and the encoder copes. Sparse, quiet music masks almost nothing — a solo piano note has silence around it, and every detail of that note is exposed."
+    },
+    {
+      "type": "p",
+      "text": "This is counterintuitive and it is why the hardest material for a lossy codec is not the loudest. Solo piano, harpsichord, classical guitar, a cappella voice and applause are the classic difficult cases. A wall of distorted guitars is easy."
+    },
+    {
+      "type": "p",
+      "text": "So a bitrate that is transparent on a rock album can be audibly compromised on a piano recital. If your material is sparse, go higher than the general advice suggests."
+    },
+    {
+      "type": "h2",
+      "text": "Where the artefacts show up"
+    },
+    {
+      "type": "p",
+      "text": "Knowing what to listen for makes testing your own threshold much faster."
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Cymbals and hi-hats. The first thing to go. They develop a swishing, watery quality — the sound is broadband noise, which is expensive to encode and easy to approximate badly.",
+        "Reverb tails. The decay becomes grainy rather than smooth, and long tails can sound like they are being switched on and off.",
+        "Applause. Thousands of uncorrelated transients, which is close to the worst case for any codec. If you want to hear compression artefacts, a live album's applause is where they live.",
+        "Sibilance. S sounds acquire a lisp or a whistle at low bitrates.",
+        "Pre-echo. A faint smear immediately before a sharp hit, most audible on solo percussion with silence around it."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "Notice that none of these is \"the bass sounds worse\" or \"it lost detail\". Those are the things people say and they are not where lossy compression actually degrades."
+    },
+    {
+      "type": "h2",
+      "text": "Bitrate for spoken word, in more detail"
+    },
+    {
+      "type": "p",
+      "text": "Because the savings here are the largest and the guidance is the least widely known."
+    },
+    {
+      "type": "p",
+      "text": "A voice occupies roughly 80 Hz to 8 kHz for full intelligibility, and most of the energy sits far narrower than that. It is mono in almost every case. And it stops — the pauses between sentences compress to almost nothing."
+    },
+    {
+      "type": "ul",
+      "items": [
+        "64kbps mono: entirely adequate for narration and audiobooks. A ten-hour book comes to about 290 MB.",
+        "96kbps mono: the sensible default for a podcast. Comfortably transparent for speech.",
+        "128kbps mono: generous. Use it if the recording is unusually good and you want to keep every bit of it.",
+        "Above 128kbps for speech: you are spending bits describing room tone.",
+        "Stereo for one speaker: doubles the file to encode an empty channel."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "The one exception is a podcast with music in it — a scored narrative show, or one with substantial musical segments. Then treat it as music, because the music is what sets the requirement."
+    },
+    {
+      "type": "h2",
+      "text": "What streaming services actually use"
+    },
+    {
+      "type": "p",
+      "text": "Useful context, because it calibrates what \"good enough\" means at scale."
+    },
+    {
+      "type": "p",
+      "text": "Most major services stream between roughly 96 and 320kbps depending on tier and connection, using AAC, Ogg Vorbis or Opus rather than MP3. Their high tiers sit around 256–320kbps equivalent, and their standard tiers considerably lower."
+    },
+    {
+      "type": "p",
+      "text": "These are companies with a strong commercial interest in listeners not complaining, and they have run more listening tests than anyone. That they settle around these figures is a reasonable indication of where transparency actually lies for normal listening."
+    },
+    {
+      "type": "p",
+      "text": "They also all apply loudness normalisation on playback, which is worth knowing for a different reason: mastering a track extremely loud no longer makes it stand out, because the platform turns it back down. It just costs you dynamic range."
+    },
+    {
+      "type": "h2",
+      "text": "Choosing a bitrate for an archive you will re-encode from"
+    },
+    {
+      "type": "p",
+      "text": "The one case where the answer is \"none of the above\"."
+    },
+    {
+      "type": "p",
+      "text": "If a file is going to be the source for future exports, do not use a lossy format at all, at any bitrate. Every export from it inherits its damage and adds more. FLAC costs you about half the WAV size and nothing else."
+    },
+    {
+      "type": "p",
+      "text": "This applies more often than people expect. The podcast episode you might re-cut. The mix you might master again. The stems you might come back to. All of them are sources, not deliverables, and the storage saving from compressing them is trivial next to the cost of being unable to go back."
+    },
+    {
+      "type": "h2",
+      "text": "One number that is not a bitrate"
+    },
+    {
+      "type": "p",
+      "text": "Streaming platforms increasingly quote LUFS rather than kbps, and the two answer different questions. Bitrate describes how much data describes the audio; LUFS describes how loud it is perceived to be."
+    },
+    {
+      "type": "p",
+      "text": "If a platform asks for −16 LUFS, that is a loudness target, not a quality one, and you hit it by adjusting level rather than by changing your export bitrate. Confusing the two leads people to raise the bitrate in the hope of hitting a loudness spec, which does nothing at all."
+    },
+    {
+      "type": "h2",
+      "text": "How to decide in ten seconds"
+    },
+    {
+      "type": "p",
+      "text": "Ask two questions. Is this speech or music? And is anything else going to happen to this file after I export it?"
+    },
+    {
+      "type": "p",
+      "text": "Speech, finished: 96kbps mono. Speech, more editing to come: WAV. Music, finished: 320kbps. Music, more editing to come: WAV or FLAC."
+    },
+    {
+      "type": "p",
+      "text": "That covers almost every case correctly, and it is a great deal better than always reaching for the highest number available."
+    }
+  ]
+}

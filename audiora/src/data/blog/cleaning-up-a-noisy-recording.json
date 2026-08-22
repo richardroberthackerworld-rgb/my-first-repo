@@ -1,0 +1,299 @@
+{
+  "slug": "cleaning-up-a-noisy-recording",
+  "title": "Cleaning up a noisy recording without wrecking the voice",
+  "excerpt": "Why aggressive noise removal makes people sound underwater, how to identify what kind of noise you actually have, and the order to do things in.",
+  "category": "Guides",
+  "date": "2026-08-10",
+  "accent": "var(--a-orange)",
+  "body": [
+    {
+      "type": "p",
+      "text": "The instinct with a noisy recording is to turn noise reduction up until the noise is gone. This reliably produces the worst possible result: a voice that sounds like it is being transmitted from underwater, surrounded by an eerie silence that swells and collapses between words."
+    },
+    {
+      "type": "p",
+      "text": "The reason is straightforward once you know it, and knowing it changes how you approach the whole job."
+    },
+    {
+      "type": "h2",
+      "text": "Why maximum reduction sounds wrong"
+    },
+    {
+      "type": "p",
+      "text": "Noise reduction works by learning the shape of the constant background — its level at every frequency — and then pulling energy down wherever it approaches that shape. What survives is whatever is loud enough to stand clearly above it."
+    },
+    {
+      "type": "p",
+      "text": "A voice is not uniformly loud. The strong part of a vowel sits well above any reasonable noise floor and survives untouched. But the quiet parts — the breath at the start of a phrase, the tail of a word as it fades, the air in a consonant, the low-level detail that makes a voice sound like it is in a room rather than in a vacuum — sit close to the noise floor. Pull the floor all the way down and you take those with it."
+    },
+    {
+      "type": "p",
+      "text": "What is left is the loud middle of every sound with nothing around it. That is precisely the underwater quality. The voice has not been damaged in the frequency sense; it has been stripped of everything quiet, and quiet detail is most of what makes speech sound natural."
+    },
+    {
+      "type": "p",
+      "text": "There is a second, related artefact. When reduction is aggressive, the background does not stay uniformly silent — it opens up slightly during speech, because the algorithm cannot pull down what is masked, and clamps shut again in the gaps. That pumping, sometimes with a faint ringing quality, is the most obvious sign of over-processing."
+    },
+    {
+      "type": "h2",
+      "text": "The right amount"
+    },
+    {
+      "type": "p",
+      "text": "Around 70–80% is right for most material. That leaves a trace of the original room tone underneath, and that trace is doing important work: it gives the ear a continuous background to sit against, so the quiet parts of the voice no longer stand out as isolated fragments."
+    },
+    {
+      "type": "p",
+      "text": "The test is not \"is the noise gone\". It is \"does this sound like a person in a room\". A recording with a little audible air that sounds natural is better than a silent one that sounds synthetic — and listeners notice the second and forgive the first."
+    },
+    {
+      "type": "p",
+      "text": "Listen on headphones while you set it, then check on a phone speaker. Over-processing is far more audible on headphones; if it sounds fine there it will sound fine anywhere."
+    },
+    {
+      "type": "h2",
+      "text": "Identify the noise before you treat it"
+    },
+    {
+      "type": "p",
+      "text": "Different noise has different structure, and picking the right type does more good than turning the strength up."
+    },
+    {
+      "type": "h3",
+      "text": "Broadband hiss"
+    },
+    {
+      "type": "p",
+      "text": "A steady \"shhh\" spread across the whole spectrum, strongest in the top half. Comes from preamp noise, a microphone used too far from the source with the gain compensating, tape, or a cheap interface."
+    },
+    {
+      "type": "p",
+      "text": "This is the easiest kind to treat, because it is genuinely constant and does not overlap the most important part of a voice. Use the Hiss setting."
+    },
+    {
+      "type": "h3",
+      "text": "Mains hum"
+    },
+    {
+      "type": "p",
+      "text": "A low, steady tone at 50 Hz or 60 Hz depending on your country, usually accompanied by harmonics at multiples of it. Caused by ground loops, unbalanced cables running near power, or dimmers and fluorescent lights."
+    },
+    {
+      "type": "p",
+      "text": "Hum is the most tractable of all noise because it occupies a handful of exact frequencies. The Hum setting targets the fundamental and its harmonics specifically, which removes it almost completely without touching anything else."
+    },
+    {
+      "type": "p",
+      "text": "It is also the most worth fixing at source. If you can re-record after moving one cable, do that instead."
+    },
+    {
+      "type": "h3",
+      "text": "Room tone and drone"
+    },
+    {
+      "type": "p",
+      "text": "Air conditioning, a computer fan, distant traffic, a fridge. Low-mid weighted and reasonably constant. This is what General is for, and it is the commonest case."
+    },
+    {
+      "type": "h3",
+      "text": "Wind and rumble"
+    },
+    {
+      "type": "p",
+      "text": "Low-frequency energy from wind across a microphone, handling, footsteps or a table knock. The Wind setting works from the bottom up, which is right, because most of this energy is below anything useful in a voice."
+    },
+    {
+      "type": "p",
+      "text": "Genuine wind buffeting — the roaring, saturated kind — is a different problem. It is not steady background but a series of loud events, and no noise reduction removes it convincingly. That one really does need re-recording, with a windshield."
+    },
+    {
+      "type": "h2",
+      "text": "What noise reduction cannot do"
+    },
+    {
+      "type": "p",
+      "text": "It is worth being clear about the limits, because a lot of frustration comes from expecting the wrong thing."
+    },
+    {
+      "type": "p",
+      "text": "It cannot remove another person talking. Noise reduction removes what is constant; speech is the opposite of constant. A second voice survives almost untouched. If you need to remove one, the vocal separation in the Stem Splitter is a better starting point, though it was designed for music rather than for two people in a room."
+    },
+    {
+      "type": "p",
+      "text": "It cannot remove a door slam, a cough or a chair scrape. These are events, not background. Cut them out with the Audio Cutter instead."
+    },
+    {
+      "type": "p",
+      "text": "It cannot fix clipping. When a recording is too loud for the converter, the peaks are flattened and the information in them is destroyed. There is nothing there to subtract; the distortion is not sitting on top of the signal, it has replaced part of it."
+    },
+    {
+      "type": "p",
+      "text": "It cannot remove reverb. A room's reflections are the voice arriving late, so they follow the voice exactly and look like signal, not background. Making a boxy recording sound dry is a genuinely different and much harder problem."
+    },
+    {
+      "type": "h2",
+      "text": "The order to work in"
+    },
+    {
+      "type": "p",
+      "text": "Sequence matters more than people expect, because each step changes what the next one sees."
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Cut first. Remove the false starts, the long silences and the one-off bangs before anything else. There is no sense in carefully de-noising audio you are about to delete.",
+        "Denoise second. With the obvious events gone, what remains is the genuinely constant background — which is exactly what noise reduction is designed to measure. Bangs left in can skew its estimate of the noise floor.",
+        "Level third. Only after the noise is down should you bring the overall level up. Raising the level first raises the noise with it and makes everything after harder.",
+        "Export last, at a bitrate that suits speech."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "The five minutes that save you an hour"
+    },
+    {
+      "type": "p",
+      "text": "Every one of these is cheaper than any amount of processing afterwards."
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Get closer. Halving the distance between mouth and microphone roughly doubles the voice level relative to the room. Nothing else you can do has anywhere near this effect.",
+        "Turn things off. The fan, the air conditioning, the fridge in the next room. Sixty seconds of walking around beats an hour of fixing it later.",
+        "Record ten seconds of silence. A clean sample of nothing but the room gives any noise reduction a much better picture of what to remove.",
+        "Watch your levels. Aim for peaks around −12 to −6 dBFS. Too quiet buries you in noise; too loud clips, and clipping is unfixable.",
+        "Soften the room. A recording made in a wardrobe full of clothes genuinely does sound better than one made in an empty kitchen."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "How noise reduction decides what to remove"
+    },
+    {
+      "type": "p",
+      "text": "A short explanation that makes the settings make sense."
+    },
+    {
+      "type": "p",
+      "text": "The audio is converted into a spectrogram — a picture of which frequencies are present at each moment. The algorithm estimates the noise floor by looking for the level each frequency band sits at when nothing much is happening: the quietest consistent value in each band across the recording."
+    },
+    {
+      "type": "p",
+      "text": "That estimate becomes a threshold. Anything above it is treated as signal and left alone; anything at or below it is attenuated by the amount you set with the strength control."
+    },
+    {
+      "type": "p",
+      "text": "Two consequences follow directly. The estimate is only as good as the quiet passages available to make it from, which is why recording thirty seconds of room tone helps so much. And the strength control is not \"how much noise to remove\" but \"how far below the threshold to push\" — which is why turning it to maximum takes the quiet parts of the voice with it."
+    },
+    {
+      "type": "h2",
+      "text": "Reading the recording before you treat it"
+    },
+    {
+      "type": "p",
+      "text": "Two minutes of listening tells you which tool to use and saves you from applying the wrong one."
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Listen to a gap between words with the level up. That is your noise, isolated.",
+        "Can you hum along with it? Then it is tonal — hum or a fan whine — and wants the Hum setting rather than General.",
+        "Is it a steady shhh across the whole range? Hiss.",
+        "Is it low and rumbling? Wind or handling.",
+        "Does it change with what is being said? Then it is not background at all, and noise reduction is the wrong tool.",
+        "Does it stop and start? Same answer — that is an event, and it wants cutting rather than reducing."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Treating more than one problem"
+    },
+    {
+      "type": "p",
+      "text": "Real recordings frequently have several at once, and the order compounds."
+    },
+    {
+      "type": "p",
+      "text": "The principle: remove the most specific problem first, because a broad treatment applied first will have measured the specific problem as part of the background and over-corrected everything."
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Cut the events — bangs, coughs, chair scrapes. They skew every measurement that follows.",
+        "Remove hum, which is the most narrowly targeted treatment available.",
+        "Remove wind or rumble with a low-frequency treatment, if present.",
+        "Then treat what remains as broadband, at a lower strength than you would have needed at the start.",
+        "Level last."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "Doing this in the wrong order is the commonest reason a recording ends up sounding over-processed despite each individual setting looking reasonable."
+    },
+    {
+      "type": "h2",
+      "text": "Recovering a recording that is too quiet"
+    },
+    {
+      "type": "p",
+      "text": "A different problem from a noisy one, and it needs a different order."
+    },
+    {
+      "type": "p",
+      "text": "A quiet recording has a good signal sitting close to the noise floor. Raising the level raises both, so the noise is proportionally exactly as bad as before — you have not made it worse, but you have made it audible."
+    },
+    {
+      "type": "p",
+      "text": "So: reduce the noise first, then raise the level. Doing it the other way round means the reduction is working on a louder noise floor and has to work harder, taking more of the signal with it."
+    },
+    {
+      "type": "p",
+      "text": "If the recording is very quiet — peaking below about −30 dBFS — accept that there is a limit. Every 6 dB of gain you add brings the noise up 6 dB too, and at some point the result is a clean-sounding recording of a hiss with someone talking in it."
+    },
+    {
+      "type": "h2",
+      "text": "The limits, stated plainly"
+    },
+    {
+      "type": "p",
+      "text": "Four things that no amount of processing fixes, so that you can stop trying and re-record instead."
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Clipping. The peaks were flattened at the moment of recording and the information in them was never stored. There is nothing to restore.",
+        "Room reverberation. It is the voice, arriving late, so it follows the voice exactly and cannot be separated from it by anything that works on \"what is constant\".",
+        "A second person talking. Speech is the opposite of constant background. It survives untouched.",
+        "A dropout. If the recording lost a section, there is silence where audio should be. Nothing recovers what was not captured."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "Two of these — clipping and dropouts — are worth checking for before you start editing, because discovering them after an hour of careful work is dispiriting and avoidable."
+    },
+    {
+      "type": "h2",
+      "text": "Save the settings that worked"
+    },
+    {
+      "type": "p",
+      "text": "If you record in the same room with the same equipment week after week, the settings that suited one recording will suit the next."
+    },
+    {
+      "type": "p",
+      "text": "Write them down — noise type, strength, and the order you applied things in. It turns a twenty-minute job of trial and error into a two-minute one, and it stops you rediscovering the same answer every time."
+    },
+    {
+      "type": "h2",
+      "text": "If it still sounds wrong"
+    },
+    {
+      "type": "p",
+      "text": "Back the strength off rather than pushing it further. Almost every recording that sounds processed has been processed too hard, not too little."
+    },
+    {
+      "type": "p",
+      "text": "And judge it in context. A podcast heard in a car, on a train or through a phone speaker is competing with far more background noise than your headphones have. A recording that sounds slightly imperfect in a quiet room may be entirely clean by the time your audience hears it — while an over-processed one sounds strange everywhere."
+    }
+  ]
+}

@@ -1,0 +1,277 @@
+{
+  "slug": "how-to-make-a-karaoke-track",
+  "title": "How to make a karaoke track from any song",
+  "excerpt": "Turning a commercial record into a backing track you can actually perform to — choosing the song, getting a clean instrumental, fixing the key, and what to check before you are on stage.",
+  "category": "Guides",
+  "date": "2026-08-04",
+  "accent": "var(--a-violet)",
+  "body": [
+    {
+      "type": "p",
+      "text": "Commercial karaoke tracks are re-recordings. A session band plays the song again, someone mixes it to sound approximately like the original, and it is sold as a backing track. They are competent and they are never quite the record — the drums sit differently, the guitar tone is not the tone, and the arrangement has usually been simplified."
+    },
+    {
+      "type": "p",
+      "text": "Making your own from the actual recording avoids all of that, because it is the actual recording, minus the voice. This guide covers the whole process: which songs work, how to get the cleanest instrumental, how to move it into your key, and the practical checks that separate a track that works on stage from one that lets you down."
+    },
+    {
+      "type": "h2",
+      "text": "Start with the right source file"
+    },
+    {
+      "type": "p",
+      "text": "This decides your ceiling before you touch a single setting, and it is where most disappointing results come from."
+    },
+    {
+      "type": "p",
+      "text": "Separation reconstructs what it can identify in the file you give it. A 128kbps MP3 has already thrown away most of the fine detail, and the cymbals in your instrumental will sound like frying bacon no matter how good the model is. Rip from a CD if you have one, buy a lossless download if you can, and use a 320kbps stream rip if you cannot. What you should not do is pull the audio from a low-quality video and expect a professional result."
+    },
+    {
+      "type": "p",
+      "text": "One thing that does not help: converting a poor MP3 to WAV first. The file grows; the missing detail does not return."
+    },
+    {
+      "type": "h2",
+      "text": "Which songs separate well"
+    },
+    {
+      "type": "p",
+      "text": "Not every record makes a good karaoke track, and it is much better to find this out at home than during a set."
+    },
+    {
+      "type": "p",
+      "text": "Songs that work well have a clear lead vocal, moderate reverb, and an arrangement with space in it. A great deal of pop, country, folk, soul and singer-songwriter material falls into this category and comes out remarkably clean."
+    },
+    {
+      "type": "p",
+      "text": "Songs that need more care: anything with stacked, doubled or heavily harmonised vocals, because four takes spread across the stereo field behave differently from one voice in the middle. Anything drenched in reverb or long delay, because the tail of a word is still the voice but stops looking like one. And anything mastered extremely loudly, where compression has glued every element into a single moving block."
+    },
+    {
+      "type": "p",
+      "text": "Songs that are genuinely hard: live recordings, where the vocal bleeds into every drum microphone on stage and therefore exists in places the model cannot remove it from; and heavily distorted or screamed vocals, whose harmonic structure resembles a guitar more than singing."
+    },
+    {
+      "type": "p",
+      "text": "None of these fail outright. They simply leave more of a ghost, which matters much less than you would think — see below."
+    },
+    {
+      "type": "h2",
+      "text": "Making the instrumental"
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Open the Vocal Remover and load your file.",
+        "Choose High quality unless you are in a hurry. The six-source model resolves overlapping material better, and on a dense mix the improvement is obvious rather than marginal.",
+        "Set the export format. WAV if you are going to edit or pitch-shift afterwards; 320kbps MP3 if the file is going straight to a phone or a laptop for playback.",
+        "Process, then download the instrumental. You also get the isolated vocal from the same run — keep it, it is genuinely useful later."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "Listen to the whole thing once, at performance volume, before you decide it is finished. Problems that are inaudible in headphones at low level can be obvious through a PA."
+    },
+    {
+      "type": "h2",
+      "text": "The vocal ghost, and why it matters less than you think"
+    },
+    {
+      "type": "p",
+      "text": "Almost every separated instrumental has some trace of the original vocal in it. You will hear it clearly, because you know it is there and you are listening for it in solo, in headphones, in a quiet room."
+    },
+    {
+      "type": "p",
+      "text": "Your audience will not. On stage, that ghost is competing with a full backing track at performance level, a room full of people, and a live singer with a microphone. The masking is enormous. A trace that seems glaring in your headphones typically disappears entirely in context."
+    },
+    {
+      "type": "p",
+      "text": "Before you spend an hour trying to remove it, do this test: play the instrumental at the volume you will actually perform at, stand where the audience stands, and sing over it. If you can still hear the ghost then, deal with it. Nine times out of ten you cannot."
+    },
+    {
+      "type": "p",
+      "text": "If you genuinely need to reduce it, the order is: try High quality if you used Standard, then check whether a better source file exists. What is not worth doing is running the instrumental through separation a second time — reconstructing a reconstruction compounds artefacts rather than cancelling them."
+    },
+    {
+      "type": "h2",
+      "text": "Putting it in your key"
+    },
+    {
+      "type": "p",
+      "text": "This is the step most people skip and the one that makes the biggest difference to how a performance actually goes."
+    },
+    {
+      "type": "p",
+      "text": "Songs are recorded in the key that suited the original singer. There is no reason that key should suit you, and straining for a note at the top of a chorus is both unpleasant to do and unpleasant to hear. Moving the track down two or three semitones is completely routine — professional singers do it constantly — and modern pitch shifting separates pitch from tempo, so the song does not slow down."
+    },
+    {
+      "type": "p",
+      "text": "The method: open the Pitch Shifter, load your instrumental, and use the live preview while you sing along. Do not calculate it; find it by ear. Move down a semitone, try the hardest phrase in the song, and keep going until that phrase is comfortable rather than merely possible."
+    },
+    {
+      "type": "p",
+      "text": "Within about five semitones either way, artefacts are essentially inaudible on a full mix. Beyond that you will start to hear the percussion soften. Most singers need two or three, which is comfortably inside the clean range."
+    },
+    {
+      "type": "p",
+      "text": "Shift the instrumental, not the original song. There is no original vocal left to fight with, and any artefacts hide underneath the band."
+    },
+    {
+      "type": "h2",
+      "text": "Trimming and arranging"
+    },
+    {
+      "type": "p",
+      "text": "A four-minute album track is often not the right shape for a performance."
+    },
+    {
+      "type": "p",
+      "text": "Use the Audio Cutter to trim a long instrumental intro that leaves you standing in silence, to cut the fade-out and end on the last chorus, or to shorten an extended outro. If you need to remove a whole verse, mark the sections you want to keep and export them, then join them back together with the Song Joiner using a short crossfade so the edit is inaudible."
+    },
+    {
+      "type": "p",
+      "text": "Two practical notes. First, cut on the beat — a join that lands slightly off the grid is obvious even to people who cannot say why. Second, watch out for reverb tails at edit points: cutting the instant a chord ends can chop the tail off unnaturally, so leave a beat of air and crossfade into it."
+    },
+    {
+      "type": "h2",
+      "text": "Before you perform"
+    },
+    {
+      "type": "p",
+      "text": "The difference between a track that works and one that embarrasses you is almost entirely in these checks."
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Play it end to end at performance volume, on the actual playback system if you can. Phone speakers hide problems that a PA will not.",
+        "Check the level against your other tracks. A set where one song is noticeably quieter than the rest is a bad look, and it is fixed in thirty seconds with the converter's normalise option.",
+        "Check the count-in. If the song starts immediately with no bar of intro, you need somewhere to breathe. Adding two bars of silence to the front is trivial and saves you every time.",
+        "Have a backup. Two copies, on two devices, in a format both will definitely play. MP3 at 320kbps is the safe choice — every laptop, phone and media player handles it.",
+        "Label the files with the key you shifted them to. Six months later you will not remember, and neither will the person running sound."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "What to do with the vocal you also got"
+    },
+    {
+      "type": "p",
+      "text": "The Vocal Remover gives you the isolated vocal alongside the instrumental, and for karaoke purposes it is more useful than people expect."
+    },
+    {
+      "type": "p",
+      "text": "Use it to learn the song properly. Hearing the vocal without the band makes phrasing, breath placement and the exact timing of entries far clearer than the full mix ever does — the details that separate someone who knows a song from someone who has heard it a lot."
+    },
+    {
+      "type": "p",
+      "text": "It is also the fastest way to settle a lyric you have been getting wrong for years."
+    },
+    {
+      "type": "p",
+      "text": "And if you are running the karaoke rather than singing at it, a quiet guide vocal underneath the instrumental helps nervous singers stay on the melody. Mix the vocal back in at a low level, well under the band, and you have a guide track."
+    },
+    {
+      "type": "h2",
+      "text": "One thing worth knowing"
+    },
+    {
+      "type": "p",
+      "text": "Separating a song does not change who owns it. An instrumental made from a commercial recording is a derivative of that recording. Singing over one at home, at a karaoke night, or at a venue that holds a public performance licence is ordinarily fine, because the venue's licence is what covers the performance."
+    },
+    {
+      "type": "p",
+      "text": "Selling the track, or publishing a video built on it, is a different matter and generally needs permission from whoever controls the master recording. This is not legal advice and the details vary by country. It is simply worth knowing that how easy something is to make has no bearing on what you are allowed to do with it."
+    },
+    {
+      "type": "h2",
+      "text": "Building a set rather than one track"
+    },
+    {
+      "type": "p",
+      "text": "If you are preparing several songs for a performance, a few habits save a great deal of trouble on the night."
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Process everything in one sitting with the same settings. A set where one track is noticeably brighter or quieter than the rest is distracting.",
+        "Normalise all of them to the same target so nobody has to touch the volume between songs.",
+        "Put the key you shifted to in every filename. You will not remember, and neither will whoever is running sound.",
+        "Number the files in running order with a zero-padded prefix, so they sort correctly and can be played straight down the list.",
+        "Export everything as 320kbps MP3. Universal, small, and no laptop will refuse it.",
+        "Copy the whole set to a second device before you leave."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Adding count-ins and gaps"
+    },
+    {
+      "type": "p",
+      "text": "Two small edits that make a performance much easier and that almost nobody does."
+    },
+    {
+      "type": "p",
+      "text": "A count-in: if a song starts immediately with the vocal, you have nowhere to breathe and no idea when to come in. Add two bars of silence to the front, or better, keep two bars of the instrumental intro that you were about to trim."
+    },
+    {
+      "type": "p",
+      "text": "A gap between songs: if you are running a continuous set from one file, three or four seconds of silence between tracks gives you time to speak, and prevents the next song starting while you are still acknowledging applause."
+    },
+    {
+      "type": "p",
+      "text": "Both are done with the Audio Cutter and the Song Joiner in a couple of minutes, and both are noticeable by their absence."
+    },
+    {
+      "type": "h2",
+      "text": "If the venue provides the system"
+    },
+    {
+      "type": "p",
+      "text": "Some practical points that only become apparent the first time."
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Ask what it plays from. A laptop, a phone, a USB stick and a CD are four different answers, and the last one still happens.",
+        "MP3 on a FAT32-formatted USB stick is the most universally accepted combination there is.",
+        "Bring your own cable. The one adapter you need is the one nobody has.",
+        "Check the level against whatever else is being played that night, not just against your own tracks.",
+        "Have the files in a single flat folder. Nested folders confuse some hardware players, and hunting through directories on a small screen mid-set is not fun."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Rehearsing with what you made"
+    },
+    {
+      "type": "p",
+      "text": "Practise with the finished track, not with the original record. They are different to sing to, and finding that out on stage is avoidable."
+    },
+    {
+      "type": "p",
+      "text": "The original carries you: the artist's voice cues every entry and covers any hesitation. Your instrumental does neither. Entries you thought you knew turn out to have been prompted by the vocal you removed, and the first place you notice is in front of an audience."
+    },
+    {
+      "type": "p",
+      "text": "Two run-throughs with the actual file, at performance volume, is enough to find them."
+    },
+    {
+      "type": "h2",
+      "text": "The whole process, briefly"
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Find the best-quality copy of the song you can.",
+        "Vocal Remover, High quality, export as WAV.",
+        "Pitch Shifter with the live preview, singing along, until the hardest phrase is comfortable.",
+        "Audio Cutter and Song Joiner to trim the arrangement to performance length.",
+        "Export at 320kbps MP3, normalised, with the key in the filename.",
+        "Test at full volume, then copy it to a second device."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "Twenty minutes of work, and you get the actual record rather than a session band's impression of it."
+    }
+  ]
+}

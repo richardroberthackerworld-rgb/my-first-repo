@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!--
+    7 Audio app icon.
+    White ground, square with rounded corners, no wordmark. The 7 carries the
+    brand blue; the waveform is black so the mark stays high-contrast and
+    readable at 48px. Generous margin keeps it safe inside Play's mask.
+  -->
+  <defs>
+    <linearGradient id="sevenGrad" x1="120" y1="420" x2="400" y2="110" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2F6BFF"/>
+      <stop offset="0.55" stop-color="#3B2BF5"/>
+      <stop offset="1" stop-color="#6A2BEA"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="114" fill="#FFFFFF"/>
+
+  <!-- The 7: thick top bar sweeping into a diagonal. -->
+  <path
+    d="M126 104h248c25.5 0 41.1 21.3 31.9 44.7L281.4 452c-7.8 19.9-29.1 29.1-47.5 21.6-19.1-7.8-27.6-29.4-19.8-48.5L305.6 182H126c-21.3 0-39-17.4-39-39s17.7-39 39-39Z"
+    fill="url(#sevenGrad)"/>
+
+  <!-- Waveform: outer bars blue, inner bars black. -->
+  <g fill="#0B0E1A">
+    <rect x="196" y="300" width="26" height="44" rx="13" fill="#3B2BF5"/>
+    <rect x="230" y="272" width="26" height="100" rx="13"/>
+    <rect x="264" y="248" width="26" height="148" rx="13"/>
+    <rect x="298" y="222" width="26" height="200" rx="13"/>
+    <rect x="332" y="256" width="26" height="132" rx="13"/>
+    <rect x="366" y="280" width="26" height="84" rx="13"/>
+    <rect x="400" y="302" width="26" height="40" rx="13" fill="#3B2BF5"/>
+  </g>
+</svg>

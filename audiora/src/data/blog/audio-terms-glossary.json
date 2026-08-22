@@ -1,0 +1,507 @@
+{
+  "slug": "audio-terms-glossary",
+  "title": "An audio glossary for people who did not go to audio school",
+  "excerpt": "Plain definitions of the terms that come up constantly — stems, bitrate, clipping, dBFS, formants, transients and the rest — with what each one means in practice.",
+  "category": "Explainers",
+  "date": "2026-07-01",
+  "accent": "var(--a-violet)",
+  "body": [
+    {
+      "type": "p",
+      "text": "Audio has an unusually large vocabulary of terms that sound self-explanatory and are not. This is a working glossary: what each word means, and — more usefully — what it means for a decision you might actually be making."
+    },
+    {
+      "type": "h2",
+      "text": "Formats and files"
+    },
+    {
+      "type": "h3",
+      "text": "Lossless"
+    },
+    {
+      "type": "p",
+      "text": "A format that reproduces the original samples exactly. WAV and FLAC. You can convert between lossless formats indefinitely with no degradation whatsoever."
+    },
+    {
+      "type": "h3",
+      "text": "Lossy"
+    },
+    {
+      "type": "p",
+      "text": "A format that discards audio a psychoacoustic model predicts you will not notice, in exchange for a much smaller file. MP3, AAC, M4A, OGG. What is discarded does not come back, and every re-encode discards more."
+    },
+    {
+      "type": "h3",
+      "text": "Bitrate"
+    },
+    {
+      "type": "p",
+      "text": "How many bits per second a lossy format spends. Higher means less discarded and a bigger file. 320kbps MP3 is transparent for most people; 128kbps is audible on music and fine for speech."
+    },
+    {
+      "type": "h3",
+      "text": "Sample rate"
+    },
+    {
+      "type": "p",
+      "text": "How many times per second the audio was measured. 44.1 kHz is the CD standard and covers everything humans can hear. 48 kHz is the video standard. Higher rates help during production and add nothing audible to a finished file."
+    },
+    {
+      "type": "h3",
+      "text": "Bit depth"
+    },
+    {
+      "type": "p",
+      "text": "How precisely each measurement is stored. Determines the noise floor, not \"detail\". 16-bit is transparent for a finished file; 24-bit gives headroom while working."
+    },
+    {
+      "type": "h3",
+      "text": "Container versus codec"
+    },
+    {
+      "type": "p",
+      "text": "A codec is how the audio is encoded — AAC, MP3, FLAC. A container is the wrapper that holds it — M4A, MP4, OGG. M4A is a container that almost always holds AAC, which is why \"AAC vs M4A\" is not a real comparison."
+    },
+    {
+      "type": "h3",
+      "text": "Generation loss"
+    },
+    {
+      "type": "p",
+      "text": "The cumulative damage from repeatedly encoding to a lossy format. Each pass discards more, and the damage compounds. The reason to keep a lossless master."
+    },
+    {
+      "type": "h2",
+      "text": "Levels and loudness"
+    },
+    {
+      "type": "h3",
+      "text": "dBFS"
+    },
+    {
+      "type": "p",
+      "text": "Decibels relative to full scale — the loudest a digital system can represent. Always zero or negative. −6 dBFS is a healthy peak; 0 dBFS is the ceiling, and hitting it means clipping."
+    },
+    {
+      "type": "h3",
+      "text": "Clipping"
+    },
+    {
+      "type": "p",
+      "text": "What happens when a signal exceeds what the system can represent: the peaks are flattened. It sounds like harsh distortion and it is unrecoverable, because the information in those peaks was never stored. The one recording mistake that cannot be fixed afterwards."
+    },
+    {
+      "type": "h3",
+      "text": "Headroom"
+    },
+    {
+      "type": "p",
+      "text": "The gap between your loudest peak and 0 dBFS. Leaving 6–12 dB means an unexpected loud moment does not clip."
+    },
+    {
+      "type": "h3",
+      "text": "Noise floor"
+    },
+    {
+      "type": "p",
+      "text": "The level of the constant background — preamp hiss, room tone, air conditioning. Everything quieter than this is effectively inaudible. Getting closer to the microphone raises your signal above it, which is why distance matters so much."
+    },
+    {
+      "type": "h3",
+      "text": "Normalisation"
+    },
+    {
+      "type": "p",
+      "text": "Raising a file so its loudest peak sits just below full scale. Useful for matching a set of files. Note that it matches peaks, not perceived loudness — a compressed track and a dynamic one can peak identically and sound very different."
+    },
+    {
+      "type": "h3",
+      "text": "Dynamic range"
+    },
+    {
+      "type": "p",
+      "text": "The distance between the quietest and loudest parts. Wide dynamic range sounds natural and needs a quiet listening environment; compressed dynamic range survives noisy environments and is tiring over time."
+    },
+    {
+      "type": "h2",
+      "text": "Separation and stems"
+    },
+    {
+      "type": "h3",
+      "text": "Stem"
+    },
+    {
+      "type": "p",
+      "text": "One part of a song on its own. In a studio it is a submix of real tracks. From a separation tool it is a reconstruction inferred from the finished mix — usually very close, occasionally audibly a guess."
+    },
+    {
+      "type": "h3",
+      "text": "Acapella"
+    },
+    {
+      "type": "p",
+      "text": "The vocal alone, with no accompaniment. What you get from the vocals side of a separation."
+    },
+    {
+      "type": "h3",
+      "text": "Source separation"
+    },
+    {
+      "type": "p",
+      "text": "Reconstructing individual instruments from a mixed recording using a model trained on many examples. What modern vocal removers and stem splitters do, as distinct from the old subtraction tricks."
+    },
+    {
+      "type": "h3",
+      "text": "Bleed"
+    },
+    {
+      "type": "p",
+      "text": "Traces of one source audible in another's stem — a ghost of the vocal in the instrumental. Normal in small amounts, and usually inaudible in context even when obvious in solo."
+    },
+    {
+      "type": "h3",
+      "text": "Centre-channel cancellation"
+    },
+    {
+      "type": "p",
+      "text": "The old vocal-removal trick: subtract right from left, and anything panned centre disappears. Takes the bass and kick with it, produces mono, and fails entirely on mono sources. Obsolete."
+    },
+    {
+      "type": "h3",
+      "text": "Spectrogram"
+    },
+    {
+      "type": "p",
+      "text": "A picture of audio: time across, frequency up, brightness as energy. The representation most separation and noise reduction works in, because structure that is invisible in a waveform becomes visible here."
+    },
+    {
+      "type": "h3",
+      "text": "Mask"
+    },
+    {
+      "type": "p",
+      "text": "A map the same size as a spectrogram, saying how much of each point to keep. Multiply one by the other and you have separated audio. Estimating a good mask is the whole problem of separation."
+    },
+    {
+      "type": "h2",
+      "text": "Sound and processing"
+    },
+    {
+      "type": "h3",
+      "text": "Transient"
+    },
+    {
+      "type": "p",
+      "text": "The sharp attack at the start of a sound — the stick hitting the drum, the pick hitting the string. Transients carry most of what identifies an instrument, which is why smearing them is so noticeable."
+    },
+    {
+      "type": "h3",
+      "text": "Formant"
+    },
+    {
+      "type": "p",
+      "text": "A resonance of the body producing a sound — throat, mouth, instrument cavity. Formants stay roughly fixed as pitch changes, which is why a person singing high still sounds like that person. Move them and you get the chipmunk effect."
+    },
+    {
+      "type": "h3",
+      "text": "Time-stretching"
+    },
+    {
+      "type": "p",
+      "text": "Changing duration without changing pitch. Done by cutting audio into short grains and repeating or skipping them, choosing overlap points where the waveform matches so the joins are inaudible."
+    },
+    {
+      "type": "h3",
+      "text": "Pitch shifting"
+    },
+    {
+      "type": "p",
+      "text": "Changing pitch without changing duration. Time-stretch by the desired ratio, then resample back to the original length."
+    },
+    {
+      "type": "h3",
+      "text": "Semitone"
+    },
+    {
+      "type": "p",
+      "text": "The smallest step in Western music — one fret, one piano key. Twelve make an octave. Pitch shifts are measured in these, and two or three is the usual amount needed to move a song into a comfortable key."
+    },
+    {
+      "type": "h3",
+      "text": "Crossfade"
+    },
+    {
+      "type": "p",
+      "text": "Fading one piece of audio down while fading another up, so a join has no click. An equal-power crossfade uses a curve that keeps loudness constant through the transition rather than dipping in the middle."
+    },
+    {
+      "type": "h3",
+      "text": "Zero crossing"
+    },
+    {
+      "type": "p",
+      "text": "A moment when the waveform passes through zero. Cutting there avoids the click a sudden jump to silence produces. A short fade achieves the same thing more reliably on stereo material."
+    },
+    {
+      "type": "h3",
+      "text": "Plosive"
+    },
+    {
+      "type": "p",
+      "text": "The thump from a p or b sound hitting a microphone. Fixed with a pop filter and by singing slightly off-axis."
+    },
+    {
+      "type": "h3",
+      "text": "Sibilance"
+    },
+    {
+      "type": "p",
+      "text": "Harsh s and t sounds. More often a microphone positioning problem than an equipment one."
+    },
+    {
+      "type": "h3",
+      "text": "Proximity effect"
+    },
+    {
+      "type": "p",
+      "text": "The bass boost that occurs when you get very close to a directional microphone. Sometimes flattering, sometimes muddy — worth experimenting with rather than avoiding."
+    },
+    {
+      "type": "h3",
+      "text": "Reverb tail"
+    },
+    {
+      "type": "p",
+      "text": "The decay of a room's reflections after a sound stops. Cutting immediately after a note truncates the tail and sounds like the room was switched off."
+    },
+    {
+      "type": "h3",
+      "text": "Room tone"
+    },
+    {
+      "type": "p",
+      "text": "The sound of a space with nobody making noise in it. Recording thirty seconds of it before a session gives noise reduction a clean sample to work from."
+    },
+    {
+      "type": "h2",
+      "text": "Recording and microphones"
+    },
+    {
+      "type": "h3",
+      "text": "Gain"
+    },
+    {
+      "type": "p",
+      "text": "How much a preamp amplifies the microphone signal before it is converted to digital. Set too low and you record close to the noise floor; too high and you clip. This is the knob that matters most at the moment of recording."
+    },
+    {
+      "type": "h3",
+      "text": "Proximity effect"
+    },
+    {
+      "type": "p",
+      "text": "The bass boost that appears as you move close to a directional microphone. Radio voices use it deliberately. It becomes muddy past a certain point, so it is a control rather than a bug."
+    },
+    {
+      "type": "h3",
+      "text": "Off-axis"
+    },
+    {
+      "type": "p",
+      "text": "Speaking or singing slightly to the side of a microphone rather than straight into it. Reduces plosives and often tames harsh sibilance, at the cost of a little top end."
+    },
+    {
+      "type": "h3",
+      "text": "Polar pattern"
+    },
+    {
+      "type": "p",
+      "text": "The shape of what a microphone hears. Cardioid picks up mostly what is in front, which is what you want in an untreated room. Omnidirectional hears everything equally, including the room."
+    },
+    {
+      "type": "h3",
+      "text": "Condenser and dynamic"
+    },
+    {
+      "type": "p",
+      "text": "Two microphone types. A condenser is more sensitive and more detailed, and picks up more of the room along with your voice. A dynamic is less sensitive, which in an untreated space is an advantage rather than a limitation."
+    },
+    {
+      "type": "h3",
+      "text": "Pop filter"
+    },
+    {
+      "type": "p",
+      "text": "A screen between mouth and microphone that breaks up the blast of air from p and b sounds. A pair of tights over a coat hanger works about as well as a bought one."
+    },
+    {
+      "type": "h2",
+      "text": "Mixing terms you will meet"
+    },
+    {
+      "type": "h3",
+      "text": "Compression"
+    },
+    {
+      "type": "p",
+      "text": "Automatically reducing the level of the loudest parts, which lets you raise everything afterwards. Makes a performance more consistent and, pushed hard, makes it sound smaller and more tiring. Not to be confused with file compression, which is an entirely unrelated use of the same word."
+    },
+    {
+      "type": "h3",
+      "text": "Limiting"
+    },
+    {
+      "type": "p",
+      "text": "Compression taken to an extreme, used as a ceiling: nothing gets past this level. What stops a master from clipping."
+    },
+    {
+      "type": "h3",
+      "text": "EQ"
+    },
+    {
+      "type": "p",
+      "text": "Boosting or cutting specific frequency ranges. Cutting is usually more effective than boosting — removing what is in the way beats adding more of what you want."
+    },
+    {
+      "type": "h3",
+      "text": "High-pass and low-pass"
+    },
+    {
+      "type": "p",
+      "text": "A high-pass filter removes content below a chosen frequency; a low-pass removes above it. A high-pass around 80 Hz on a voice removes rumble and handling noise without touching anything you want to hear, and it is the single most useful filter in spoken-word work."
+    },
+    {
+      "type": "h3",
+      "text": "Pan"
+    },
+    {
+      "type": "p",
+      "text": "Where a sound sits between the left and right speakers. Centre-panned material is what the oldest vocal-removal trick relied on, which is why it took the bass and kick with it."
+    },
+    {
+      "type": "h3",
+      "text": "Wet and dry"
+    },
+    {
+      "type": "p",
+      "text": "Dry is unprocessed; wet has an effect applied. A separated vocal is usually drier than the original, because some of its reverb stayed behind with the instrumental."
+    },
+    {
+      "type": "h2",
+      "text": "File and delivery terms"
+    },
+    {
+      "type": "h3",
+      "text": "Container"
+    },
+    {
+      "type": "p",
+      "text": "The wrapper around encoded audio. M4A and MP4 are containers; AAC is the codec inside. This distinction causes more confusion than any other in the subject."
+    },
+    {
+      "type": "h3",
+      "text": "Codec"
+    },
+    {
+      "type": "p",
+      "text": "The thing that encodes and decodes — MP3, AAC, FLAC, Opus. Short for coder-decoder."
+    },
+    {
+      "type": "h3",
+      "text": "VBR, CBR, ABR"
+    },
+    {
+      "type": "p",
+      "text": "Variable, constant and average bitrate. Variable spends more bits on complex passages and gives better quality per megabyte; constant is predictable and slightly wasteful; average splits the difference."
+    },
+    {
+      "type": "h3",
+      "text": "Metadata / tags"
+    },
+    {
+      "type": "p",
+      "text": "Title, artist, album, cover art. FLAC and MP3 handle these well; WAV effectively does not, which is why a WAV's only reliable metadata is its filename."
+    },
+    {
+      "type": "h3",
+      "text": "Loudness normalisation"
+    },
+    {
+      "type": "p",
+      "text": "What streaming services do: playing everything back at a matched perceived loudness, measured in LUFS rather than peaks. It is why mastering a track extremely loud no longer makes it stand out — the platform simply turns it back down."
+    },
+    {
+      "type": "h2",
+      "text": "Terms that get misused"
+    },
+    {
+      "type": "p",
+      "text": "Four worth correcting, because using them precisely makes everything else clearer."
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Bitrate is not quality. It is a budget. A well-encoded 192kbps file beats a badly encoded 256kbps one.",
+        "Compression means two unrelated things — dynamic range reduction, and making files smaller. Context decides which, and people regularly talk past each other over it.",
+        "Volume, gain and loudness are three different things: what you set at the output, what you set at the input, and what a listener perceives.",
+        "Hi-res describes sample rates and bit depths above CD standard. It is a specification, not a guarantee — a hi-res file made from a poor master is a poor master in a larger container."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Words for problems"
+    },
+    {
+      "type": "h3",
+      "text": "Pre-echo"
+    },
+    {
+      "type": "p",
+      "text": "A faint smear of sound immediately before a sharp hit, produced when a lossy encoder spreads its error across an analysis block containing a transient. The classic low-bitrate artefact, and the specific thing AAC handles better than MP3."
+    },
+    {
+      "type": "h3",
+      "text": "Flutter echo"
+    },
+    {
+      "type": "p",
+      "text": "The rapid metallic ringing you hear when you clap in an empty room with parallel hard walls. The most obviously amateur-sounding room problem, and the reason a kitchen is a bad place to record."
+    },
+    {
+      "type": "h3",
+      "text": "Ground loop"
+    },
+    {
+      "type": "p",
+      "text": "A hum caused by two connected pieces of equipment sitting at slightly different electrical grounds. Plugging everything into one outlet usually cures it, and cures it properly rather than covering it up."
+    },
+    {
+      "type": "h3",
+      "text": "Aliasing"
+    },
+    {
+      "type": "p",
+      "text": "Content above half the sample rate being misread as a lower frequency that was never played. Inharmonic, metallic, and unremovable once recorded — which is why converters filter it out before sampling."
+    },
+    {
+      "type": "h3",
+      "text": "Comping"
+    },
+    {
+      "type": "p",
+      "text": "Assembling one good performance from the best parts of several takes. Standard professional practice, not a shortcut."
+    },
+    {
+      "type": "h2",
+      "text": "The five worth remembering"
+    },
+    {
+      "type": "p",
+      "text": "If you take nothing else from this: lossless versus lossy determines whether you can convert freely. Clipping is the one mistake you cannot undo. Noise floor is why distance to the microphone matters more than the microphone. Transients are what smearing damages. And a stem from a separation tool is a reconstruction, not a recovery."
+    },
+    {
+      "type": "p",
+      "text": "Everything else can be looked up when it comes up."
+    }
+  ]
+}

@@ -1,0 +1,319 @@
+{
+  "slug": "remix-copyright-basics",
+  "title": "Remixes and copyright: what you should know before you publish",
+  "excerpt": "The two rights every recording carries, what actually happens when you upload an unlicensed remix, and the routes that let you release one legitimately.",
+  "category": "Explainers",
+  "date": "2026-07-13",
+  "accent": "var(--a-blue)",
+  "body": [
+    {
+      "type": "p",
+      "text": "Separation has made it trivially easy to extract an acapella from any record. It has not made it any more legal to release a track built on one. Those two facts are unrelated, and a great deal of frustration comes from assuming that the first implies the second."
+    },
+    {
+      "type": "p",
+      "text": "This is a plain-English orientation rather than legal advice — the details vary considerably by country and by platform, and if money is involved you should talk to someone qualified. But knowing the shape of the thing prevents most of the avoidable mistakes."
+    },
+    {
+      "type": "h2",
+      "text": "Two rights, not one"
+    },
+    {
+      "type": "p",
+      "text": "This is the single most useful thing to understand, and most people who get caught out did not know it."
+    },
+    {
+      "type": "p",
+      "text": "Every commercial recording carries two separate copyrights."
+    },
+    {
+      "type": "p",
+      "text": "The composition — the song itself. The melody, the chords, the lyrics. Usually owned by the songwriters and their publisher. It exists independently of any particular recording, which is why a cover version engages this right and not the other one."
+    },
+    {
+      "type": "p",
+      "text": "The master recording — that specific performance, as captured. Usually owned by the record label. It is the actual audio."
+    },
+    {
+      "type": "p",
+      "text": "The reason this matters: an extracted acapella is the master recording. Not an imitation of it, not a re-performance — the literal audio from the release. So a remix built on an extracted vocal engages both rights at once, and needs permission from both the label and the publisher."
+    },
+    {
+      "type": "p",
+      "text": "By contrast, re-recording the song yourself engages only the composition right, which is generally much easier to clear — in many countries a compulsory mechanical licence exists precisely so that anyone can record a cover without asking permission, provided they pay the statutory rate."
+    },
+    {
+      "type": "h2",
+      "text": "What actually happens when you upload one"
+    },
+    {
+      "type": "p",
+      "text": "The practical reality is usually less dramatic than people fear and less permissive than they hope."
+    },
+    {
+      "type": "p",
+      "text": "Major platforms run automated content identification. It compares your upload against a database of registered recordings and compositions and flags matches — including matches that are pitch-shifted, time-stretched, filtered or buried under new production. It is considerably better at this than most people expect, and separation does not evade it, because the underlying recording is still there."
+    },
+    {
+      "type": "p",
+      "text": "When it matches, one of several things happens depending on what the rights-holder has chosen: the upload is blocked, or blocked in certain countries only, or left up with the advertising revenue redirected to the rights-holder, or left up and simply tracked."
+    },
+    {
+      "type": "p",
+      "text": "Note that the third option is common and is not a punishment. Many rights-holders are entirely happy for remixes to exist and simply want the revenue. The system working as designed often looks, from the uploader's side, like nothing bad happened at all."
+    },
+    {
+      "type": "p",
+      "text": "Repeated blocked uploads are a different matter, and can put an account at risk. That is the real cost of ignoring this."
+    },
+    {
+      "type": "h2",
+      "text": "Things that are widely believed and are not true"
+    },
+    {
+      "type": "p",
+      "text": "Each of these gets repeated constantly and none of them will help you."
+    },
+    {
+      "type": "ul",
+      "items": [
+        "\"Under thirty seconds is fine.\" There is no length below which use is automatically permitted. Short samples have lost court cases.",
+        "\"I credited the artist.\" Attribution is polite and is not permission.",
+        "\"I am not making money from it.\" Non-commercial use is one factor among several in a fair-use analysis, not an exemption.",
+        "\"It is transformative, so it is fair use.\" Fair use is a defence assessed case by case in specific jurisdictions, not a category you can place yourself in by declaring it.",
+        "\"I changed the pitch so it will not be detected.\" Content identification handles pitch and tempo changes routinely.",
+        "\"It was already on the internet.\" Something being available does not make it unlicensed."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "What you can do without asking anyone"
+    },
+    {
+      "type": "p",
+      "text": "Quite a lot, in fact, and this covers the majority of what people actually want."
+    },
+    {
+      "type": "p",
+      "text": "Private use. Making an instrumental to practise with, extracting a vocal to study phrasing, slowing a solo down to learn it. None of this involves distribution and none of it is a problem."
+    },
+    {
+      "type": "p",
+      "text": "Performing live at a licensed venue. Most venues hold a public performance licence covering the music played there, which is what makes a karaoke night lawful. Your separated backing track is covered by the same licence as the record would have been."
+    },
+    {
+      "type": "p",
+      "text": "Teaching and study, within limits that vary by country but generally exist."
+    },
+    {
+      "type": "p",
+      "text": "Working on something you have no intention of releasing. There is no rule against making things."
+    },
+    {
+      "type": "h2",
+      "text": "Routes to releasing legitimately"
+    },
+    {
+      "type": "p",
+      "text": "If you want a remix to exist publicly and stay up, there are real options."
+    },
+    {
+      "type": "h3",
+      "text": "Official remix competitions"
+    },
+    {
+      "type": "p",
+      "text": "Labels and artists run these regularly, and they come with official stems and an explicit licence for the competition's terms. This is the easiest legitimate route and the material is usually better than anything you could separate, because it is the real multitrack."
+    },
+    {
+      "type": "h3",
+      "text": "Ask"
+    },
+    {
+      "type": "p",
+      "text": "Genuinely underrated. Independent artists in particular are often delighted, and a polite message explaining what you want to do succeeds more often than people assume. Get the answer in writing."
+    },
+    {
+      "type": "h3",
+      "text": "Creative Commons and royalty-free material"
+    },
+    {
+      "type": "p",
+      "text": "A large body of music is released under licences that permit derivative works, sometimes requiring only attribution. Check the specific licence, since some prohibit commercial use and some prohibit derivatives entirely."
+    },
+    {
+      "type": "h3",
+      "text": "Public domain"
+    },
+    {
+      "type": "p",
+      "text": "Compositions eventually enter the public domain — the term varies by country, commonly life of the author plus seventy years. Note the trap: the composition being public domain does not make a modern recording of it public domain. A 2019 recording of a Beethoven symphony has a master recording copyright dated 2019."
+    },
+    {
+      "type": "h3",
+      "text": "Clear it properly"
+    },
+    {
+      "type": "p",
+      "text": "For a commercial release, this means licensing from both the label and the publisher, usually through a clearance service. It costs money and takes time, and it is what professional remixers do."
+    },
+    {
+      "type": "h2",
+      "text": "Sampling is the same problem"
+    },
+    {
+      "type": "p",
+      "text": "Everything above applies to a four-bar drum loop lifted from a record exactly as it applies to a full acapella. Using someone's master recording is using their master recording, at any length."
+    },
+    {
+      "type": "p",
+      "text": "This is precisely why sample packs and royalty-free libraries exist as an industry: they sell you material that comes with the right to use it. For anything you intend to release, that is a far less stressful starting point than an extracted stem."
+    },
+    {
+      "type": "h2",
+      "text": "What fair use actually weighs"
+    },
+    {
+      "type": "p",
+      "text": "\"Fair use\" is invoked constantly and understood rarely. It is a defence assessed after the fact by a court, in specific countries — mainly the United States — and it is not a category you can put yourself into by declaring it. Other countries have narrower equivalents; the United Kingdom, for instance, has \"fair dealing\", which is a list of permitted purposes rather than a balancing test."
+    },
+    {
+      "type": "p",
+      "text": "Where the balancing test applies, four factors are weighed together. No single one decides it."
+    },
+    {
+      "type": "ol",
+      "items": [
+        "The purpose and character of the use. Is it transformative — does it add new meaning or message rather than substitute for the original? Commentary, criticism and parody weigh well here. A remix that is simply the song with different drums weighs badly.",
+        "The nature of the work. Creative works get stronger protection than factual ones. Music is about as creative as it gets.",
+        "The amount used, and how central it was. Not just length — taking the hook is worse than taking a longer but unremarkable passage. This is why \"under thirty seconds\" is not a rule.",
+        "The effect on the market. Does your use substitute for the original, or harm the market for licensing it? This factor tends to carry the most weight in practice."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "Notice what is absent: whether you credited the artist, whether you made money, and whether you meant well. Non-commercial use helps under the fourth factor but does not decide it."
+    },
+    {
+      "type": "h2",
+      "text": "Covers are a genuinely different thing"
+    },
+    {
+      "type": "p",
+      "text": "This is the most useful distinction in the whole subject and it is widely missed."
+    },
+    {
+      "type": "p",
+      "text": "Recording the song yourself engages only the composition right — the melody and lyrics — and not the master recording, because you have made a new recording. In many countries there is a compulsory mechanical licence covering exactly this: you do not need permission, you need to pay the statutory rate. The songwriter cannot refuse."
+    },
+    {
+      "type": "p",
+      "text": "That is why cover versions are everywhere and remixes built on extracted acapellas are not. One has a defined, no-permission-needed path; the other requires an actual negotiation with a label."
+    },
+    {
+      "type": "p",
+      "text": "Practical consequence: if what you want is to release your own version of a song, re-record it. It is more work and it is legally straightforward. If you want the original artist's voice on your track, that is a licensing conversation."
+    },
+    {
+      "type": "h2",
+      "text": "How Content ID actually behaves"
+    },
+    {
+      "type": "p",
+      "text": "Knowing the mechanics removes most of the anxiety, because the usual outcome is not what people fear."
+    },
+    {
+      "type": "p",
+      "text": "Rights-holders register their recordings and compositions with the platform. Every upload is fingerprinted and compared. The comparison is robust to pitch shifting, time stretching, filtering, and material layered on top — it is matching an acoustic fingerprint, not a file hash, so none of the folk remedies evade it."
+    },
+    {
+      "type": "p",
+      "text": "When a match occurs, the rights-holder's pre-set policy applies. The four common ones:"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Monetise. The video stays up and the revenue goes to them. This is by far the commonest, and from your side almost nothing appears to happen.",
+        "Track. It stays up and they collect data.",
+        "Block. Nobody can watch it — sometimes worldwide, often only in specific countries, since rights are territorial.",
+        "Mute. The video stays, the audio goes. The worst outcome for a music upload."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "A Content ID claim is not a copyright strike. A claim is automated and affects that one upload. A strike is a formal legal complaint, and accumulating them puts the account at risk. Conflating the two causes a lot of unnecessary panic."
+    },
+    {
+      "type": "h2",
+      "text": "If you get a claim"
+    },
+    {
+      "type": "p",
+      "text": "There is a right order to think about it."
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Read what was claimed. Often it is one specific element — the composition, or one sample — rather than the whole thing.",
+        "Decide whether the claim is correct. Frequently it is. If you used their master, they are right.",
+        "If it is correct and the policy is \"monetise\", you can usually leave it. The video stays up.",
+        "If it is wrong — you licensed it, or it is your own work, or it is public domain — dispute it with the evidence. Disputes with documentation are usually resolved.",
+        "Do not dispute a correct claim in the hope it is not noticed. That escalates a non-event into a formal process."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Creative Commons, in more detail"
+    },
+    {
+      "type": "p",
+      "text": "A large and genuinely useful body of music is released under these licences, and the differences between them matter."
+    },
+    {
+      "type": "ul",
+      "items": [
+        "CC BY — use it, including commercially, including modified. You must credit the creator. The most permissive.",
+        "CC BY-SA — the same, but anything you make from it must carry the same licence. Fine for a free release, awkward for a commercial one.",
+        "CC BY-NC — no commercial use. Note that \"commercial\" includes a monetised video, which catches people out.",
+        "CC BY-ND — no derivatives at all. Useless for remixing; you may only redistribute it unchanged.",
+        "CC0 — the creator has waived everything. Do as you like, no credit required."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "Two cautions. Check the specific licence on the specific track rather than assuming a whole library shares one. And credit properly when credit is required — it is the entire price of the licence, and failing to pay it is a breach as real as any other."
+    },
+    {
+      "type": "h2",
+      "text": "Public domain has a trap in it"
+    },
+    {
+      "type": "p",
+      "text": "Compositions eventually enter the public domain — the term varies by country, commonly the author's life plus seventy years. Bach, Beethoven, most traditional folk song."
+    },
+    {
+      "type": "p",
+      "text": "The trap: the composition being free does not make any particular recording of it free. A 2019 recording of a Beethoven symphony carries a 2019 master recording copyright owned by whoever made it. The notes are free; that performance is not."
+    },
+    {
+      "type": "p",
+      "text": "So to use public domain music you need either a public domain recording — genuinely old, and there are archives of them — or a recording you made yourself, or one released under a licence that permits it."
+    },
+    {
+      "type": "h2",
+      "text": "The reasonable position"
+    },
+    {
+      "type": "p",
+      "text": "None of this is an argument against separation tools, and none of it should stop you making things. Most use is private, most private use is fine, and learning by taking records apart is one of the best musical educations available."
+    },
+    {
+      "type": "p",
+      "text": "The line worth holding in your head is between making and distributing. Make whatever you like. Before you publish something built on somebody else's master, know that you are doing it, and decide deliberately rather than by accident."
+    },
+    {
+      "type": "p",
+      "text": "Again: this is general orientation, not legal advice, and the specifics vary by country. If a release matters commercially, get proper advice rather than relying on an article."
+    }
+  ]
+}

@@ -1,0 +1,329 @@
+{
+  "slug": "how-to-transcribe-a-song-by-ear",
+  "title": "How to transcribe a song by ear",
+  "excerpt": "Working out what a record is actually playing — the order to do it in, why the bass comes first, and how separation and slowing down turn a hard job into a manageable one.",
+  "category": "Practice",
+  "date": "2026-07-15",
+  "accent": "var(--a-green)",
+  "body": [
+    {
+      "type": "p",
+      "text": "Transcribing by ear used to be a slow, frustrating skill that took years to develop, because the raw material was always a finished mix in which everything was playing at once. You had to pick a bass line out from underneath a drum kit, a guitar and a vocal, at full speed, by repeatedly dropping a needle."
+    },
+    {
+      "type": "p",
+      "text": "The skill is still worth having, and it still takes practice. But two things have changed what the practice looks like: you can now hear one instrument at a time, and you can hear it at a speed you can follow, in the original key. This article is about how to use that well — because it is possible to use it badly and learn less than you would have the hard way."
+    },
+    {
+      "type": "h2",
+      "text": "The order to work in"
+    },
+    {
+      "type": "p",
+      "text": "Almost everyone starts with the melody, and almost everyone should not. There is a better order, and it makes everything after each step easier."
+    },
+    {
+      "type": "h3",
+      "text": "1. Find the tempo and the time signature"
+    },
+    {
+      "type": "p",
+      "text": "Tap along until you are confident where beat one is. This sounds trivial and it is the foundation of everything else — a transcription with the barlines in the wrong place is wrong no matter how accurate the notes are."
+    },
+    {
+      "type": "p",
+      "text": "Listen for where the phrase turns over rather than where the drums are loudest. Many records have a kick pattern that suggests a downbeat one beat away from where the harmony actually resolves."
+    },
+    {
+      "type": "h3",
+      "text": "2. Transcribe the bass"
+    },
+    {
+      "type": "p",
+      "text": "This is the step people skip and the step that unlocks the rest."
+    },
+    {
+      "type": "p",
+      "text": "The bass note is almost always the root of the chord. Get the bass line and you have most of the harmony for free — you will know that bar three is some kind of F chord before you have identified a single note above it. Working out whether that F is major, minor or a seventh is a much smaller problem than working out what the chord is from scratch."
+    },
+    {
+      "type": "p",
+      "text": "Separate the bass stem, slow it to 60–70%, and write the notes down. Bass separates exceptionally well because it lives almost alone at the bottom of the spectrum, so what you hear is clean."
+    },
+    {
+      "type": "h3",
+      "text": "3. Work out the chord quality"
+    },
+    {
+      "type": "p",
+      "text": "With roots in hand, decide major or minor for each. Sing the third against the bass note — if it sounds bright it is major, if it sounds dark it is minor. This is a two-second test per chord and it is reliable."
+    },
+    {
+      "type": "p",
+      "text": "Then look for sevenths, suspensions and inversions. Most popular music uses a small number of chord types, so if something sounds unusual it is often a familiar chord over a different bass note rather than something exotic."
+    },
+    {
+      "type": "h3",
+      "text": "4. Transcribe the melody"
+    },
+    {
+      "type": "p",
+      "text": "Now that you know the harmony, the melody is far easier, because most melody notes belong to the chord underneath and the ones that do not are passing notes with an obvious direction."
+    },
+    {
+      "type": "p",
+      "text": "Use the isolated vocal from the Vocal Remover. A melody buried in a mix is genuinely difficult; the same melody alone is usually obvious."
+    },
+    {
+      "type": "h3",
+      "text": "5. Fill in the details"
+    },
+    {
+      "type": "p",
+      "text": "The guitar figure, the horn stabs, the keyboard part. These are the parts that make a record sound like itself, and they are much easier to hear once you know what the harmony is doing underneath them."
+    },
+    {
+      "type": "h2",
+      "text": "Using separation well"
+    },
+    {
+      "type": "p",
+      "text": "The obvious approach is to separate everything and transcribe each stem. That works and it is not always the best use of the tool."
+    },
+    {
+      "type": "p",
+      "text": "The more useful trick is to remove rather than isolate. Mute the instrument you are transcribing and listen to everything else — this tells you what the part has to fit against, which is often what you actually want to know. Then isolate it to check the details."
+    },
+    {
+      "type": "p",
+      "text": "A second technique: solo an instrument and play along with it rather than writing it down. Getting it under your fingers first and notating afterwards frequently produces a more accurate transcription than notating first, because your hands catch articulation and phrasing your ear glosses over."
+    },
+    {
+      "type": "h2",
+      "text": "Slowing down without cheating yourself"
+    },
+    {
+      "type": "p",
+      "text": "Slowing a recording lets you hear individual notes in a fast passage. Used carelessly, it lets you avoid developing the ear that would have heard them at speed."
+    },
+    {
+      "type": "p",
+      "text": "A reasonable discipline: try it at full speed first, twice. Then slow it down to work out what you could not hear. Then go back to full speed and confirm that you can now hear it. That last step is where the ear training happens — recognising something you have identified is much easier than identifying it, and doing it at tempo consolidates the learning."
+    },
+    {
+      "type": "p",
+      "text": "70% is usually enough for a melody. 50% for a fast solo. Below 50% music starts to lose its shape and you end up hearing individual notes rather than a phrase, which is worse for transcription rather than better."
+    },
+    {
+      "type": "p",
+      "text": "Keep the pitch unchanged. This is the whole reason modern time-stretching is useful for this job — what you learn is in the actual key, so it transfers directly."
+    },
+    {
+      "type": "h2",
+      "text": "Practical setup"
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Run the song through the Stem Splitter at High quality.",
+        "Cut the section you are working on — eight or sixteen bars — with the Audio Cutter. Looping a short section beats waiting for it to come round.",
+        "Slow the section with the Pitch Shifter, leaving pitch at zero.",
+        "Work bass first, then chords, then melody, then details.",
+        "Check each part back against the full-speed original before moving on."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Things that catch people out"
+    },
+    {
+      "type": "h3",
+      "text": "The record is not at concert pitch"
+    },
+    {
+      "type": "p",
+      "text": "Older recordings, and anything transferred from tape, are frequently a little sharp or flat. If every note you identify seems to sit between two notes, this is why. Use the Pitch Shifter to nudge the whole thing into tune before you transcribe, rather than fighting it."
+    },
+    {
+      "type": "h3",
+      "text": "The bass is playing an inversion"
+    },
+    {
+      "type": "p",
+      "text": "Usually the bass note is the root, but not always. If a chord sounds like a C major but the bass is on E, you have a C/E — and writing it as an E minor of some kind will lead you astray for the rest of the passage."
+    },
+    {
+      "type": "h3",
+      "text": "What you hear as one instrument is two"
+    },
+    {
+      "type": "p",
+      "text": "Doubled lines are extremely common — a bass and a low synth, a guitar and a piano playing the same figure. Separation sometimes splits these and sometimes does not, and a line that seems to have an odd timbre is often two things at once."
+    },
+    {
+      "type": "h3",
+      "text": "The separated stem has artefacts"
+    },
+    {
+      "type": "p",
+      "text": "A watery quality on sustained notes is the model, not the record. Do not transcribe an artefact as an ornament. When something sounds strange, check it against the original mix before writing it down."
+    },
+    {
+      "type": "h2",
+      "text": "Why bother, when the chords are online"
+    },
+    {
+      "type": "p",
+      "text": "Two reasons."
+    },
+    {
+      "type": "p",
+      "text": "The first is that a lot of what is online is wrong. Chord sites are crowd-sourced and simplified, and it is common for a transcription to be approximately right and specifically wrong in the one bar that makes the song interesting."
+    },
+    {
+      "type": "p",
+      "text": "The second is that transcribing is how ears develop. Every song you work out makes the next one faster, because you accumulate a library of patterns — this progression, that turnaround, this kind of bass movement — and eventually you recognise them on first hearing."
+    },
+    {
+      "type": "p",
+      "text": "That is the actual prize. The transcription is a by-product; the ear is the thing you keep."
+    },
+    {
+      "type": "h2",
+      "text": "Finding the key"
+    },
+    {
+      "type": "p",
+      "text": "Worth its own method, because getting it right makes everything downstream easier and getting it wrong makes everything harder."
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Play the last chord of the song. Music usually resolves home, so the final chord is the key more often than not.",
+        "Sing the note that feels like \"home\" while the song plays. Find it on an instrument. That is very likely your tonic.",
+        "Check whether it sounds major or minor by singing the third above your tonic. Bright is major; dark is minor.",
+        "Confirm against the bass line. If your candidate key is right, most bass notes will belong to that scale."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "If nothing fits, two things are likely. The song may modulate — many do, often up a tone for the last chorus. Or the recording may not be at concert pitch, which is common with older material and tape transfers; shift it into tune before continuing."
+    },
+    {
+      "type": "h2",
+      "text": "Common progressions worth recognising"
+    },
+    {
+      "type": "p",
+      "text": "Most popular music reuses a small number of harmonic patterns. Recognising them by ear turns transcription from working out every chord into identifying which familiar shape you are hearing."
+    },
+    {
+      "type": "ul",
+      "items": [
+        "I–V–vi–IV. The most used progression in popular music. If a song sounds instantly familiar and you cannot say why, this is usually why.",
+        "vi–IV–I–V. The same four chords starting elsewhere, which is why so many songs can be sung over each other.",
+        "I–vi–IV–V. The fifties progression — doo-wop, early rock and roll, a great deal of ballad writing since.",
+        "ii–V–I. The backbone of jazz harmony, and everywhere in songwriting as a way of arriving somewhere.",
+        "I–bVII–IV. The rock cadence, borrowed from the mixolydian mode. Instantly identifiable once you know it."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "Learn to hear these four or five and a large proportion of songs become a matter of confirming rather than deducing."
+    },
+    {
+      "type": "h2",
+      "text": "Writing it down"
+    },
+    {
+      "type": "p",
+      "text": "Choose a notation that matches what you need, rather than defaulting to the most formal one."
+    },
+    {
+      "type": "p",
+      "text": "Chord symbols above lyrics are enough for most songs and take minutes. Nashville numbers — writing 1, 4, 5 instead of C, F, G — describe the relationship rather than the key, so the chart transposes instantly for a singer who needs a different key. Full staff notation is necessary for a melody line you need to be precise about, and overkill for a chord chart."
+    },
+    {
+      "type": "p",
+      "text": "Whatever you choose, mark the form: verse, chorus, bridge, and how many bars each is. A transcription with the right chords and the wrong structure is not usable."
+    },
+    {
+      "type": "h2",
+      "text": "Training your ear alongside"
+    },
+    {
+      "type": "p",
+      "text": "Transcription is ear training, and a few habits make the training much faster."
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Guess before you check. Say what you think the chord is out loud, then play it. The guess is what builds the skill; checking only confirms it.",
+        "Sing what you are transcribing. If you can sing a line back, you have internalised it; if you cannot, you are copying rather than hearing.",
+        "Use intervals rather than absolute pitch. Most people cannot name a note in isolation and everyone can learn to hear the distance between two.",
+        "Anchor intervals to songs you know. The start of a familiar tune for a fifth, another for a minor third. This is a standard technique and it works.",
+        "Go back to full speed to confirm. Recognising something at tempo is where the learning consolidates."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "When separation misleads you"
+    },
+    {
+      "type": "p",
+      "text": "Two things to watch for, because a separated stem is a reconstruction and not a recording of the original part."
+    },
+    {
+      "type": "p",
+      "text": "A watery quality on sustained notes is the model working hard, not an effect the musician used. Do not transcribe it as vibrato or tremolo."
+    },
+    {
+      "type": "p",
+      "text": "And a note that appears in a stem but is inaudible in the full mix should be treated with suspicion. Separation can occasionally invent a plausible continuation of a line that was actually masked. Check anything surprising against the original mix before writing it down."
+    },
+    {
+      "type": "h2",
+      "text": "Keep your transcriptions"
+    },
+    {
+      "type": "p",
+      "text": "A folder of your own transcriptions becomes a reference you will actually use, and more usefully a record of what you could hear at the time."
+    },
+    {
+      "type": "p",
+      "text": "Going back to something you worked out a year ago and finding it obvious is the clearest evidence that your ear has improved — and it is much more motivating than any exercise."
+    },
+    {
+      "type": "h2",
+      "text": "When you are genuinely stuck"
+    },
+    {
+      "type": "p",
+      "text": "Everyone hits a chord they cannot name. Three things to try before giving up on it."
+    },
+    {
+      "type": "p",
+      "text": "Play the bass note and sing up from it until you find each note of the chord. Naming intervals from a known root is far easier than identifying a chord as a whole."
+    },
+    {
+      "type": "p",
+      "text": "Ask what came before and what comes after. Harmony moves in patterns, and the surrounding chords usually narrow the possibilities to two or three candidates you can then test."
+    },
+    {
+      "type": "p",
+      "text": "And leave it. Mark the bar, carry on, and come back the next day — an ear that has slept on a problem frequently solves it in seconds."
+    },
+    {
+      "type": "h2",
+      "text": "A reasonable first project"
+    },
+    {
+      "type": "p",
+      "text": "Pick something with a clear bass line, a moderate tempo and an arrangement with space in it. Soul and Motown records are close to ideal, and so is most folk and singer-songwriter material."
+    },
+    {
+      "type": "p",
+      "text": "Avoid, for now: dense productions, anything with heavily distorted guitars, live recordings, and songs where the harmony changes every beat. Those get much easier after ten songs and are discouraging as a first one."
+    }
+  ]
+}

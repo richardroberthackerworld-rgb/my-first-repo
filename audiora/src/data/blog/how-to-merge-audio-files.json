@@ -1,0 +1,307 @@
+{
+  "slug": "how-to-merge-audio-files",
+  "title": "How to merge audio files into one track",
+  "excerpt": "Joining several recordings without an audible seam — what a crossfade actually does, how long it should be, and how to match levels so the result sounds like one recording.",
+  "category": "Guides",
+  "date": "2026-07-29",
+  "accent": "var(--a-blue)",
+  "body": [
+    {
+      "type": "p",
+      "text": "Joining audio sounds like the easiest job in the list. Put file two after file one. What could go wrong?"
+    },
+    {
+      "type": "p",
+      "text": "Three things, reliably: an audible click at the join, a jarring level change between the parts, and a transition that is technically clean but musically wrong. This article covers all three, because getting them right is the difference between a continuous recording and an obvious collage."
+    },
+    {
+      "type": "h2",
+      "text": "Why joins click"
+    },
+    {
+      "type": "p",
+      "text": "The same reason cuts do. At the end of the first file the waveform sits at some arbitrary value; at the start of the second it sits at some other arbitrary value. Butt them together and the signal jumps instantaneously from one to the other. An instantaneous jump contains energy across the whole spectrum, and you hear it as a click."
+    },
+    {
+      "type": "p",
+      "text": "A crossfade removes the jump by making the transition gradual: the first file fades down while the second fades up, and the summed signal moves smoothly from one to the other. Even a very short crossfade — five or ten milliseconds, far too short to perceive as a fade — eliminates the click completely."
+    },
+    {
+      "type": "p",
+      "text": "This is why the crossfade control exists and why setting it to zero is almost never right."
+    },
+    {
+      "type": "h2",
+      "text": "Equal power, not equal gain"
+    },
+    {
+      "type": "p",
+      "text": "There is a subtlety here that explains why some crossfades sag in the middle."
+    },
+    {
+      "type": "p",
+      "text": "The obvious way to crossfade is linear: fade one down in a straight line while fading the other up in a straight line. Halfway through, each is at 50%."
+    },
+    {
+      "type": "p",
+      "text": "The problem is that loudness does not add linearly. Two uncorrelated signals at 50% amplitude do not sum to 100% — they sum to about 71%. So a linear crossfade produces an audible dip in the middle, most noticeable on longer fades between unrelated material."
+    },
+    {
+      "type": "p",
+      "text": "An equal-power crossfade uses a curve instead, chosen so that the total power stays constant throughout. At the midpoint each signal is at about 71% amplitude, and the perceived loudness holds steady. That is what the Song Joiner uses, and it is why a long crossfade between two different songs does not dip."
+    },
+    {
+      "type": "h2",
+      "text": "How long the crossfade should be"
+    },
+    {
+      "type": "p",
+      "text": "The right length depends entirely on what you are joining, and the range is wider than most people assume."
+    },
+    {
+      "type": "h3",
+      "text": "5–20 milliseconds: an invisible splice"
+    },
+    {
+      "type": "p",
+      "text": "For joining two halves of what was one continuous recording — removing a cough from the middle of an interview, for instance. Long enough to kill the click, far too short to perceive. Use this whenever the two sides are meant to sound like they were never apart."
+    },
+    {
+      "type": "h3",
+      "text": "50–200 milliseconds: a clean transition"
+    },
+    {
+      "type": "p",
+      "text": "For joining separately recorded segments that belong together: chapters of an audiobook, sections of a podcast, takes of the same piece. Smooths the change in room tone between recordings without being noticeable as a fade."
+    },
+    {
+      "type": "h3",
+      "text": "1–3 seconds: a musical blend"
+    },
+    {
+      "type": "p",
+      "text": "For joining songs into a continuous mix. The end of one record blends into the start of the next. This is where equal power matters most, and where matching tempo and key starts to matter too."
+    },
+    {
+      "type": "h3",
+      "text": "4–10 seconds: a DJ-style transition"
+    },
+    {
+      "type": "p",
+      "text": "For a genuinely continuous mix where the two records play together for a while. At this length you are no longer joining, you are mixing, and the two tracks need to agree on tempo and preferably on key for it to work."
+    },
+    {
+      "type": "h2",
+      "text": "Matching levels first"
+    },
+    {
+      "type": "p",
+      "text": "The commonest complaint about a merged file is not a click. It is that one part is much louder than another, so the listener reaches for the volume control halfway through."
+    },
+    {
+      "type": "p",
+      "text": "This happens because separate recordings were made at different levels, or because a commercially mastered track sits far louder than something you recorded yourself. A modern master can be ten decibels hotter than a home recording, which is an enormous and completely obvious difference."
+    },
+    {
+      "type": "p",
+      "text": "The fix is to normalise each part before joining. The Audio Converter's normalise option brings the loudest peak of a file up to just below full scale, which puts every part on the same footing."
+    },
+    {
+      "type": "p",
+      "text": "One caveat worth understanding: peak normalisation matches peaks, not perceived loudness. A heavily compressed track and a dynamic one can have identical peaks and sound wildly different in volume, because the compressed one spends far more time near its peak. If your parts are of very different types, trust your ears over the numbers and adjust."
+    },
+    {
+      "type": "h2",
+      "text": "Getting the order right"
+    },
+    {
+      "type": "p",
+      "text": "Obvious, but worth saying because it is the mistake that costs the most time: sort the running order before you export, not after."
+    },
+    {
+      "type": "p",
+      "text": "Two things help. Name your files so they sort correctly — a numeric prefix, with leading zeros if you have more than nine, since otherwise 10 sorts before 2. And check the list once before exporting, especially if you rearranged it, because a merged file with two parts swapped has to be rebuilt from scratch."
+    },
+    {
+      "type": "h2",
+      "text": "Mixed formats and mismatched files"
+    },
+    {
+      "type": "p",
+      "text": "You can join files of different formats — an MP3 and a WAV can sit next to each other, because everything is decoded before it is joined and the output format is chosen separately."
+    },
+    {
+      "type": "p",
+      "text": "Sample rates and channel counts are handled too, but they are worth thinking about. Joining a 22 kHz mono voice memo to a 44.1 kHz stereo music file works, and the result will be 44.1 stereo — but the voice memo section will still sound like a 22 kHz mono voice memo. Converting up does not add quality; it just makes the difference between the sections more obvious by putting them side by side."
+    },
+    {
+      "type": "p",
+      "text": "If your parts vary a lot in quality, consider whether the lowest common denominator is actually the better target. A whole file at consistent moderate quality often sounds more professional than one that lurches between excellent and poor."
+    },
+    {
+      "type": "h2",
+      "text": "Common jobs"
+    },
+    {
+      "type": "h3",
+      "text": "Assembling a podcast episode"
+    },
+    {
+      "type": "p",
+      "text": "Intro music, then the interview, then the outro. Use a 100–200 ms crossfade between speech segments and something longer where music meets speech, so the music ducks away rather than stopping. Normalise everything first — an intro recorded at a professional level over an interview recorded on a laptop is the classic version of the level problem."
+    },
+    {
+      "type": "h3",
+      "text": "Making a continuous mix"
+    },
+    {
+      "type": "p",
+      "text": "Two to four seconds between tracks, and pay attention to key as well as tempo. Tracks a fifth or a fourth apart blend comfortably; tracks a semitone apart clash badly. The Pitch Shifter can nudge one into agreement, and spreading a small adjustment across both tracks sounds better than forcing all of it onto one."
+    },
+    {
+      "type": "h3",
+      "text": "Rejoining a split recording"
+    },
+    {
+      "type": "p",
+      "text": "Some recorders split long sessions into fixed-size files. These are meant to be gapless, so use the shortest crossfade available — 5 to 10 milliseconds. Anything longer will very slightly overlap material that was continuous, which on music can produce a momentary flam."
+    },
+    {
+      "type": "h3",
+      "text": "Merging audiobook chapters"
+    },
+    {
+      "type": "p",
+      "text": "Short crossfades, plus a deliberate pause between chapters. A second or two of silence is what tells a listener that one chapter ended and another began — joining them seamlessly is technically neater and worse to listen to."
+    },
+    {
+      "type": "h2",
+      "text": "Checklist"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Normalise the parts before joining if they came from different sources.",
+        "Never set the crossfade to zero — five milliseconds costs nothing and prevents clicks.",
+        "Match the crossfade length to the job: milliseconds for a splice, seconds for a musical blend.",
+        "Fix the running order before exporting.",
+        "Export lossless if the merged file will be edited again.",
+        "Listen to the joins specifically, at normal volume, before you call it finished."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Matching loudness rather than peaks"
+    },
+    {
+      "type": "p",
+      "text": "The most common complaint about a merged file is a level jump, and peak normalisation does not always prevent it."
+    },
+    {
+      "type": "p",
+      "text": "Peak normalisation moves a file so its single loudest sample sits just below full scale. But perceived loudness depends on how much time the audio spends near that peak, not on the peak itself. A heavily compressed pop master spends most of its time near the top; a dynamic acoustic recording touches the peak once in a chorus and sits far below it the rest of the time."
+    },
+    {
+      "type": "p",
+      "text": "Normalise both and they will have identical peaks and sound perhaps eight decibels apart."
+    },
+    {
+      "type": "p",
+      "text": "Two practical responses. Where the material is similar — episodes of the same podcast, tracks from one album — peak normalisation is fine and will get you close. Where it is not, normalise as a starting point and then adjust by ear, checking the transition specifically rather than the files in isolation."
+    },
+    {
+      "type": "h2",
+      "text": "Joining recordings made at different times"
+    },
+    {
+      "type": "p",
+      "text": "A specific case with a specific problem: the room changes."
+    },
+    {
+      "type": "p",
+      "text": "Two takes recorded an hour apart have subtly different backgrounds — the heating came on, traffic changed, the microphone moved a centimetre. Butt them together and the join is audible not as a click but as a shift in the ambience, which is oddly more noticeable than a click because it sounds like a change of place."
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Use a longer crossfade than you would for a splice — 200 to 500 milliseconds — so the two backgrounds blend rather than switch.",
+        "If one take is much noisier, treat it before joining rather than after. Treating the merged file applies one setting to two different noise floors.",
+        "Where there is a natural pause, put the join inside it. A change of room tone across a silence is far less noticeable than one mid-sentence."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Gapless material"
+    },
+    {
+      "type": "p",
+      "text": "Some things must join with no audible seam at all: a recorder that split a long session into fixed-size files, a live album where tracks run together, a DJ mix cut into pieces."
+    },
+    {
+      "type": "p",
+      "text": "Two rules. Use the shortest crossfade available — 5 to 10 milliseconds. Anything longer overlaps material that was continuous, which on music produces a momentary doubling that sounds like a flam."
+    },
+    {
+      "type": "p",
+      "text": "And use a lossless format throughout. MP3 adds a small amount of padding at the start and end of every file as a side effect of how it frames audio; joining MP3s therefore inserts a tiny silence at each join no matter how carefully you crossfade. WAV and FLAC do not have this problem."
+    },
+    {
+      "type": "h2",
+      "text": "Building a continuous mix"
+    },
+    {
+      "type": "p",
+      "text": "The most demanding version of joining, because the tracks have to agree musically as well as technically."
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Order by key and tempo, not just by preference. Adjacent tracks a fifth or fourth apart blend comfortably; a semitone apart clashes badly.",
+        "Adjust tempo where needed, spreading the change across both tracks rather than forcing all of it onto one. Two tracks moved 2% each sound better than one moved 4%.",
+        "Use two to four seconds of crossfade, and choose where — the end of a phrase into the start of another, not an arbitrary point.",
+        "Consider removing the bass from the outgoing track for the duration of the blend, so two low ends are not competing. This is where the Stem Splitter earns its place.",
+        "Listen to every transition specifically, at volume, before exporting the whole thing."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Checking a merged file efficiently"
+    },
+    {
+      "type": "p",
+      "text": "The wrong way is to play it from the beginning. By the third join your attention has gone and you are no longer evaluating anything."
+    },
+    {
+      "type": "p",
+      "text": "The right way: note the timestamp of each join as you build, then jump directly to each one and listen to ten seconds either side. Five joins take two minutes rather than the length of the file."
+    },
+    {
+      "type": "p",
+      "text": "What you are listening for, in order: a click, a level jump, a change in background, and a rhythmic stumble. The first three are technical and fixable in seconds. The fourth means the join is in the wrong place and needs moving."
+    },
+    {
+      "type": "h2",
+      "text": "Keep the parts"
+    },
+    {
+      "type": "p",
+      "text": "Merging is not reversible. Once the files are one file, separating them again means finding the join by ear and cutting there, which is fiddly and imprecise."
+    },
+    {
+      "type": "p",
+      "text": "Keep the source files until the merged version is finished, approved and published. The moment you need to swap out segment three for a re-recorded version is invariably the moment after you deleted it."
+    },
+    {
+      "type": "h2",
+      "text": "The thing worth listening for"
+    },
+    {
+      "type": "p",
+      "text": "When you check a merged file, do not listen to the whole thing from the beginning — you will lose concentration by the second join. Skip directly to each transition and listen to ten seconds either side."
+    },
+    {
+      "type": "p",
+      "text": "That is where every problem lives, and it takes a minute rather than an hour."
+    }
+  ]
+}

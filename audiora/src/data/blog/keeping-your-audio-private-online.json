@@ -1,0 +1,299 @@
+{
+  "slug": "keeping-your-audio-private-online",
+  "title": "Keeping your audio private when you use online tools",
+  "excerpt": "What actually happens to a file you hand to a web tool, which questions are worth asking before you upload anything sensitive, and how to check the answers yourself.",
+  "category": "Privacy",
+  "date": "2026-08-06",
+  "accent": "var(--a-green)",
+  "body": [
+    {
+      "type": "p",
+      "text": "Most audio is not sensitive. A song you are making a karaoke track from is already public. But some of it is: an interview under embargo, a client's rough mix, a therapy session, a recording of a meeting, a demo you have not released. For those, it is worth knowing what happens to a file after you hand it to a website — and worth knowing which questions actually distinguish a careful service from a careless one."
+    },
+    {
+      "type": "p",
+      "text": "This is a practical guide rather than a scare piece. The honest summary is that most tools are fine for most material, and that the few things worth checking are easy to check."
+    },
+    {
+      "type": "h2",
+      "text": "The two ways a web tool can work"
+    },
+    {
+      "type": "p",
+      "text": "Every audio tool you meet online does the work in one of two places, and this is the single most important distinction."
+    },
+    {
+      "type": "p",
+      "text": "Server-side: the file is uploaded, processed on the provider's machines, and the result is sent back. This is how most tools work, because it is far easier to build and it lets the provider use whatever hardware they like."
+    },
+    {
+      "type": "p",
+      "text": "Client-side: the processing runs in your browser, on your own machine. The file is read into memory by the page and never sent anywhere. This is harder to build, limited by whatever device you are on, and — for the processing step specifically — means there is no copy on anybody's server to worry about."
+    },
+    {
+      "type": "p",
+      "text": "7 Audio's processing tools are client-side. That is an engineering choice made for latency and cost as much as anything else, and it is not a claim that the whole service works without a network: signing in, credits and payments all involve a server, as they must. But the audio itself is decoded and processed in the tab."
+    },
+    {
+      "type": "p",
+      "text": "The way to check this on any site is straightforward and is described further down."
+    },
+    {
+      "type": "h2",
+      "text": "What \"we delete files after an hour\" actually means"
+    },
+    {
+      "type": "p",
+      "text": "Server-side tools almost all carry a line like this, and it is usually true. It is also less reassuring than it sounds, for reasons that have nothing to do with anybody's honesty."
+    },
+    {
+      "type": "p",
+      "text": "Deletion is typically of the primary object. Backups are a separate system with their own retention, often measured in weeks. Content delivery caches may hold a copy of your result if it was served through one. Logs record that a file with a given name and size was processed, and logs live longer than files."
+    },
+    {
+      "type": "p",
+      "text": "None of this is sinister; it is how ordinary infrastructure is built. But \"deleted after an hour\" describes a policy about one storage bucket, not a guarantee that no trace of your audio exists anywhere after an hour."
+    },
+    {
+      "type": "p",
+      "text": "For a song, this does not matter. For a recording that would cause a problem if it surfaced, it is worth weighing."
+    },
+    {
+      "type": "h2",
+      "text": "The questions worth asking"
+    },
+    {
+      "type": "p",
+      "text": "If you are about to hand a sensitive file to a service you have not used before, these five questions separate the careful from the careless quickly."
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Is the connection HTTPS? Non-negotiable, and visible in the address bar. Without it your audio crosses the network in the clear.",
+        "Does the privacy policy say what happens to uploads specifically? A policy that discusses cookies at length and never mentions your files is telling you something.",
+        "Does it claim any licence over your content? Some terms grant the provider broad rights to material you upload. Read that clause; it is usually short and near the end.",
+        "Is the file used for training? An increasingly common clause, and one many people would decline if asked directly rather than by default.",
+        "Do you need an account, and what does it collect? A tool that demands an email address to trim thirty seconds of audio is monetising something other than the trimming."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "How to check whether a file left your machine"
+    },
+    {
+      "type": "p",
+      "text": "You do not have to take anybody's word for this, including ours. Every desktop browser ships with the tool to check, and it takes about a minute."
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Open the developer tools — F12 on Windows and Linux, Option-Command-I on a Mac.",
+        "Go to the Network tab and clear whatever is listed.",
+        "Load your file into the tool and start whatever processing you want to test.",
+        "Watch what appears. Sort by size."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "If your 40 MB WAV was uploaded, there will be a request roughly 40 MB in size going out. It cannot be hidden — it is your own browser reporting its own activity."
+    },
+    {
+      "type": "p",
+      "text": "What you will see on a client-side tool instead is the application code, and possibly a large one-time download of a model file coming in. That direction matters: a large download is the tool arriving on your machine, not your audio leaving it."
+    },
+    {
+      "type": "p",
+      "text": "This test works on any site, which is the point. It is a general skill worth having."
+    },
+    {
+      "type": "h2",
+      "text": "What client-side processing does not protect you from"
+    },
+    {
+      "type": "p",
+      "text": "Being clear about this is more useful than overselling it."
+    },
+    {
+      "type": "p",
+      "text": "It does not make your device secure. If the machine you are working on is compromised, or shared, or has a backup service syncing your downloads folder to somebody else's cloud, none of that changes."
+    },
+    {
+      "type": "p",
+      "text": "It does not cover the rest of the service. An account exists on a server. A payment goes through a payment provider. If you sign in, that identity and the fact that you used the service are recorded, because they have to be."
+    },
+    {
+      "type": "p",
+      "text": "It does not stop you from sharing the result. The commonest way sensitive audio escapes is not a processing tool at all — it is the email, the messaging app or the shared drive it goes into next."
+    },
+    {
+      "type": "p",
+      "text": "And it does not cover the browser itself, extensions included. An extension with permission to read page content has that permission regardless of where processing happens."
+    },
+    {
+      "type": "h2",
+      "text": "Sensible practice, by sensitivity"
+    },
+    {
+      "type": "h3",
+      "text": "Public material"
+    },
+    {
+      "type": "p",
+      "text": "A released song, a podcast episode that is already out, anything already on the internet. Use whatever tool does the best job. There is nothing to protect."
+    },
+    {
+      "type": "h3",
+      "text": "Private but not consequential"
+    },
+    {
+      "type": "p",
+      "text": "Your own demos, family recordings, a voice memo. Prefer a client-side tool where one exists, and prefer not to create an account you do not need. If you use a server-side tool, glance at its policy first."
+    },
+    {
+      "type": "h3",
+      "text": "Genuinely confidential"
+    },
+    {
+      "type": "p",
+      "text": "Legal recordings, medical material, an embargoed interview, anything under an NDA. Here it is worth being deliberate: use a client-side tool and verify with the Network tab, or use offline software on a machine you control. Check whether your organisation has rules about third-party services — many do, and \"it was only a website\" is not usually accepted as an exception."
+    },
+    {
+      "type": "p",
+      "text": "Also consider whether the recording was legal to make in the first place. Consent rules for recording conversations vary by country and by state, and they apply regardless of what you do with the file afterwards."
+    },
+    {
+      "type": "h2",
+      "text": "The habits that matter more than tool choice"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Keep confidential audio off shared computers, and out of folders that sync automatically.",
+        "Name files so that the name alone does not disclose anything — logs record names.",
+        "Delete working copies when a job is finished, including from your downloads folder.",
+        "Use HTTPS everywhere, and be suspicious of any tool that does not.",
+        "Ask the person who gave you the recording what they expect. Often that answers the question faster than any policy does."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "What a service can see even when it never receives your file"
+    },
+    {
+      "type": "p",
+      "text": "Worth being precise about, because it is where the honest limits of client-side processing lie."
+    },
+    {
+      "type": "ul",
+      "items": [
+        "That you visited, from what approximate location, on what device — every web server logs this.",
+        "That you used a particular tool, if the page reports usage analytics.",
+        "The size and duration of what you processed, if the application sends that as a metric.",
+        "Your account identity and email, if you signed in.",
+        "The fact that a payment was made, and to what plan."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "None of that is the audio, and for most people none of it matters. But \"the file never left my machine\" and \"nothing about my activity is recorded\" are different claims, and only the first is being made."
+    },
+    {
+      "type": "h2",
+      "text": "Reading a privacy policy quickly"
+    },
+    {
+      "type": "p",
+      "text": "Most are long and most of the length is boilerplate. Four things are worth finding, and they are usually findable in two minutes."
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Search the document for \"upload\", \"content\", or \"your files\". If the policy never addresses what happens to what you submit, that absence is the answer.",
+        "Search for \"licence\" or \"license\". Some terms grant the provider a broad, perpetual right to use material you upload. Read that clause in full; it is normally short.",
+        "Search for \"train\" or \"improve our services\". This is the phrasing that usually covers using your content to train models.",
+        "Search for \"retain\" or \"delete\" to find the actual retention period, and note whether it says \"backups\" anywhere."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "If a policy is genuinely unreadable, that is information too. A service that is careful with your data usually finds it easy to say so."
+    },
+    {
+      "type": "h2",
+      "text": "A worked example of the Network tab check"
+    },
+    {
+      "type": "p",
+      "text": "The method described earlier is worth walking through once in detail, because doing it once makes it permanent knowledge."
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Open the tool in a desktop browser and press F12 (or Option-Command-I on a Mac).",
+        "Click the Network tab. Press the clear button so the list is empty.",
+        "Load a file into the tool — pick something recognisable in size, say a 40 MB WAV.",
+        "Sort the list by size, largest first.",
+        "Look at what is large, and which direction it went."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "If your file was uploaded, you will see a request of roughly 40 MB with your file's size in the outgoing column. It cannot be concealed: this is your own browser reporting its own network activity, not the site telling you about itself."
+    },
+    {
+      "type": "p",
+      "text": "What you will see on a client-side tool is application code coming in, and possibly a large one-time model download. Large and incoming is the tool arriving on your machine. Large and outgoing is your audio leaving it. That distinction is the whole test."
+    },
+    {
+      "type": "p",
+      "text": "One refinement: leave the Network tab open while you actually process, not just while you load. A tool could plausibly read a file locally and upload it at the point of processing."
+    },
+    {
+      "type": "h2",
+      "text": "Sensitive recordings: a short protocol"
+    },
+    {
+      "type": "p",
+      "text": "For the small number of files where a leak would genuinely matter."
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Work on a machine you control, not a shared or work computer where policy may differ from your assumptions.",
+        "Check that the folder you are working in is not being synced to a cloud service. This is the commonest accidental disclosure and it has nothing to do with any tool.",
+        "Verify with the Network tab rather than trusting a claim, including ours.",
+        "Name files so the name alone discloses nothing. Logs record names.",
+        "Delete working copies when you are done, including from your downloads folder.",
+        "Think about where the result goes next. Most sensitive audio escapes through the email or shared drive after processing, not through the processing."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Consent, which is a separate question"
+    },
+    {
+      "type": "p",
+      "text": "Worth raising because it is the part people forget entirely."
+    },
+    {
+      "type": "p",
+      "text": "Whether you may lawfully record a conversation varies considerably. Some jurisdictions require only one party to consent — which can be you. Others require every party to consent, and recording without it is a criminal matter regardless of what you subsequently do with the file."
+    },
+    {
+      "type": "p",
+      "text": "This applies to the recording, not to the processing, so no tool choice affects it. If you are handling a recording somebody else made, it is reasonable to ask how it was obtained before you build anything on it."
+    },
+    {
+      "type": "h2",
+      "text": "The reasonable position"
+    },
+    {
+      "type": "p",
+      "text": "Blanket suspicion of online tools is not warranted, and it costs you the use of software that is frequently better than the desktop alternative. What is warranted is proportion: know which of your files would matter if they leaked, know how to check where a file goes, and apply more care to the small number that need it."
+    },
+    {
+      "type": "p",
+      "text": "The Network tab test is the part worth remembering. It replaces trusting a marketing claim with checking one, and it works everywhere."
+    }
+  ]
+}

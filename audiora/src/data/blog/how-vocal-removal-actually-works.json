@@ -1,0 +1,246 @@
+{
+  "slug": "how-vocal-removal-actually-works",
+  "title": "How vocal removal actually works",
+  "excerpt": "What happens inside a separation model when it pulls a voice out of a finished mix — masks, spectrograms, and why reconstruction beats subtraction.",
+  "category": "Explainers",
+  "date": "2026-08-14",
+  "accent": "var(--a-violet)",
+  "body": [
+    {
+      "type": "p",
+      "text": "If you have ever wondered what is going on in the ninety seconds between pressing a button and getting an instrumental back, this is the article for that. It is not a guide to using the tool — that is covered elsewhere — but an account of what the software is actually doing to your audio, why the answer used to be \"not very much\" and is now \"quite a lot\", and what that means for the results you get."
+    },
+    {
+      "type": "h2",
+      "text": "The problem, stated precisely"
+    },
+    {
+      "type": "p",
+      "text": "A stereo audio file is two sequences of numbers. Each number is a measurement of air pressure at one instant, typically 44,100 of them per second per channel. A three-minute song is about sixteen million numbers."
+    },
+    {
+      "type": "p",
+      "text": "Everything that was recorded — every drum hit, every guitar chord, every syllable — has been added together into those numbers. Addition is the operative word. When the mix engineer summed the vocal track and the piano track, the result at each instant was simply one number plus the other. Nothing recorded which contribution came from where."
+    },
+    {
+      "type": "p",
+      "text": "So the task is: given a sum, recover one of the addends. In general this is impossible. If I tell you two numbers add to 10, you cannot tell me what they were. The only reason audio separation works at all is that music is not arbitrary — voices and pianos have structure, and that structure is enough to make some decompositions overwhelmingly more likely than others."
+    },
+    {
+      "type": "h2",
+      "text": "Working in the frequency domain"
+    },
+    {
+      "type": "p",
+      "text": "Almost nothing useful can be said about a raw waveform by looking at it. The first move in every serious approach is therefore to change the representation."
+    },
+    {
+      "type": "p",
+      "text": "A short-time Fourier transform chops the audio into short overlapping windows — a few tens of milliseconds each — and for every window computes how much energy is present at each frequency. Lay those side by side and you get a spectrogram: a two-dimensional picture where time runs left to right, frequency runs bottom to top, and brightness is energy."
+    },
+    {
+      "type": "p",
+      "text": "In that picture, things become visible that were invisible before. A bass note is a stack of evenly spaced horizontal lines low down. A cymbal is a vertical smear across the whole height. A sung vowel is a set of harmonics with a characteristic pattern of emphasis — the formants — that wobbles gently with vibrato. A consonant is a brief burst of noise."
+    },
+    {
+      "type": "p",
+      "text": "Separation becomes a question about this picture: for each point in it, how much of this energy belongs to the voice?"
+    },
+    {
+      "type": "h2",
+      "text": "Masks"
+    },
+    {
+      "type": "p",
+      "text": "The answer takes the form of a mask — a second picture, the same size as the spectrogram, where every cell holds a number between zero and one. Multiply the spectrogram by the mask, invert the transform, and you have audio containing only the parts the mask kept."
+    },
+    {
+      "type": "p",
+      "text": "A mask of all ones returns the original. A mask that is one everywhere except the vocal harmonics returns an instrumental. The whole problem reduces to estimating a good mask."
+    },
+    {
+      "type": "p",
+      "text": "Early systems estimated masks with hand-written rules: energy in this frequency band, panned near the centre, present for longer than a percussive hit — probably vocal. These rules capture something real, which is why the old methods worked at all, but they are crude. They cannot tell a sustained vowel from a sustained synth pad, because by those rules the two look identical."
+    },
+    {
+      "type": "h2",
+      "text": "What a trained model changes"
+    },
+    {
+      "type": "p",
+      "text": "A neural network replaces the rules with something learned. It is shown many thousands of examples where both the mix and the true separate parts are known, and it adjusts millions of internal parameters until the masks it predicts reproduce the true parts as closely as possible."
+    },
+    {
+      "type": "p",
+      "text": "What it learns is much richer than any rule anybody would write. It learns that vocal harmonics move together — when the fundamental slides up, every harmonic slides with it in lockstep, and a synth pad does not do that. It learns what breath before a phrase looks like. It learns that a snare's energy arrives all at once and decays in a particular shape. It learns the difference between a consonant and a hi-hat, which on a spectrogram are both brief bursts of broadband noise, by their surroundings rather than by themselves."
+    },
+    {
+      "type": "p",
+      "text": "Modern architectures also work in two domains at once. A hybrid model runs one path over the spectrogram and another over the raw waveform, then combines them. The spectrogram path is good at pitched, sustained material; the waveform path preserves transients and phase, which is where spectrogram-only methods smear. This is why a modern separation keeps the snap of a snare in a way that older spectral tools never could."
+    },
+    {
+      "type": "h2",
+      "text": "Subtraction versus reconstruction"
+    },
+    {
+      "type": "p",
+      "text": "Here is the difference that matters most, and it is easy to miss."
+    },
+    {
+      "type": "p",
+      "text": "The old approaches could only take away. Whatever the vocal was covering up stayed covered up, because there was nothing underneath to reveal — the piano note that was masked by a held vocal note was simply gone from the sum in any recoverable sense."
+    },
+    {
+      "type": "p",
+      "text": "A trained model does something different. Having heard an enormous number of pianos, it has a strong prior about what a piano chord does over time. When a voice masks part of that chord, the model can produce a plausible continuation of the chord underneath. It is not recovering the original samples; it is generating something that fits."
+    },
+    {
+      "type": "p",
+      "text": "That is why separated instrumentals sound complete rather than hollow. It is also, precisely, why they occasionally sound slightly wrong. When the model is confident, its guess is right. When it is uncertain — a dense, loud, heavily compressed passage where six things overlap — it still produces something, and what it produces is a blend of the possibilities it considered. That blend is what you hear as watery or smeared."
+    },
+    {
+      "type": "h2",
+      "text": "Why some songs are harder"
+    },
+    {
+      "type": "p",
+      "text": "Everything above predicts the failure cases exactly."
+    },
+    {
+      "type": "p",
+      "text": "Reverb is hard because a reverb tail is the voice, spread out and diffused until it no longer looks like a voice. The model has to decide whether a smear of energy two seconds after a word is that word or the room the band was in. Frequently the tail is left behind in the instrumental."
+    },
+    {
+      "type": "p",
+      "text": "Doubled vocals are hard because four takes panned across the stereo field do not match the model's picture of a single voice in one place."
+    },
+    {
+      "type": "p",
+      "text": "Distorted vocals are hard because distortion adds harmonics that make a voice's spectral fingerprint look like a guitar's."
+    },
+    {
+      "type": "p",
+      "text": "Loud mastering is hard because heavy compression pushes every element up against every other, reducing the level differences the model uses as evidence."
+    },
+    {
+      "type": "p",
+      "text": "And low-bitrate sources are hard for a different reason: the encoder already discarded detail the model needs, and no amount of intelligence recovers information that is not present."
+    },
+    {
+      "type": "h2",
+      "text": "Why the first run takes longer"
+    },
+    {
+      "type": "p",
+      "text": "A model of this kind is a large file — the four-source model used for Standard quality runs to well over a hundred megabytes, and the six-source model is larger still. It has to arrive before it can run, which is why the first separation you do takes noticeably longer than the second."
+    },
+    {
+      "type": "p",
+      "text": "After that it is cached, and subsequent runs skip straight to the work. The work itself scales with the length of the audio and with the hardware available — a machine with a capable graphics card will finish several times faster than one without, because this kind of computation is exactly what graphics hardware is built for."
+    },
+    {
+      "type": "h2",
+      "text": "Four sources or six"
+    },
+    {
+      "type": "p",
+      "text": "The two quality settings are two different models rather than the same model run harder."
+    },
+    {
+      "type": "p",
+      "text": "The four-source model estimates masks for vocals, drums, bass and everything else. The six-source model estimates masks for vocals, drums, bass, guitar, piano and everything else. Because it has to resolve two additional and genuinely difficult categories, it is a larger network trained for longer, and the extra capacity improves the other four outputs as well."
+    },
+    {
+      "type": "p",
+      "text": "That is the honest reason High quality sounds better even when you only want the vocal removed: you are not just getting more stems, you are getting a better model."
+    },
+    {
+      "type": "h2",
+      "text": "Why the model needs a lot of examples"
+    },
+    {
+      "type": "p",
+      "text": "A trained separation model has seen a very large number of songs for which both the mix and the original separate parts were available. That dataset is the real constraint on the field, and it explains a few things about how these tools behave."
+    },
+    {
+      "type": "p",
+      "text": "Multitracks are commercially valuable and rarely released, so the available data skews towards what is obtainable: a lot of pop, rock and electronic music, considerably less classical, jazz, and non-Western traditions."
+    },
+    {
+      "type": "p",
+      "text": "The practical consequence is that separation is best on the material the models saw most of. A sitar, a gamelan ensemble or a string quartet is further from the training distribution than a rock band, and results are correspondingly less reliable. This is not a flaw in the algorithm — it is what any statistical model does outside the data it learned from."
+    },
+    {
+      "type": "h2",
+      "text": "Why the first run downloads so much"
+    },
+    {
+      "type": "p",
+      "text": "The model is a file, and it has to arrive."
+    },
+    {
+      "type": "p",
+      "text": "The four-source model runs to well over a hundred megabytes; the six-source model is larger still. That is millions of learned parameters, and every one of them is needed to make a prediction. There is no smaller version that produces the same result."
+    },
+    {
+      "type": "p",
+      "text": "Once downloaded it is cached, so the second separation you run skips straight to the work. The work itself scales with the length of the audio and with the hardware available — graphics hardware is built for exactly this kind of computation, so a machine with a capable GPU finishes several times faster than one without."
+    },
+    {
+      "type": "p",
+      "text": "This is why the interface says the first run may take longer depending on your connection. It is a download, not a slow algorithm."
+    },
+    {
+      "type": "h2",
+      "text": "What a mask cannot express"
+    },
+    {
+      "type": "p",
+      "text": "One genuine limitation worth understanding, because it explains an artefact people notice and misattribute."
+    },
+    {
+      "type": "p",
+      "text": "A mask scales the magnitude of each point in the spectrogram — how much energy to keep. What it does not naturally handle is phase: the timing relationship between frequencies, which is what makes a waveform a waveform rather than a set of levels."
+    },
+    {
+      "type": "p",
+      "text": "Early spectrogram methods simply reused the mixture's phase, which is wrong for each separated source and is a major cause of the watery quality those methods produced."
+    },
+    {
+      "type": "p",
+      "text": "Modern hybrid models sidestep this by working partly in the waveform domain, where phase is preserved implicitly because you are operating on the samples themselves. That is the technical reason a modern separation keeps the snap of a snare where a spectrogram-only method softens it, and it is why \"hybrid\" appears in the names of current architectures."
+    },
+    {
+      "type": "h2",
+      "text": "Evaluating a separation objectively"
+    },
+    {
+      "type": "p",
+      "text": "There are standard measurements, and knowing they exist is useful even if you never compute one."
+    },
+    {
+      "type": "p",
+      "text": "The field uses metrics that compare a separated stem against the true original — signal-to-distortion, signal-to-interference and signal-to-artefacts ratios. Interference is how much of other sources leaked in; artefacts is how much of the output was invented rather than recovered."
+    },
+    {
+      "type": "p",
+      "text": "The reason to know this: those two failure modes trade against each other. A model tuned to remove all interference will invent more, and one tuned to invent nothing will leak more. What sounds best depends on the use — for an instrumental you would rather have a little vocal bleed than obvious artefacts, and for a transcription the opposite."
+    },
+    {
+      "type": "p",
+      "text": "That trade is why two tools can measure similarly and sound quite different, and why your own ears on your own material remain the final test."
+    },
+    {
+      "type": "h2",
+      "text": "What none of this can do"
+    },
+    {
+      "type": "p",
+      "text": "No amount of model improvement recovers the original multitrack, because the information is not merely obscured — it has been destroyed by summation. Two different sets of parts can produce a bit-identical mix. Any system claiming to recover the true originals is claiming to distinguish between cases that are indistinguishable in principle."
+    },
+    {
+      "type": "p",
+      "text": "What separation gives you is the most plausible decomposition given everything the model has learned about how music is made. On most material that is close enough that the difference is academic. It is worth knowing which one you have got."
+    }
+  ]
+}

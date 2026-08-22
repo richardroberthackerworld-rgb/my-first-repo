@@ -22,6 +22,11 @@ const jwt = require('jsonwebtoken');
 process.on('uncaughtException', e => console.error('[uncaughtException]', e));
 process.on('unhandledRejection', e => console.error('[unhandledRejection]', e));
 
+const cashfree = require('./cashfree');
+const audioPlans = require('./audio-plans');
+const guests = require('./guests');
+const audioMail = require('./audio-mail');
+
 const PORT = process.env.PORT || 8787;
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-insecure-secret-change-me';
 const DAILY_FREE = 20;                 // free credits granted each day
@@ -108,7 +113,35 @@ function otpEmailHTML(otp, purpose) {
   </table>
 </body></html>`;
 }
-async function sendOTP(email, otp, purpose) {
+/*
+ * Sends a verification code.
+ *
+ * A request from 7 Audio gets the 7 Audio template, from noreply@7audio.7by.in.
+ * Anything else keeps the original 7By.in email untouched, because this backend
+ * serves more than one product.
+ */
+async function sendOTP(email, otp, purpose, req) {
+  if (req && isAudioRequest(req)) {
+    const result = await audioMail.send({
+      type: 'otp',
+      to: email,
+      key: audioMail.keyFor.otp(email, otp),
+      data: { code: otp, purpose },
+      db,
+      persist,
+      // A code that cannot be delivered must fail loudly: the user is sitting
+      // on a form waiting for it, and silently succeeding strands them.
+      throwOnError: true,
+    });
+    if (!result.ok && !result.skipped && audioMail.configured()) {
+      throw new Error(result.reason || 'delivery failed');
+    }
+    return;
+  }
+  return sendLegacyOTP(email, otp, purpose);
+}
+
+async function sendLegacyOTP(email, otp, purpose) {
   const from = process.env.MAIL_FROM || '7By.in <noreply@7by.in>';
   const subject = purpose === 'reset' ? 'Your 7By.in password reset code' : 'Your 7By.in verification code';
   // plain-text fallback (shown by clients that block HTML)
@@ -123,6 +156,109 @@ async function sendOTP(email, otp, purpose) {
     throw e;
   }
 }
+
+/* ---------------------------- 7 Audio email -------------------------------
+ * This backend is shared between 7By products, so a request has to say which
+ * one it belongs to before an email can be branded. A caller declares itself
+ * with { app: '7audio' }; failing that the Origin header is checked, so the
+ * 7 Audio site gets 7 Audio emails even if a call is made without the field.
+ * Anything else keeps the original 7By.in behaviour.
+ * ------------------------------------------------------------------------ */
+function isAudioRequest(req) {
+  const declared = String(req.headers['x-7-app'] || (req.body && req.body.app) || req.query.app || '').toLowerCase();
+  if (declared === '7audio' || declared === 'audiora') return true;
+  const origin = String(req.headers.origin || req.headers.referer || '').toLowerCase();
+  return origin.includes('audiora.') || origin.includes('7audio.');
+}
+
+/* Sends the one-time welcome email for a newly created account. Never throws:
+   a mail failure must not turn a successful signup into an error. */
+async function sendAudioWelcome(user) {
+  try {
+    await audioMail.send({
+      type: 'welcome',
+      to: user.email,
+      userId: user.id,
+      key: audioMail.keyFor.welcome(user.id),
+      data: { name: user.name },
+      db,
+      persist,
+    });
+  } catch (e) {
+    console.error('[audio-mail] welcome failed for', user.email, e && e.message);
+  }
+}
+
+/*
+ * Where Cashfree sends the customer back after checkout. Derived from the site
+ * URL so that setting AUDIO_SITE_URL correctly is enough, and CASHFREE_RETURN_URL
+ * only has to be set when you want somewhere other than the credits page.
+ */
+function defaultReturnUrl() {
+  const site = (process.env.AUDIO_SITE_URL || '').replace(/\/+$/, '');
+  return site ? site + '/credits?order={order_id}' : undefined;
+}
+
+/* Formats money the way the customer saw it at checkout. */
+function amountLabel(amount, currency) {
+  const symbol = currency === 'INR' ? '₹' : currency === 'USD' ? '$' : '';
+  return symbol + Number(amount).toLocaleString('en-US') + (symbol ? '' : ' ' + currency);
+}
+
+/* The purchase receipt. Called ONLY after the server has confirmed payment —
+   from the webhook, or from the confirm endpoint that asks Cashfree directly.
+   Keyed on the order id, so a retried webhook cannot send a second copy. */
+async function sendAudioReceipt(user, record) {
+  try {
+    const plan = audioPlans.resolvePlan(record.planId, record.cycle, record.region);
+    await audioMail.send({
+      type: 'purchase',
+      to: user.email,
+      userId: user.id,
+      key: audioMail.keyFor.purchase(record.orderId),
+      data: {
+        email: user.email,
+        planName: (plan && plan.label) || record.planId,
+        amountLabel: amountLabel(record.amount, record.currency),
+        currency: record.currency,
+        credits: record.credits,
+        files: plan && plan.files,
+        cycle: record.cycle,
+        orderId: record.orderId,
+        paymentRef: record.paymentId || undefined,
+        purchasedAt: new Date(record.creditedAt || Date.now()).toISOString().slice(0, 10),
+      },
+      db,
+      persist,
+    });
+  } catch (e) {
+    console.error('[audio-mail] receipt failed for order', record.orderId, e && e.message);
+  }
+}
+
+/* Sent when a payment attempt ends without a confirmed success. Says plainly
+   that nothing was activated — it must never read like a receipt. */
+async function sendAudioPaymentFailed(user, record, reason) {
+  try {
+    const plan = audioPlans.resolvePlan(record.planId, record.cycle, record.region);
+    await audioMail.send({
+      type: 'paymentFailed',
+      to: user.email,
+      userId: user.id,
+      key: audioMail.keyFor.failed(record.orderId),
+      data: {
+        planName: (plan && plan.label) || record.planId,
+        orderId: record.orderId,
+        reason: reason || 'Not completed',
+      },
+      db,
+      persist,
+    });
+  } catch (e) {
+    console.error('[audio-mail] failure notice failed for order', record.orderId, e && e.message);
+  }
+}
+
 function makeOTP() { return String(Math.floor(100000 + Math.random() * 900000)); }
 function setOTP(email, otp, payload) {
   db.otps[email.toLowerCase()] = { otp, exp: Date.now() + OTP_TTL_MS, ...payload };
@@ -214,9 +350,99 @@ app.post('/api/pay/webhook', express.raw({ type: '*/*' }), (req, res) => {
   res.json({ ok: true });
 });
 
+/* ---- Cashfree webhook — RAW body, registered before express.json().
+   Signature is HMAC-SHA256 of (timestamp + raw body), base64, keyed with the
+   Cashfree secret. Parsing first and re-serialising changes the bytes, so the
+   signature would never match. Idempotent: an order is credited exactly once. ---- */
+app.post('/api/pay/cashfree/webhook', express.raw({ type: '*/*' }), (req, res) => {
+  const signature = req.headers['x-webhook-signature'];
+  const timestamp = req.headers['x-webhook-timestamp'];
+
+  if (!cashfree.verifyWebhook({ rawBody: req.body, signature, timestamp })) {
+    console.warn('[cashfree] webhook rejected: bad signature');
+    return res.status(401).end();
+  }
+  if (!cashfree.timestampFresh(timestamp)) {
+    console.warn('[cashfree] webhook rejected: stale timestamp');
+    return res.status(401).end();
+  }
+
+  let evt;
+  try { evt = JSON.parse(req.body.toString('utf8')); } catch { return res.status(400).end(); }
+
+  const data = (evt && evt.data) || {};
+  const order = data.order || {};
+  const payment = data.payment || {};
+  const orderId = order.order_id;
+  const status = String(payment.payment_status || '').toUpperCase();
+
+  // Acknowledge anything recognised but not acted on, so Cashfree stops retrying.
+  if (!orderId) return res.status(200).json({ ok: true, ignored: 'no order id' });
+  if (status && status !== 'SUCCESS') {
+    console.log('[cashfree] order', orderId, 'status', status, '- no credit granted');
+    db.orders = db.orders || {};
+    const failedRecord = db.orders[orderId];
+    if (failedRecord && !failedRecord.credited) {
+      failedRecord.status = status;
+      persist();
+      const failedUser = db.users.find(u => u.id === failedRecord.uid);
+      if (failedUser) void sendAudioPaymentFailed(failedUser, failedRecord, status);
+    }
+    return res.status(200).json({ ok: true, ignored: status });
+  }
+
+  db.orders = db.orders || {};
+  const record = db.orders[orderId];
+  if (!record) {
+    console.warn('[cashfree] webhook for unknown order', orderId);
+    return res.status(200).json({ ok: true, ignored: 'unknown order' });
+  }
+  if (record.credited) {
+    return res.status(200).json({ ok: true, duplicate: true });
+  }
+
+  const user = db.users.find(u => u.id === record.uid);
+  if (!user) {
+    console.warn('[cashfree] order', orderId, 'has no matching user');
+    return res.status(200).json({ ok: true, ignored: 'unknown user' });
+  }
+
+  user.paidCredits = (user.paidCredits || 0) + record.credits;
+  record.credited = true;
+  record.creditedAt = Date.now();
+  record.paymentId = payment.cf_payment_id || null;
+  record.status = 'PAID';
+  persist();
+  console.log('[cashfree] credited', record.credits, 'to', user.email, 'order', orderId);
+
+  // The receipt goes out only here and in the confirm endpoint — both of which
+  // run after the SERVER has established that the payment succeeded. It is
+  // keyed on the order id, so a retried webhook cannot send a second copy.
+  void sendAudioReceipt(user, record);
+
+  res.status(200).json({ ok: true });
+});
+
 app.use(express.json());
-const origins = (process.env.CORS_ORIGIN || '*').split(',').map(s => s.trim());
-app.use(cors({ origin: origins.includes('*') ? true : origins }));
+/* ----------------------------------- CORS --------------------------------
+ * A browser sends the Origin header with no trailing slash, ever. People write
+ * CORS_ORIGIN with one because that is what they copy out of the address bar,
+ * and the request is then refused with no useful error anywhere: the browser
+ * blocks it, and the server logs a perfectly ordinary 200 on the preflight.
+ * Normalising here removes an entire category of "the site cannot reach the
+ * API" reports.
+ * ------------------------------------------------------------------------- */
+const origins = (process.env.CORS_ORIGIN || '*')
+  .split(',')
+  .map(s => s.trim().replace(/\/+$/, ''))
+  .filter(Boolean);
+
+app.use(cors({
+  origin: origins.includes('*') ? true : origins,
+  // The frontend sends X-7-App so the backend knows which product is calling.
+  // A custom header triggers a preflight, which must allow it explicitly.
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-7-App'],
+}));
 
 // Abuse protection: throttle OTP emails and password attempts per IP.
 app.use(['/api/auth/signup', '/api/auth/forgot'], rateLimit(6, 15 * 60 * 1000, 'Too many code requests — wait 15 minutes.'));
@@ -285,7 +511,7 @@ app.post('/api/auth/signup', async (req, res) => {
   const otp = makeOTP();
   const hash = await bcrypt.hash(String(password), 10);
   setOTP(email, otp, { purpose: 'signup', name, hash });
-  try { await sendOTP(email, otp, 'signup'); } catch (e) { return res.status(500).json({ error: 'Could not send email — check server mail logs' }); }
+  try { await sendOTP(email, otp, 'signup', req); } catch (e) { return res.status(500).json({ error: 'Could not send email — check server mail logs' }); }
   res.json({ ok: true });
 });
 
@@ -297,6 +523,11 @@ app.post('/api/auth/verify', (req, res) => {
   if (c.rec.purpose !== 'signup') return res.status(400).json({ error: 'Wrong code type' });
   const u = { id: crypto.randomUUID(), name: c.rec.name, email: email.toLowerCase(), passHash: c.rec.hash, paidCredits: 0, freeCredits: DAILY_FREE, freeDate: today(), createdAt: Date.now() };
   db.users.push(u); delete db.otps[email.toLowerCase()]; persist();
+
+  // Welcome the new account. Not awaited: the signup response should not wait
+  // on an SMTP round trip, and a mail failure must not fail the signup.
+  if (isAudioRequest(req)) void sendAudioWelcome(u);
+
   res.json({ token: sign(u), user: publicUser(u) });
 });
 
@@ -317,7 +548,7 @@ app.post('/api/auth/forgot', async (req, res) => {
   if (!isGmail(email)) return res.status(400).json({ error: 'Only real @gmail.com addresses are allowed' });
   const u = findUser(email);
   // Always respond ok (don't leak which emails exist), but only send if the user exists.
-  if (u) { const otp = makeOTP(); setOTP(email, otp, { purpose: 'reset' }); try { await sendOTP(email, otp, 'reset'); } catch {} }
+  if (u) { const otp = makeOTP(); setOTP(email, otp, { purpose: 'reset' }); try { await sendOTP(email, otp, 'reset', req); } catch {} }
   res.json({ ok: true });
 });
 
@@ -348,9 +579,23 @@ app.post('/api/auth/google', async (req, res) => {
   try {
     const ticket = await googleClient.verifyIdToken({ idToken: credential, audience: process.env.GOOGLE_CLIENT_ID });
     const p = ticket.getPayload();
+    // Normal accounts are Gmail-only. Reject anything else gracefully —
+    // the client shows a plain sentence, never an auth error dump.
+    if (!isGmail(p.email)) {
+      return res.status(403).json({ error: 'Please sign in with a Gmail account to continue.' });
+    }
+    if (p.email_verified === false) {
+      return res.status(403).json({ error: 'Please verify your Google account first.' });
+    }
     let u = findUser(p.email);
+    const isNewAccount = !u;
     if (!u) { u = { id: crypto.randomUUID(), name: p.name || p.email.split('@')[0], email: p.email.toLowerCase(), google: true, paidCredits: 0, freeCredits: DAILY_FREE, freeDate: today(), createdAt: Date.now() }; db.users.push(u); }
     persist();
+
+    // Only on the FIRST sign-in, and only for 7 Audio. Signing in again is not
+    // a signup, and the welcome key makes a second send impossible regardless.
+    if (isNewAccount && isAudioRequest(req)) void sendAudioWelcome(u);
+
     res.json({ token: sign(u), user: publicUser(u) });
   } catch (e) { res.status(401).json({ error: 'Google verification failed' }); }
 });
@@ -410,9 +655,159 @@ app.post('/api/pay/verify', auth, (req, res) => {
   res.json({ ok: true, added: p.credits, credits: balance(req.user) });
 });
 
+/* ------------------------------ guest credits ------------------------------ */
+/* A visitor gets a small allowance before a Gmail sign-in is required. The token
+   identifies the browser; the per-IP ledger in guests.js is what actually
+   resists clearing storage and refreshing. */
+app.post('/api/guest/start', (req, res) => {
+  guests.ensureStore(db);
+  let guest = null;
+  const header = req.headers.authorization || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7) : null;
+  if (token) {
+    try {
+      const payload = jwt.verify(token, JWT_SECRET);
+      if (payload.typ === 'guest') guest = guests.getGuest(db, payload.gid);
+    } catch { guest = null; }
+  }
+  if (!guest) guest = guests.newGuest(db);
+  guests.prune(db);
+  persist();
+  const guestToken = jwt.sign({ typ: 'guest', gid: guest.id }, JWT_SECRET, { expiresIn: '30d' });
+  res.json({ token: guestToken, credits: guests.remaining(guest), allowance: guests.GUEST_CREDITS });
+});
+
+/* Spend guest credits. Kept separate from /api/credits/spend so a guest token
+   can never be mistaken for a signed-in session. */
+app.post('/api/guest/spend', (req, res) => {
+  const header = req.headers.authorization || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7) : null;
+  let guest = null;
+  if (token) {
+    try {
+      const payload = jwt.verify(token, JWT_SECRET);
+      if (payload.typ === 'guest') guest = guests.getGuest(db, payload.gid);
+    } catch { guest = null; }
+  }
+  if (!guest) return res.status(401).json({ error: 'Guest session expired', credits: 0 });
+
+  const amount = Math.max(0, Math.floor(Number(req.body && req.body.amount) || 0));
+  const result = guests.spend(db, guest, guests.clientIP(req), amount);
+  persist();
+  if (!result.ok) {
+    return res.status(402).json({
+      error: 'Your free credits are used. Sign in with Gmail to continue.',
+      credits: result.remaining,
+      reason: result.reason,
+    });
+  }
+  res.json({ ok: true, credits: result.remaining });
+});
+
+/* ------------------------------- Cashfree ---------------------------------- */
+app.get('/api/pay/cashfree/health', (req, res) => {
+  res.json({
+    configured: cashfree.configured(),
+    env: cashfree.baseUrl().includes('sandbox') ? 'sandbox' : 'production',
+  });
+});
+
+/* Create an order. The AMOUNT comes from the server plan table, so a client
+   cannot choose its own price. */
+app.post('/api/pay/cashfree/order', auth, async (req, res) => {
+  if (!cashfree.configured()) return res.status(501).json({ error: 'Payments are not available right now.' });
+  const body = req.body || {};
+  const plan = audioPlans.resolvePlan(body.plan, body.cycle, body.region);
+  if (!plan) return res.status(400).json({ error: 'Unknown plan' });
+
+  const orderId = '7audio_' + Date.now().toString(36) + '_' + crypto.randomBytes(4).toString('hex');
+  try {
+    const created = await cashfree.createOrder({
+      orderId,
+      amount: plan.amount,
+      currency: plan.currency,
+      customer: { id: req.user.id, email: req.user.email, name: req.user.name },
+      // Falls back to the site URL rather than being silently absent: without
+      // a return URL Cashfree leaves the customer on its own page after paying,
+      // which looks like the purchase failed even though it succeeded.
+      returnUrl: process.env.CASHFREE_RETURN_URL || defaultReturnUrl(),
+      notes: plan.label,
+    });
+
+    db.orders = db.orders || {};
+    db.orders[orderId] = {
+      orderId, uid: req.user.id, planId: plan.planId, cycle: plan.cycle, region: plan.region,
+      amount: plan.amount, currency: plan.currency, credits: plan.credits,
+      credited: false, status: 'CREATED', createdAt: Date.now(),
+    };
+    persist();
+
+    res.json({
+      orderId,
+      paymentSessionId: created.paymentSessionId,
+      amount: plan.amount,
+      currency: plan.currency,
+      credits: plan.credits,
+    });
+  } catch (e) {
+    console.error('[cashfree] order create failed:', e.message, e.detail || '');
+    res.status(502).json({ error: 'Could not start the payment. Please try again.' });
+  }
+});
+
+/* Confirm an order by asking Cashfree directly. The browser's word is never
+   enough; this lets the UI settle without waiting for the webhook, and credits
+   through the same idempotent record so it can never double-credit. */
+app.post('/api/pay/cashfree/confirm', auth, async (req, res) => {
+  const orderId = String((req.body && req.body.orderId) || '');
+  db.orders = db.orders || {};
+  const record = db.orders[orderId];
+  if (!record || record.uid !== req.user.id) return res.status(404).json({ error: 'Unknown order' });
+  if (record.credited) return res.json({ ok: true, status: 'PAID', added: 0, credits: balance(req.user) });
+
+  try {
+    const order = await cashfree.fetchOrder(orderId);
+    const status = String(order.order_status || '').toUpperCase();
+    if (status !== 'PAID') {
+      record.status = status || 'PENDING';
+      persist();
+      return res.json({ ok: false, status: record.status, credits: balance(req.user) });
+    }
+    req.user.paidCredits = (req.user.paidCredits || 0) + record.credits;
+    record.credited = true;
+    record.creditedAt = Date.now();
+    record.status = 'PAID';
+    record.paymentId = record.paymentId || (order.cf_order_id ? String(order.cf_order_id) : null);
+    persist();
+
+    // Same key as the webhook uses. Whichever path confirms the payment first
+    // sends the receipt; the other finds the key already recorded and stops.
+    void sendAudioReceipt(req.user, record);
+
+    res.json({ ok: true, status: 'PAID', added: record.credits, credits: balance(req.user) });
+  } catch (e) {
+    console.error('[cashfree] confirm failed:', e.message);
+    res.status(502).json({ error: 'Could not confirm the payment yet. It will update shortly.' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`7By backend on http://localhost:${PORT}`);
-  if (!process.env.SMTP_HOST) console.log('  ⚠ SMTP not set — OTPs will print to this console (dev mode).');
+  if (!process.env.SMTP_HOST) console.log('  ⚠ SMTP_HOST not set — 7By.in OTPs will print to this console (dev mode).');
+  /* The two settings that fail silently. A CORS mismatch is invisible from the
+     server side — the browser blocks the response and nothing is logged as an
+     error — so it is worth stating plainly at boot. */
+  const siteUrl = (process.env.AUDIO_SITE_URL || '').replace(/\/+$/, '');
+  if (siteUrl && !origins.includes('*') && !origins.includes(siteUrl)) {
+    console.log('  ⚠ CORS_ORIGIN does not include ' + siteUrl + ' — the site will not be able to reach this API.');
+    console.log('    current: ' + origins.join(', '));
+  }
+  if (!process.env.CASHFREE_RETURN_URL && !defaultReturnUrl()) {
+    console.log('  ⚠ Neither CASHFREE_RETURN_URL nor AUDIO_SITE_URL is set — customers will not be returned to the site after paying.');
+  }
+
+  if (!audioMail.configured()) console.log('  ⚠ 7 Audio email not configured — its emails will be logged, not sent.');
+  else console.log('  ✓ 7 Audio email ready:', Object.values(audioMail.SENDERS).map(x => x.address).join(', '));
   if (!googleClient) console.log('  ⚠ GOOGLE_CLIENT_ID not set — Google sign-in disabled.');
   if (!razor) console.log('  ⚠ Razorpay keys not set — payments disabled.');
 });

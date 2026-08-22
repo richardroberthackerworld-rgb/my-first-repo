@@ -1,0 +1,75 @@
+{
+  "id": "/",
+  "name": "7 Audio — AI Audio Toolkit",
+  "short_name": "7 Audio",
+  "description": "Remove vocals, split stems, clean up noise, cut, join, pitch-shift and convert audio. Your files are processed on your device.",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "lang": "en",
+  "dir": "ltr",
+  "background_color": "#fbfbfe",
+  "theme_color": "#ffffff",
+  "categories": ["music", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/brand/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/brand/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/brand/maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/brand/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/brand/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Vocal Remover",
+      "short_name": "Vocals",
+      "description": "Split a song into an instrumental and an isolated vocal track",
+      "url": "/tools/vocal-remover?source=pwa",
+      "icons": [{ "src": "/brand/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Stem Splitter",
+      "short_name": "Stems",
+      "description": "Separate a track into vocals, drums, bass and more",
+      "url": "/tools/stem-splitter?source=pwa",
+      "icons": [{ "src": "/brand/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Noise Remover",
+      "short_name": "Denoise",
+      "description": "Clean up hiss, hum and background noise",
+      "url": "/tools/noise-remover?source=pwa",
+      "icons": [{ "src": "/brand/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ],
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  },
+  "prefer_related_applications": false
+}

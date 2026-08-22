@@ -1,0 +1,290 @@
+{
+  "slug": "sample-rate-and-bit-depth-explained",
+  "title": "Sample rate and bit depth, explained without the myths",
+  "excerpt": "What 44.1 kHz and 24-bit actually describe, why higher is not automatically better, and the two settings that genuinely matter during production.",
+  "category": "Explainers",
+  "date": "2026-07-05",
+  "accent": "var(--a-blue)",
+  "body": [
+    {
+      "type": "p",
+      "text": "Sample rate and bit depth are the two numbers every export dialog asks about and almost nobody is confident answering. They are also surrounded by more confident misinformation than any other topic in audio, most of it built on a picture of how digital audio works that is intuitive and wrong."
+    },
+    {
+      "type": "p",
+      "text": "This article covers what each number actually describes, where higher genuinely helps, and where it just costs you storage."
+    },
+    {
+      "type": "h2",
+      "text": "Sample rate: how often"
+    },
+    {
+      "type": "p",
+      "text": "A microphone produces a continuously varying voltage. To store it digitally, that voltage is measured at regular intervals. The sample rate is how many measurements happen per second — 44,100 for CD audio, 48,000 for video."
+    },
+    {
+      "type": "p",
+      "text": "The rule that governs this is the sampling theorem, and it says something more precise than most people expect: a signal containing no frequencies above some limit can be reconstructed exactly from samples taken at more than twice that limit."
+    },
+    {
+      "type": "p",
+      "text": "Exactly. Not approximately, not with stair-steps that need smoothing. The original waveform is recoverable perfectly, provided nothing in it exceeded half the sample rate."
+    },
+    {
+      "type": "p",
+      "text": "So 44.1 kHz can perfectly represent everything up to about 22 kHz. Human hearing tops out around 20 kHz in young people with undamaged ears and considerably lower for most adults. The CD rate was chosen to cover the audible range with a little margin, and it does exactly that."
+    },
+    {
+      "type": "h3",
+      "text": "The staircase myth"
+    },
+    {
+      "type": "p",
+      "text": "The picture everyone has seen: a smooth curve with a jagged staircase overlaid, captioned to suggest that higher sample rates give a smoother, more accurate staircase."
+    },
+    {
+      "type": "p",
+      "text": "The staircase does not exist. It is an artefact of how the samples are drawn on a screen, not of what comes out of a converter. Reconstruction is not \"join the dots with steps\" — the mathematics of the sampling theorem produces the one smooth waveform that passes through those points and contains no frequencies above the limit, and there is exactly one such waveform."
+    },
+    {
+      "type": "p",
+      "text": "This single misunderstanding is responsible for most of the belief that higher sample rates sound better."
+    },
+    {
+      "type": "h3",
+      "text": "When higher rates do help"
+    },
+    {
+      "type": "p",
+      "text": "There are real reasons, and none of them are \"more detail in the audible range\"."
+    },
+    {
+      "type": "p",
+      "text": "Anti-alias filters need somewhere to work. At 44.1 kHz the filter has to go from passing 20 kHz to blocking 22.05 kHz, which is a steep requirement. At 96 kHz there is far more room, and the filter can be gentler. Modern converters handle this well enough that it is rarely audible, but it is a genuine engineering argument."
+    },
+    {
+      "type": "p",
+      "text": "Some processing benefits. Anything non-linear — distortion, saturation, some compression — generates harmonics above the input frequency, and those can fold back into the audible range as aliasing. Working at a higher rate gives them somewhere to go. This is why many plugins oversample internally."
+    },
+    {
+      "type": "p",
+      "text": "Extreme time-stretching. If you are slowing something to a quarter speed, ultrasonic content becomes audible content, so having captured it matters."
+    },
+    {
+      "type": "p",
+      "text": "What is not a reason: delivering a finished file. A 96 kHz master delivered to a listener contains content nobody can hear, in a file twice the size."
+    },
+    {
+      "type": "h2",
+      "text": "Bit depth: how precisely"
+    },
+    {
+      "type": "p",
+      "text": "Bit depth is how finely each individual measurement is recorded. 16-bit gives 65,536 possible values per sample; 24-bit gives about 16.7 million."
+    },
+    {
+      "type": "p",
+      "text": "What this determines is not \"resolution\" in the sense of detail, but the noise floor. Any measurement has a smallest step, and the error between the true value and the nearest available step is noise. More bits, smaller steps, quieter noise."
+    },
+    {
+      "type": "p",
+      "text": "16-bit gives roughly 96 dB of dynamic range. 24-bit gives roughly 144 dB. For context: a quiet domestic room has a noise floor around 30 dB SPL, and sustained exposure above 120 dB SPL causes hearing damage. 96 dB already exceeds the usable range of any real listening environment."
+    },
+    {
+      "type": "h3",
+      "text": "Why 24-bit still matters during production"
+    },
+    {
+      "type": "p",
+      "text": "Not because the finished file needs it, but because of headroom while working."
+    },
+    {
+      "type": "p",
+      "text": "When recording, you leave space below full scale so an unexpected loud moment does not clip. That means your signal is not using the top of the available range. If you record at 16-bit with 18 dB of headroom, you are effectively working with about 13 bits of the signal, and the noise floor is correspondingly closer."
+    },
+    {
+      "type": "p",
+      "text": "At 24-bit you can leave generous headroom and still have far more precision than you need. Then when you raise the level in the mix, you are not raising a noise floor with it."
+    },
+    {
+      "type": "p",
+      "text": "The same argument applies to stems you are about to process. Separated stems are quieter than the mix they came from, and you will be applying gain to them. 24-bit means that gain costs you nothing."
+    },
+    {
+      "type": "p",
+      "text": "For a finished file that nobody will process further, 16-bit is transparent."
+    },
+    {
+      "type": "h2",
+      "text": "Dither, briefly"
+    },
+    {
+      "type": "p",
+      "text": "When you reduce bit depth — 24-bit down to 16-bit for a finished file — the discarded precision has to go somewhere. Simply rounding produces a particular kind of error that correlates with the signal, which the ear picks up as a granular, unpleasant distortion on quiet passages rather than as neutral noise."
+    },
+    {
+      "type": "p",
+      "text": "Dither is a tiny amount of deliberately added noise that decorrelates the error, converting distortion into a faint hiss. That trade is heavily in your favour: a hiss at −93 dB is inaudible, and correlated distortion is not."
+    },
+    {
+      "type": "p",
+      "text": "The rule: dither once, at the final step, when reducing bit depth. Never dither repeatedly through a chain."
+    },
+    {
+      "type": "h2",
+      "text": "Converting between rates"
+    },
+    {
+      "type": "p",
+      "text": "Two things worth knowing."
+    },
+    {
+      "type": "p",
+      "text": "Converting down loses the content above the new limit, permanently. Going from 96 kHz to 44.1 kHz discards everything above 22 kHz. Since you could not hear it, this is usually fine — but it is gone."
+    },
+    {
+      "type": "p",
+      "text": "Converting up adds nothing. A 22 kHz recording converted to 48 kHz is a bigger file containing exactly the same audio. It does not become more detailed, and no amount of interpolation invents content that was never captured."
+    },
+    {
+      "type": "p",
+      "text": "There is one legitimate reason to convert up: everything in a project needs to be at the same rate, and matching the project is simpler than the alternative."
+    },
+    {
+      "type": "h2",
+      "text": "Practical settings"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Recording: 24-bit, at 44.1 or 48 kHz. Use 48 if the audio will accompany video, 44.1 otherwise.",
+        "Stems for further production: 24-bit WAV, matching the project rate.",
+        "A finished music file: 16-bit, 44.1 kHz. Anything more is storage spent on inaudible content.",
+        "A finished speech file: 16-bit, and 22.05 kHz mono is entirely adequate for a voice.",
+        "Archive: whatever you recorded at. Do not convert an archive; keep the original.",
+        "Never convert up hoping to improve something."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Aliasing, and why the filter exists"
+    },
+    {
+      "type": "p",
+      "text": "The sampling theorem promises perfect reconstruction on one condition: the signal must contain nothing above half the sample rate. What happens when it does is worth understanding, because it explains a whole class of digital artefacts."
+    },
+    {
+      "type": "p",
+      "text": "Content above that limit does not simply vanish. It is misinterpreted — reflected back down into the audible range as a frequency that was never in the original. A 25 kHz tone sampled at 44.1 kHz reappears as roughly 19 kHz, sitting in the middle of the music, unrelated to anything that was played."
+    },
+    {
+      "type": "p",
+      "text": "This is aliasing, and it sounds wrong in a specific way: inharmonic, metallic, and it moves in the opposite direction to the music when a note slides. Once it is recorded, it cannot be removed, because it is now indistinguishable from a real signal at that frequency."
+    },
+    {
+      "type": "p",
+      "text": "So every converter puts a low-pass filter in front of the sampling stage, removing anything above the limit before it can alias. That filter is the real engineering constraint, and it is the honest argument for higher sample rates: at 44.1 kHz it must go from passing 20 kHz to blocking 22.05 kHz, which is steep; at 96 kHz it has an octave of room and can be far gentler."
+    },
+    {
+      "type": "h2",
+      "text": "Where aliasing still shows up"
+    },
+    {
+      "type": "p",
+      "text": "Even with a good converter, aliasing can be created after recording — by processing."
+    },
+    {
+      "type": "p",
+      "text": "Anything non-linear generates new harmonics above the input frequency. Distortion, saturation, hard compression, some pitch shifting. A 15 kHz tone through a distortion produces harmonics at 30 kHz and above, which at 44.1 kHz have nowhere to go and fold back into the audible range."
+    },
+    {
+      "type": "p",
+      "text": "This is why plugins oversample internally: they run the non-linear stage at two or four times the project rate, filter, then come back down. It is also why heavily processed digital audio from twenty years ago often has a harsh quality that modern equivalents do not — the tools were not doing this yet."
+    },
+    {
+      "type": "p",
+      "text": "The practical consequence for you: if you are applying heavy processing, working at 96 kHz genuinely helps. If you are cutting, joining and converting, it does not."
+    },
+    {
+      "type": "h2",
+      "text": "Bit depth in practice: the headroom argument"
+    },
+    {
+      "type": "p",
+      "text": "The theory says 16-bit exceeds any real listening environment. The practice says record at 24-bit anyway, and the reason is worth spelling out with numbers."
+    },
+    {
+      "type": "p",
+      "text": "When recording, you leave headroom so an unexpected loud moment does not clip — say you peak at −18 dBFS. At 16-bit, those 18 decibels of unused range cost you three bits of the sixteen. You are effectively recording at 13-bit, with the noise floor 18 dB closer than the specification suggests."
+    },
+    {
+      "type": "p",
+      "text": "At 24-bit the same headroom leaves you 21 bits, which is still far more precision than anything downstream needs. You can then raise the level in the mix without dragging up a noise floor."
+    },
+    {
+      "type": "p",
+      "text": "The same argument applies to separated stems. A stem is quieter than the mix it came from, and you will apply gain to it. Exporting stems at 24-bit means that gain costs nothing."
+    },
+    {
+      "type": "h2",
+      "text": "Dither, and when to use it"
+    },
+    {
+      "type": "p",
+      "text": "The counterintuitive one: deliberately adding noise improves the result."
+    },
+    {
+      "type": "p",
+      "text": "Reducing 24-bit to 16-bit means discarding the bottom eight bits. Simply rounding produces an error that correlates with the signal — and correlated error is not heard as noise, it is heard as distortion, most obviously on quiet fades where it sounds granular and grainy."
+    },
+    {
+      "type": "p",
+      "text": "Dither adds a very small amount of random noise before the truncation, which decorrelates the error and converts that distortion into a faint constant hiss. Hiss at −93 dB is inaudible in any real room; correlated distortion on a fade-out is not. The trade is heavily in your favour."
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Dither once, at the very last step, when reducing bit depth for delivery.",
+        "Never dither twice — each pass adds its own noise.",
+        "Do not dither when staying at the same bit depth, or when converting between lossless formats. There is nothing to truncate.",
+        "Do not dither before further processing. Process first, dither at the end."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "The hi-res question"
+    },
+    {
+      "type": "p",
+      "text": "Worth addressing directly, since it is where most of the argument on this subject lives."
+    },
+    {
+      "type": "p",
+      "text": "Controlled listening tests have repeatedly failed to find people who can reliably distinguish a properly produced 44.1 kHz 16-bit file from a 96 kHz 24-bit version of the same master. That result is stable across decades of studies."
+    },
+    {
+      "type": "p",
+      "text": "What is also true: hi-res releases often do sound better, and not because of the numbers. They are frequently mastered from a better source, with less aggressive loudness processing, because they are aimed at an audience that cares. The improvement is real and the cause is the mastering, not the sample rate."
+    },
+    {
+      "type": "p",
+      "text": "This matters practically. If you are choosing between a hi-res release and a loud CD master, the hi-res one may genuinely be better. If you are choosing what to export your own finished work as, 44.1 kHz 16-bit costs you nothing audible and a third of the storage."
+    },
+    {
+      "type": "h2",
+      "text": "The bit that actually matters"
+    },
+    {
+      "type": "p",
+      "text": "Neither of these numbers is where recordings go wrong."
+    },
+    {
+      "type": "p",
+      "text": "Recordings go wrong because the microphone was too far away, the room was reflective, the level was set badly, or the source file had already been compressed to 128kbps before anyone touched it. Those four account for essentially every disappointing result."
+    },
+    {
+      "type": "p",
+      "text": "Sample rate and bit depth are worth setting correctly and are almost never the reason something sounds bad. Spend the attention on distance and levels; set these two sensibly once and stop thinking about them."
+    }
+  ]
+}

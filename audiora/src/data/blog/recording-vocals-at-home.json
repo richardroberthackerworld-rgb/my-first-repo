@@ -1,0 +1,333 @@
+{
+  "slug": "recording-vocals-at-home",
+  "title": "Recording vocals at home without a studio",
+  "excerpt": "The room matters more than the microphone, the distance matters more than the room, and levels matter more than either — a practical order of priorities.",
+  "category": "Practice",
+  "date": "2026-07-07",
+  "accent": "var(--a-violet)",
+  "body": [
+    {
+      "type": "p",
+      "text": "Most advice about recording vocals at home is really advice about buying things. It is the wrong emphasis: the gap between a bad home vocal and a good one is almost entirely technique and room, and almost none of it is equipment. A £70 microphone used well beats a £700 one used badly, every single time."
+    },
+    {
+      "type": "p",
+      "text": "Here is what actually matters, in the order it matters."
+    },
+    {
+      "type": "h2",
+      "text": "1. Distance"
+    },
+    {
+      "type": "p",
+      "text": "The highest-impact variable, free, and the one most often wrong."
+    },
+    {
+      "type": "p",
+      "text": "Direct sound falls off rapidly with distance. Room reflections do not — they are bouncing around the space regardless of where you stand. So moving closer increases your voice while leaving the room the same, which means the ratio between the two improves dramatically."
+    },
+    {
+      "type": "p",
+      "text": "At 15 cm you sound present and intimate. At 60 cm, same microphone, same room, you sound distant and boxy. That difference is larger than the difference between almost any two microphones, and unlike the microphone it costs nothing."
+    },
+    {
+      "type": "p",
+      "text": "Practical target: about a hand's width, angled slightly off-axis so plosives pass across the capsule rather than into it. Closer than about 10 cm and proximity effect starts to add an artificial bass boost, which is sometimes flattering and sometimes muddy — worth experimenting with rather than avoiding."
+    },
+    {
+      "type": "h2",
+      "text": "2. The room"
+    },
+    {
+      "type": "p",
+      "text": "Second most important, and the hardest thing to fix afterwards."
+    },
+    {
+      "type": "p",
+      "text": "Reverberation cannot be removed in post. It follows the voice exactly — it is the voice, arriving late — so noise reduction cannot separate it out, and nothing else can either. A boxy recording stays boxy."
+    },
+    {
+      "type": "p",
+      "text": "You do not need acoustic treatment. You need soft, irregular surfaces. In rough order of effectiveness with what most people already own:"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "A wardrobe full of clothes. Genuinely the best free vocal booth in most homes, and used by more professionals than admit it.",
+        "A bedroom with a bed, curtains and a rug. Soft surfaces everywhere, and a bookshelf to break up reflections.",
+        "A duvet hung behind you and another to one side, which kills the two worst reflections.",
+        "A corner of a carpeted room, facing into the corner with something soft behind you."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "Avoid: kitchens, bathrooms, hallways, and any empty room with parallel hard walls. Those produce flutter echo, which is the most obviously amateur-sounding artefact there is."
+    },
+    {
+      "type": "p",
+      "text": "One counterintuitive tip: point the microphone at the soft thing and stand with the hard wall behind you, not the other way round. The microphone picks up what it is facing."
+    },
+    {
+      "type": "h2",
+      "text": "3. Levels"
+    },
+    {
+      "type": "p",
+      "text": "Get this wrong and nothing else matters, because one of the two failure modes is unrecoverable."
+    },
+    {
+      "type": "p",
+      "text": "Aim for peaks between −12 and −6 dBFS while singing at your normal performance level. Then sing the loudest thing in the song and check that still fits with room to spare."
+    },
+    {
+      "type": "p",
+      "text": "Too quiet is a problem you can partly fix: raising the level afterwards also raises the noise floor, which is worse but usable. Too loud is not fixable at all — when the input clips, the peaks are flattened and the information in them is destroyed. There is nothing to restore."
+    },
+    {
+      "type": "p",
+      "text": "So when in doubt, record quieter. A recording that peaks at −18 dBFS is fine. One that clips on the chorus is a re-record."
+    },
+    {
+      "type": "p",
+      "text": "Set your level on the loudest part of the song, not on speech. People routinely check levels by saying \"test, test\" and then sing ten decibels louder."
+    },
+    {
+      "type": "h2",
+      "text": "4. Plosives and sibilance"
+    },
+    {
+      "type": "p",
+      "text": "Two specific problems with cheap, specific fixes."
+    },
+    {
+      "type": "p",
+      "text": "Plosives are the thumps from p and b sounds — a blast of air hitting the capsule. A pop filter solves it, and a pair of tights stretched over a coat hanger works about as well as a bought one. Singing slightly off-axis helps further."
+    },
+    {
+      "type": "p",
+      "text": "Sibilance is harsh s and t sounds, and it is more often a positioning problem than an equipment one. Try angling the microphone slightly down or moving a little off-axis. If it persists, it can be reduced afterwards, but positioning is a better fix than processing."
+    },
+    {
+      "type": "h2",
+      "text": "5. The equipment, finally"
+    },
+    {
+      "type": "p",
+      "text": "Now that the things that matter are handled."
+    },
+    {
+      "type": "p",
+      "text": "A dynamic microphone is more forgiving in an untreated room. It is less sensitive, which sounds like a disadvantage and is not — it picks up less of the room along with your voice. A large-diaphragm condenser gives more detail and picks up more of everything, including the neighbour's television."
+    },
+    {
+      "type": "p",
+      "text": "For most home situations, a dynamic microphone is the better first choice, and this is the opposite of what most buying guides say."
+    },
+    {
+      "type": "p",
+      "text": "Headphones for monitoring must be closed-back, so the backing track does not leak into the recording. Open-back headphones sound better and will put a quiet copy of the instrumental into your vocal track."
+    },
+    {
+      "type": "p",
+      "text": "An audio interface matters less than people think once you are past the very bottom of the market. Anything reputable will be transparent enough that it is not your limiting factor."
+    },
+    {
+      "type": "h2",
+      "text": "Recording practice"
+    },
+    {
+      "type": "p",
+      "text": "Some habits that make the editing much easier later."
+    },
+    {
+      "type": "p",
+      "text": "Record several full takes rather than trying to get one perfect run. Comping — assembling the best version from parts of several takes — is normal practice and produces better results than exhausting yourself chasing a single flawless pass."
+    },
+    {
+      "type": "p",
+      "text": "Record thirty seconds of silence before you start. It gives noise reduction a clean sample and tells you immediately if you have a hum problem while the cable is still reachable."
+    },
+    {
+      "type": "p",
+      "text": "Leave a couple of seconds of air at the start and end of each take. Cutting tight to the first word makes editing harder and removes your options."
+    },
+    {
+      "type": "p",
+      "text": "Do the hard part first, while your voice is fresh. Vocal stamina is real, and the tenth take of a demanding chorus is usually worse than the second."
+    },
+    {
+      "type": "h2",
+      "text": "Making the backing track"
+    },
+    {
+      "type": "p",
+      "text": "If you are singing over an existing song, use the Vocal Remover to make an instrumental first. Singing over the original with the artist's vocal in your headphones drags your phrasing toward theirs — you end up imitating rather than performing."
+    },
+    {
+      "type": "p",
+      "text": "And if the song sits outside your range, move it. The Pitch Shifter changes the key without changing the tempo, and two or three semitones is completely routine. A comfortable performance in a shifted key beats a strained one in the original, and listeners cannot tell."
+    },
+    {
+      "type": "h2",
+      "text": "Cleaning up afterwards"
+    },
+    {
+      "type": "p",
+      "text": "In this order."
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Cut the false starts, the coughs and the long gaps.",
+        "Denoise lightly — 70–80%. Anything higher strips the breath and air out of the voice and makes it sound synthetic.",
+        "Level, once the noise is down.",
+        "Export as WAV if it is going into a mix, or MP3 at 320kbps if it is finished."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "The temptation with a home vocal is to process it heavily to make it sound expensive. It rarely works. A clean, close, well-levelled vocal with light processing beats a mediocre one buried in effects — and the fixes that would actually help all happened before you pressed record."
+    },
+    {
+      "type": "h2",
+      "text": "Setting the level properly, step by step"
+    },
+    {
+      "type": "p",
+      "text": "Levels are where the unrecoverable mistakes happen, so it is worth doing deliberately rather than by eye."
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Put on your headphones and get into position — the distance you will actually sing at, not a comfortable talking distance.",
+        "Sing the loudest phrase in the song, at full performance energy. Not a test count, not speech. People routinely sing ten decibels louder than they check levels at.",
+        "Turn the gain up until that phrase peaks around −6 dBFS.",
+        "Now sing the quietest phrase and check it is still comfortably above the noise floor — you want it well clear of the hiss, not scraping along it.",
+        "If the loud part clips and the quiet part disappears, the problem is performance dynamics rather than gain. Sing the loud part slightly further from the microphone, which is what a technique called working the mic exists for."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "The asymmetry is the thing to remember. Recording 10 dB too quietly costs you a little noise, and you can raise it later. Recording 3 dB too loudly costs you the take, permanently, because clipped peaks contain nothing to restore."
+    },
+    {
+      "type": "h2",
+      "text": "Working the microphone"
+    },
+    {
+      "type": "p",
+      "text": "A technique worth ten minutes of practice, and almost never mentioned to people starting out."
+    },
+    {
+      "type": "p",
+      "text": "Rather than staying at a fixed distance, move with the dynamics: lean in slightly on quiet, intimate phrases and pull back on the loud ones. This does what a compressor does, before the signal is ever recorded, and it sounds more natural because the tone changes with the distance rather than just the level."
+    },
+    {
+      "type": "p",
+      "text": "It also gives you the proximity effect as an expressive tool — closer is warmer and more intimate, further is more open. Singers who sound effortless on record are frequently doing this without thinking about it."
+    },
+    {
+      "type": "p",
+      "text": "Start with about a hand's width as your neutral position, six inches closer for a whisper, and a foot back for a belted note."
+    },
+    {
+      "type": "h2",
+      "text": "Headphone monitoring"
+    },
+    {
+      "type": "p",
+      "text": "Three problems people hit, all avoidable."
+    },
+    {
+      "type": "h3",
+      "text": "Bleed"
+    },
+    {
+      "type": "p",
+      "text": "Open-back headphones sound better and leak audibly into the microphone. You will not notice while recording and you will find a quiet copy of the backing track underneath your vocal afterwards, which cannot be removed. Use closed-back headphones for tracking; keep the open ones for mixing."
+    },
+    {
+      "type": "h3",
+      "text": "Latency"
+    },
+    {
+      "type": "p",
+      "text": "If your voice arrives in the headphones a fraction of a second late, singing becomes genuinely difficult — the same effect that makes people stammer when their speech is delayed back to them. Reduce the buffer size in your interface settings, or use direct monitoring if your interface offers it, which routes the microphone to the headphones in hardware with no delay at all."
+    },
+    {
+      "type": "h3",
+      "text": "Too much of yourself"
+    },
+    {
+      "type": "p",
+      "text": "If your voice is very loud in the headphones you will sing quietly, and vice versa. Getting this balance right changes the performance, not just the comfort. A slightly quieter vocal in the mix tends to produce a more committed take."
+    },
+    {
+      "type": "h2",
+      "text": "Getting a better take"
+    },
+    {
+      "type": "p",
+      "text": "The technical setup is only half of it, and the other half is worth as much."
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Warm up. Ten minutes of easy singing before the first take is the difference between takes one to five being usable and being discarded.",
+        "Record the hardest section first, while the voice is fresh. Vocal stamina is real and it declines through a session.",
+        "Do complete takes rather than punching in constantly. A performance has an arc; assembling one from fragments frequently sounds like fragments.",
+        "Then comp — take the best parts of several complete passes. This is standard professional practice, not cheating.",
+        "Keep the take you thought was a throwaway. First takes have a looseness that later ones lose, and they are surprisingly often the keeper.",
+        "Stop when your voice tires. The eleventh take of a hard chorus is worse than the third, and pushing through can cost you the next day too."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "The things people spend money on that do not help"
+    },
+    {
+      "type": "p",
+      "text": "Said plainly, because it saves real money."
+    },
+    {
+      "type": "p",
+      "text": "A more expensive microphone in the same untreated room. The room is the limiting factor, not the capsule."
+    },
+    {
+      "type": "p",
+      "text": "A reflection filter — the foam shield that clips behind a microphone. They do something, and far less than the marketing implies, because they only address reflections arriving from directly behind. A duvet does more for nothing."
+    },
+    {
+      "type": "p",
+      "text": "An expensive interface, beyond the very bottom of the market. Anything reputable is transparent enough that it is not your bottleneck."
+    },
+    {
+      "type": "p",
+      "text": "Plugins bought to fix a bad recording. Nothing fixes clipping, and nothing convincingly removes room reverb. That money buys a better result if it is spent on making the room drier, or on nothing at all."
+    },
+    {
+      "type": "h2",
+      "text": "One last check before you commit"
+    },
+    {
+      "type": "p",
+      "text": "Listen back to thirty seconds on headphones, at a moderate level, with your eyes shut. Not while looking at a waveform — looking at a waveform makes you evaluate the picture rather than the sound."
+    },
+    {
+      "type": "p",
+      "text": "You are listening for three things: does it sound close, does it sound like a room you would want to be in, and is there anything present that should not be. If all three pass, carry on. If any fails, it is far cheaper to fix now than after you have recorded twelve takes."
+    },
+    {
+      "type": "h2",
+      "text": "The order of priorities, restated"
+    },
+    {
+      "type": "p",
+      "text": "Distance, then room, then levels, then plosives, then equipment."
+    },
+    {
+      "type": "p",
+      "text": "Anybody selling you a solution that starts at step five is selling you something."
+    }
+  ]
+}

@@ -1,0 +1,370 @@
+{
+  "slug": "how-to-convert-audio-formats",
+  "title": "How to convert audio between formats properly",
+  "excerpt": "Real conversion versus renaming a file, which direction is safe, and the settings that actually change the result rather than just the extension.",
+  "category": "Guides",
+  "date": "2026-07-03",
+  "accent": "var(--a-blue)",
+  "body": [
+    {
+      "type": "p",
+      "text": "Format conversion is the least interesting audio job and the one people need most often. Something wants a WAV. Something else refuses anything but MP3. A phone wants an M4A. A game engine wants OGG."
+    },
+    {
+      "type": "p",
+      "text": "It is also the job with the most quietly wrong advice attached, starting with the belief that you can convert a file by changing its extension."
+    },
+    {
+      "type": "h2",
+      "text": "Renaming is not converting"
+    },
+    {
+      "type": "p",
+      "text": "Worth stating plainly because people genuinely try it."
+    },
+    {
+      "type": "p",
+      "text": "An audio file is not just samples. It has a specific internal structure: a header describing the format, frames organised the way that codec expects, and data encoded by that codec's rules. An MP3's contents look nothing like a WAV's."
+    },
+    {
+      "type": "p",
+      "text": "Renaming song.wav to song.mp3 changes three characters of the filename and nothing else. Whatever tries to open it will either recognise the real format and ignore the extension, or trust the extension and fail — usually with a confusing error."
+    },
+    {
+      "type": "p",
+      "text": "Real conversion decodes the file to raw samples and re-encodes them with the target codec, producing a file with the correct header and the correct internal structure. That is what happens when you use a converter, and it is why the resulting file actually works."
+    },
+    {
+      "type": "h2",
+      "text": "Which conversions are safe"
+    },
+    {
+      "type": "p",
+      "text": "Three cases, with very different consequences."
+    },
+    {
+      "type": "h3",
+      "text": "Lossless to lossless: completely safe"
+    },
+    {
+      "type": "p",
+      "text": "WAV to FLAC, FLAC to WAV, back and forth indefinitely. Nothing is discarded at any step, so the final file is bit-identical to the first. Do this as often as you like."
+    },
+    {
+      "type": "h3",
+      "text": "Lossless to lossy: safe, once"
+    },
+    {
+      "type": "p",
+      "text": "WAV to MP3. This is the normal delivery step and it is fine — you have a lossless master, and you are producing a copy for a purpose."
+    },
+    {
+      "type": "p",
+      "text": "The important part is that you keep the master. Then when you need a different format later, you encode from the master again rather than from the MP3."
+    },
+    {
+      "type": "h3",
+      "text": "Lossy to lossy: avoid"
+    },
+    {
+      "type": "p",
+      "text": "MP3 to AAC, MP3 to MP3, AAC to OGG. Each encode discards, and the second encoder is working on already-damaged audio while making its own decisions about what to remove — including things the first one kept."
+    },
+    {
+      "type": "p",
+      "text": "Once is usually tolerable. Repeated, it is not: a file that has been through four or five generations is audibly degraded in a way that sounds like a bad phone recording."
+    },
+    {
+      "type": "p",
+      "text": "If you have no lossless master and genuinely need a different format, convert once and accept the cost. Do not make a habit of it."
+    },
+    {
+      "type": "h3",
+      "text": "Lossy to lossless: pointless, unless"
+    },
+    {
+      "type": "p",
+      "text": "Converting a 128kbps MP3 to a 24-bit WAV produces a file about forty times larger containing exactly the same damaged audio. Nothing is recovered."
+    },
+    {
+      "type": "p",
+      "text": "The one legitimate case: you are about to edit or process the file, and you want to avoid another generation of lossy loss when you save. Then converting up is a working decision. It is not an improvement."
+    },
+    {
+      "type": "h2",
+      "text": "The settings that matter"
+    },
+    {
+      "type": "h3",
+      "text": "Bitrate, for lossy formats"
+    },
+    {
+      "type": "p",
+      "text": "How many bits per second the encoder gets to spend. 320kbps MP3 is transparent for essentially everyone. 192 is a reasonable compromise. 128 is audible on music and perfectly fine for speech."
+    },
+    {
+      "type": "p",
+      "text": "Do not raise the bitrate above what the source had. Encoding a 128kbps MP3 at 320kbps produces a much larger file with the same damage plus a little more."
+    },
+    {
+      "type": "h3",
+      "text": "Sample rate"
+    },
+    {
+      "type": "p",
+      "text": "Leave it at the source rate unless you have a specific reason. 44.1 kHz for music, 48 kHz if it accompanies video."
+    },
+    {
+      "type": "p",
+      "text": "Reducing it is a legitimate way to shrink a speech file — 22.05 kHz is fine for a voice and halves the data. Raising it above the source adds nothing at all."
+    },
+    {
+      "type": "h3",
+      "text": "Channels"
+    },
+    {
+      "type": "p",
+      "text": "Mono halves the size and is the right answer for anything that was mono to begin with: one person speaking into one microphone, most voice memos, most interviews."
+    },
+    {
+      "type": "p",
+      "text": "It is the wrong answer for music, where you lose the stereo image entirely and irreversibly."
+    },
+    {
+      "type": "h3",
+      "text": "Normalise"
+    },
+    {
+      "type": "p",
+      "text": "Raises the loudest peak to just below full scale. Useful when a file is quiet, or when you are producing several files that need to sit at consistent levels."
+    },
+    {
+      "type": "p",
+      "text": "One thing it does not do: match perceived loudness. A heavily compressed track and a dynamic one can have identical peaks and sound very different in volume. For a set of files of similar type it works well; across wildly different material, trust your ears."
+    },
+    {
+      "type": "h2",
+      "text": "Common jobs"
+    },
+    {
+      "type": "ul",
+      "items": [
+        "A form only accepts MP3 and you have a WAV: convert to MP3 at 320kbps. Keep the WAV.",
+        "A file is too big to email: convert to MP3 at 192kbps, and to mono if it is speech. That is usually a tenfold reduction.",
+        "Archiving a folder of WAVs: convert to FLAC. Identical audio, roughly half the space.",
+        "A player will not open your file: convert to MP3. Nothing refuses an MP3.",
+        "Preparing stems for a collaborator: WAV, 24-bit, at the project rate.",
+        "An audiobook that is enormous: 64–96kbps mono is entirely adequate for narration."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Batch thinking"
+    },
+    {
+      "type": "p",
+      "text": "When converting several files that belong together — episodes of a series, tracks of an album, sections of a recording — use identical settings for all of them."
+    },
+    {
+      "type": "p",
+      "text": "Mixed settings within a set is the sort of thing nobody notices while making it and everybody notices while listening: one episode quieter than the rest, one track in mono, one file that will not play in the car."
+    },
+    {
+      "type": "p",
+      "text": "Decide the settings once, write them down, and use the same ones every time."
+    },
+    {
+      "type": "h2",
+      "text": "How to tell a real conversion happened"
+    },
+    {
+      "type": "p",
+      "text": "Two quick checks."
+    },
+    {
+      "type": "p",
+      "text": "File size. A three-minute WAV is about 30 MB; the same audio as a 320kbps MP3 is about 7 MB. If you converted WAV to MP3 and the size did not change dramatically, something did not happen."
+    },
+    {
+      "type": "p",
+      "text": "It opens. A correctly encoded file opens in whatever handles that format. A renamed one produces an error, or opens as its real format regardless of the name."
+    },
+    {
+      "type": "h2",
+      "text": "What actually happens during a conversion"
+    },
+    {
+      "type": "p",
+      "text": "Three steps, always, regardless of which formats are involved."
+    },
+    {
+      "type": "ol",
+      "items": [
+        "Decode. The source file is turned back into raw samples — plain numbers describing the waveform. A WAV is already almost in this form; an MP3 has to be reconstructed from its compressed representation.",
+        "Process, if you asked for it. Sample rate conversion, channel mixing and normalisation all happen here, on the raw samples.",
+        "Encode. The samples are written out in the target format, with that codec's rules applied."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "This explains every property of conversion that surprises people. It explains why lossy-to-lossy costs quality: step one recovers already-damaged audio, and step three damages it again independently. It explains why lossless-to-lossless is free: nothing is lost in either direction. And it explains why renaming a file does nothing — renaming skips all three steps."
+    },
+    {
+      "type": "h2",
+      "text": "Sample rate conversion is not trivial"
+    },
+    {
+      "type": "p",
+      "text": "Changing from 48 kHz to 44.1 kHz sounds like it should be arithmetic, and it is more delicate than that."
+    },
+    {
+      "type": "p",
+      "text": "The two rates are not related by a whole number — the ratio is 160:147 — so samples in the output do not line up with samples in the input. New values have to be calculated between existing ones, and how well that is done varies enormously between tools. A poor resampler introduces aliasing that sounds like a faint metallic shimmer on cymbals."
+    },
+    {
+      "type": "p",
+      "text": "Two practical consequences. Convert the sample rate once, at the end, rather than repeatedly through a chain. And avoid converting at all when you do not need to: leaving a file at its source rate is always the highest-quality option available."
+    },
+    {
+      "type": "p",
+      "text": "The one time you must convert is when something downstream demands a specific rate — video, which wants 48 kHz, being the usual case."
+    },
+    {
+      "type": "h2",
+      "text": "What happens to your tags"
+    },
+    {
+      "type": "p",
+      "text": "An underrated annoyance, and worth knowing before you convert a library."
+    },
+    {
+      "type": "p",
+      "text": "Title, artist, album and cover art are stored differently by every format. MP3 uses ID3, FLAC uses Vorbis comments, M4A uses MP4 atoms. They do not map onto one another perfectly, and some fields simply have no equivalent."
+    },
+    {
+      "type": "p",
+      "text": "WAV is the worst case: its metadata support was added long after the format was designed, is implemented inconsistently, and is frequently stripped by software that does not expect it. In practice a WAV file's only reliable metadata is its filename."
+    },
+    {
+      "type": "p",
+      "text": "So: if you are converting a music library and you care about it being browsable afterwards, convert to FLAC rather than WAV, and check that the tags survived on the first file before you run the other nine hundred."
+    },
+    {
+      "type": "h2",
+      "text": "Converting for specific destinations"
+    },
+    {
+      "type": "p",
+      "text": "Most conversions exist because something downstream has a requirement. The common ones:"
+    },
+    {
+      "type": "h3",
+      "text": "Messaging apps"
+    },
+    {
+      "type": "p",
+      "text": "WhatsApp, Telegram and the rest re-encode whatever you send, usually to a low-bitrate voice codec. Sending a 320kbps MP3 achieves nothing except a longer upload — it will be compressed again on arrival. Send 128kbps and accept that the recipient hears the app's version either way."
+    },
+    {
+      "type": "h3",
+      "text": "Video platforms"
+    },
+    {
+      "type": "p",
+      "text": "YouTube and similar re-encode everything too, but they encode from what you give them, so the input quality does set a ceiling. Upload the highest quality you have — lossless if the platform accepts it. This is the opposite of the messaging case, and the difference is that a video platform keeps a high-quality master and serves derived versions from it."
+    },
+    {
+      "type": "h3",
+      "text": "Podcast hosts"
+    },
+    {
+      "type": "p",
+      "text": "Most accept MP3 and many accept nothing else. 96–128kbps mono is the right target for speech. Some hosts re-encode; some serve your file verbatim. Check, because if they serve it verbatim then your export settings are what your listeners hear."
+    },
+    {
+      "type": "h3",
+      "text": "Music distribution"
+    },
+    {
+      "type": "p",
+      "text": "Distributors almost universally want lossless — 16-bit 44.1 kHz WAV or FLAC — because they generate every streaming format from it themselves. Sending an MP3 to a distributor means every service serves a re-encode of an already-lossy file."
+    },
+    {
+      "type": "h3",
+      "text": "Games and applications"
+    },
+    {
+      "type": "p",
+      "text": "OGG or a platform-specific format, usually specified by the engine. This is the one case where an unusual format is the right answer, because you control the environment completely."
+    },
+    {
+      "type": "h2",
+      "text": "Verifying that a conversion worked"
+    },
+    {
+      "type": "p",
+      "text": "Three checks, in ascending order of thoroughness."
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Size. A three-minute WAV is around 30 MB; the same audio at 320kbps MP3 is around 7 MB. If you converted WAV to MP3 and the size barely moved, nothing happened.",
+        "It opens. A correctly encoded file opens in whatever handles that format. A renamed one either errors or opens as its real format regardless of the name.",
+        "It sounds right the whole way through. Skip to the middle and the end, not just the start. A truncated conversion — from running out of memory on a very long file — plays the first half perfectly and then stops."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "That last one catches the failure people notice latest, usually after they have deleted the source."
+    },
+    {
+      "type": "h2",
+      "text": "Converting a lot of files consistently"
+    },
+    {
+      "type": "p",
+      "text": "When several files belong together — episodes, album tracks, chapters — the failure mode is not a bad conversion but an inconsistent set."
+    },
+    {
+      "type": "p",
+      "text": "One episode quieter than the rest. One track in mono because a default was left on. One file that will not play in the car because it went out as OGG. None of these is noticeable while you are making them and all of them are noticeable while listening."
+    },
+    {
+      "type": "ul",
+      "items": [
+        "Decide the settings once — format, bitrate, sample rate, channels, normalisation — and write them down.",
+        "Convert one file and check it properly before doing the rest.",
+        "Use the same settings for everything in the set, even where a particular file could have used less.",
+        "Name the outputs so they sort correctly, with leading zeros if there are more than nine."
+      ]
+    },
+    {
+      "type": "h2",
+      "text": "Why the file got bigger"
+    },
+    {
+      "type": "p",
+      "text": "A conversion that produces a larger file is almost always one of two things, and neither is a fault."
+    },
+    {
+      "type": "p",
+      "text": "You converted to a lossless format. A 5 MB MP3 becomes a 50 MB WAV because WAV stores every sample uncompressed. The audio is identical; the container is not compressed."
+    },
+    {
+      "type": "p",
+      "text": "Or you raised a setting the source did not have. Encoding at a higher bitrate, a higher sample rate or in stereo when the source was mono all inflate the file without adding anything. If that was not deliberate, check your settings and convert again from the original."
+    },
+    {
+      "type": "h2",
+      "text": "The rule that covers everything"
+    },
+    {
+      "type": "p",
+      "text": "Keep a lossless master. Convert from that master every time you need a delivery copy."
+    },
+    {
+      "type": "p",
+      "text": "Do that and none of the individual decisions can hurt you permanently, because the good version still exists and you can always export again."
+    }
+  ]
+}

@@ -1,0 +1,224 @@
+{
+  "_comment": "Landing content for each tool page. JSON rather than TypeScript on purpose: src/components/ToolLanding.tsx imports it for rendering, and scripts/prerender.mjs reads the same file to emit HowTo and FAQPage structured data into the delivered HTML. Google will not show a rich result for markup that describes something the page does not display, so there must only ever be this one copy. Everything here must stay true to what the app actually does — an FAQ that contradicts the product is worse than no FAQ.",
+
+  "vocal-remover": {
+    "lede": "A vocal remover splits a finished song back into the two things you usually want from it: the backing track on its own, and the vocal on its own. 7 Audio does that with a source-separation model rather than the old left-minus-right trick, so it works on real modern mixes instead of only on recordings where the singer sits perfectly centre.",
+    "body": "You get both files, not just one. That matters more than it sounds: the instrumental is what you need for karaoke, live performance or a practice track, while the isolated vocal is what you need for a remix, a sample, a cover or a transcription. Both come out at the same length as the original, and you choose the format they arrive in.",
+    "howToName": "How to remove vocals from a song",
+    "steps": [
+      { "name": "Choose your song", "text": "Load an MP3, WAV, FLAC, M4A, OGG or AAC file, up to 500 MB. Start from the highest-quality copy you have — a 128kbps MP3 limits how clean the split can be." },
+      { "name": "Pick a quality", "text": "Standard is quick and handles most songs. High quality gives a cleaner split and adds separate guitar and piano stems, but takes longer to set up and to run." },
+      { "name": "Choose an export format", "text": "WAV for the best quality, 320kbps MP3 for something you can send. FLAC, M4A, OGG and AAC are there too." },
+      { "name": "Process and download", "text": "Wait for it to finish, then download the instrumental, the vocal, or both together." }
+    ],
+    "useCases": [
+      { "title": "Karaoke and live sets", "body": "Turn any track into a backing track you can actually sing over." },
+      { "title": "Remixes and mashups", "body": "Pull a clean acapella out of a finished master to build something new." },
+      { "title": "Covers and practice", "body": "Sing along to the instrumental, or study the isolated vocal line phrase by phrase." },
+      { "title": "Transcription", "body": "Hearing the vocal on its own makes lyrics and melodies far easier to write down." }
+    ],
+    "specs": [
+      ["Files it accepts", "MP3, WAV, FLAC, M4A, OGG, AAC — up to 500 MB"],
+      ["What you get back", "Instrumental and isolated vocal, both full length"],
+      ["Export formats", "WAV (24-bit), MP3 (320kbps), FLAC, M4A, OGG, AAC"],
+      ["Credits", "10 credits per 5 minutes of audio, rounded up"]
+    ],
+    "faqs": [
+      { "q": "Is the vocal remover free?", "a": "You get 10 free credits to try it without signing in, and 20 free credits every day once you sign in with Gmail. A 5-minute song costs 10 credits, so the free daily allowance covers two songs a day. Plans add more." },
+      { "q": "Will there be any vocal left in the instrumental?", "a": "Sometimes a little. Dense mixes, heavy reverb and low-bitrate sources are the hardest cases, and no separation is perfect. Starting from the best-quality file you have makes the biggest difference, and the High quality option usually helps." },
+      { "q": "Can I get the acapella as well as the instrumental?", "a": "Yes — both are produced every time, and you can download either one or both together. It is one run, not two." },
+      { "q": "How long does it take?", "a": "The first run takes longer because of a one-off setup that depends on your connection. After that a typical song takes well under a minute on a normal laptop, faster on a machine with a graphics card." },
+      { "q": "Does it work on mono recordings?", "a": "Yes. The old left-minus-right method needs a stereo mix and produces silence on mono; source separation does not work that way, so a mono file is fine." }
+    ],
+    "related": ["stem-splitter", "noise-remover", "pitch-shifter"]
+  },
+
+  "stem-splitter": {
+    "lede": "A stem splitter takes one finished stereo file and gives you the parts back: vocals, drums, bass and everything else, each as its own audio file. It is the same idea as a vocal remover taken further — instead of two tracks out, you get four or six.",
+    "body": "Stems are what a producer, a DJ or a music teacher actually wants to work with. Once the drums are separate from the bass and the bass is separate from the vocal, you can remix, re-balance, transcribe an individual part, or drop just the drum loop into something new. Choose High quality and guitar and piano come out as their own stems too.",
+    "howToName": "How to split a song into stems",
+    "steps": [
+      { "name": "Load a track", "text": "MP3, WAV, FLAC, M4A, OGG or AAC, up to 500 MB. The cleaner the source, the cleaner the stems." },
+      { "name": "Choose 4 stems or 6", "text": "Standard gives vocals, drums, bass and other. High quality separates guitar and piano out of that last group as well." },
+      { "name": "Pick the stems you want", "text": "Take all of them, or just the two you came for — you only download what you select." },
+      { "name": "Export", "text": "WAV keeps everything for further production work; MP3 is smaller for sharing or reference." }
+    ],
+    "useCases": [
+      { "title": "Remixing and production", "body": "Rebuild a track from its parts, or borrow just the drums." },
+      { "title": "DJ edits", "body": "Make an intro, an acapella-out or a drums-only transition from any record." },
+      { "title": "Learning an instrument", "body": "Solo the bass or the guitar and play along with just that part." },
+      { "title": "Re-balancing a mix", "body": "Bring a buried vocal up, or pull a harsh snare down, without the original session." }
+    ],
+    "specs": [
+      ["Stems (Standard)", "Vocals, drums, bass, other"],
+      ["Stems (High quality)", "Vocals, drums, bass, guitar, piano, other"],
+      ["Files it accepts", "MP3, WAV, FLAC, M4A, OGG, AAC — up to 500 MB"],
+      ["Export formats", "WAV (24-bit), MP3 (320kbps), FLAC, M4A, OGG, AAC"],
+      ["Credits", "20 credits per 5 minutes of audio, rounded up"]
+    ],
+    "faqs": [
+      { "q": "What is the difference between 4 stems and 6 stems?", "a": "Four stems are vocals, drums, bass and one 'other' track holding everything else. Six pulls guitar and piano out of that 'other' track as well, and gives a cleaner split overall — at the cost of a much longer one-time setup and a slower run." },
+      { "q": "How much does it cost?", "a": "20 credits for every 5 minutes of audio, rounded up. Signing in with Gmail gives you 20 free credits every day; plans add more." },
+      { "q": "Will the stems sound like the original multitrack?", "a": "No, and nothing that works from a finished mix can. Separation is very good but it is a reconstruction, so expect some bleed between stems on dense material. For most remix and practice work it is more than good enough." },
+      { "q": "Can I download only one stem?", "a": "Yes. Select just the ones you want before exporting — you are not forced to take all of them." },
+      { "q": "Does a longer song cost more?", "a": "Yes, but in blocks rather than by the second: 20 credits per 5 minutes started. A 6-minute track and a 10-minute track both cost 40." }
+    ],
+    "related": ["vocal-remover", "audio-cutter", "noise-remover"]
+  },
+
+  "noise-remover": {
+    "lede": "Background noise is the difference between a recording that sounds like it was made on purpose and one that sounds like it happened by accident. This tool pulls the noise floor down — hiss, hum, room tone, wind — while leaving the speech band where it is, so voices stay clear instead of going hollow and underwater.",
+    "body": "There is a control for how far to push it, because the maximum setting is rarely the best one. Backing off slightly leaves a little of the original room tone in, which almost always sounds more natural than a completely dead background. It is free to use, with no account and no watermark.",
+    "howToName": "How to remove background noise from a recording",
+    "steps": [
+      { "name": "Load your recording", "text": "Any of MP3, WAV, FLAC, M4A, OGG or AAC, up to 500 MB." },
+      { "name": "Choose the noise type", "text": "General for everyday background, Hiss for tape and high-frequency noise, Hum for 50/60 Hz mains buzz, Wind for low-frequency rumble." },
+      { "name": "Set the strength", "text": "Start around 75%. Below 100% keeps a little room tone, which usually sounds better than absolute silence between words." },
+      { "name": "Process and download", "text": "Export as 24-bit WAV to keep everything, or MP3 if you are sending it on." }
+    ],
+    "useCases": [
+      { "title": "Podcasts and interviews", "body": "Clean up an air-conditioner drone or a noisy room without dulling the voice." },
+      { "title": "Voiceovers", "body": "Get a usable take out of a room that was never meant to be a studio." },
+      { "title": "Old tapes and vinyl rips", "body": "Pull down hiss and surface noise from digitised recordings." },
+      { "title": "Video sound", "body": "Rescue location audio spoiled by wind or traffic." }
+    ],
+    "specs": [
+      ["Price", "Free — no credits, no account"],
+      ["Noise types", "General, hiss, hum, wind"],
+      ["Strength", "Adjustable, with the speech band protected"],
+      ["Export formats", "WAV (24-bit), MP3, FLAC, M4A, OGG, AAC"]
+    ],
+    "faqs": [
+      { "q": "Is the noise remover really free?", "a": "Yes. It costs no credits and needs no account. Only the two AI separation tools — Vocal Remover and Stem Splitter — use credits." },
+      { "q": "Why does the voice sound strange at 100%?", "a": "Pulling the noise floor all the way down also removes the quiet detail around a voice, which is what makes it sound thin or watery. Around 70–80% almost always sounds more natural." },
+      { "q": "Can it remove someone talking in the background?", "a": "Not reliably. This removes steady, constant noise — hiss, hum, drone, wind. Another voice is not steady, so it survives. For that, the Stem Splitter's vocal separation is a better starting point." },
+      { "q": "Will it fix a clipped or distorted recording?", "a": "No. Clipping destroys information rather than adding noise on top of it, so there is nothing to subtract. Re-record if you can." }
+    ],
+    "related": ["audio-cutter", "audio-converter", "vocal-remover"]
+  },
+
+  "audio-cutter": {
+    "lede": "Cutting audio should not require installing anything. Load a file, drag out the section you want, listen back to check it, and export. If you need several pieces out of one recording, mark them all and take them in one go rather than repeating the whole process.",
+    "body": "It is precise rather than approximate: you can see the waveform, scrub to the exact point, and preview each section before committing. Nothing is re-encoded unnecessarily, and there is no watermark on anything that comes out.",
+    "howToName": "How to cut and trim an audio file",
+    "steps": [
+      { "name": "Load the file", "text": "MP3, WAV, FLAC, M4A, OGG or AAC, up to 500 MB." },
+      { "name": "Mark a section", "text": "Drag across the waveform to set the start and end, then fine-tune the handles." },
+      { "name": "Add more sections if you need them", "text": "Mark as many as you like — each one becomes its own file." },
+      { "name": "Preview, then export", "text": "Listen to each section before you commit, then export them all together." }
+    ],
+    "useCases": [
+      { "title": "Ringtones", "body": "Take the 30 seconds of a song that actually make a ringtone." },
+      { "title": "Podcast edits", "body": "Cut out the false starts, the long pause and the doorbell." },
+      { "title": "Samples and loops", "body": "Pull several short pieces out of one long recording in a single pass." },
+      { "title": "Trimming silence", "body": "Top and tail a recording so it starts where it should." }
+    ],
+    "specs": [
+      ["Price", "Free — no credits, no account"],
+      ["Sections per file", "As many as you need, exported together"],
+      ["Preview", "Play any section before exporting"],
+      ["Export formats", "WAV (24-bit), MP3, FLAC, M4A, OGG, AAC"]
+    ],
+    "faqs": [
+      { "q": "Is there a watermark on the output?", "a": "No. What comes out is your audio, cut where you asked, with nothing added." },
+      { "q": "Can I cut several parts out of one file?", "a": "Yes. Mark as many sections as you want and export them in one pass — each becomes its own file." },
+      { "q": "Does cutting an MP3 lose quality?", "a": "A small amount, because the file has to be decoded and re-encoded. Exporting as WAV avoids it entirely; exporting at 320kbps MP3 makes it hard to hear." },
+      { "q": "Is there a length limit?", "a": "Files up to 500 MB. Very long files on an older phone can run short of memory, so a laptop is the better choice for a full album side." }
+    ],
+    "related": ["song-joiner", "noise-remover", "audio-converter"]
+  },
+
+  "song-joiner": {
+    "lede": "Joining audio is the other half of cutting: several files in, one continuous file out. The part most tools get wrong is the join itself — butt two tracks together and you hear the seam. A crossfade smooths it, and you decide how long it is.",
+    "body": "Order matters as much as the join, so you can rearrange the list before exporting rather than having to redo the whole thing. Mixed formats are fine: MP3s and WAVs can go into the same mix, and the export format is your choice regardless of what went in.",
+    "howToName": "How to merge audio files into one track",
+    "steps": [
+      { "name": "Add your files", "text": "Load as many as you need. They can be different formats." },
+      { "name": "Put them in order", "text": "Rearrange the list until the running order is right." },
+      { "name": "Set the crossfade", "text": "A short fade removes the click at each join. A longer one blends one track into the next." },
+      { "name": "Export one file", "text": "WAV for quality, MP3 for something you can send." }
+    ],
+    "useCases": [
+      { "title": "DJ mixes and playlists", "body": "Turn a set of tracks into one continuous file." },
+      { "title": "Podcast assembly", "body": "Join the intro, the interview and the outro into a finished episode." },
+      { "title": "Audiobook chapters", "body": "Merge chapter files into one long recording." },
+      { "title": "Rejoining split recordings", "body": "Put a recording back together after it was captured in pieces." }
+    ],
+    "specs": [
+      ["Price", "Free — no credits, no account"],
+      ["Input", "Any mix of MP3, WAV, FLAC, M4A, OGG, AAC"],
+      ["Join", "Equal-power crossfade, adjustable length"],
+      ["Export formats", "WAV (24-bit), MP3, FLAC, M4A, OGG, AAC"]
+    ],
+    "faqs": [
+      { "q": "Can I join files that are different formats?", "a": "Yes. Everything is decoded before it is joined, so an MP3 and a WAV can sit next to each other in the same mix. You choose the output format separately." },
+      { "q": "What does the crossfade actually do?", "a": "It fades the end of one track down while fading the next one up, using an equal-power curve so the level does not dip in the middle. Even a very short fade removes the click you would otherwise hear at the join." },
+      { "q": "Can I change the order after adding files?", "a": "Yes — rearrange the list at any point before exporting." },
+      { "q": "Is there a limit on how many files I can join?", "a": "No fixed limit. The practical limit is memory: a very large number of long files will run out on a phone before it does on a laptop." }
+    ],
+    "related": ["audio-cutter", "audio-converter", "noise-remover"]
+  },
+
+  "pitch-shifter": {
+    "lede": "Pitch and tempo used to be locked together — speed a record up and it goes sharp. Digitally they can be separated, so you can move a song into a key you can sing without it turning into a chipmunk, or slow a passage down to learn it without dropping the pitch.",
+    "body": "Both controls are independent here, and there is a live preview so you can hear the change before committing to an export. That matters because the right amount of shift is something you find by ear, not by arithmetic.",
+    "howToName": "How to change the pitch or tempo of a song",
+    "steps": [
+      { "name": "Load a track", "text": "MP3, WAV, FLAC, M4A, OGG or AAC, up to 500 MB." },
+      { "name": "Shift the pitch", "text": "Move it in semitones, up or down. Two semitones down is usually enough to bring a song into a comfortable range." },
+      { "name": "Change the tempo separately", "text": "Slow a difficult passage down without the pitch dropping with it." },
+      { "name": "Listen, then export", "text": "The preview plays your settings live. Export when it sounds right." }
+    ],
+    "useCases": [
+      { "title": "Singing in your own key", "body": "Move a song up or down until it fits your range." },
+      { "title": "Learning a part", "body": "Slow a solo down to half speed and keep it in the original key." },
+      { "title": "Matching two tracks", "body": "Nudge one recording into the same key or tempo as another." },
+      { "title": "Instrument tuning", "body": "Shift a backing track to match an instrument that cannot be retuned." }
+    ],
+    "specs": [
+      ["Price", "Free — no credits, no account"],
+      ["Pitch", "Shift in semitones, tempo unchanged"],
+      ["Tempo", "Change speed, pitch unchanged"],
+      ["Preview", "Live, before you export"],
+      ["Export formats", "WAV (24-bit), MP3, FLAC, M4A, OGG, AAC"]
+    ],
+    "faqs": [
+      { "q": "Will it sound like a chipmunk?", "a": "No — that is what happens when pitch and speed move together. Here they are independent, so shifting the pitch leaves the tempo exactly where it was." },
+      { "q": "How far can I shift before it sounds wrong?", "a": "Within about five semitones either way most material holds up well. Beyond an octave you will hear artefacts on almost anything, because there is only so much information in the original recording." },
+      { "q": "Can I change the tempo without changing the key?", "a": "Yes. The two controls are separate — move one and the other stays put." },
+      { "q": "Is the preview the same as the export?", "a": "The preview is designed to keep up in real time, so the exported file is rendered with the higher-quality path. If anything, the export sounds slightly better than the preview." }
+    ],
+    "related": ["audio-cutter", "vocal-remover", "audio-converter"]
+  },
+
+  "audio-converter": {
+    "lede": "Format conversion is the least glamorous audio job and the one people need most often: something wants a WAV, something else will only take an MP3, and a phone wants an M4A. This converts between all six of the formats that matter, and it genuinely re-encodes — the output is a real file of the format you picked, not a renamed copy.",
+    "body": "You also get the settings that actually change the result: bitrate, sample rate and channels. Converting a stereo interview to mono at a lower sample rate can cut the file size by three quarters without anyone noticing, and that choice should be yours rather than a fixed preset's.",
+    "howToName": "How to convert an audio file to another format",
+    "steps": [
+      { "name": "Load a file", "text": "MP3, WAV, FLAC, M4A, OGG or AAC, up to 500 MB." },
+      { "name": "Pick the output format", "text": "WAV and FLAC keep everything. MP3, M4A, OGG and AAC trade a little quality for a much smaller file." },
+      { "name": "Set the quality", "text": "Choose the bitrate, sample rate and whether you want stereo or mono. The estimated size updates as you change them." },
+      { "name": "Convert and download", "text": "The file you get is a real file of that format, correctly encoded." }
+    ],
+    "useCases": [
+      { "title": "Meeting an upload requirement", "body": "Turn a WAV into the MP3 a submission form insists on." },
+      { "title": "Shrinking a file", "body": "Drop a long recording to mono at a lower bitrate for email." },
+      { "title": "Archiving", "body": "Convert to FLAC to keep the full quality at about half the size of a WAV." },
+      { "title": "Device compatibility", "body": "Produce the M4A or AAC a particular player will actually open." }
+    ],
+    "specs": [
+      ["Price", "Free — no credits, no account"],
+      ["Formats", "MP3, WAV, FLAC, M4A, OGG, AAC — in and out"],
+      ["Quality controls", "Bitrate, sample rate, stereo or mono"],
+      ["Lossless options", "WAV up to 24-bit, and FLAC"]
+    ],
+    "faqs": [
+      { "q": "Does it really convert, or just rename the file?", "a": "It really converts. Each format is encoded by its own encoder, and the file you download carries the correct header and structure for the format you chose." },
+      { "q": "Which format should I choose?", "a": "WAV or FLAC if quality matters and size does not — FLAC is lossless at roughly half the size. MP3 at 320kbps for something that has to work everywhere. M4A or AAC when a specific device or app asks for it." },
+      { "q": "Can converting improve quality?", "a": "No. Turning a 128kbps MP3 into a WAV makes the file much bigger without adding back anything that was lost. Always convert from the best copy you have." },
+      { "q": "Will it convert a video file?", "a": "This tool takes audio files. Extract the audio track first, then convert it here." }
+    ],
+    "related": ["audio-cutter", "noise-remover", "song-joiner"]
+  }
+}
