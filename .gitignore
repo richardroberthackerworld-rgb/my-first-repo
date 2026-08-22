@@ -51,3 +51,39 @@ android/**/build/
 # the ops/quality logs the admin dashboard reads, sync state. Real user content
 # and none of it belongs in git. .htaccess also 404s these directories.
 */data/
+
+# ---------------------------------------------------------------------------
+# Signing keys — GLOBAL, not just under android/
+#
+# The rules above only covered "android/*.keystore", which is why
+# paylistener/7pay-release.keystore was committed: it lives somewhere else.
+# Anyone holding a signing key can produce builds Android accepts as yours,
+# so these are matched wherever they appear.
+# ---------------------------------------------------------------------------
+*.keystore
+*.jks
+*.p12
+*.pfx
+keystore.properties
+key.properties
+
+# ---------------------------------------------------------------------------
+# Real per-deployment configuration. The *-TEMPLATE and *.example files are the
+# ones that belong in git; these hold live database passwords, mail passwords
+# and payment keys.
+# ---------------------------------------------------------------------------
+account-hub/config.php
+pay/config.php
+paylistener/config.php
+
+# Env files anywhere. server/.gitignore and audiora/.gitignore already cover
+# their own; this is the net that catches a new one added later.
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Local databases written at runtime — real accounts, credits, orders and the
+# email log. Never belongs in a repo, public or not.
+db.json
+*/db.json
