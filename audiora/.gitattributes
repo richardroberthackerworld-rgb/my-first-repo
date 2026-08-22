@@ -1,0 +1,25 @@
+# Check every text file out with LF, on every platform.
+#
+# Without this, a clone on a machine with core.autocrlf=true gets CRLF, and the
+# build scripts that parse source files — make-sitemap.mjs reading seo.ts is the
+# one that bites first — match on patterns like /\n  \{\n/ that CRLF defeats.
+# The result is a repository that builds for whoever wrote it and fails for
+# everyone else, with an error that blames the file format rather than the
+# checkout. The scripts normalise line endings themselves as well; this is the
+# half that stops the problem happening in the first place.
+#
+# text=auto still lets git detect and leave binaries alone; the explicit rules
+# below cover the ones that matter here so detection is never the deciding
+# factor for a 31 MB wasm or a splash screen.
+* text=auto eol=lf
+
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.ico   binary
+*.webp  binary
+*.woff  binary
+*.woff2 binary
+*.wasm  binary
+*.zip   binary
+*.gz    binary

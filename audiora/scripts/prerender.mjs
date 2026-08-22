@@ -47,7 +47,7 @@ if (!existsSync(dist)) {
  * shape is not what we expect, so a refactor cannot silently produce an empty
  * sitemap or a site with no titles.
  */
-const seoSource = readFileSync(join(root, 'src/config/seo.ts'), 'utf8');
+const seoSource = readFileSync(join(root, 'src/config/seo.ts'), 'utf8').replace(/\r\n/g, '\n');
 
 function parseRoutes(source) {
   const start = source.indexOf('export const ROUTE_SEO');
@@ -120,7 +120,7 @@ const posts = readPosts(root);
  * renders. Google only shows an FAQ rich result when the markup matches
  * what a visitor can actually see, so these must never be written twice.
  */
-const faqSource = readFileSync(join(root, 'src/data/faq.ts'), 'utf8');
+const faqSource = readFileSync(join(root, 'src/data/faq.ts'), 'utf8').replace(/\r\n/g, '\n');
 const faqs = [];
 {
   const re = /\{\s*\n\s*q: '((?:[^'\\]|\\.)*)',\s*\n\s*a:\s*\n?\s*'((?:[^'\\]|\\.)*)',?\s*\n\s*\}/g;

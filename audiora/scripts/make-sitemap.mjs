@@ -22,7 +22,7 @@ const origin = (process.argv[2] ?? 'https://7audio.7by.in').replace(/\/$/, '');
  * Routes marked noindex are skipped, because a sitemap is a list of pages you
  * are asking Google to index.
  */
-const seoSource = readFileSync(join(root, 'src/config/seo.ts'), 'utf8');
+const seoSource = readFileSync(join(root, 'src/config/seo.ts'), 'utf8').replace(/\r\n/g, '\n');
 
 function routesFromSeo(source) {
   const start = source.indexOf('export const ROUTE_SEO');
