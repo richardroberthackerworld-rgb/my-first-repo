@@ -376,8 +376,9 @@
       ],
       "engines": {
         "js": "try { checks = checks.concat(checkDivisibility(text)); } catch(e){}",
-        "php": null
-      }
+        "php": "BandB::checkDivisibility($body),"
+      },
+      "note": "Band B: ported to PHP so /v1 matches the site. Was JS-only, so the website could certify on it and the API could not."
     },
     {
       "checker": "conditionCheck",
@@ -386,8 +387,9 @@
       ],
       "engines": {
         "js": "try { checks = checks.concat(conditionCheck(question, text)); } catch(e){}",
-        "php": null
-      }
+        "php": "BandB::conditionCheck($question, $body)"
+      },
+      "note": "Band B: ported to PHP so /v1 matches the site. Was JS-only, so the website could certify on it and the API could not."
     },
     {
       "checker": "uniqueness",
@@ -457,8 +459,9 @@
       ],
       "engines": {
         "js": "function bounds(question, md){",
-        "php": null
-      }
+        "php": "BandB::bounds($question, $body),"
+      },
+      "note": "Band B: ported to PHP so /v1 matches the site. Was JS-only, so the website could certify on it and the API could not."
     },
     {
       "checker": "extremumCheck",
@@ -478,9 +481,9 @@
       ],
       "engines": {
         "js": "checks = checks.concat(chem.length ? chem : chemistry(text));",
-        "php": null
+        "php": "BandB::chemistry($body),"
       },
-      "note": "invoked inside a ternary, so the pipeline-to-registry sweep cannot see it — registered by hand"
+      "note": "Band B: ported to PHP so /v1 matches the site. Was JS-only, so the website could certify on it and the API could not."
     }
   ],
   "subjects": [
@@ -721,6 +724,89 @@
         "questionCheck"
       ],
       "status": "supported"
+    },
+    {
+      "id": "chemistry",
+      "display": "Chemical equations",
+      "aliases": [
+        "chemistry",
+        "balancing",
+        "reaction",
+        "chemical equation"
+      ],
+      "checkers": [
+        "chemistry"
+      ],
+      "problem_types": [
+        "chem.equation.balance"
+      ],
+      "taxonomy": [],
+      "status": "supported",
+      "match": {
+        "any": [
+          "\\b(balanc\\w*)\\b[\\s\\S]{0,40}\\b(equation|reaction|combustion)\\b",
+          "\\bchemical\\s+equation\\b",
+          "\\breaction\\b",
+          "\\bcombustion\\b",
+          "\\bstoichiometr"
+        ],
+        "flags": "i",
+        "rank": 70
+      }
+    },
+    {
+      "id": "probability",
+      "display": "Probability",
+      "aliases": [
+        "probability",
+        "chance",
+        "likelihood"
+      ],
+      "checkers": [
+        "bounds"
+      ],
+      "problem_types": [
+        "prob.value.bounds"
+      ],
+      "taxonomy": [],
+      "status": "supported",
+      "match": {
+        "any": [
+          "\\bprobabilit"
+        ],
+        "flags": "i",
+        "rank": 80
+      }
+    },
+    {
+      "id": "divisibility",
+      "display": "Divisibility",
+      "aliases": [
+        "divisibility",
+        "divides",
+        "divisible"
+      ],
+      "checkers": [
+        "checkDivisibility",
+        "conditionCheck"
+      ],
+      "problem_types": [
+        "number.divisibility",
+        "number.condition.satisfy"
+      ],
+      "taxonomy": [
+        "in.school.c6.maths.numbers"
+      ],
+      "status": "supported",
+      "match": {
+        "any": [
+          "\\bdivisib\\w*\\b",
+          "\\bdivides\\b",
+          "\\bdivide\\s+by\\b"
+        ],
+        "flags": "i",
+        "rank": 90
+      }
     },
     {
       "id": "management",

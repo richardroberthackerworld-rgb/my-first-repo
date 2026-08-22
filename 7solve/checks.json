@@ -98,12 +98,14 @@
     {
       "name": "checkDivisibility",
       "js": "try { checks = checks.concat(checkDivisibility(text)); } catch(e){}",
-      "php": null
+      "php": "BandB::checkDivisibility($body),",
+      "note": "Band B: ported to PHP so /v1 matches the site. Was JS-only, so the website could certify on it and the API could not."
     },
     {
       "name": "conditionCheck",
       "js": "try { checks = checks.concat(conditionCheck(question, text)); } catch(e){}",
-      "php": null
+      "php": "BandB::conditionCheck($question, $body)",
+      "note": "Band B: ported to PHP so /v1 matches the site. Was JS-only, so the website could certify on it and the API could not."
     },
     {
       "name": "uniqueness",
@@ -138,7 +140,8 @@
     {
       "name": "bounds",
       "js": "function bounds(question, md){",
-      "php": null
+      "php": "BandB::bounds($question, $body),",
+      "note": "Band B: ported to PHP so /v1 matches the site. Was JS-only, so the website could certify on it and the API could not."
     },
     {
       "name": "extremumCheck",
@@ -149,8 +152,8 @@
     {
       "name": "chemistry",
       "js": "checks = checks.concat(chem.length ? chem : chemistry(text));",
-      "php": null,
-      "note": "invoked inside a ternary, so the pipeline-to-registry sweep cannot see it — registered by hand"
+      "php": "BandB::chemistry($body),",
+      "note": "Band B: ported to PHP so /v1 matches the site. Was JS-only, so the website could certify on it and the API could not."
     }
   ],
   "_limits": "The pipeline-to-registry sweep in parity.js recognises the two ordinary wiring shapes (a result concatenated directly, or parked in a local declared with it). Checkers wired unusually — inside a ternary, or assigned to a pre-declared local — are invisible to it and carry a note here. Wire new checks the ordinary way and the sweep will catch a missing registration for you."

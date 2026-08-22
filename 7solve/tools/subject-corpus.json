@@ -1,5 +1,5 @@
 {
-  "_": "FROZEN SUBJECT-DETECTION CORPUS. Every input here was run through the .2 capability.php and its answer recorded in `expect`. gate-capabilities.js re-runs them against the manifest-driven implementation. The contract is asymmetric ON PURPOSE: an input whose .2 answer was a SUBJECT must still give exactly that subject, while an input whose .2 answer was null may now resolve to a covered_not_verifiable subject — that is the only behaviour Release A is allowed to add, and covered subjects are ranked below every original rule so they can never take an input away from one.",
+  "_": "FROZEN SUBJECT-DETECTION CORPUS. Every input here was run through the .2 capability.php and its answer recorded in `expect`. gate-capabilities.js re-runs them against the manifest-driven implementation. The contract is asymmetric ON PURPOSE: an input whose .2 answer was a SUBJECT must still give exactly that subject, while an input whose .2 answer was null may now resolve to a covered_not_verifiable subject — that is the only behaviour Release A is allowed to add, and covered subjects are ranked below every original rule so they can never take an input away from one. BAND B: ten rows were appended after the original 67. Those tail rows are pinned at their BAND B answers, not at .2 — chemistry, probability and divisibility all returned null before their checkers were ported, so pinning null would assert the gap rather than the fix. Every original row keeps its .2 value untouched. The two ledger/trial-balance rows are guards: they must stay with accounting, because a bare \"balance\" pattern in the chemistry rule (rank 70) would silently steal them from accounting (rank 130).",
   "schema": "7solve.subject-corpus/1",
   "questions": [
     "Differentiate 3x^2 sin x",
@@ -68,7 +68,17 @@
     "Compute the big-O of this loop",
     "Solve x = 2 and explain the marketing mix",
     "Differentiate x^2 and write an essay about it",
-    "Integrate x and discuss welfare economics"
+    "Integrate x and discuss welfare economics",
+    "Balance the equation for the formation of water",
+    "Balance the combustion of methane",
+    "Balance this chemical equation",
+    "What is the probability of two heads in two tosses?",
+    "Find the probability of drawing a red card",
+    "Check the divisibility claim",
+    "Is 1234 divisible by 3?",
+    "Find all n such that 3 divides n + 1",
+    "Show that 7 divides 343",
+    "Balance the following ledger accounts"
   ],
   "expect": [
     "derivative",
@@ -137,6 +147,16 @@
     null,
     "equation_roots",
     "derivative",
-    "integral"
+    "integral",
+    "chemistry",
+    "chemistry",
+    "chemistry",
+    "probability",
+    "probability",
+    "divisibility",
+    "divisibility",
+    "divisibility",
+    "divisibility",
+    "accounting"
   ]
 }
