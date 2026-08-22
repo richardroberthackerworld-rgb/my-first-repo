@@ -355,8 +355,9 @@
       ],
       "engines": {
         "js": "try { checks = checks.concat(transformCheck(question, text)); } catch(e){}",
-        "php": null
-      }
+        "php": "BandB2::transformCheck($question, $body),"
+      },
+      "note": "Band B part 2: ported to PHP so /v1 matches the site. Was JS-only, so the website could certify on it and the API could not."
     },
     {
       "checker": "identityCheck",
@@ -398,8 +399,9 @@
       ],
       "engines": {
         "js": "try { checks = checks.concat(uniqueness(question, text)); } catch(e){}",
-        "php": null
-      }
+        "php": "BandB2::uniqueness($question, $body),"
+      },
+      "note": "Band B part 2: ported to PHP so /v1 matches the site. Was JS-only, so the website could certify on it and the API could not."
     },
     {
       "checker": "optimality",
@@ -470,9 +472,9 @@
       ],
       "engines": {
         "js": "try { extremum = extremumCheck(question, text); } catch(e){}",
-        "php": null
+        "php": "BandB2::extremumCheck($question, $body)"
       },
-      "note": "result is parked in a local and concatenated on the next line, so the pipeline-to-registry sweep cannot see it — registered by hand"
+      "note": "Band B part 2: ported to PHP so /v1 matches the site. Was JS-only, so the website could certify on it and the API could not."
     },
     {
       "checker": "chemistry",
@@ -612,7 +614,9 @@
         "solution"
       ],
       "problem_types": [
-        "algebra.equation.solve"
+        "algebra.equation.solve",
+        "algebra.equation.uniqueness",
+        "algebra.map.preserves"
       ],
       "taxonomy": [
         "in.school.c10.maths.quadratic"
@@ -626,7 +630,9 @@
         "rank": 60
       },
       "checkers": [
-        "substitution"
+        "substitution",
+        "uniqueness",
+        "transformCheck"
       ],
       "status": "supported"
     },
@@ -806,6 +812,34 @@
         ],
         "flags": "i",
         "rank": 90
+      }
+    },
+    {
+      "id": "optimisation",
+      "display": "Constrained optimisation",
+      "aliases": [
+        "optimisation",
+        "optimization",
+        "maximum",
+        "minimum",
+        "extremum"
+      ],
+      "checkers": [
+        "extremumCheck"
+      ],
+      "problem_types": [
+        "algebra.optimise.symmetric"
+      ],
+      "taxonomy": [],
+      "status": "supported",
+      "match": {
+        "any": [
+          "\\b(maximum|minimum|largest|smallest|greatest|least)\\s+value\\s+of\\b",
+          "\\b(maximi[sz]e|minimi[sz]e)\\b"
+        ],
+        "flags": "i",
+        "rank": 45,
+        "_why": "Above system (50) on purpose. \"For x+y+z=12 and xy+yz+zx=45, find the maximum value of xyz\" carries two = signs, so the system rule would claim it and the API would name systemCheck while extremumCheck is what actually certified the answer. The optimisation rule only fires on explicit max/min wording, so a plain simultaneous-equations question is untouched."
       }
     },
     {

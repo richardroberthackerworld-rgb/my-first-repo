@@ -131,6 +131,50 @@ const add = (fix, role, name, q, a, want) => C.push({ fix, role, name, q, a, wan
   add('condition', 'control', 'different modulus, failed', q2, A('k = 3'), 'disputed');
 }
 
+/* ---- transformCheck — does a stated map send solutions to solutions?
+   The Markov-style equation x² + y² + 1 = 3xy. Vieta jumping says that from a
+   solution (x, y) the OTHER root of t² − 3yt + (y²+1) = 0 is 3y − x, so
+   (y, 3y − x) is again a solution and (3y − x, x) is not. Both directions are
+   pinned, because a map that happens to work on one hop is exactly what the
+   three-step iteration in the checker exists to catch. */
+{
+  const q = 'Solve x^2 + y^2 + 1 = 3xy in positive integers';
+  const M = (m) => '## ✅ Answer\nThe map ' + m + ' sends solutions to solutions.';
+  add('transform', 'positive', 'valid Vieta jump', q, M('(x, y) -> (y, 3y - x)'), 'verified');
+  add('transform', 'positive', 'valid jump, other order', q, M('(x, y) -> (3x - y, x)'), 'verified');
+  add('transform', 'control', 'INVALID map', q, M('(x, y) -> (3y - x, x)'), 'disputed');
+  add('transform', 'control', 'invalid map, mirrored', q, M('(x, y) -> (y, 3x - y)'), 'disputed');
+  add('transform', 'control', 'invalid map + AI prose', q, M('(x, y) -> (3y - x, x)') + PROSE, 'disputed');
+}
+
+/* ---- uniqueness — is the single value offered really the only one? ---- */
+{
+  add('uniqueness', 'positive', 'genuinely unique root',
+      'Find all n such that n^3 = 8', A('The only solution is n = 2.'), 'disputed');
+  add('uniqueness', 'control', 'NOT unique — n = -2 also works',
+      'Find all n such that n^2 = 4', A('The only solution is n = 2.'), 'disputed');
+  add('uniqueness', 'control', 'not unique, "unique" phrasing',
+      'Find all n such that n^2 = 9', A('n = 3 is the unique solution.'), 'disputed');
+  add('uniqueness', 'positive', 'unique cube root, larger',
+      'Find all n such that n^3 = 27', A('The only solution is n = 3.'), 'disputed');
+}
+
+/* ---- extremumCheck — is the claimed extreme actually extreme? -------
+   x+y+z = 12 and xy+yz+zx = 45 pins the feasible set to a curve, and the
+   largest xyz on it is 54. The sweep is 44,000 points and is NOT thinned in
+   the PHP port: a sparser scan finds a worse extreme and would certify a wrong
+   answer as correct. Measured at ~27 ms per call in PHP, because most x are
+   infeasible and never reach an evaluation. */
+{
+  const q = 'For x+y+z=12 and xy+yz+zx=45, find the maximum value of xyz';
+  add('extremum', 'positive', 'correct maximum', q, A('54'), 'verified');
+  add('extremum', 'control', 'maximum understated', q, A('50'), 'disputed');
+  add('extremum', 'control', 'maximum overstated', q, A('60'), 'disputed');
+  add('extremum', 'control', 'wrong maximum + AI prose', q, A('50') + PROSE, 'disputed');
+  add('extremum', 'control', 'minimum asked, maximum given',
+      'For x+y+z=12 and xy+yz+zx=45, find the minimum value of xyz', A('54'), 'disputed');
+}
+
 /* ------------------------------------------------------------------ */
 const V = loadJs();
 const jsOut = C.map((c) => {

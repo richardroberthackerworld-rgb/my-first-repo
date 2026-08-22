@@ -87,7 +87,8 @@
     {
       "name": "transformCheck",
       "js": "try { checks = checks.concat(transformCheck(question, text)); } catch(e){}",
-      "php": null
+      "php": "BandB2::transformCheck($question, $body),",
+      "note": "Band B part 2: ported to PHP so /v1 matches the site. Was JS-only, so the website could certify on it and the API could not."
     },
     {
       "name": "identityCheck",
@@ -110,7 +111,8 @@
     {
       "name": "uniqueness",
       "js": "try { checks = checks.concat(uniqueness(question, text)); } catch(e){}",
-      "php": null
+      "php": "BandB2::uniqueness($question, $body),",
+      "note": "Band B part 2: ported to PHP so /v1 matches the site. Was JS-only, so the website could certify on it and the API could not."
     },
     {
       "name": "optimality",
@@ -146,8 +148,8 @@
     {
       "name": "extremumCheck",
       "js": "try { extremum = extremumCheck(question, text); } catch(e){}",
-      "php": null,
-      "note": "result is parked in a local and concatenated on the next line, so the pipeline-to-registry sweep cannot see it — registered by hand"
+      "php": "BandB2::extremumCheck($question, $body)",
+      "note": "Band B part 2: ported to PHP so /v1 matches the site. Was JS-only, so the website could certify on it and the API could not."
     },
     {
       "name": "chemistry",

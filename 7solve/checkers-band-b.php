@@ -196,7 +196,7 @@ final class BandB
         $out = [];
         if (!preg_match_all('/-?\d[\d,]*(?:\.\d+)?/', $txt, $ms, PREG_SET_ORDER)) return $out;
         foreach ($ms as $m) {
-            $n = Algebra::toNum($m[0]);
+            $n = Checks::toNum($m[0]);
             if (!is_finite($n)) continue;
             $out[] = ['n' => $n, 'raw' => $m[0]];
         }

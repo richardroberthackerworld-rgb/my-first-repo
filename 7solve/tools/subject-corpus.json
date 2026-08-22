@@ -78,7 +78,11 @@
     "Is 1234 divisible by 3?",
     "Find all n such that 3 divides n + 1",
     "Show that 7 divides 343",
-    "Balance the following ledger accounts"
+    "Balance the following ledger accounts",
+    "For x+y+z=12 and xy+yz+zx=45, find the maximum value of xyz",
+    "For x+y+z=12 and xy+yz+zx=45, find the minimum value of xyz",
+    "Find the minimum value of x^2 + y^2",
+    "Maximise xyz subject to x+y+z=9"
   ],
   "expect": [
     "derivative",
@@ -157,6 +161,10 @@
     "divisibility",
     "divisibility",
     "divisibility",
-    "accounting"
+    "accounting",
+    "optimisation",
+    "optimisation",
+    "optimisation",
+    "optimisation"
   ]
 }
