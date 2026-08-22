@@ -142,9 +142,16 @@ Checks that may never certify alone: the single-variable root branch of
 `subst`. Tier-3 advisory checks (`agree`) never certify at all.
 
 **Consequence, accepted deliberately:** an equation whose solution set this
-engine cannot establish returns `plain` even when the answer is right.
-`exp(x)−1=0 → x=0`, `sqrt(x)=3 → x=9` and `1/(x−2)=1 → x=3` are all correct
-and all read "unable to verify". Fewer green badges, every remaining one earned.
+engine cannot establish returns `plain` even when the answer is right. Fewer
+green badges, every remaining one earned.
+
+That consequence is now *narrower*, not weaker. `exp(x)−1=0 → x=0`,
+`sqrt(x)=3 → x=9`, `ln(x)=0 → x=1`, `2^x=8 → x=3` and `x+eˣ=0 → x=−0.567` all
+certify, because monotonicity establishes their solution sets — see **The
+monotonicity argument** below. `1/(x−2)=1 → x=3` is still correct and still
+reads "unable to verify": it has a pole, and the argument is refused rather
+than stretched. The rule did not move; the set of equations the engine can
+establish did.
 
 ## Badge authority
 
@@ -429,17 +436,53 @@ root; it says nothing about whether it is *the* solution set. The rule is now
 in both engines, and PHP reads its certifying kinds from `capabilities.json`
 rather than carrying a hand-copied list.
 
-## Why a correct transcendental root is `unverified`, not `verified`
+## The monotonicity argument
 
-Substitution now passes for `x = −0.567`, and the answer settles at
-**unverified** because completeness cannot run: `x + eˣ = 0` is not a
-polynomial, so the engine cannot enumerate its roots and cannot know whether one
-value is the whole solution set. (It is — `1 + eˣ > 0` everywhere — but that is
-a monotonicity argument this engine does not make.)
+*(This section supersedes "Why a correct transcendental root is `unverified`",
+which reasoned from `1 + eˣ > 0` and then said "that is a monotonicity argument
+this engine does not make". It makes it now.)*
 
-Phase 1's `evidenceOnly` rule then correctly refuses the badge. Moving a correct
-answer from *"you are wrong"* to *"not checked"* is the honest gain; certifying
-it would mean weakening the completeness authority, which Release B does not do.
+`roots` established a complete solution set by reconstructing a polynomial.
+When `realRootsOf` returned null there was no completeness verdict at all, so
+`evidenceOnly` refused the badge and a correct answer read "unable to verify".
+
+A strictly monotonic function crosses zero at most once. That is a completeness
+argument of the same strength as counting a polynomial's roots, and it reaches
+the transcendental cases. It composes with the declared precision policy into a
+proof rather than an estimate:
+
+* monotonicity gives **at most one** root;
+* a sign change across the student's own rounding interval gives **at least
+  one** root inside it;
+* together, **exactly one** — and it is the claimed one.
+
+`monotoneCompleteness` therefore emits the existing `roots` kind. No new
+certification authority was created: the kind that could already certify is
+simply reachable by a second sound technique.
+
+**The design is the default.** `monotone()` returns null for everything it has
+not been explicitly taught. `sin`, `cos`, `tan`, `abs`, `floor`, `round`, even
+powers, products of two moving factors and anything with a pole all fall
+through to "cannot tell" and are refused. Over a 6,765-expression sweep it
+refuses 90%.
+
+Poles are refused as firmly as folds, and for a reason worth stating: **"at most
+one root" is a claim about ONE interval.** A function with two branches can have
+a root in each. So `c/f` is refused even though `1/(x−2)=1` happens to have a
+single root — the engine will not reason about branches, so it declines.
+
+`monotone-soundness.js` is what makes this safe to trust, and it must pass
+before any release:
+
+| | |
+|---|---|
+| 1. numeric soundness | every claimed-monotone expression is verified over a dense grid; a claim that folds anywhere fails |
+| 2. connected domain | every claimed-monotone function is checked for a single interval — sampling alone cannot see this, because a gap in the samples looks like a gap in the domain |
+| 3. cross-engine | the JS and PHP provers are compared expression by expression, so the badge and `/v1` cannot drift apart |
+| 4. whitelist | `MONO_FN` is asserted against the function table in both engines — adding `sin` is a one-word edit that would certify `sin(x)=0` as having exactly one root |
+
+Adding `sin` to the whitelist is caught by **numeric soundness**, not merely by
+the name check: it is mathematics that refuses it, not a naming rule.
 
 ## The photo-question hole, closed
 

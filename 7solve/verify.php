@@ -267,6 +267,117 @@ final class Algebra
         return $ast;
     }
 
+    /* ---------------------------------------------------------------
+       MONOTONICITY — the PHP half of the completeness argument for
+       equations polyOf cannot reach. Mirrors monotone() in index.html
+       exactly; parity.js compares the two engines case by case, so a
+       divergence here fails the build rather than reaching /v1.
+
+       null is the default and the safe answer: everything this has not
+       been explicitly taught — sin, cos, tan, abs, floor, even powers,
+       products of two moving factors, anything with a pole — falls
+       through to "cannot tell" and is refused.
+       --------------------------------------------------------------- */
+    private const MONO_FN = ['exp', 'cbrt', 'atan', 'ln', 'log', 'log10', 'log2', 'sqrt'];
+
+    public static function dependsOn(?array $ast, string $v): bool
+    {
+        if ($ast === null) return true;              /* unreadable → assume it moves */
+        switch ($ast['t']) {
+            case 'n': return false;
+            case 'v': return $ast['v'] === $v;
+            case 'u': return self::dependsOn($ast['a'], $v);
+            case 'c': return self::dependsOn($ast['a'], $v);
+            case 'b': return self::dependsOn($ast['a'], $v) || self::dependsOn($ast['b'], $v);
+        }
+        return true;
+    }
+
+    public static function constValue(?array $ast, string $v): ?float
+    {
+        if (self::dependsOn($ast, $v)) return null;
+        $n = self::evalAt($ast, self::constants());
+        return is_finite($n) ? $n : null;
+    }
+
+    /** +1 strictly increasing, -1 strictly decreasing, 0 independent of $v, null cannot tell. */
+    public static function monotone(?array $ast, string $v): ?int
+    {
+        if ($ast === null) return null;
+        if (!self::dependsOn($ast, $v)) return 0;
+
+        if ($ast['t'] === 'v') return 1;
+
+        if ($ast['t'] === 'u') {
+            $du = self::monotone($ast['a'], $v);
+            return $du === null ? null : -$du;
+        }
+
+        if ($ast['t'] === 'c') {
+            if (!in_array($ast['fn'], self::MONO_FN, true)) return null;
+            return self::monotone($ast['a'], $v);
+        }
+
+        if ($ast['t'] === 'b') {
+            $A = $ast['a']; $B = $ast['b']; $op = $ast['op'];
+
+            if ($op === '+' || $op === '-') {
+                $da = self::monotone($A, $v); $db = self::monotone($B, $v);
+                if ($da === null || $db === null) return null;
+                if ($op === '-') $db = -$db;
+                if ($da === 0) return $db;
+                if ($db === 0) return $da;
+                if ($da === $db) return $da;
+                return null;                          /* increasing plus decreasing proves nothing */
+            }
+
+            if ($op === '*') {
+                $c = self::constValue($A, $v);
+                if ($c !== null) {
+                    if ($c === 0.0) return 0;
+                    $db = self::monotone($B, $v);
+                    return $db === null ? null : ($c > 0 ? $db : -$db);
+                }
+                $c = self::constValue($B, $v);
+                if ($c !== null) {
+                    if ($c === 0.0) return 0;
+                    $da = self::monotone($A, $v);
+                    return $da === null ? null : ($c > 0 ? $da : -$da);
+                }
+                return null;                          /* f·g, both moving */
+            }
+
+            if ($op === '/') {
+                $c = self::constValue($B, $v);
+                if ($c !== null && $c !== 0.0) {
+                    $da = self::monotone($A, $v);
+                    return $da === null ? null : ($c > 0 ? $da : -$da);
+                }
+                return null;                          /* a pole would split the domain */
+            }
+
+            if ($op === '^') {
+                $c = self::constValue($B, $v);
+                if ($c !== null) {
+                    $da = self::monotone($A, $v);
+                    if ($da === null) return null;
+                    /* only odd positive integer powers are strictly monotone on all of R;
+                       even ones fold and negative ones introduce a pole */
+                    if ($c === (float)round($c) && $c > 0 && ((int)round($c)) % 2 === 1) return $da;
+                    return null;
+                }
+                $c = self::constValue($A, $v);
+                if ($c !== null && $c > 0 && $c !== 1.0) {
+                    $db = self::monotone($B, $v);
+                    return $db === null ? null : ($c > 1 ? $db : -$db);
+                }
+                return null;
+            }
+            return null;
+        }
+        return null;
+    }
+
     public static function evalAt(?array $ast, array $env): float
     {
         if ($ast === null) return NAN;
@@ -940,6 +1051,43 @@ final class Checks
         return ['real' => $roots, 'degree' => $deg, 'realMult' => $mult, 'complex' => $deg - $mult];
     }
 
+    /** Reached only when realRootsOf could not reconstruct a polynomial. */
+    private static function monotoneCompleteness(array $eq, string $v, string $md): array
+    {
+        $dir = Algebra::monotone(['t' => 'b', 'op' => '-', 'a' => $eq['L'], 'b' => $eq['R']], $v);
+        if ($dir !== 1 && $dir !== -1) return [];
+
+        $claimed = self::claimedRoots(self::claimZone($md), $v);
+        /* Two claimed values cannot both be roots of a strictly monotone
+           function, so a list of them is substitution's fault to report, not a
+           completeness story. One claim is the only case this can speak to. */
+        if (count($claimed) !== 1) return [];
+
+        /* Completeness may only speak when there is a root to be complete about,
+           and it must read the claim at the SAME declared precision substitution
+           does. An invented tolerance here would refuse the decimals the rest of
+           the engine accepts.
+
+           This is also what makes the argument a proof rather than an estimate:
+           monotonicity gives AT MOST one root, a sign change across the
+           student's own rounding interval gives AT LEAST one root inside it,
+           and together they give exactly one — the claimed one. */
+        $root = $claimed[0];
+        $d = Algebra::decimalsFor($md, $root);
+        if ($d === null) {
+            $isRoot = Algebra::holdsAt($eq, [$v => $root]);   /* exact or algebraic claim */
+        } else {
+            $half = pow(10, -$d) / 2;
+            $isRoot = Algebra::rootInInterval($eq, $v, $root - $half, $root + $half);
+        }
+        if ($isRoot !== true) return [];
+
+        return [['kind' => 'roots', 'ok' => true,
+            'text' => 'the difference between the two sides is strictly ' .
+                      ($dir > 0 ? 'increasing' : 'decreasing') .
+                      ', so this equation has at most one solution — and the answer accounts for it']];
+    }
+
     public static function solutionCompleteness(string $question, string $md): array
     {
         $found = self::findEquation($question);
@@ -949,7 +1097,10 @@ final class Checks
         if (Algebra::hasTrig($eq['L']) || Algebra::hasTrig($eq['R'])) return [];
         $v = $eq['vars'][0];
         $info = self::realRootsOf($eq, $v);
-        if ($info === null) return [];
+        /* Not a polynomial this engine can reconstruct. Before giving up, ask
+           whether the equation is monotone — that settles completeness without
+           needing the root count. */
+        if ($info === null) return self::monotoneCompleteness($eq, $v, $md);
 
         $zone = self::claimZone($md);
         $show = static function (float $n): string {
