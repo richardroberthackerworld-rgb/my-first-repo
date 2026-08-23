@@ -9294,8 +9294,18 @@ async function solve(extraQuestion){
   if(window.Pay && Pay.broke && Pay.broke()){ Pay.open('out'); return; }   // fewer than 10 credits left
   // Big & tough doubts need the premium AI models — free accounts solve BASIC
   // questions only (simple models). Hard ones ask for Premium instead.
+  /* Judge the DOUBT, not the button. On a follow-up, `typed` is the chip's own
+     wording — "Solve the SAME question again using a different method" — and
+     rating that instead of the student's question got the decision wrong in
+     both directions: of the 24 follow-ups, exactly one reads as 'deep' on its
+     own prose, so a free student clicking "Another method" was billed as a
+     hard question no matter how simple their doubt, while the other 23 skipped
+     this gate entirely no matter how hard it was. planRoute() already judges
+     the full userText, which carries the earlier doubt with it; this now
+     agrees with it. */
+  const gateText = (extraQuestion !== undefined && state.lastQ) ? state.lastQ : (typed || '');
   if(window.Pay && Pay.hub && !Pay.active && Pay.status && Pay.status.signed_in && !Pay.isPaid()
-     && assessComplexity(typed || '', !!state.imageData) === 'deep'){
+     && assessComplexity(gateText, !!state.imageData) === 'deep'){
     Pay.open('premium'); return;
   }
   if(!anyEngine()){ $('errMsg').textContent = engineErr(); updateEngineBadge(); return; }
@@ -9356,7 +9366,14 @@ async function solve(extraQuestion){
        paying student with nothing at all. */
     const qForCheck = state.lastQ || typed || '';
     let report = null;
-    try { report = Verify.run(qForCheck, text); } catch(e){}
+    /* Failing OPEN is deliberate: a verifier that throws must leave `report`
+       null so the answer shows unverified. It must never fall through to a
+       badge. But swallowing the throw silently means a crash in the one engine
+       this product exists for would never be noticed, so it is logged — to the
+       console, not to the student, whose verdict is correctly "not verified"
+       either way. */
+    try { report = Verify.run(qForCheck, text); }
+    catch(e){ console.error('[verify] engine threw, answer stays unverified:', e); }
     /* PROVENANCE (Phase 2 / Release A). The engine decided the verdict; this
        asks whether the QUESTION it decided against is trustworthy enough to
        certify against, and may lower `checked` if it is not. It runs OUTSIDE
@@ -9393,7 +9410,8 @@ async function solve(extraQuestion){
         const second = await getAnswer(complaint, state.imageData, {idem});
         second.text = deLatex(second.text);
         let r2 = null;
-        try { r2 = Verify.run(qForCheck, second.text); } catch(e){}
+        try { r2 = Verify.run(qForCheck, second.text); }
+        catch(e){ console.error('[verify] engine threw on the re-solve:', e); }
         r2 = Prov.capReport(r2, Prov.forQuestion(typed, !!state.imageData));
         /* keep whichever survives more scrutiny */
         if(r2 && r2.state !== 'disputed'){ text = second.text; via = second.via; report = r2; }
