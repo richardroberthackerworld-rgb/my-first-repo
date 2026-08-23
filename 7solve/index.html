@@ -7915,6 +7915,17 @@ async function initProxy(){
   }catch(e){ proxyDown = true; proxyProviders = []; }   // network / CORS / offline
   updateEngineBadge();
 }
+/* initProxy() runs ONCE, at startup. One failed fetch — a transient blip, a
+   moment when the server was mid-deploy and api.php answered 500 — left
+   proxyProviders empty for the rest of the session, so anyEngine() stayed
+   false and every solve refused, silently, until the student reloaded. They
+   have no way to know that reloading is the cure.
+
+   Exposed so the solve path can ask for a fresh look instead of the session
+   staying dead. This adds no key, no provider and no capability: it re-reads
+   the same endpoint startup already read. */
+window.initProxy7 = initProxy;
+window.anyEngine7 = anyEngine;
 /* "no key" and "the server is not answering" need different advice — one is a
    file to edit, the other is nothing the reader can fix by editing anything.
    When the server told us exactly what is wrong, the owner gets that verbatim;
@@ -17421,16 +17432,66 @@ if(W.AI && !W.AI.__gated){
 }
 
 var origSolve = W.solve;
+/* Every silent refusal funnels through the !busy branch below.
+
+   solve() reports a refusal by writing into #errMsg, and #errMsg lives up in
+   the composer. The follow-up chips sit underneath a full answer, roughly
+   1500px further down the page — measured, not guessed. So a student who taps
+   "Explain like I'm 10" and gets told "no AI engine is configured" has been
+   told nothing at all: the sentence renders somewhere they are not looking.
+
+   All 24 chips and the Solve button share this one path, which is why the
+   failure arrives as "no button works" rather than as one broken button.
+
+   Say it where the click happened. This repeats whatever solve() already
+   wrote as a toast, which is fixed-position and therefore visible from
+   anywhere on the page, and scrolls the original message into view. It
+   changes no gate and no verdict — a refusal is still a refusal. It just
+   stops being invisible. */
+var retryingEngines = false;   // one re-check per click, never a loop
+function reportBail(){
+  var el = document.getElementById('errMsg');
+  var msg = el ? String(el.textContent || '').trim() : '';
+  if(!msg) return false;
+  try { (W.toast7 || function(){})(msg); } catch(e){}
+  try { el.scrollIntoView({behavior:'smooth', block:'center'}); } catch(e){}
+  return true;
+}
+
 W.solve = function(extra){
   var hadImage = !!W.state.imageData;
   /* check before the composer even starts working, so a student who
      cannot afford the generation is told now rather than after a wait */
   if(W.aiGate && !W.aiGate()) return;
+  /* A second click while the first is still running used to fall through to
+     startLadder() below and stack a duplicate spinner, because origSolve
+     returns immediately on `busy` and leaves the flag TRUE — so the !busy
+     test below could not tell "already working" apart from "started". */
+  if(W.state.busy){ (W.toast7 || function(){})('Still working on the last one…'); return; }
   var p = origSolve.apply(this, arguments);
-  if(!W.state.busy) return p;              // it bailed early (empty box, paywall)
+  if(!W.state.busy){                       // it bailed early (empty box, paywall, no engine)
+    /* If the refusal was "no engine", the provider list is empty — and it is
+       empty because ONE fetch failed at startup, possibly hours ago. Ask the
+       server again and run the same click once more. A student should not
+       have to discover that reloading the page is the cure. */
+    if(W.anyEngine7 && !W.anyEngine7() && W.initProxy7 && !retryingEngines){
+      retryingEngines = true;
+      var args = arguments;
+      return Promise.resolve(W.initProxy7()).then(function(){
+        retryingEngines = false;
+        if(W.anyEngine7()) return W.solve.apply(null, args);   // recovered: do what was asked
+        reportBail();                                          // genuinely down: say so
+      }, function(){ retryingEngines = false; reportBail(); });
+    }
+    reportBail();
+    return p;
+  }
   startLadder(hadImage);
   stopTTS();
-  Promise.resolve(p).catch(function(){}).then(function(){ stopLadder(); });
+  /* errMsg is cleared at the top of every solve(), so anything sitting in it
+     once the promise settles was written by THIS attempt — a failure inside
+     getAnswer() that would otherwise land off-screen too. */
+  Promise.resolve(p).catch(function(){}).then(function(){ stopLadder(); reportBail(); });
   return p;
 };
 
