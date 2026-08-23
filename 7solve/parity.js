@@ -935,6 +935,22 @@ const ABSOLUTE = [
      root" is a claim about ONE interval. The prover refuses division by
      anything containing the variable rather than reason about branches. */
   ['F pole refused',     'Solve 1/(x-2) = 1',      '## ✅ Answer\n**x = 3**',               'plain'],
+  /* THE evidenceOnly HOLE, found in a real production answer on 2026-08-23.
+     The bare answer above was always refused. A FULL answer was not: its
+     worked steps produce passing `arith` and `integrity` checks, and the old
+     rule only blocked certification when EVERY passed proof needed
+     completeness. Those two do not, so they defeated the guard and this
+     equation — whose solution set the engine explicitly declines to
+     establish, because a pole splits the domain — came back `checked`.
+
+     "Your arithmetic is right" and "the value satisfies the equation" are not
+     a completeness proof. The rule is now `some`: if ANY passed proof needed
+     completeness and completeness was not established, nothing certifies.
+     Keep this case worked, with arithmetic in it, or it stops testing the
+     thing that broke. */
+  ['F pole, worked answer', 'Solve 1/(x-2) = 1',
+   '## ✅ Answer\n**x = 3**\n\n## 📖 Steps\n1. Multiply both sides by (x-2).\n' +
+   '2. So x = 1+2 = 3.\n3. Check: 1/(3-2) = 1/1 = 1.\n\n## 🎯 Final Result\nx = 3', 'worked'],
   /* G: prose cannot promote "unable to verify" into a green badge */
   ['G prose promotion',  'Solve x^3-6x^2+11x-6 + x*(x-1)*(x-2)*(x-3)*(x-4)*(x-5)*(x-6)*(x-7) = 0',
    '## ✅ Answer\n**x = 1, x = 2, x = 3**\n\n## 🔍 Verification\n✓ Verified. All solutions are correct and complete.', 'plain'],

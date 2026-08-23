@@ -121,6 +121,30 @@ substitution alone was enough to reach `checked`.
 Substitution of claimed roots is therefore marked `needsComplete: true`. It
 remains in the receipt as evidence; it no longer carries authority on its own.
 
+**Tightened 2026-08-23, from a real production answer.** The rule read:
+
+```js
+passedProofs.every(function(c){ return c.needsComplete === true; })
+```
+
+so certification was blocked only when **every** passed proof needed
+completeness. A worked answer to `1/(x−2) = 1` also produces passing `arith`
+and `integrity` checks, and those do not need completeness — so they defeated
+the guard and the answer came back `checked`, on an equation whose solution set
+the engine explicitly declines to establish because a pole splits the domain.
+
+A bare `## ✅ x = 3` was always refused. Adding correct working is what bought
+the badge, which is precisely backwards.
+
+"Your arithmetic is right" and "the value satisfies the equation" are not a
+completeness proof, and neither is "the question is well formed". The rule is
+now `some`: **if any passed proof needed completeness and completeness was not
+established, nothing certifies.** All 971 parity cases still pass, so this
+withdrew no badge that was previously earned — it only closed the hole.
+
+`parity.js` pins it as *F pole, worked answer*, and that fixture must keep its
+worked steps: the bare-answer version never exercised the bug.
+
 ## What may produce `checked`
 
 `checked` requires **at least one passing PROOF-level check that is not

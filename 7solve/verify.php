@@ -2153,10 +2153,11 @@ final class Checks
             static fn($c) => isset($certifying[$c['kind'] ?? ''])));
         $completeProved = false;
         foreach ($passed as $c) if (($c['kind'] ?? '') === 'roots') { $completeProved = true; break; }
-        $evidenceOnly = count($passedProofs) > 0 && !$completeProved;
-        if ($evidenceOnly) {
+        $evidenceOnly = false;
+        $anyNeeds = count($passedProofs) > 0 && !$completeProved;
+        if ($anyNeeds) {
             foreach ($passedProofs as $c) {
-                if (empty($c['needsComplete'])) { $evidenceOnly = false; break; }
+                if (!empty($c['needsComplete'])) { $evidenceOnly = true; break; }
             }
         }
 

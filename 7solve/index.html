@@ -16748,7 +16748,7 @@ var Verify = (function(){
        integrals, systems, identities and units are untouched. */
     var completeProved = passed.some(function(c){ return c.kind === 'roots'; });
     var evidenceOnly = passedProofs.length > 0 && !completeProved &&
-                       passedProofs.every(function(c){ return c.needsComplete === true; });
+                       passedProofs.some(function(c){ return c.needsComplete === true; });
 
     if(invalidQuestion)            state = 'invalid_question';
     else if(failedAnswer.length)   state = 'disputed';       // ✗ the ANSWER does not hold
