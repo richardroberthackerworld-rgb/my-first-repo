@@ -58,9 +58,14 @@ for (; p < html.length; p++) {
 }
 const prompt = html.slice(pStart, p + 1);
 
-/* the section headings the prompt instructs, in the order it lists them */
-const promised = [...prompt.matchAll(/"##\s*([^\s"<]+)\s*<([^>]+)>"/g)]
-  .map((m) => ({ marker: m[1], name: m[2] }));
+/* The section headings the prompt instructs, in the order it lists them.
+   These were once written "## ✅ <Final Answer>", where the angle brackets meant
+   "put the heading here". Nothing said so, and models split three ways: copy the
+   brackets literally, translate the name, or paraphrase it — all three turned up
+   in real production answers on 2026-08-23. The prompt now names the heading
+   verbatim, so this reads it verbatim too. */
+const promised = [...prompt.matchAll(/"##\s*([^\s"]+)\s+([^"]+)"/g)]
+  .map((m) => ({ marker: m[1], name: m[2].trim() }));
 
 /* ---- 2. what does the ENGINE actually look for? ------------------ */
 const needed = [
