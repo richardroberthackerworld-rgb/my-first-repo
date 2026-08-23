@@ -2154,6 +2154,8 @@ final class Checks
         $completeProved = false;
         foreach ($passed as $c) if (($c['kind'] ?? '') === 'roots') { $completeProved = true; break; }
         $evidenceOnly = false;
+        $CORROB = array_fill_keys(Capability::corroboratingKinds(), true);
+        $certifyingChecks = array_values(array_filter($passedProofs, static fn($c) => !isset($CORROB[$c['kind']])));
         $anyNeeds = count($passedProofs) > 0 && !$completeProved;
         if ($anyNeeds) {
             foreach ($passedProofs as $c) {
@@ -2164,7 +2166,7 @@ final class Checks
         if ($invalidQuestion)         $state = 'invalid_question';
         elseif (count($failedAnswer)) $state = 'disputed';
         elseif (count($failed))       $state = 'stepfail';
-        elseif (count($passedProofs) && !$evidenceOnly) $state = 'checked';
+        elseif (count($certifyingChecks) && !$evidenceOnly) $state = 'checked';
         else                          $state = 'unverified';
 
         /* ---------- three trust layers, reported separately ----------

@@ -16678,10 +16678,10 @@ var Verify = (function(){
        dropped it into 'partial' and labelled a correct answer
        "⚠ Partially verified". Every answer looked half-checked. */
     /* @generated:PROOF from capabilities.json — do not edit by hand.
-       sha256:20156901c68cdff2  regenerate: node tools/gen-capabilities.js */
+       sha256:148e2aab54c0b293  regenerate: node tools/gen-capabilities.js */
     var PROOF = {subst:1, transform:1, arith:1, chem:1, identity:1, bound:1, divis:1,
-                 unique:1, condition:1, extremum:1, integrity:1, units:1, trace:1,
-                 question:1, claim:1, primality:1, truncated:1, contradiction:1, deriv:1,
+                 unique:1, condition:1, extremum:1, integrity:2, units:1, trace:2,
+                 question:2, claim:1, primality:1, truncated:2, contradiction:2, deriv:1,
                  roots:1, integral:1, system:1};
     /* @end:PROOF */
     /* A soft check is advisory: it reports what could NOT be tested, not a
@@ -16692,6 +16692,22 @@ var Verify = (function(){
     var advisory = checks.filter(function(c){ return !c.ok && c.soft; });
     var failedProofs = failed.filter(function(c){ return PROOF[c.kind]; });
     var passedProofs = passed.filter(function(c){ return PROOF[c.kind]; });
+    /* PROOF[kind] === 2 means CORROBORATING: the check belongs in the receipt
+       and disputes when it fails, but its passing establishes nothing about
+       whether the answer is right. "The question was transcribed faithfully",
+       "the question is well posed", "the solution is not cut off", "the working
+       reaches the answer it claims", "the answer does not contradict itself" —
+       every one of those can be true of a completely wrong answer.
+
+       Found 2026-08-23 by a real answer: "x + eˣ = 0 has no real solution" is
+       FALSE — the root is −0.567 — and it carried a green badge, because
+       integrity was the only check that ran and integrity could certify alone.
+       A wrong answer wearing "Verified by 7Solve" is the worst thing this
+       engine can produce.
+
+       The rank comes from capabilities.json, not from a list here — a list here
+       is the fourth copy Release A removed. */
+    var certifying = passedProofs.filter(function(c){ return PROOF[c.kind] === 1; });
     /* 📝 was missing. The answer format now emits "## 📝 Steps", so a reply
        WITH working was being read as having none and fell through to the
        bottom of the state machine. Both markers are accepted. */
@@ -16753,7 +16769,7 @@ var Verify = (function(){
     if(invalidQuestion)            state = 'invalid_question';
     else if(failedAnswer.length)   state = 'disputed';       // ✗ the ANSWER does not hold
     else if(failedWorking.length)  state = 'stepfail';       // ⚠ a line of the working is wrong
-    else if(passedProofs.length && !evidenceOnly) state = 'checked';        // ✓ proofs passed; hints do not veto
+    else if(certifying.length && !evidenceOnly) state = 'checked';        // ✓ proofs passed; hints do not veto
     else if(failed.length)         state = 'partial';        // ⚠ only hints ran, and one missed
     /* A hint AGREEING is not partial verification — nothing was proved, and
        "partially verified" claims that something was. With the arithmetic

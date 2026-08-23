@@ -948,6 +948,24 @@ const ABSOLUTE = [
      completeness and completeness was not established, nothing certifies.
      Keep this case worked, with arithmetic in it, or it stops testing the
      thing that broke. */
+  /* CORROBORATING KINDS CANNOT CERTIFY. Found 2026-08-23 in a real production
+     answer: the model claimed "x + eˣ = 0 has no real solution", which is
+     FALSE — the root is −0.567143, and the same model found it on another
+     attempt. Nothing in the answer could be checked except `integrity` ("the
+     answer restates the same relation as the question"), which passed, and
+     integrity could certify on its own. So a mathematically false answer wore
+     "✓ Verified by 7Solve".
+
+     integrity, question, truncated, trace and contradiction are now
+     authority:corroborating in capabilities.json — emitted as PROOF[kind] === 2
+     — and may never certify alone. They still dispute when they FAIL, which
+     the case below this one covers. */
+  ['I false no-solution',  'Solve x + e^x = 0',
+   '## ✅ No real solution\n\n## 📖 Steps\n1. e^x is always positive.\n' +
+   '2. So x + e^x can never be zero.\n\n## 🎯 Final Result\nNo real solution exists.', 'explained'],
+  ['I corroborating alone', 'Solve 3x + y = 7',
+   '## ✅ Answer\nGiven 3x + y = 7, we get y = 7 - 3x.', 'plain'],
+
   ['F pole, worked answer', 'Solve 1/(x-2) = 1',
    '## ✅ Answer\n**x = 3**\n\n## 📖 Steps\n1. Multiply both sides by (x-2).\n' +
    '2. So x = 1+2 = 3.\n3. Check: 1/(3-2) = 1/1 = 1.\n\n## 🎯 Final Result\nx = 3', 'worked'],

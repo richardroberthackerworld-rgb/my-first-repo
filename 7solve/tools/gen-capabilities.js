@@ -72,9 +72,24 @@ function buildChecks() {
    `subst` in PROOF and then stops it certifying alone through the
    evidenceOnly rule, which reads needsComplete off the emitted check.
    Dropping evidence kinds out of PROOF here would change behaviour,
-   and Release A changes none.                                        */
+   and Release A changes none.
+
+   The VALUE carries the second distinction, added 2026-08-23:
+
+       1  may certify on its own
+       2  corroborating — belongs in the receipt, may DISPUTE when it
+          fails, and may never certify alone
+
+   A corroborating check is one whose pass means "nothing wrong found
+   here" rather than "the answer is established": integrity, question,
+   truncated, trace, contradiction. Membership still comes from the
+   manifest, so the set is not written by hand anywhere.            */
 function proofKinds() {
   return m.kinds.filter((k) => k.authority !== 'advisory').map((k) => k.kind);
+}
+function proofRank(kind) {
+  const k = m.kinds.find((x) => x.kind === kind);
+  return (k && k.authority === 'corroborating') ? 2 : 1;
 }
 
 function buildProofBlock(indent) {
@@ -86,7 +101,7 @@ function buildProofBlock(indent) {
   const lines = [];
   let line = '';
   keys.forEach((k, i) => {
-    const piece = k + ':1' + (i === keys.length - 1 ? '' : ', ');
+    const piece = k + ':' + proofRank(k) + (i === keys.length - 1 ? '' : ', ');
     if (line.length + piece.length > 74) { lines.push(line.replace(/\s+$/, '')); line = ''; }
     line += piece;
   });

@@ -158,12 +158,46 @@ checked        = proofs passed AND NOT evidenceOnly
 ```
 
 Checks that may certify on their own: `roots`, `deriv`, `integral`,
-`system`, `identity`, `primality`, `units`, `arith`, `question`,
-`integrity`, `contradiction`, `trace`, `truncated`, and the multivariable
-branch of `subst` (a claimed tuple answers "find a solution", not "find all").
+`system`, `identity`, `primality`, `units`, `arith`, `chem`, `bound`,
+`divis`, `unique`, `condition`, `extremum`, `transform`, `claim`, and the
+multivariable branch of `subst` (a claimed tuple answers "find a solution",
+not "find all").
 
 Checks that may never certify alone: the single-variable root branch of
-`subst`. Tier-3 advisory checks (`agree`) never certify at all.
+`subst`; the **corroborating** kinds below. Tier-3 advisory checks (`agree`)
+never certify at all.
+
+### Corroborating is not certifying
+
+Added 2026-08-23, from a real production answer. `question`, `integrity`,
+`contradiction`, `trace` and `truncated` used to certify on their own. They
+must not, because what a *pass* means for each of them is **"nothing wrong
+found here"**, never "the answer is established":
+
+| kind | a PASS proves |
+|---|---|
+| `integrity` | the answer discusses the same relation as the question |
+| `question` | the question itself is well posed |
+| `truncated` | the answer is finished, not cut off |
+| `trace` | the working reaches the answer it claims |
+| `contradiction` | the answer does not contradict its own working |
+
+Every one of those is true of a completely wrong answer. The case that proved
+it: a model answered `x + eˣ = 0` with **"no real solution"**, which is false —
+the root is −0.567143, and the same model found it on another attempt. Nothing
+in that answer could be checked except `integrity`, which passed. The badge read
+**✓ Verified by 7Solve** on a mathematically false claim.
+
+They are now `authority: "corroborating"` in `capabilities.json`, emitted into
+`index.html` as `PROOF[kind] === 2` and read in PHP through
+`Capability::corroboratingKinds()`. **The set is not written by hand in either
+engine** — a hand-written list is the fourth copy Release A removed.
+
+They keep their full power to **dispute**: a failing `integrity` still makes an
+answer `disputed`. Only the ability to certify alone was withdrawn.
+
+`parity.js` pins both halves — *I corroborating alone* (must not certify) and
+the mismatched-restatement case (must still dispute).
 
 **Consequence, accepted deliberately:** an equation whose solution set this
 engine cannot establish returns `plain` even when the answer is right. Fewer

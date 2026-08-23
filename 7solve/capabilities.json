@@ -65,7 +65,7 @@
     },
     {
       "kind": "integrity",
-      "authority": "proof",
+      "authority": "corroborating",
       "needs_complete": false,
       "describes": "The question was transcribed faithfully into the working"
     },
@@ -77,13 +77,13 @@
     },
     {
       "kind": "trace",
-      "authority": "proof",
+      "authority": "corroborating",
       "needs_complete": false,
       "describes": "The working reaches the answer it claims"
     },
     {
       "kind": "question",
-      "authority": "proof",
+      "authority": "corroborating",
       "needs_complete": false,
       "describes": "The question itself is well posed"
     },
@@ -101,13 +101,13 @@
     },
     {
       "kind": "truncated",
-      "authority": "proof",
+      "authority": "corroborating",
       "needs_complete": false,
       "describes": "The solution is finished, not cut off"
     },
     {
       "kind": "contradiction",
-      "authority": "proof",
+      "authority": "corroborating",
       "needs_complete": false,
       "describes": "The answer does not contradict its own working"
     },

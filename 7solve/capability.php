@@ -271,4 +271,18 @@ final class Capability
         }
         return $out;
     }
+
+    /* Corroborating kinds belong in the receipt and DISPUTE when they fail, but
+       their passing establishes nothing about whether the answer is right —
+       "the question is well posed" is true of a wrong answer too. Read from the
+       manifest so the set is never written by hand; index.html gets the same
+       fact as PROOF[kind] === 2, emitted by tools/gen-capabilities.js. */
+    public static function corroboratingKinds(): array
+    {
+        $out = [];
+        foreach (self::manifest()['kinds'] as $k) {
+            if (($k['authority'] ?? '') === 'corroborating') $out[] = $k['kind'];
+        }
+        return $out;
+    }
 }
