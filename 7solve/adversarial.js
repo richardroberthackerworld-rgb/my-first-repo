@@ -1125,6 +1125,69 @@ for (const [name, q, ans, wantTuple] of WITNESS) {
   }
 }
 
+/* ============================================================
+   A FAMILY CAN BE RIGHT AND STILL NOT BE ALL OF THEM
+   ------------------------------------------------------------
+   x² + y² + z² = xyz came back answered with the family
+
+       (3, aₙ, aₙ₊₁),  a₀ = a₁ = 3,  aₙ₊₂ = 3aₙ₊₁ − aₙ
+
+   — every listed triple correct, the recurrence right, and a
+   descent argued in fifteen steps. It is still incomplete.
+   (6, 15, 87) gives 7830 = 7830 and contains no 3 at all, so it
+   is in no permutation of that family. The Markov tree branches;
+   the family is one branch.
+
+   The slip is between two of its own steps: "the minimal entry
+   is at least 3" becomes "set x = 3".
+
+   A generative answer must NOT be refuted by a bigger solution —
+   that may simply be its next term. It may be refuted by one
+   INSIDE the range it has already reached, which is not a next
+   term but a hole. That distinction is the whole rule.
+   ============================================================ */
+{
+  const q = 'Find all positive integers x, y, z with x^2 + y^2 + z^2 = xyz.';
+  const fam = '## ✅ Answer\nAll positive integer solutions are the permutations of the infinite family (3, an, an+1) where an+2 = 3an+1 - an.\nThe first few triples are (3,3,3), (3,3,6), (3,6,15), (3,15,39), (3,39,102), …';
+  const out = V.exhaustion(q, fam);
+  const hit = out.find((c) => c.kind === 'exhaust' && !c.ok);
+  check('witness', 'an incomplete family is refuted', !!hit, true,
+        JSON.stringify(out.map((c) => c.text.slice(0, 70))));
+  if (hit) {
+    check('witness', 'it names the branch that was missed',
+          hit.text.indexOf('(6,15,87)') >= 0 ? 'named' : 'NOT NAMED', 'named', hit.text.slice(0, 150));
+    check('witness', 'it says why this is not simply the next term',
+          /inside the range it claims to cover/.test(hit.text) ? 'explained' : 'UNEXPLAINED',
+          'explained', hit.text.slice(0, 150));
+  }
+  /* every triple the answer listed really is a solution — the family is not
+     wrong, it is incomplete, and the receipt must not suggest otherwise */
+  const r = V.run(q, fam);
+  check('witness', 'the listed triples all still substitute',
+        r.checks.filter((c) => c.kind === 'subst' && c.ok).length >= 5, true,
+        r.checks.map((c) => c.kind + (c.ok ? '+' : '-')).join(','));
+}
+
+/* A GENERATIVE ANSWER IS NEVER REFUTED BY ITS OWN NEXT TERM. These families
+   are all correct as far as they go, and every solution inside the range
+   each has reached is listed — so the engine must stay silent on all of
+   them. This is the control that stops the rule above from becoming a
+   machine for punishing answers that stopped writing. */
+const FAMILY_OK = [
+  ['only the base triple listed', 'All solutions arise from (1,1,1) by the Vieta jump.'],
+  ['infinitude stated outright', 'There are infinitely many; the first are (1,1,1), (1,1,2), (1,2,5).'],
+  ['a trailing ellipsis', '(1,1,1), (1,1,2), (1,2,5), (1,5,13), …'],
+  ['a recurrence with a correct prefix',
+   'The recurrence generates (1,1,1), (1,1,2), (1,2,5), (1,5,13), (2,5,29).'],
+];
+for (const [name, ans] of FAMILY_OK) {
+  const out = V.exhaustion('Find all positive integers a,b,c with a^2+b^2+c^2=3abc.',
+                           '## ✅ Answer\n' + ans);
+  check('witness', 'no witness against ' + name,
+        out.some((c) => c.kind === 'exhaust' && !c.ok), false,
+        JSON.stringify(out.map((c) => c.text.slice(0, 80))));
+}
+
 /* The controls, which matter more. A witness that fires on an answer
    describing a PROCESS is answering something the answer never said. */
 const NO_WITNESS = [

@@ -16095,9 +16095,9 @@ var Verify = (function(){
     return true;
   }
 
-  function witness(eq, vars, dom, claims, upto){
+  function witness(eq, vars, dom, claims, upto, ceiling){
     var k = vars.length;
-    var hi = k === 1 ? 5000 : (k === 2 ? 300 : 60);
+    var hi = ceiling || (k === 1 ? 5000 : (k === 2 ? 300 : 60));
     var low = dom.low === null ? 1 : dom.low;
     var keyOf = function(tp){
       return (upto ? tp.slice().sort(function(a, b){ return a - b; }) : tp).join(',');
@@ -16357,21 +16357,50 @@ var Verify = (function(){
       if(dom.low === null) return out;       // unbounded below: no region is provable
       var tuples = [], i, j;
 
-      /* Before any of the bounded routes: if the answer has put forward a
-         CLOSED list and the domain contains a solution it left out, that is
-         decided already and no bound is needed. */
-      if(claims.length && ALL_ASKED.test(String(question || '')) && !GENERATIVE.test(full)){
-        var miss = witness(eq, vars, dom, claims,
-                           UPTO_ORDER.test(full) || isSymmetric(eq, vars));
+      /* Before any of the bounded routes: if the answer has put forward a list
+         and the domain contains a solution it left out, that is decided already
+         and no bound is needed.
+
+         A GENERATIVE answer — "all solutions are the permutations of the family
+         (3, aₙ, aₙ₊₁)" — is not claiming its examples are everything, so a
+         solution BIGGER than anything it listed may simply be the next term and
+         must never be held against it. But a solution that sits INSIDE the range
+         it has already reached is not a next term. It is a hole.
+
+         x² + y² + z² = xyz came back answered with exactly that family, every
+         listed triple correct, the recurrence right, and a descent argued in
+         fifteen steps. It is still incomplete: (6, 15, 87) gives 7830 = 7830 and
+         contains no 3 at all, so it is in no permutation of (3, aₙ, aₙ₊₁). The
+         answer's own largest triple reaches 102, so 87 is well inside the
+         territory it claims to have covered. The Markov tree branches, and that
+         family is one branch of it.
+
+         So a generative claim is refuted only below its own high-water mark, and
+         a closed list is refuted anywhere. */
+      if(claims.length && ALL_ASKED.test(String(question || ''))){
+        var gen = GENERATIVE.test(full);
+        var reach = 0;
+        claims.forEach(function(tp){ tp.forEach(function(v){ if(v > reach) reach = v; }); });
+        var ceil = gen ? Math.min(reach, 300) : 0;
+        var miss = (gen && reach < 2) ? null : witness(eq, vars, dom, claims,
+                           UPTO_ORDER.test(full) || isSymmetric(eq, vars), ceil);
         if(miss){
           var env0 = {};
           vars.forEach(function(v, i){ env0[v] = miss[i]; });
           out.push({ kind:'exhaust', ok:false,
-            text:'the answer presents its list as complete, but ' + fmtTuple(vars, miss) +
-                 ' also satisfies ' + found.src.trim() + ' — ' +
-                 round6(evalAt(eq.L, env0)) + ' = ' + round6(evalAt(eq.R, env0)) +
-                 ' — and is not in it. One solution left out settles a claim of ' +
-                 'completeness; this is a counterexample, not a search for more' });
+            text: (gen
+              ? 'the answer describes a family and claims it is every solution, but ' +
+                fmtTuple(vars, miss) + ' also satisfies ' + found.src.trim() + ' — ' +
+                round6(evalAt(eq.L, env0)) + ' = ' + round6(evalAt(eq.R, env0)) +
+                ' — and is not in that family. It is not a later term either: the answer ' +
+                'already lists a solution reaching ' + reach + ', so this one sits inside ' +
+                'the range it claims to cover'
+              : 'the answer presents its list as complete, but ' + fmtTuple(vars, miss) +
+                ' also satisfies ' + found.src.trim() + ' — ' +
+                round6(evalAt(eq.L, env0)) + ' = ' + round6(evalAt(eq.R, env0)) +
+                ' — and is not in it') +
+              '. One solution left out settles a claim of completeness; this is a ' +
+              'counterexample, not a search for more' });
           return out;
         }
       }

@@ -617,10 +617,10 @@ final class Exhaustion
        correct verification of (3,3,3). Every check passed, the badge read "not
        checked", and (3,3,6) sat two seconds of searching away. Mirrors
        witness() in index.html. */
-    public static function witness(array $eq, array $vars, array $dom, array $claims, bool $upto): ?array
+    public static function witness(array $eq, array $vars, array $dom, array $claims, bool $upto, int $ceiling = 0): ?array
     {
         $k = count($vars);
-        $hi = $k === 1 ? 5000 : ($k === 2 ? 300 : 60);
+        $hi = $ceiling > 0 ? $ceiling : ($k === 1 ? 5000 : ($k === 2 ? 300 : 60));
         $low = $dom['low'] === null ? 1 : $dom['low'];
         $keyOf = static function (array $tp) use ($upto): string {
             $t = array_map(static fn($x) => (int)round($x), $tp);
@@ -706,22 +706,46 @@ final class Exhaustion
             if ($dom['low'] === null) return $out;    // unbounded below: no region is provable
             $tuples = [];
 
-            /* Before any bounded route: if the answer put forward a CLOSED list
-               and the domain contains a solution it left out, that is decided
-               already and no bound is needed. */
-            if (count($claims) && preg_match(self::ALL_ASKED_RE, $question) && !preg_match(self::GENERATIVE, $md)) {
+            /* Before any bounded route: if the answer put forward a list and the
+               domain contains a solution it left out, that is decided already and
+               no bound is needed.
+
+               A GENERATIVE answer — "all solutions are the permutations of the
+               family (3, a_n, a_n+1)" — is not claiming its examples are
+               everything, so a solution BIGGER than anything it listed may be the
+               next term and must never be held against it. A solution INSIDE the
+               range it has already reached is not a next term; it is a hole.
+
+               x^2 + y^2 + z^2 = xyz came back answered with exactly that family,
+               every listed triple correct and a descent argued in fifteen steps.
+               It is still incomplete: (6, 15, 87) gives 7830 = 7830 and contains
+               no 3, so it is in no permutation of the family — and the answer's
+               own largest triple already reaches 102. The Markov tree branches.
+               Mirrors index.html. */
+            if (count($claims) && preg_match(self::ALL_ASKED_RE, $question)) {
+                $gen = (bool)preg_match(self::GENERATIVE, $md);
+                $reach = 0;
+                foreach ($claims as $tp) foreach ($tp as $v) if ($v > $reach) $reach = (int)$v;
+                $ceil = $gen ? min($reach, 300) : 0;
                 $upto = (bool)preg_match(self::UPTO_ORDER, $md) || self::isSymmetric($eq, $vars);
-                $miss = self::witness($eq, $vars, $dom, $claims, $upto);
+                $miss = ($gen && $reach < 2) ? null : self::witness($eq, $vars, $dom, $claims, $upto, $ceil);
                 if ($miss !== null) {
                     $env0 = [];
                     foreach ($vars as $i => $vn) $env0[$vn] = (float)$miss[$i];
+                    $lhs = Algebra::round6(Algebra::evalAt($eq['L'], $env0));
+                    $rhs = Algebra::round6(Algebra::evalAt($eq['R'], $env0));
                     $out[] = ['kind' => 'exhaust', 'ok' => false,
-                        'text' => 'the answer presents its list as complete, but ' . self::fmtTuple($vars, $miss) .
-                                  ' also satisfies ' . trim((string)$found['src']) . ' — ' .
-                                  Algebra::round6(Algebra::evalAt($eq['L'], $env0)) . ' = ' .
-                                  Algebra::round6(Algebra::evalAt($eq['R'], $env0)) .
-                                  ' — and is not in it. One solution left out settles a claim of ' .
-                                  'completeness; this is a counterexample, not a search for more'];
+                        'text' => ($gen
+                            ? 'the answer describes a family and claims it is every solution, but ' .
+                              self::fmtTuple($vars, $miss) . ' also satisfies ' . trim((string)$found['src']) .
+                              ' — ' . $lhs . ' = ' . $rhs . ' — and is not in that family. It is not a later ' .
+                              'term either: the answer already lists a solution reaching ' . $reach .
+                              ', so this one sits inside the range it claims to cover'
+                            : 'the answer presents its list as complete, but ' . self::fmtTuple($vars, $miss) .
+                              ' also satisfies ' . trim((string)$found['src']) . ' — ' . $lhs . ' = ' . $rhs .
+                              ' — and is not in it') .
+                            '. One solution left out settles a claim of completeness; this is a ' .
+                            'counterexample, not a search for more'];
                     return $out;
                 }
             }

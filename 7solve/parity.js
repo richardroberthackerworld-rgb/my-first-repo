@@ -232,6 +232,14 @@ const VERDICTS = [
   ['Find all positive integers x,y,z satisfying x^2+y^2+z^2=xyz.', '## ✅ Answer\nThe only positive integer triple is (3, 3, 3).'],
   ['Find all positive integers a,b,c with a^2+b^2+c^2=3abc.', '## ✅ Answer\nAll solutions arise from (1,1,1) by the Vieta jump.'],
   ['Find all positive integers a,b,c with a^2+b^2+c^2=3abc.', '## ✅ Answer\nThere are infinitely many; the first are (1,1,1), (1,1,2), (1,2,5).'],
+
+  /* A family that is right and still not all of them. Both engines run the
+     high-water-mark rule, so both must find (6,15,87) — and both must stay
+     silent on a family whose prefix is complete as far as it goes. */
+  ['Find all positive integers x, y, z with x^2 + y^2 + z^2 = xyz.',
+   '## ✅ Answer\nAll positive integer solutions are the permutations of the infinite family (3, an, an+1) where an+2 = 3an+1 - an.\nThe first few triples are (3,3,3), (3,3,6), (3,6,15), (3,15,39), (3,39,102), …'],
+  ['Find all positive integers a,b,c with a^2+b^2+c^2=3abc.',
+   '## ✅ Answer\nThe recurrence generates (1,1,1), (1,1,2), (1,2,5), (1,5,13), (2,5,29).'],
   ['Find all positive integers x,y with x^2 + y^2 = 25.', '## ✅ Answer\n(3,4) and (4,3)'],
 
   /* DOUBLE ENTRY, in both engines. Accounting was the largest unverifiable
