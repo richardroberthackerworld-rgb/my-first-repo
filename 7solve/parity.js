@@ -213,6 +213,15 @@ const VERDICTS = [
      seen went unreported — in both languages, which is why it belongs here. */
   ['Solve it.', '## ✅ Answer\nx = 3\n\n## 📖 Steps\n    *   Wait, the previous message used x^2.\n    *   Let me recheck that.'],
   ['Solve it.', '## ✅ Answer\nx = 3\n\n## 📖 Steps\n1. Add 6 to both sides.\n2. Divide by 3.'],
+
+  /* A CLAIM OF COMPLETENESS REFUTED BY ONE WITNESS. Both engines run the
+     search, so both must find the same solution the answer left out — and
+     both must stay silent on an answer that describes a process instead of a
+     closed list. */
+  ['Find all positive integers x,y,z satisfying x^2+y^2+z^2=xyz.', '## ✅ Answer\nThe only positive integer triple is (3, 3, 3).'],
+  ['Find all positive integers a,b,c with a^2+b^2+c^2=3abc.', '## ✅ Answer\nAll solutions arise from (1,1,1) by the Vieta jump.'],
+  ['Find all positive integers a,b,c with a^2+b^2+c^2=3abc.', '## ✅ Answer\nThere are infinitely many; the first are (1,1,1), (1,1,2), (1,2,5).'],
+  ['Find all positive integers x,y with x^2 + y^2 = 25.', '## ✅ Answer\n(3,4) and (4,3)'],
   ['Find all positive integers n with n^2=2^n.', '## ✅ Answer\nn = 2 and n = 4'],
   ['Find all positive integers n with n^2=2^n.', '## ✅ Answer\nn = 2'],
   ['Find all positive integers x,y satisfying x^2+xy+y^2=3^{x+y}.',

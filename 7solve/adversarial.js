@@ -270,12 +270,15 @@ const VERDICTS = [
    '## ✅ Final Answer\n(3,7)', 'disputed'],
 
   /* ---- 4. COMPLETENESS: found is not all ---- */
+  /* Was 'unverified' until the witness route existed. It is not that the engine
+     cannot tell — (1,2) gives 1 + 4 + 1 = 6 = 3·1·2 — it is that the engine used
+     to need a PROVED bound before it would speak. Refuting needs no bound. */
   ['complete', 'three verified pairs of an equation with infinitely many',
    'Find all positive integers x,y with x^2+y^2+1=3xy.',
-   '## ✅ Final Answer\nThe solutions are (1,1), (2,5) and (5,13).', 'unverified'],
+   '## ✅ Final Answer\nThe solutions are (1,1), (2,5) and (5,13).', 'disputed'],
   ['complete', 'four verified triples of the Markov equation',
    'Find all positive integers a,b,c with a^2+b^2+c^2=3abc.',
-   '## ✅ Final Answer\nThe solutions are (1,1,1), (1,1,2), (1,2,5) and (1,5,13).', 'unverified'],
+   '## ✅ Final Answer\nThe solutions are (1,1,1), (1,1,2), (1,2,5) and (1,5,13).', 'disputed'],
   ['complete', 'the reported question, answered correctly',
    'Find all positive integers x,y satisfying x^2+xy+y^2=3^{x+y}.',
    '## ✅ Final Answer\nThere are no positive integer solutions.', 'verified'],
@@ -573,8 +576,11 @@ const NO_BOUND = [
 ];
 for (const [name, q] of NO_BOUND) {
   const out = V.exhaustion(q, '## ✅ Final Answer\n(1,1)');
-  check('growth', 'no completeness claimed for ' + name,
-        out.some((c) => c.kind === 'exhaust') ? 'CLAIMED' : 'silent', 'silent');
+  /* CLAIMED, not merely spoken. A failing `exhaust` is a counterexample — one
+     solution the answer left out — and needs no bound at all. What must never
+     happen without a proved region is the PASS: "these are all of them". */
+  check('growth', 'no completeness is CERTIFIED for ' + name,
+        out.some((c) => c.kind === 'exhaust' && c.ok) ? 'CERTIFIED' : 'silent', 'silent');
 }
 
 /* ============================================================
@@ -1077,6 +1083,75 @@ const LEAKS = [
 ];
 for (const [name, md, want] of LEAKS) {
   check('cutoff', 'leaks: ' + name, V.leaks(md).length > 0, want, JSON.stringify(V.leaks(md)));
+}
+
+/* ============================================================
+   14. A WITNESS REFUTES; ONLY A BOUND CAN PROVE
+   ------------------------------------------------------------
+   x² + y² + z² = xyz came back answered "the only positive
+   integer triple is (3, 3, 3)" — a clean Vieta descent, a
+   correct verification of (3,3,3), every check passing, and a
+   badge reading "not checked". (3, 3, 6) gives 9 + 9 + 36 = 54
+   and 3·3·6 = 54. The engine had everything it needed and said
+   nothing, because `exhaust` would only speak once it could
+   PROVE a bound.
+
+   Proving a set complete needs a proved region. Refuting a
+   claim of completeness needs one solution the answer left out.
+   The second is the cheaper half and it was missing.
+   ============================================================ */
+const WITNESS = [
+  ['the (3,3,3) claim', 'Find all positive integers x,y,z satisfying x^2+y^2+z^2=xyz.',
+   'The only positive integer triple is (3, 3, 3).', '(3,3,6)'],
+  ['a Markov list that stops early', 'Find all positive integers a,b,c with a^2+b^2+c^2=3abc.',
+   'The solutions are (1,1,1), (1,1,2), (1,2,5) and (1,5,13).', '(1,13,34)'],
+  ['a two-variable list that stops early', 'Find all positive integers x,y with x^2+y^2+1=3xy.',
+   'The solutions are (1,1), (2,5) and (5,13).', '(1,2)'],
+];
+for (const [name, q, ans, wantTuple] of WITNESS) {
+  const out = V.exhaustion(q, '## ✅ Answer\n' + ans);
+  const hit = out.find((c) => c.kind === 'exhaust' && !c.ok);
+  check('witness', name + ' is refuted', !!hit, true, JSON.stringify(out.map((c) => c.text.slice(0, 60))));
+  if (hit) {
+    check('witness', name + ': names the solution that was left out',
+          hit.text.indexOf(wantTuple) >= 0 ? 'named' : 'NOT NAMED', 'named', hit.text.slice(0, 130));
+    check('witness', name + ': calls itself a counterexample, not a proof',
+          /counterexample, not a search/.test(hit.text) ? 'honest' : 'OVERCLAIMS', 'honest',
+          'a bounded search must never be worded as if it had proved the rest');
+  }
+}
+
+/* The controls, which matter more. A witness that fires on an answer
+   describing a PROCESS is answering something the answer never said. */
+const NO_WITNESS = [
+  ['a generative claim', 'Find all positive integers a,b,c with a^2+b^2+c^2=3abc.',
+   'All solutions arise from (1,1,1) by the Vieta jump.'],
+  ['an explicit infinitude', 'Find all positive integers a,b,c with a^2+b^2+c^2=3abc.',
+   'There are infinitely many; the first are (1,1,1), (1,1,2), (1,2,5).'],
+  ['an ellipsis meaning more', 'Find all positive integers a,b,c with a^2+b^2+c^2=3abc.',
+   '(1,1,1), (1,1,2), (1,2,5), (1,5,13), …'],
+  ['a recurrence named', 'Find all positive integers a,b,c with a^2+b^2+c^2=3abc.',
+   'The recurrence gives (1,1,1), (1,1,2), (1,2,5).'],
+  ['a genuinely complete list', 'Find all positive integers x,y with 3x + 5y = 31.', '(7,2) and (2,5)'],
+  ['a complete list on a symmetric equation', 'Find all positive integers x,y with x^2 + y^2 = 25.',
+   '(3,4) and (4,3)'],
+];
+for (const [name, q, ans] of NO_WITNESS) {
+  const out = V.exhaustion(q, '## ✅ Answer\n' + ans);
+  const hit = out.find((c) => c.kind === 'exhaust' && !c.ok);
+  check('witness', 'no witness against ' + name, !!hit, false, hit ? hit.text.slice(0, 120) : '');
+}
+
+/* Symmetry is a PROPERTY, tested, not a phrase read out of the prose —
+   offering (1,2,1) against an answer that already listed (1,1,2) is pedantry,
+   and a student shown that would be right to ignore the badge afterwards. */
+const SYM = [
+  ['x^2+y^2+z^2=xyz', true], ['x^2+y^2+1=3xy', true], ['x^2+y^2=25', true],
+  ['3x+5y=31', false], ['x-y=3', false],
+];
+for (const [src, want] of SYM) {
+  const eq = A.parseEquation(src);
+  check('witness', 'symmetry of ' + src, V.isSymmetric(eq, eq.vars), want);
 }
 
 /* ---------- report ---------- */
