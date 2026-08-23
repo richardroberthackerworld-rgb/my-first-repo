@@ -614,6 +614,13 @@ final class Checks
     /* ---------- arithmetic written in the working ---------- */
     public static function arithmetic(string $md): array
     {
+        /* Currency marks made the arithmetic checker blind across the whole
+           commerce syllabus — see the matching comment in index.html. Stripped
+           only where the mark sits against a digit, so a variable is never
+           turned into a numeral. Mirrors the JS exactly; parity.js compares. */
+        $md = preg_replace('/(?:₹|\$|€|£|Rs\.?|INR|USD)\s*(?=[\d.])/iu', '', $md);
+        $md = preg_replace('/(\d)\s*(?:Rs\.?|INR|USD)(?![A-Za-z])/iu', '$1', $md);
+
         $out = [];
         $seen = [];
         if (!preg_match_all(self::CALC_RE, $md, $ms, PREG_SET_ORDER | PREG_OFFSET_CAPTURE)) {

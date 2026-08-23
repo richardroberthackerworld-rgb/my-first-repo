@@ -948,6 +948,22 @@ const ABSOLUTE = [
      completeness and completeness was not established, nothing certifies.
      Keep this case worked, with arithmetic in it, or it stops testing the
      thing that broke. */
+  /* CURRENCY. Found 2026-08-23 by a real CA answer: a merchant's profit was
+     arithmetically perfect and NOTHING was checked, because every figure was
+     priced. "Rs" reads as letters to the algebra guard, and ₹ breaks the
+     expression match outright — so the arithmetic checker was blind across the
+     entire commerce syllabus, which is a core 7Solve audience. Keep a wrong
+     one beside each right one, or this only proves the scanner runs. */
+  ['J rupee prefix',    'A merchant buys 10 bags at Rs 1200 each.',
+   '## ✅ Final Answer\n**23400**\n\n## 📖 Steps\n1. Rs 12000 + Rs 11400 = Rs 23400', 'checked'],
+  ['J rupee sign',      'A merchant buys 10 bags at Rs 1200 each.',
+   '## ✅ Final Answer\n**23400**\n\n## 📖 Steps\n1. ₹12,000 + ₹11,400 = ₹23,400', 'checked'],
+  ['J rupee wrong',     'A merchant buys 10 bags at Rs 1200 each.',
+   '## ✅ Final Answer\n**23400**\n\n## 📖 Steps\n1. Rs 12000 + Rs 11400 = Rs 23500', 'stepfail'],
+  /* the strip must not manufacture arithmetic out of algebra */
+  ['J not a currency',  'Solve for R in R = 5x + 3',
+   '## ✅ Final Answer\n**R = 5x + 3**\n\n## 📖 Steps\n1. Rate R is 5x + 3.', 'worked'],
+
   /* CORROBORATING KINDS CANNOT CERTIFY. Found 2026-08-23 in a real production
      answer: the model claimed "x + eˣ = 0 has no real solution", which is
      FALSE — the root is −0.567143, and the same model found it on another

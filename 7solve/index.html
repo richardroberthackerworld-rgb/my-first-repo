@@ -13172,6 +13172,21 @@ var Verify = (function(){
   var CALC_RE = /(-?\d[\d,]*(?:\.\d+)?(?:\s*[+\-×÷*\/]\s*-?\d[\d,]*(?:\.\d+)?)+)\s*=\s*(-?\d[\d,]*(?:\.\d+)?(?:\s*\/\s*-?\d[\d,]*(?:\.\d+)?)?)/g;
 
   function arithmetic(md){
+    /* Commerce answers price everything, and none of it was ever checked.
+       "Rs 12,000 + Rs 11,400 = Rs 23,400" fails two ways at once: the leading
+       "Rs" reads as letters to the algebra guard below, which skips the line,
+       and ₹ breaks the expression match outright because CALC_RE cannot span
+       it. So for CA, CMA, B.Com and every commerce question — where every
+       figure carries a currency mark — the arithmetic checker was blind across
+       the whole syllabus. A merchant's ten bags of rice went unverified not
+       because the sum was hard but because it was priced in rupees.
+
+       Stripped only where the mark sits against a digit, so a variable can
+       never be turned into a numeral: `Rs 500` loses its prefix, `Rspeed` and
+       a bare `R` do not. Everything downstream still sees the same numbers. */
+    md = String(md == null ? '' : md)
+      .replace(/(?:₹|\$|€|£|Rs\.?|INR|USD)\s*(?=[\d.])/gi, '')   // ₹500, Rs. 500
+      .replace(/(\d)\s*(?:Rs\.?|INR|USD)(?![A-Za-z])/gi, '$1');  // 500 Rs
     var out = [], seen = {}, re = new RegExp(CALC_RE.source, 'g'), m;
     while((m = re.exec(md)) !== null){
       if(out.length >= 12) break;                       // a cap, not a sample: 12 lines is plenty
