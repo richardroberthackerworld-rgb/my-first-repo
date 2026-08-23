@@ -16075,7 +16075,16 @@ var Verify = (function(){
       why = 'the answer ends on "therefore" with no conclusion after it';
 
     var count = function(hay, needle){ return hay.split(needle).length - 1; };
-    var dd = count(s, '$$'), dollars = count(s, '$') - 2 * dd;
+    /* A dollar AMOUNT is not a maths delimiter. "$12,000 + $11,400 = $23,400"
+       carries three $ — an odd count — and was reported as "an unclosed $…$
+       formula", which DISPUTES a perfectly correct answer. Telling a student
+       their right answer is wrong is the second-worst thing this engine can do,
+       and US CMA, US CPA, CFA and ACCA all price in dollars.
+
+       Only a $ that is NOT against a number counts as a delimiter: $12,000 is
+       money, $x + y$ is mathematics. */
+    var delim = s.replace(/\$(?=\s*[\d.])/g, '');
+    var dd = count(delim, '$$'), dollars = count(delim, '$') - 2 * dd;
     if(!why && dd % 2 !== 0)                                   why = 'an unclosed $$…$$ block';
     if(!why && dollars % 2 !== 0)                              why = 'an unclosed $…$ formula';
     if(!why && count(s, '\\[') !== count(s, '\\]'))            why = 'an unclosed \\[…\\] block';

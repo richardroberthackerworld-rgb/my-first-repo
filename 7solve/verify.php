@@ -1898,9 +1898,15 @@ final class Checks
         if ($why === null && preg_match('/\b(therefore|hence|thus|so we get|which gives)\s*[:,]?\s*$/iu', $tail)) {
             $why = 'the answer ends on "therefore" with no conclusion after it';
         }
-        /* Unbalanced delimiters mean a formula was cut in half. */
-        $dollars = substr_count($s, '$') - 2 * substr_count($s, '$$');
-        if ($why === null && substr_count($s, '$$') % 2 !== 0) $why = 'an unclosed $$…$$ block';
+        /* Unbalanced delimiters mean a formula was cut in half.
+
+           A dollar AMOUNT is not a delimiter: "$12,000 + $11,400 = $23,400"
+           carries three $ and was disputed as an unclosed formula, which tells
+           a student their correct answer is wrong. US CMA, US CPA, CFA and
+           ACCA all price in dollars. Mirrors index.html; parity.js compares. */
+        $delim = preg_replace('/\$(?=\s*[\d.])/u', '', $s);
+        $dollars = substr_count($delim, '$') - 2 * substr_count($delim, '$$');
+        if ($why === null && substr_count($delim, '$$') % 2 !== 0) $why = 'an unclosed $$…$$ block';
         if ($why === null && $dollars % 2 !== 0)               $why = 'an unclosed $…$ formula';
         if ($why === null && substr_count($s, '\\[') !== substr_count($s, '\\]')) $why = 'an unclosed \\[…\\] block';
         if ($why === null && substr_count($s, '\\(') !== substr_count($s, '\\)')) $why = 'an unclosed \\(…\\) formula';

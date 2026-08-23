@@ -963,6 +963,17 @@ const ABSOLUTE = [
   /* the strip must not manufacture arithmetic out of algebra */
   ['J not a currency',  'Solve for R in R = 5x + 3',
    '## ✅ Final Answer\n**R = 5x + 3**\n\n## 📖 Steps\n1. Rate R is 5x + 3.', 'worked'],
+  /* A dollar AMOUNT is not a maths delimiter. Three $ is an odd count and was
+     read as "an unclosed $…$ formula", DISPUTING a correct answer — the second
+     worst thing this engine can do, and US CMA / CPA / CFA / ACCA all price in
+     dollars. The unclosed-LaTeX case below it must keep failing, or the fix has
+     simply switched the guard off. */
+  ['J dollar amounts',  'A CMA candidate values inventory.',
+   '## ✅ Final Answer\n**23400**\n\n## 📖 Steps\n1. $12,000 + $11,400 = $23,400', 'checked'],
+  ['J dollar wrong',    'A CMA candidate values inventory.',
+   '## ✅ Final Answer\n**23400**\n\n## 📖 Steps\n1. $12,000 + $11,400 = $23,500', 'stepfail'],
+  ['J latex still caught', 'A CMA candidate values inventory.',
+   '## ✅ Final Answer\n**23400**\n\n## 📖 Steps\n1. The value is $x + y = 5 and we continue', 'disputed'],
 
   /* CORROBORATING KINDS CANNOT CERTIFY. Found 2026-08-23 in a real production
      answer: the model claimed "x + eˣ = 0 has no real solution", which is
