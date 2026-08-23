@@ -12,23 +12,28 @@
    decides `hasSteps` from "## 📖" or "## 📝", and claimedRootsOf
    strips the ** emphasis the prompt asks for.
 
-   Change one emoji in the prompt and NOTHING FAILS. Every suite
-   in this repo supplies its own answer text, so they all stay
-   green while live answers quietly stop matching and every
-   student sees "Unable to verify" on work that is perfectly
-   correct. The engine would be fine; the pipe between the model
-   and the engine would be cut.
+   CORRECTED 2026-08-23. This file first claimed that changing one
+   emoji in the prompt would silently unbadge every student. That
+   was wrong, and measuring it is what showed so: claimZone falls
+   back to `String(md).slice(0, 400)` when no heading matches, so
+   the engine verifies an answer with NO headings at all, with
+   prose only, and with a completely alien format. Breaking
+   claimZone outright moved none of the verdicts here.
 
-   That gap was found by trying to run the real solve flow on
-   production and being stopped by the sign-in gate — the one
-   link no test in this repo has ever exercised, because every
-   test starts after the model has already replied.
+   The real exposure is narrower and worth stating exactly: the
+   claim must appear inside the fallback window. An answer whose
+   value sits past the first 400 characters with no recognised
+   ✅ or 🎯 heading returns `plain` — a correct answer with no
+   badge. The live format opens with "## 📌 Understood as" before
+   the answer, so the margin is real but not large: grow that
+   preamble, move the answer below Method and Verification, and
+   lose heading recognition, and badges go.
 
-   This closes the half that needs no credentials: it reads the
-   FORMAT OUT OF THE PROMPT, builds an answer in exactly that
-   shape, and demands the engine verify it. If the prompt drifts,
-   the synthesised answer drifts with it and the verdict falls
-   over — loudly, at build time.
+   So this gate does three honest things rather than one
+   overstated one: it holds the prompt to the markers the readers
+   use, it proves an answer in the prompt's own shape verifies,
+   and it pins the shape production ACTUALLY sends — which is not
+   the shape the prompt asks for.
 
        node tools/gate-answer-format.js
 
@@ -129,6 +134,59 @@ const cases = [
   ['wrong derivative, prompt format', 'Differentiate 3x^2 sin x',
     compose('9x sin x + 3x^2 cos x', '1. Product rule.'), 'disputed'],
 ];
+
+/* ---- 4. THE FORMAT THE MODEL ACTUALLY EMITS ------------------------
+   Everything above composes answers from buildSystemPrompt's template. A
+   real signed-in answer captured from production on 2026-08-23 does NOT
+   match that template:
+
+     prompt says            model sent
+     ## ✅ Final Answer      ## ✅ Answer
+     ## 📖 Step-by-Step …    ## 📝 Steps
+     ## 🧭 Method            (absent)
+     ## 🔍 Verification      (absent)
+                            ## 📌 Understood as   (extra, leads the answer)
+
+   It still verifies, because the engine keys on the EMOJI rather than the
+   heading words and hasSteps accepts 📝 alongside 📖. That is luck holding
+   it up, not a test — so the real thing is pinned here as a fixture. If a
+   future prompt or model change breaks the shape students actually receive,
+   this fails even when the template above still passes.
+
+   Captured verbatim. Do not tidy the headings to match the prompt: the
+   whole point is that they do not match. */
+const LIVE = '## 📌 Understood as\n3x - 6 = 0\n\n' +
+  '## ✅ Answer\n**x = 2**\n\n' +
+  '## 📝 Steps\n' +
+  '1. The equation is linear in x: **3x + -6 = 0**.\n' +
+  '2. Move the constant across: 3x = 6.\n' +
+  '3. Divide both sides by 3: **x = 2**.\n' +
+  '4. Check: substituting back gives 0 = 0.\n\n' +
+  '## 🎯 Final Result\nx = 2\n';
+cases.push(['LIVE production answer', 'Solve 3x - 6 = 0', LIVE, 'verified']);
+/* the same real shape carrying a wrong value must still be caught */
+cases.push(['LIVE shape, wrong value', 'Solve 3x - 6 = 0',
+  LIVE.replace(/x = 2/g, 'x = 5').replace('gives 0 = 0', 'gives 9 = 0'), 'disputed']);
+
+/* ---- 5. THE FALLBACK WINDOW, which is the exposure that is real ----
+   claimZone reads ✅/🎯 and otherwise falls back to the first 400 characters.
+   That fallback is why format drift is survivable — and it is also the whole
+   of the remaining risk, because it is a WINDOW. Push the claim past it with
+   no recognised heading and a correct answer silently loses its badge.
+
+   These two cases pin both sides of that edge. If someone lengthens the
+   preamble the prompt asks for, or moves the answer below Method and
+   Verification, the second one starts failing and says why. */
+const PREAMBLE = 'First, let us restate and understand the problem carefully. ';
+const bare = (pad, val) => pad + '\n\nThe answer is ' + val + '.\n';
+cases.push(['claim inside fallback window', 'Solve 3x - 6 = 0',
+  bare(PREAMBLE.repeat(2), 'x = 2'), 'verified']);
+cases.push(['claim past fallback, no heading', 'Solve 3x - 6 = 0',
+  bare(PREAMBLE.repeat(9), 'x = 2'), 'unverified']);
+/* …and a recognised heading rescues exactly that case, which is what the
+   headings are actually FOR */
+cases.push(['heading rescues a long preamble', 'Solve 3x - 6 = 0',
+  PREAMBLE.repeat(9) + '\n\n## ' + mAnswer + ' Answer\n**x = 2**\n', 'verified']);
 
 const results = [];
 for (const [name, q, a, want] of cases) {

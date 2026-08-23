@@ -516,20 +516,45 @@ exactly those markers — `claimZone()` reads `withHead(md,'✅')` and
 `withHead(md,'🎯')`, `hasSteps` tests for `## 📖` or `## 📝`, and
 `claimedRootsOf` strips the `**` the prompt asks for.
 
-Nothing enforced that. Every suite in this repo supplies its own answer text,
-so an edit to the prompt's emoji would leave all of them green while live
-answers stopped matching and every student saw "unable to verify" on correct
-work. The engine would be intact; the pipe into it would be cut.
+**Corrected 2026-08-23.** This section first said an edit to the prompt's
+emoji would leave every suite green while students silently stopped getting
+badges. That was wrong. `claimZone` falls back to `String(md).slice(0, 400)`
+when no heading matches, so the engine verifies an answer with **no headings
+at all**, with prose only, and with a completely alien format; breaking
+`claimZone` outright moves no verdicts. Format drift is survivable by design.
+
+The real exposure is a **window**, not a format. An answer whose value sits
+past the first 400 characters with no recognised `✅` or `🎯` heading returns
+`plain` — correct, unbadged. That is what the headings are actually for: they
+rescue exactly the case the fallback cannot reach. The live format opens with
+`## 📌 Understood as` before the answer, so the margin is real but not large.
+Lengthen that preamble, move the answer below Method and Verification, and
+lose heading recognition, and badges go.
 
 `tools/gate-answer-format.js` reads the section markers **out of the prompt**,
 composes answers in exactly that shape, and runs them through the shipping
 `Verify.run`. Correct answers must reach `checked` and wrong ones `disputed` —
 the second half matters, or the gate would prove only that the engine reads
-headings. Because the fixtures are built from the prompt rather than typed
-into the test, a prompt that drifts drifts the fixtures with it and the
-verdicts collapse.
+headings. It then pins two further things: the shape production **actually**
+sends, and both sides of the fallback window.
 
-This covers the format half of the model→engine link. The transport half —
-`getAnswer` actually returning text — remains untested here, because it sits
-behind `aiGate()` and needs a signed-in account with credits.
+**The transport half is now closed.** A real signed-in answer from production
+on 2026-08-23 was put through both engines and reached `checked`
+(`integrity+, subst+, roots+, trace+`), so model → text → verifier → badge is
+proven end to end rather than by inspection.
+
+That capture also showed the model does **not** answer in the shape the prompt
+asks for:
+
+| prompt instructs | production sent |
+|---|---|
+| `## ✅ Final Answer` | `## ✅ Answer` |
+| `## 📖 Step-by-Step Solution` | `## 📝 Steps` |
+| `## 🧭 Method`, `## 🔍 Verification` | absent |
+| — | `## 📌 Understood as`, leading |
+
+It verifies because the readers key on the **emoji**, not the heading words,
+and `hasSteps` accepts `📝` alongside `📖`. Testing only the prompt's template
+would have left the shape students actually receive unguarded, so that exact
+answer is now a fixture.
 
