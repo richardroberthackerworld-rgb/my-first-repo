@@ -17448,14 +17448,34 @@ var origSolve = W.solve;
    anywhere on the page, and scrolls the original message into view. It
    changes no gate and no verdict — a refusal is still a refusal. It just
    stops being invisible. */
+/* Watch the surface, not each writer. solve() is not the only thing that
+   reports a refusal into #errMsg — getHint() and startTutorMode() do too, and
+   patching call sites one at a time leaves the next one to be forgotten. An
+   observer covers every writer that exists now and every writer added later.
+
+   Fires only on a non-empty message, and never twice for the same text in a
+   row, so clearing the box at the start of an attempt stays silent. */
+(function watchErrMsg(){
+  var el = document.getElementById('errMsg');
+  if(!el || !W.MutationObserver) return;
+  var last = '', lastAt = 0;
+  new W.MutationObserver(function(){
+    var msg = String(el.textContent || '').trim();
+    if(!msg) { last = ''; return; }
+    var now = Date.now();
+    if(msg === last && now - lastAt < 4000) return;      // same fault, same attempt
+    last = msg; lastAt = now;
+    try { (W.toast7 || function(){})(msg); } catch(e){}
+    try { el.scrollIntoView({behavior:'smooth', block:'center'}); } catch(e){}
+  }).observe(el, {childList:true, characterData:true, subtree:true});
+})();
+
 var retryingEngines = false;   // one re-check per click, never a loop
+/* Whether solve() left a refusal behind. The observer above is what SHOWS it;
+   this only reports whether one happened, so the retry below can decide. */
 function reportBail(){
   var el = document.getElementById('errMsg');
-  var msg = el ? String(el.textContent || '').trim() : '';
-  if(!msg) return false;
-  try { (W.toast7 || function(){})(msg); } catch(e){}
-  try { el.scrollIntoView({behavior:'smooth', block:'center'}); } catch(e){}
-  return true;
+  return !!(el && String(el.textContent || '').trim());
 }
 
 W.solve = function(extra){
