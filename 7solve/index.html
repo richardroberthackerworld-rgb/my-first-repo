@@ -13549,7 +13549,23 @@ function setMode(m){
    The split is by length, because that is what actually distinguishes them, and
    the short branch goes through exactly the same gate a photo does: read it,
    reconstruct the mathematics, show it, and only then solve. */
+/* A flat character count is the wrong shape for this. A worksheet of eight
+   questions is longer than 1200 characters and is still a question paper, not a
+   chapter — and a student with one was being handed a reading tool. So length
+   is only the fallback: a document that looks like QUESTIONS goes to the solver
+   whatever its length, up to the point where it is plainly a chapter. */
 var DOC_AS_QUESTION_CHARS = 1200;
+var DOC_QUESTION_MAX = 6000;
+function looksLikeQuestions(t){
+  var s = String(t || '');
+  if(s.length > DOC_QUESTION_MAX) return false;
+  var numbered = (s.match(/^\s*(?:Q\s*)?\d{1,2}\s*[.)]\s+\S/gim) || []).length;
+  var asks = (s.match(/\b(find|solve|prove|evaluate|calculate|show that|determine|simplify|state|derive)\b/gi) || []).length;
+  var marks = /\[\s*\d{1,2}\s*marks?\s*\]|\(\s*\d{1,2}\s*marks?\s*\)/i.test(s);
+  /* a chapter explains; a paper asks. Two numbered items that both ask, or an
+     explicit marks scheme, is a paper. */
+  return (numbered >= 2 && asks >= 2) || marks;
+}
 function pickDocument(){
   var inp = $1('fileDoc');
   if(!inp) return;
@@ -13569,7 +13585,7 @@ function pickDocument(){
       }
       txt = String(txt || '').trim();
       if(st) st.textContent = '';
-      if(txt.length > DOC_AS_QUESTION_CHARS){
+      if(txt.length > DOC_AS_QUESTION_CHARS && !looksLikeQuestions(txt)){
         /* a chapter, not a question — the reader is the right place for it */
         toast('That looks like a chapter (' + Math.round(txt.length / 1000) + 'k characters) — ' +
               'opening it in the reader.');
@@ -16668,21 +16684,31 @@ var Verify = (function(){
      coarser grid, because k² points of a 250-point sweep is not a cost this
      can carry on a phone. */
   function hunt(vars, pts, test){
-    var i, j;
+    var i;
     if(vars.length === 1){
       for(i = 0; i < pts.length; i++){
-        var r1 = test([pts[i]]);
-        if(r1 === false) return [pts[i]];
+        if(test([pts[i]]) === false) return [pts[i]];
       }
       return null;
     }
-    var coarse = pts.filter(function(x){ return Math.abs(x) <= 40 && x === Math.round(x); });
-    for(i = 0; i < coarse.length; i++)
-      for(j = 0; j < coarse.length; j++){
-        var r2 = test([coarse[i], coarse[j]]);
-        if(r2 === false) return [coarse[i], coarse[j]];
+    /* THREE VARIABLES USED TO BE REFUSED OUTRIGHT, and "for all x, y, z" is a
+       perfectly ordinary thing for an answer to claim. The grid thins as the
+       dimension grows so the cost stays flat rather than cubing: 40 points in
+       two variables is 1,600 tests, and 40 in three would be 64,000, so three
+       gets 16. A coarser net catches fewer counterexamples and invents none,
+       which is the right direction to fail in. */
+    var span = vars.length === 2 ? 40 : 16;
+    var coarse = pts.filter(function(x){ return Math.abs(x) <= span && x === Math.round(x); });
+    var cur = new Array(vars.length), found = null;
+    (function rec(d){
+      if(found) return;
+      if(d === vars.length){
+        if(test(cur.slice()) === false) found = cur.slice();
+        return;
       }
-    return null;
+      for(var k = 0; k < coarse.length && !found; k++){ cur[d] = coarse[k]; rec(d + 1); }
+    })(0);
+    return found;
   }
 
   function counterexample(question, md){
@@ -16733,7 +16759,7 @@ var Verify = (function(){
         var se = grabExpr(sm[1], true);
         var sv = se ? Object.keys(varsOf(se.ast)) : [];
         var word = sm[2].toLowerCase().replace('non-negative', 'nonnegative');
-        if(se && sv.length >= 1 && sv.length <= 2 && !hasTrig(se.ast)){
+        if(se && sv.length >= 1 && sv.length <= 3 && !hasTrig(se.ast)){
           var hitS = hunt(sv, pts, function(pt){
             var env = {};
             sv.forEach(function(v, i){ env[v] = pt[i]; });
@@ -16776,7 +16802,7 @@ var Verify = (function(){
       if(!L || !R) continue;
       if(hasTrig(L.ast) || hasTrig(R.ast)) continue;
       var vs = Object.keys(varsOf(R.ast, varsOf(L.ast, {})));
-      if(!vs.length || vs.length > 2) continue;
+      if(!vs.length || vs.length > 3) continue;
 
       var seen = 0;
       var hit = hunt(vs, pts, function(pt){
@@ -17351,6 +17377,177 @@ var Verify = (function(){
     return [{ kind:'unit', ok: gk === wk,
       text: gk === wk ? 'the result is in ' + want[1] + ', as asked'
                       : 'the question asks for ' + want[1] + ' but the answer is in ' + got[1] }];
+  }
+
+  /* ============================================================
+     DOUBLE ENTRY — the one accounting law a machine can check
+     ------------------------------------------------------------
+     Accounting has been marked covered_not_verifiable since the
+     capability manifest existed, and 7Solve's own README aims the product
+     at CA, CMA and B.Com students. So the largest single audience for this
+     app has been getting answers that could never earn a badge — the same
+     "unable to verify" a broken parse gets.
+
+     Most of accounting genuinely is not checkable here: whether the right
+     account was debited, whether a policy was applied, whether an estimate
+     is reasonable. But the law the whole system rests on is arithmetic and
+     absolute:
+
+         every entry debits exactly what it credits.
+
+     A journal entry whose columns do not agree is wrong before anyone asks
+     which account it hit, and that is provable without knowing any
+     accounting at all. Same for a trial balance, and same for a balance
+     sheet whose two sides do not meet.
+
+     WHAT IT READS. Two shapes, because those are the two shapes an answer
+     is written in: a markdown table with Debit and Credit columns, and the
+     prose form every Indian textbook uses —
+
+         Cash A/c                    Dr.    50,000
+             To Sales A/c                          50,000
+
+     A TOTAL is a claim, not an entry. A row whose particulars say "Total"
+     is taken out of the sum and checked AGAINST it, so an answer that adds
+     its own column up wrongly is caught separately from one whose entries
+     do not balance.
+
+     WHAT IT REFUSES. Anything without both a debit and a credit amount;
+     figures it cannot parse; and a page with no accounting vocabulary on
+     it at all, so a physics answer containing the word "credit" is never
+     dragged in. Rule 1 as everywhere else: no verdict beats a wrong one.
+
+     Mirrors Books::check in checkers-books.php. */
+  var BOOKS_CONTEXT = /\bA\/c\b|\bDr\.?\b|\bCr\.?\b|\bjournal\b|\bledger\b|\btrial balance\b|\bbalance sheet\b|\bdebit\b|\bcredit\b/i;
+  var BOOKS_TOTAL = /\btotals?\b|\bgrand total\b|\bb\/?f\b|\bc\/?d\b/i;
+
+  /* ₹ 1,50,000 — Indian grouping, a currency mark, or neither. */
+  function money(t){
+    var m = String(t || '').replace(/[₹$€£]|Rs\.?|INR/gi, '').trim();
+    if(!/^-?[\d,]+(?:\.\d{1,2})?$/.test(m)) return null;
+    var n = parseFloat(m.replace(/,/g, ''));
+    return isFinite(n) ? n : null;
+  }
+  function moneyIn(t){
+    /* the LAST figure on a line is the amount; anything earlier is a folio,
+       a date or an account number */
+    var all = String(t || '').match(/-?(?:₹|Rs\.?|INR)?\s*[\d,]+(?:\.\d{1,2})?/gi) || [];
+    for(var i = all.length - 1; i >= 0; i--){
+      var v = money(all[i]);
+      if(v !== null && Math.abs(v) >= 1) return v;
+    }
+    return null;
+  }
+
+  function booksTable(lines){
+    /* a header naming both columns, then rows read by position */
+    var hdr = -1, dCol = -1, cCol = -1;
+    for(var i = 0; i < lines.length && hdr < 0; i++){
+      if(lines[i].indexOf('|') < 0) continue;
+      var cells = lines[i].split('|').map(function(x){ return x.trim().toLowerCase(); });
+      var d = -1, c = -1;
+      cells.forEach(function(x, j){
+        if(d < 0 && /^debit|dr\.?$|debit \(/.test(x)) d = j;
+        if(c < 0 && /^credit|cr\.?$|credit \(/.test(x)) c = j;
+      });
+      if(d >= 0 && c >= 0 && d !== c){ hdr = i; dCol = d; cCol = c; }
+    }
+    if(hdr < 0) return null;
+    var dr = 0, cr = 0, n = 0, claimD = null, claimC = null;
+    for(var r = hdr + 1; r < lines.length; r++){
+      var row = lines[r];
+      if(row.indexOf('|') < 0) break;                       // the table ended
+      if(/^[\s|:\-]+$/.test(row)) continue;                 // the ---|--- rule
+      var cs = row.split('|');
+      if(cs.length <= Math.max(dCol, cCol)) continue;
+      var dv = moneyIn(cs[dCol]), cv = moneyIn(cs[cCol]);
+      if(dv === null && cv === null) continue;
+      if(BOOKS_TOTAL.test(row)){                            // a claim, not an entry
+        if(dv !== null) claimD = dv;
+        if(cv !== null) claimC = cv;
+        continue;
+      }
+      if(dv !== null){ dr += dv; n++; }
+      if(cv !== null){ cr += cv; n++; }
+    }
+    return n >= 2 ? { dr:dr, cr:cr, n:n, claimD:claimD, claimC:claimC, how:'the debit and credit columns' } : null;
+  }
+
+  function booksProse(lines){
+    var dr = 0, cr = 0, n = 0;
+    for(var i = 0; i < lines.length; i++){
+      var line = lines[i];
+      if(line.indexOf('|') >= 0) continue;                  // tables are the other reader's job
+      if(BOOKS_TOTAL.test(line)) continue;
+      var amt = moneyIn(line);
+      if(amt === null) continue;
+      var isCredit = /^\s*(?:\*|-)?\s*To\s+/i.test(line) || /\bCr\.?(?:\s|$)/.test(line);
+      var isDebit  = /\bDr\.?(?:\s|$)/.test(line) || /^\s*(?:\*|-)?\s*By\s+/i.test(line);
+      if(isCredit && !isDebit){ cr += amt; n++; }
+      else if(isDebit){ dr += amt; n++; }
+    }
+    return n >= 2 ? { dr:dr, cr:cr, n:n, claimD:null, claimC:null, how:'the entries' } : null;
+  }
+
+  function rupee(n){
+    var neg = n < 0, a = Math.abs(n);
+    var t = (Math.abs(a - Math.round(a)) < 1e-9) ? String(Math.round(a)) : a.toFixed(2);
+    /* Indian grouping: the last three, then twos */
+    var parts = t.split('.'), whole = parts[0];
+    if(whole.length > 3){
+      var last3 = whole.slice(-3), rest = whole.slice(0, -3);
+      whole = rest.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + ',' + last3;
+    }
+    return (neg ? '−' : '') + '₹' + whole + (parts[1] ? '.' + parts[1] : '');
+  }
+  function sameMoney(a, b){ return Math.abs(a - b) <= Math.max(1, Math.abs(a), Math.abs(b)) * 1e-9; }
+
+  function bookkeeping(question, md){
+    var text = deLatexSafe(md);
+    if(!BOOKS_CONTEXT.test(text)) return [];
+    var lines = text.split(/\r?\n/);
+    var out = [];
+
+    var t = booksTable(lines) || booksProse(lines);
+    if(t){
+      /* the law itself */
+      out.push({ kind:'books', ok: sameMoney(t.dr, t.cr),
+        text: sameMoney(t.dr, t.cr)
+          ? 'the entry balances — ' + t.how + ' both come to ' + rupee(t.dr) +
+            ' across ' + t.n + ' figures, which is the one thing double entry requires'
+          : 'the entry does not balance — debits come to ' + rupee(t.dr) + ' and credits to ' +
+            rupee(t.cr) + ', a difference of ' + rupee(Math.abs(t.dr - t.cr)) +
+            '. Every entry must debit exactly what it credits, whichever accounts were chosen' });
+      /* and any total the answer wrote itself */
+      if(t.claimD !== null && !sameMoney(t.claimD, t.dr)){
+        out.push({ kind:'books', ok:false,
+          text:'the debit column is totalled as ' + rupee(t.claimD) + ' but its entries add to ' +
+               rupee(t.dr) });
+      }
+      if(t.claimC !== null && !sameMoney(t.claimC, t.cr)){
+        out.push({ kind:'books', ok:false,
+          text:'the credit column is totalled as ' + rupee(t.claimC) + ' but its entries add to ' +
+               rupee(t.cr) });
+      }
+    }
+
+    /* ---- the balance sheet, when both sides are stated ---- */
+    var assets = null, equity = null;
+    var aRe = /total\s+assets?\b[^\n\d]{0,40}((?:₹|Rs\.?|INR)?\s*[\d,]+(?:\.\d{1,2})?)/i;
+    var lRe = /total\s+(?:liabilit\w+(?:\s+and\s+(?:capital|equity))?|equity\s+and\s+liabilit\w+|capital\s+and\s+liabilit\w+)\b[^\n\d]{0,40}((?:₹|Rs\.?|INR)?\s*[\d,]+(?:\.\d{1,2})?)/i;
+    var am = text.match(aRe), lm = text.match(lRe);
+    if(am) assets = money(am[1]);
+    if(lm) equity = money(lm[1]);
+    if(assets !== null && equity !== null){
+      out.push({ kind:'books', ok: sameMoney(assets, equity),
+        text: sameMoney(assets, equity)
+          ? 'the balance sheet balances — total assets ' + rupee(assets) +
+            ' equals total liabilities and capital'
+          : 'the balance sheet does not balance — total assets ' + rupee(assets) +
+            ' against total liabilities and capital ' + rupee(equity) + ', out by ' +
+            rupee(Math.abs(assets - equity)) });
+    }
+    return out.slice(0, 4);
   }
 
   /* ---------- chemistry: does the equation conserve atoms? ----------
@@ -19424,6 +19621,7 @@ var Verify = (function(){
       checks = checks.concat(chem.length ? chem : chemistry(text));
     } catch(e){}
     try { checks = checks.concat(unitPresence(question, text)); } catch(e){}
+    try { checks = checks.concat(bookkeeping(question, text)); } catch(e){}
     try { checks = checks.concat(bounds(question, text)); } catch(e){}
 
     /* ---- a heuristic must never outrank a proof ----
@@ -19452,12 +19650,12 @@ var Verify = (function(){
        dropped it into 'partial' and labelled a correct answer
        "⚠ Partially verified". Every answer looked half-checked. */
     /* @generated:PROOF from capabilities.json — do not edit by hand.
-       sha256:3f53077b790f7a8d  regenerate: node tools/gen-capabilities.js */
+       sha256:01b83cbf4d682c82  regenerate: node tools/gen-capabilities.js */
     var PROOF = {subst:1, transform:1, arith:1, chem:1, identity:1, bound:1, divis:1,
                  unique:1, domain:1, exhaust:1, sequence:1, counter:1, step:2, unitconv:1,
-                 condition:1, extremum:1, integrity:2, units:1, trace:2, question:2,
-                 claim:1, primality:1, truncated:2, contradiction:2, deriv:1, roots:1,
-                 integral:1, system:1};
+                 books:1, condition:1, extremum:1, integrity:2, units:1, trace:2,
+                 question:2, claim:1, primality:1, truncated:2, contradiction:2, deriv:1,
+                 roots:1, integral:1, system:1};
     /* @end:PROOF */
     /* A soft check is advisory: it reports what could NOT be tested, not a
        problem found. It belongs in the receipt and nowhere near the failure
@@ -19507,7 +19705,12 @@ var Verify = (function(){
        outside the domain the question set is not a wrong step, it is a wrong
        answer; and a solution set missing a member is not a presentational
        matter either. */
-    var ANSWER_LEVEL = {subst:1, extremum:1, condition:1, unique:1, domain:1, exhaust:1, chem:1, bound:1, transform:1, units:1, integrity:1, question:1, claim:1, primality:1, truncated:1, contradiction:1, deriv:1, roots:1, integral:1, system:1};
+    /* books is ANSWER-level. A journal entry that does not balance is not a
+       wrong step on the way to a right answer — the entry IS the answer, and
+       an unbalanced one is wrong before anyone asks which account it hit.
+       Registering the kind without adding it here left it reporting
+       "a step does not hold" on an answer that was simply wrong. */
+    var ANSWER_LEVEL = {subst:1, extremum:1, condition:1, unique:1, domain:1, exhaust:1, chem:1, bound:1, transform:1, units:1, integrity:1, question:1, claim:1, primality:1, truncated:1, contradiction:1, deriv:1, roots:1, integral:1, system:1, books:1};
     var failedAnswer  = failed.filter(function(c){ return ANSWER_LEVEL[c.kind]; });
     var failedWorking = failedProofs.filter(function(c){ return !ANSWER_LEVEL[c.kind]; });
 
@@ -19581,6 +19784,7 @@ var Verify = (function(){
            realRootsOf:realRootsOf,
            positiveBound:positiveBound, polyExpand:polyExpand,
            stepChain:stepChain, unitmath:unitmath, sigfigs:sigfigs, witness:witness,
+           bookkeeping:bookkeeping,
            isSymmetric:isSymmetric,
            qOne:qOne, qExpr:qExpr, qUnit:qUnit, qRender:qRender, Q_UNITS:Q_UNITS, U_DIM:U_DIM,
            growthBound:growthBound, polyExpand:polyExpand, expSideOf:expSideOf,

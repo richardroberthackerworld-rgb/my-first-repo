@@ -48,6 +48,7 @@ require_once __DIR__ . '/checkers-sequence.php';
 require_once __DIR__ . '/checkers-counterexample.php';
 require_once __DIR__ . '/checkers-stepchain.php';
 require_once __DIR__ . '/checkers-quantity.php';
+require_once __DIR__ . '/checkers-books.php';
 require_once __DIR__ . '/calculus-phase1.php';
 
 final class Algebra
@@ -2336,7 +2337,13 @@ final class Checks
                KIND of thing; this asks whether the number and the unit follow
                from the working — "60 km/h = 21 m/s" and "5 kg x 2 m/s^2 = 10 J"
                are both invisible to a dimension-only check. */
-            Qty::check($question, $body)
+            Qty::check($question, $body),
+            /* Double entry. Accounting has been covered_not_verifiable since this
+               manifest existed, while CA and CMA students are the audience this
+               product names first. Most of the subject genuinely cannot be checked
+               here; the law it rests on can, and is arithmetic: every entry debits
+               exactly what it credits. */
+            Books::check($question, $body)
         );
 
         /* A soft check is advisory: it reports something worth telling the
@@ -2358,7 +2365,12 @@ final class Checks
         /* domain and exhaust are ANSWER-level. A value outside the domain the
            question set is not a wrong step, it is a wrong answer; a solution
            set missing a member is not a presentational matter either. */
-        $answerLevel = ['subst' => true, 'units' => true, 'integrity' => true, 'question' => true, 'claim' => true, 'primality' => true, 'truncated' => true, 'contradiction' => true, 'roots' => true, 'domain' => true, 'exhaust' => true, 'system' => true, 'deriv' => true, 'integral' => true];
+    /* books is ANSWER-level. A journal entry that does not balance is not a
+       wrong step on the way to a right answer — the entry IS the answer, and
+       an unbalanced one is wrong before anyone asks which account it hit.
+       Registering the kind without adding it here left it reporting
+       "a step does not hold" on an answer that was simply wrong. */
+        $answerLevel = ['subst' => true, 'units' => true, 'integrity' => true, 'question' => true, 'claim' => true, 'primality' => true, 'truncated' => true, 'contradiction' => true, 'roots' => true, 'domain' => true, 'exhaust' => true, 'system' => true, 'deriv' => true, 'integral' => true, 'books' => true];
 
         /* A question with no answer is its own outcome, and flattening it into
            "the answer is wrong" tells a student to try again at something

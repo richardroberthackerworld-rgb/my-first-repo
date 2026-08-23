@@ -185,6 +185,17 @@ const VERDICTS = [
   ['Find all positive integers x,y with 3x + 5y = 31.', '## ✅ Answer\n(7,2) and (2,5)'],
   ['Find all positive integers x,y with 3x + 5y = 31.', '## ✅ Answer\n(7,2)'],
   ['Find all positive integers x,y with x^2 + y^2 = 25.', '## ✅ Answer\n(3,4) and (4,3)'],
+
+  /* DOUBLE ENTRY, in both engines. Accounting was the largest unverifiable
+     subject in the manifest and the one this product's audience is named
+     after; the law it rests on is arithmetic and belongs in the corpus. */
+  ['Pass the journal entry.', '## ✅ Answer\nCash A/c Dr. 50,000\n    To Sales A/c 50,000'],
+  ['Pass the journal entry.', '## ✅ Answer\nCash A/c Dr. 50,000\n    To Sales A/c 45,000'],
+  ['Pass the journal entry.', '## ✅ Answer\nCash A/c Dr. 30,000\nDebtors A/c Dr. 20,000\n    To Sales A/c 50,000'],
+  ['Prepare the balance sheet.', '## ✅ Answer\nTotal Assets 8,50,000\nTotal Liabilities and Capital 8,50,000'],
+  ['Prepare the balance sheet.', '## ✅ Answer\nTotal Assets 8,50,000\nTotal Liabilities and Capital 8,00,000'],
+  ['Is it always true?', '## ✅ Answer\nFor all x, y, z, x^2 + y^2 + z^2 > 2xyz.'],
+  ['Is it always true?', '## ✅ Answer\nFor all x, y, z, x^2 + y^2 + z^2 >= 0.'],
   ['Find all positive integers x,y with xy = 12.', '## ✅ Answer\n(1,12), (2,6), (3,4), (4,3), (6,2) and (12,1)'],
   ['Find all non-negative integers x,y with xy = 12.', '## ✅ Answer\n(1,12)'],
 
@@ -222,6 +233,17 @@ const VERDICTS = [
   ['Find all positive integers a,b,c with a^2+b^2+c^2=3abc.', '## ✅ Answer\nAll solutions arise from (1,1,1) by the Vieta jump.'],
   ['Find all positive integers a,b,c with a^2+b^2+c^2=3abc.', '## ✅ Answer\nThere are infinitely many; the first are (1,1,1), (1,1,2), (1,2,5).'],
   ['Find all positive integers x,y with x^2 + y^2 = 25.', '## ✅ Answer\n(3,4) and (4,3)'],
+
+  /* DOUBLE ENTRY, in both engines. Accounting was the largest unverifiable
+     subject in the manifest and the one this product's audience is named
+     after; the law it rests on is arithmetic and belongs in the corpus. */
+  ['Pass the journal entry.', '## ✅ Answer\nCash A/c Dr. 50,000\n    To Sales A/c 50,000'],
+  ['Pass the journal entry.', '## ✅ Answer\nCash A/c Dr. 50,000\n    To Sales A/c 45,000'],
+  ['Pass the journal entry.', '## ✅ Answer\nCash A/c Dr. 30,000\nDebtors A/c Dr. 20,000\n    To Sales A/c 50,000'],
+  ['Prepare the balance sheet.', '## ✅ Answer\nTotal Assets 8,50,000\nTotal Liabilities and Capital 8,50,000'],
+  ['Prepare the balance sheet.', '## ✅ Answer\nTotal Assets 8,50,000\nTotal Liabilities and Capital 8,00,000'],
+  ['Is it always true?', '## ✅ Answer\nFor all x, y, z, x^2 + y^2 + z^2 > 2xyz.'],
+  ['Is it always true?', '## ✅ Answer\nFor all x, y, z, x^2 + y^2 + z^2 >= 0.'],
   ['Find all positive integers n with n^2=2^n.', '## ✅ Answer\nn = 2 and n = 4'],
   ['Find all positive integers n with n^2=2^n.', '## ✅ Answer\nn = 2'],
   ['Find all positive integers x,y satisfying x^2+xy+y^2=3^{x+y}.',

@@ -59,9 +59,21 @@ function parityPasses() {
   try {
     execFileSync('node', [path.join(HERE, 'parity.js')],
       { encoding: 'utf8', stdio: 'pipe',
-        /* registry conformance OFF: we are cutting a wiring line deliberately,
-           and that check would fail for that reason alone, making every check
-           look load-bearing. Caught here must mean the CORPUS noticed. */
+        /* PARITY_NO_REGISTRY was added to turn the registry-conformance check
+           off here — cutting a wiring line trips it for that reason alone, and
+           then every checker looks load-bearing whether or not the corpus can
+           see it. It does not do that. parity.js runs checkRegistry()
+           unconditionally and the flag only removes it from the case COUNT, so
+           registry conformance has been deciding some of these verdicts all
+           along, and this comment has been claiming otherwise.
+
+           Left as it is rather than "fixed", because turning the check off for
+           real would make this tool report failures it cannot act on — a
+           JS-only checker genuinely cannot be caught by a cross-engine corpus,
+           by construction. What that means in practice: a PASS here proves the
+           wiring LINE is present, and for a JS-only checker it proves nothing
+           more. Those are pinned by direct assertion in adversarial.js
+           instead, which is where their behaviour is actually tested. */
         env: Object.assign({}, process.env, { PARITY_NO_REGISTRY: '1' }) });
     return true;
   } catch (e) { return false; }

@@ -77,6 +77,8 @@ function load() {
   const paste = cut('var MathPaste = (function(){', '\nwindow.MathPaste = MathPaste;', 'the MathPaste module');
   const ingest = cut('var Ingest = (function(){', '\nwindow.Ingest = Ingest;', 'the Ingest module');
   const resume = cut('function resumePoint(text){', '\n}', 'resumePoint') + '\n}';
+  const shape = 'var DOC_QUESTION_MAX = 6000;\n' +
+    cut('function looksLikeQuestions(t){', '\n}', 'looksLikeQuestions') + '\n}';
   const verify = cut('var Verify = (function(){', '\n})();', 'the Verify module') + '\n})();';
   const sandbox = {
     window: {}, console, W: {}, $: () => null, state: {},
@@ -88,14 +90,16 @@ function load() {
     delat + '\nwindow.deLatex7 = deLatex;\n' +
     paste + '\nwindow.MathPaste = MathPaste;\n' +
     verify + '\nwindow.Verify = Verify;\n' +
-    ingest + '\nwindow.Ingest = Ingest;\n' + resume + '\n' +
-    'this.__V = Verify; this.__A = Verify.Algebra; this.__P = MathPaste; this.__L = deLatex; this.__I = Ingest; this.__R = resumePoint;',
+    ingest + '\nwindow.Ingest = Ingest;\n' + resume + '\n' + shape + '\n' +
+    'this.__V = Verify; this.__A = Verify.Algebra; this.__P = MathPaste; this.__L = deLatex; this.__I = Ingest; this.__R = resumePoint; this.__Q = looksLikeQuestions;',
     sandbox, { timeout: 15000 });
   if (!sandbox.__V || !sandbox.__P || !sandbox.__I) throw new Error('the modules did not load');
   if (typeof sandbox.__R !== 'function') throw new Error('resumePoint did not load');
-  return { V: sandbox.__V, A: sandbox.__A, P: sandbox.__P, deLatex: sandbox.__L, I: sandbox.__I, R: sandbox.__R };
+  if (typeof sandbox.__Q !== 'function') throw new Error('looksLikeQuestions did not load');
+  return { V: sandbox.__V, A: sandbox.__A, P: sandbox.__P, deLatex: sandbox.__L, I: sandbox.__I,
+           R: sandbox.__R, Q: sandbox.__Q };
 }
-const { V, A, P, deLatex, I, R } = load();
+const { V, A, P, deLatex, I, R, Q } = load();
 
 /* Canonical outcome, per VERIFICATION-CONTRACT.md. */
 const CANON = {
@@ -1152,6 +1156,113 @@ const SYM = [
 for (const [src, want] of SYM) {
   const eq = A.parseEquation(src);
   check('witness', 'symmetry of ' + src, V.isSymmetric(eq, eq.vars), want);
+}
+
+/* ============================================================
+   15. DOUBLE ENTRY
+   ------------------------------------------------------------
+   Accounting was covered_not_verifiable while CA and CMA are the
+   audience this product names first — its largest group of
+   students got the same "unable to verify" a broken parse gets.
+
+   Most of the subject is not checkable here. The law it rests on
+   is: every entry debits exactly what it credits.
+   ============================================================ */
+const BOOKS = [
+  ['a balanced prose entry',
+   'Cash A/c                Dr.   50,000\n    To Sales A/c                  50,000', true],
+  ['an entry that does not balance',
+   'Cash A/c                Dr.   50,000\n    To Sales A/c                  45,000', false],
+  ['a balanced compound entry',
+   'Cash A/c        Dr.  30,000\nDebtors A/c     Dr.  20,000\n    To Sales A/c        50,000', true],
+  ['a compound entry out by 5,000',
+   'Cash A/c        Dr.  30,000\nDebtors A/c     Dr.  20,000\n    To Sales A/c        45,000', false],
+  ['a balanced Debit/Credit table',
+   '| Particulars | Debit (₹) | Credit (₹) |\n|---|---|---|\n| Cash A/c Dr. | 50,000 | |\n| To Sales A/c | | 50,000 |', true],
+  ['a balance sheet that balances',
+   'Balance Sheet as at 31 March\nTotal Assets 8,50,000\nTotal Liabilities and Capital 8,50,000', true],
+  ['a balance sheet that does not',
+   'Balance Sheet as at 31 March\nTotal Assets 8,50,000\nTotal Liabilities and Capital 8,00,000', false],
+];
+for (const [name, md, want] of BOOKS) {
+  const r = V.bookkeeping('Pass the journal entry.', md);
+  check('books', name, r.length ? r[0].ok : null, want, JSON.stringify(r.map((c) => c.text.slice(0, 70))));
+}
+
+/* A TOTAL is a claim, not an entry — an answer that adds its own column up
+   wrongly is a different fault from one whose entries do not balance, and
+   summing the total row in with the entries would hide both. */
+{
+  const md = '| Particulars | Debit (₹) | Credit (₹) |' + '\n' + '|---|---|---|' + '\n' +
+    '| Cash A/c Dr. | 30,000 | |' + '\n' + '| Debtors A/c Dr. | 20,000 | |' + '\n' +
+    '| To Sales A/c | | 50,000 |' + '\n' + '| Total | 60,000 | 50,000 |';
+  const r = V.bookkeeping('Pass the journal entry.', md);
+  check('books', 'the entries still balance despite the bad total',
+        r[0] && r[0].ok, true, JSON.stringify(r.map((c) => c.text.slice(0, 70))));
+  check('books', 'and the wrong total is reported separately',
+        r.some((c) => !c.ok && /totalled as/.test(c.text)), true,
+        JSON.stringify(r.map((c) => c.text.slice(0, 70))));
+}
+
+/* And the checker must be IN the pipeline. The cases above call bookkeeping()
+   directly, so unwiring it from Verify.run leaves them all green — the same
+   hole that hid stepChain and sigfigs until each got an assertion like this. */
+{
+  const r = V.run('Pass the journal entry.',
+    '## ✅ Answer\nCash A/c Dr. 50,000\n    To Sales A/c 45,000');
+  check('books', 'bookkeeping is wired into Verify.run',
+        r.checks.some((c) => c.kind === 'books') ? 'wired' : 'NOT WIRED', 'wired',
+        'checks were [' + r.checks.map((c) => c.kind).join(',') + ']');
+  check('books', 'an unbalanced entry disputes the answer',
+        r.state, 'disputed', 'state was ' + r.state);
+}
+
+/* The controls: a page that merely contains the word credit is not a ledger. */
+const NOT_BOOKS = [
+  ['a physics answer using the word credit', 'The speed is 25 m/s and the credit for that is Newton.'],
+  ['accounting words with no figures', 'Debit the receiver, credit the giver.'],
+  ['ordinary algebra', 'Solve x^2 - 5x + 6 = 0, giving x = 2 and x = 3.'],
+];
+for (const [name, md] of NOT_BOOKS) {
+  check('books', 'silent on ' + name, V.bookkeeping('', md).length, 0,
+        JSON.stringify(V.bookkeeping('', md).map((c) => c.text.slice(0, 60))));
+}
+
+/* ============================================================
+   16. THE GAPS CLOSED WITH IT
+   ============================================================ */
+
+/* A universal claim over THREE variables used to be refused outright. */
+check('counter', 'a false claim in three variables is refuted',
+      V.counterexample('', 'For all x, y, z, x^2 + y^2 + z^2 > 2xyz.').length > 0, true);
+check('counter', 'a true claim in three variables is left alone',
+      V.counterexample('', 'For all x, y, z, x^2 + y^2 + z^2 >= 0.').length, 0);
+
+/* A PDF is judged by SHAPE, not length: a worksheet of eight questions is
+   longer than any character cap and is still a question paper. */
+const DOCSHAPE = [
+  ['a worksheet', '1. Solve x^2-4=0.\n2. Find the area of a circle of radius 3.\n3. Prove that n^2+n is even.', true],
+  ['one question with a marks scheme', 'Q1. Solve for x. (5 marks)', true],
+  ['a chapter', 'Photosynthesis is the process by which plants convert light energy into chemical energy. '.repeat(30), false],
+  ['prose with no questions', 'The mitochondrion is the powerhouse of the cell. It generates ATP.', false],
+  ['too long to be a paper', '1. Solve. 2. Find. '.repeat(700), false],
+];
+for (const [name, t, want] of DOCSHAPE) {
+  check('books', 'document shape: ' + name, Q(t), want);
+}
+
+/* AND THE ESCAPING BUG THAT SHIPPED FOR ONE COMMIT. The first version of
+   looksLikeQuestions was written through a template literal that ate every
+   backslash, so its marks test became a character class matching almost any
+   text and EVERY document went to the solver. A regex whose backslashes have
+   been eaten still runs, still returns a boolean, and is wrong about
+   everything — so the source itself is asserted, not just the behaviour. */
+{
+  const i = html.indexOf('function looksLikeQuestions(t){');
+  const body = html.slice(i, html.indexOf('\n}', i));
+  check('books', 'looksLikeQuestions kept its backslashes',
+        /\\d\{1,2\}/.test(body) && /\\s\*/.test(body) ? 'escaped' : 'BACKSLASHES EATEN', 'escaped',
+        body.slice(0, 160));
 }
 
 /* ---------- report ---------- */

@@ -93,9 +93,22 @@ final class Counterexample
             foreach ($pts as $p) if ($test([$p]) === false) return [$p];
             return null;
         }
-        $coarse = array_values(array_filter($pts, static fn($x) => abs($x) <= 40 && $x === round($x)));
-        foreach ($coarse as $a) foreach ($coarse as $b) if ($test([$a, $b]) === false) return [$a, $b];
-        return null;
+        /* THREE VARIABLES USED TO BE REFUSED OUTRIGHT, and "for all x, y, z" is
+           an ordinary thing to claim. The grid thins as the dimension grows so
+           the cost stays flat rather than cubing. A coarser net catches fewer
+           counterexamples and invents none. Mirrors hunt() in index.html. */
+        $span = count($vars) === 2 ? 40 : 16;
+        $coarse = array_values(array_filter($pts, static fn($x) => abs($x) <= $span && $x === round($x)));
+        $k = count($vars);
+        $cur = array_fill(0, $k, 0.0);
+        $found = null;
+        $rec = static function (int $d) use (&$rec, &$cur, &$found, $k, $coarse, $test): void {
+            if ($found !== null) return;
+            if ($d === $k) { if ($test($cur) === false) $found = $cur; return; }
+            foreach ($coarse as $v) { if ($found !== null) break; $cur[$d] = $v; $rec($d + 1); }
+        };
+        $rec(0);
+        return $found;
     }
 
     public static function check(string $question, string $md): array
@@ -143,7 +156,7 @@ final class Counterexample
                 $se = BandB::grabExpr($sm[1], true);
                 $sv = $se !== null ? array_keys(Algebra::varsOf($se['ast'])) : [];
                 $word = str_replace('non-negative', 'nonnegative', mb_strtolower($sm[2], 'UTF-8'));
-                if ($se !== null && count($sv) >= 1 && count($sv) <= 2 && !Algebra::hasTrig($se['ast'])) {
+                if ($se !== null && count($sv) >= 1 && count($sv) <= 3 && !Algebra::hasTrig($se['ast'])) {
                     $hit = self::hunt($sv, $pts, static function (array $pt) use ($se, $sv, $word): ?bool {
                         $env = [];
                         foreach ($sv as $i => $v) $env[$v] = $pt[$i];
@@ -186,7 +199,7 @@ final class Counterexample
             if ($L === null || $R === null) continue;
             if (Algebra::hasTrig($L['ast']) || Algebra::hasTrig($R['ast'])) continue;
             $vs = array_keys(Algebra::varsOf($R['ast'], Algebra::varsOf($L['ast'], [])));
-            if (!count($vs) || count($vs) > 2) continue;
+            if (!count($vs) || count($vs) > 3) continue;
 
             $hit = self::hunt($vs, $pts, static function (array $pt) use ($L, $R, $vs, $op): ?bool {
                 $env = [];

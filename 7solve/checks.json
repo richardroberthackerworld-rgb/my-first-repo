@@ -145,6 +145,12 @@
       "note": "Carries MAGNITUDE as well as dimension, which the frozen Units table deliberately does not: 60 km/h = 21 m/s and F = 5 kg x 2 m/s^2 = 10 J are both invisible to a dimension-only check. Temperature is an offset scale, not a factor. Reads a line only when BOTH sides carry units it knows, and refuses an unknown unit rather than guessing."
     },
     {
+      "name": "bookkeeping",
+      "js": "try { checks = checks.concat(bookkeeping(question, text)); } catch(e){}",
+      "php": "Books::check($question, $body)",
+      "note": "The one accounting law a machine can settle: every entry debits exactly what it credits. Reads a Debit/Credit table or the Dr./To prose form, treats a Total row as a CLAIM to be checked rather than an entry to be summed, and compares the two sides of a balance sheet when both are stated. Says nothing about whether the right account was chosen — that is not arithmetic."
+    },
+    {
       "name": "sigfigs",
       "js": "try { checks = checks.concat(sigfigs(question, text)); } catch(e){}",
       "php": null,
