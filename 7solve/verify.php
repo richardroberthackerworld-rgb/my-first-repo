@@ -43,6 +43,11 @@ require_once __DIR__ . '/deriv.php';
 require_once __DIR__ . '/checkers-phase1.php';
 require_once __DIR__ . '/checkers-band-b.php';
 require_once __DIR__ . '/checkers-band-b2.php';
+require_once __DIR__ . '/checkers-exhaustion.php';
+require_once __DIR__ . '/checkers-sequence.php';
+require_once __DIR__ . '/checkers-counterexample.php';
+require_once __DIR__ . '/checkers-stepchain.php';
+require_once __DIR__ . '/checkers-quantity.php';
 require_once __DIR__ . '/calculus-phase1.php';
 
 final class Algebra
@@ -106,8 +111,19 @@ final class Algebra
         $s = preg_replace('/\|([^|]+)\|/u', '(abs($1))', $s);
         $s = preg_replace('/[\x{2212}\x{2013}\x{2014}]/u', '-', $s);   // − – —
         $s = str_replace(['×', '÷'], ['*', '/'], $s);
-        $s = str_replace(['⁰', '¹', '²', '³', '⁴', '⁵'],
-                         ['^0', '^1', '^2', '^3', '^4', '^5'], $s);
+        /* SUPERSCRIPTS, as a RUN and for every digit. ⁶ ⁷ ⁸ ⁹ were missing
+           while deLatex turns ^7 into ⁷, so one half of the pipeline produced
+           what the other half refused; and a two-digit exponent came out as
+           x^1^2, which is right-associative here and means x. Mirrors
+           tokenize() in index.html. */
+        $s = preg_replace_callback('/\x{207B}?[\x{2070}\x{00B9}\x{00B2}\x{00B3}\x{2074}-\x{2079}]+/u',
+            static function (array $m): string {
+                $map = ['⁰' => '0', '¹' => '1', '²' => '2', '³' => '3', '⁴' => '4',
+                        '⁵' => '5', '⁶' => '6', '⁷' => '7', '⁸' => '8', '⁹' => '9', '⁻' => '-'];
+                $d = '';
+                foreach (preg_split('//u', $m[0], -1, PREG_SPLIT_NO_EMPTY) as $c) $d .= $map[$c] ?? '';
+                return '^(' . $d . ')';
+            }, $s);
         /* A root is usually written without brackets — "30√7", "√25200" — and
            sqrt() in this grammar requires them, so give it some. This is what
            lets an exact answer like 82 − 30√7 be evaluated rather than failing
@@ -552,7 +568,10 @@ final class Checks
     private const CALC_RE =
         '/(-?\d[\d,]*(?:\.\d+)?(?:\s*[+\-×÷*\/]\s*-?\d[\d,]*(?:\.\d+)?)+)\s*=\s*(-?\d[\d,]*(?:\.\d+)?(?:\s*\/\s*-?\d[\d,]*(?:\.\d+)?)?)/u';
 
-    private const EQ_CHARS = '[0-9a-zA-Z\s^²³⁴*\/+\-−–—().]';
+    /* ⁰¹⁵⁶⁷⁸⁹ were missing while ²³⁴ were present, so an equation was visible
+       to this scan at x⁴ and invisible at x⁵ — and deLatex emits every one of
+       them from ^0 … ^9. Mirrors EQ_CHARS in index.html. */
+    private const EQ_CHARS = '[0-9a-zA-Z\s^⁰¹²³⁴⁵⁶⁷⁸⁹⁻*\/+\-−–—().]';
 
     public static function toNum(string $s): float
     {
@@ -612,6 +631,64 @@ final class Checks
     }
 
     /* ---------- arithmetic written in the working ---------- */
+    /* ---------- THE SECOND ARITHMETIC PASS: closed forms ----------
+       evalFlat is deliberately narrow — digits and the four operators — so it
+       can never guess. The cost was that everything else went unchecked:
+       2^10 = 1024, sqrt(144) = 12, (3+4)^2 = 49 and 15% of 200 = 30 were all
+       invisible, and a model gets those wrong far more often than it gets
+       12 x 3 wrong.
+
+       The exact parser the verifier already uses for algebra is turned on any
+       line whose two sides are both CLOSED numeric expressions; if a variable
+       survives on either side it is algebra and this says nothing. Only lines
+       evalFlat could not have read are looked at, so nothing is reported twice.
+       Mirrors closedForm() in index.html. */
+    private const RICH = '/[\^√∛()%⁰¹²³⁴⁵⁶⁷⁸⁹]/u';
+
+    private static function pctExpand(string $t): string
+    {
+        $t = preg_replace('/(\d+(?:\.\d+)?)\s*%\s*of\s+/iu', '($1/100)*', $t);
+        return preg_replace('/(\d+(?:\.\d+)?)\s*%/u', '($1/100)', $t);
+    }
+
+    private static function closedForm(string $md, array &$out, array &$seen): void
+    {
+        foreach (preg_split('/\r?\n/u', $md) as $line) {
+            if (strpos($line, '=') === false) continue;
+            if (preg_match('/[≠≈≤≥<>]/u', $line)) continue;
+            if (strpos($line, '`') !== false) continue;
+            $body = preg_replace('/^\s*[-*•]\s+|^\s*\d+[.)]\s+/u', '',
+                     preg_replace('/\*\*|__/u', '', $line));
+            $parts = explode('=', $body);
+            if (count($parts) < 2 || count($parts) > 4) continue;
+            for ($p = 0; $p + 1 < count($parts); $p++) {
+                $lseg = preg_split('/[,;:]/u', $parts[$p]);
+                $rseg = preg_split('/[,;:]/u', $parts[$p + 1]);
+                /* The percent rewrite is for the PARSER; the receipt shows what
+                   the student actually wrote. */
+                $lhsShown = rtrim(trim(end($lseg)), '.,;:');
+                $rhsShown = rtrim(trim($rseg[0]), '.,;:');
+                $lhs = self::pctExpand($lhsShown);
+                $rhs = self::pctExpand($rhsShown);
+                if ($lhs === '' || $rhs === '') continue;
+                if (!preg_match(self::RICH, $lhs) && !preg_match(self::RICH, $rhs)) continue;
+                if (!preg_match('/\d/u', $lhs) || !preg_match('/\d/u', $rhs)) continue;
+                if (!preg_match('/[+\-*\/×÷^√]/u', $lhs) && !preg_match('/[⁰¹²³⁴⁵⁶⁷⁸⁹%]/u', $lhs)) continue;
+                $a = self::constOf($lhs);
+                $b = self::constOf($rhs);
+                if ($a === null || $b === null) continue;
+                if (!is_finite($a) || !is_finite($b)) continue;
+                $key = 'c' . preg_replace('/\s+/u', '', $lhs) . '=' . preg_replace('/\s+/u', '', $rhs);
+                if (isset($seen[$key])) continue;
+                $seen[$key] = true;
+                $out[] = ['kind' => 'arith', 'ok' => self::near($a, $b, $rhs),
+                          'text' => trim(preg_replace('/\s+/u', ' ', $lhsShown . ' = ' . $rhsShown)),
+                          'got' => Algebra::round6($a), 'want' => Algebra::round6($b)];
+                if (count($out) > 24) return;
+            }
+        }
+    }
+
     public static function arithmetic(string $md): array
     {
         /* Currency marks made the arithmetic checker blind across the whole
@@ -624,6 +701,10 @@ final class Checks
         $out = [];
         $seen = [];
         if (!preg_match_all(self::CALC_RE, $md, $ms, PREG_SET_ORDER | PREG_OFFSET_CAPTURE)) {
+            /* No flat arithmetic on the page does not mean no arithmetic: a reply
+               made entirely of powers, roots and brackets reaches here with an
+               empty match list, and used to leave without being read at all. */
+            self::closedForm($md, $out, $seen);
             return $out;
         }
         foreach ($ms as $m) {
@@ -713,6 +794,7 @@ final class Checks
                       'text' => trim(preg_replace('/\s+/u', ' ', $whole)),
                       'got' => Algebra::round6($got), 'want' => Algebra::round6($want)];
         }
+        self::closedForm($md, $out, $seen);
         return $out;
     }
 
@@ -1109,6 +1191,28 @@ final class Checks
            needing the root count. */
         if ($info === null) return self::monotoneCompleteness($eq, $v, $md);
 
+        /* CONSTRAINT PRESERVATION. "Find all POSITIVE integers n with n² − 4 = 0"
+           has exactly one answer, n = 2, and reporting "n = −2 is also a root and
+           is missing" disputes a correct reply. The root set is cut down to the
+           domain the question set before completeness is judged against it, and a
+           complex pair stops being a caveat when the question asked for integers.
+           Mirrors solutionCompleteness() in index.html. */
+        $dom = Exhaustion::domainOf($question);
+        $narrowed = false;
+        if ($dom !== null) {
+            /* Exhaustion::domainBreak, not a private copy of its rules: "find all
+               primes p with p² − 4p + 3 = 0" has roots 1 and 3 and only one of
+               them is a prime. A second filter here would drift from the one the
+               answer is judged by, and then the engine can demand a solution it
+               would itself reject. */
+            $keep = [];
+            foreach ($info['real'] as $r) {
+                if (Exhaustion::domainBreak($dom, [$v], [$r]) === null) $keep[] = $r;
+            }
+            $narrowed = count($keep) !== count($info['real']) || ($info['complex'] ?? 0) > 0;
+            $info = ['real' => $keep, 'complex' => 0];
+        }
+
         $zone = self::claimZone($md);
         $show = static function (float $n): string {
             $r = round($n, 6);
@@ -1121,7 +1225,9 @@ final class Checks
         if (!count($info['real'])) {
             if (preg_match($NONE, $zone))
                 return [['kind' => 'roots', 'ok' => true,
-                         'text' => 'no real solutions exist, and the answer says so']];
+                         'text' => ($dom !== null && $narrowed)
+                             ? 'no solutions exist in ' . $dom['label'] . ', and the answer says so'
+                             : 'no real solutions exist, and the answer says so']];
             if (preg_match($CPLX, $zone))
                 return [['kind' => 'roots', 'ok' => false, 'soft' => true,
                          'text' => 'this equation has no real solutions and the answer gives complex ones — '
@@ -1159,7 +1265,8 @@ final class Checks
                              . 'this engine can check']];
         }
         return [['kind' => 'roots', 'ok' => true,
-                 'text' => 'all ' . $n . ' solution' . ($n > 1 ? 's are' : ' is') . ' accounted for']];
+                 'text' => 'all ' . $n . ' solution' . ($n > 1 ? 's are' : ' is') . ' accounted for'
+                         . (($dom !== null && $narrowed) ? ', over the ' . $dom['label'] . ' the question asked for' : '')]];
     }
 
     public static function substitution(string $question, string $md): array
@@ -1180,6 +1287,15 @@ final class Checks
                solution is a claim, wherever on the page it is written. */
             $tuples = self::claimedTuples($md, count($eq['vars']));
             if (!count($tuples)) return [];
+            /* FOUND IS NOT ALL. "Find all positive integers x, y with
+               x² + y² + 1 = 3xy" answered with (1,1), (2,5) and (5,13) reached
+               `checked` on three passing substitutions, and that equation has
+               infinitely many solutions. Substitution proves each pair genuine
+               and cannot prove there are no others, so a tuple offered against
+               a "find all" question carries the same needsComplete flag the
+               single-variable branch has carried since Phase 1. Mirrors
+               substitution() in index.html. */
+            $mustBeAll = (bool)preg_match(Exhaustion::ALL_ASKED_RE, $question);
             $out = [];
             foreach (array_slice($tuples, 0, 10) as $tp) {
                 $env = [];
@@ -1188,7 +1304,7 @@ final class Checks
                 if ($ok === null) continue;               // undefined there → say nothing
                 $l = Algebra::round6(Algebra::evalAt($eq['L'], $env));
                 $r = Algebra::round6(Algebra::evalAt($eq['R'], $env));
-                $out[] = ['kind' => 'subst', 'ok' => $ok,
+                $out[] = ['kind' => 'subst', 'ok' => $ok, 'needsComplete' => $mustBeAll,
                     'text' => '(' . implode(',', $eq['vars']) . ') = (' . implode(',', $tp) . ') in '
                             . trim($found['src']) . ' gives ' . $l . ($ok ? ' = ' : ' ≠ ') . $r];
             }
@@ -1376,6 +1492,22 @@ final class Checks
        Sampled at several points: a wrong reading disagrees almost everywhere,
        and agreeing at eight scattered reals is as close to proof as numeric
        comparison gets. */
+    /* Where the restatement ends and the working begins. Reading a fixed 600
+       characters swept up the derivation of a SHORT answer: "Solve √(x+6) = x"
+       answered correctly carries "x + 6 = x²" inside that window, which is a
+       consequence of squaring and not a restatement — and comparing it to the
+       question flagged a right answer as solving a different problem. Mirrors
+       restateZone() in index.html. */
+    private const WORKING_STARTS = '/\n\s*(?:##\s*(?:📖|📝|🧭|🔍|🎯)|\d+\s*[.)]\s)/u';
+    private static function restateZone(string $answer): string
+    {
+        $s = ltrim($answer);
+        if (preg_match(self::WORKING_STARTS, $s, $m, PREG_OFFSET_CAPTURE) && $m[0][1] > 0) {
+            $s = substr($s, 0, $m[0][1]);
+        }
+        return mb_substr($s, 0, self::RESTATE_CHARS);
+    }
+
     private static function sameRelation(array $a, array $b, array $vars): ?bool
     {
         $ratio = null;
@@ -1416,7 +1548,7 @@ final class Checks
         $qVars = $asked['eq']['vars'];
         sort($qVars);
 
-        $zone = mb_substr(ltrim($answer), 0, self::RESTATE_CHARS);
+        $zone = self::restateZone($answer);
         $re = '/' . self::EQ_CHARS . '{1,80}=' . self::EQ_CHARS . '{1,80}/u';
 
         /* Scan LINE BY LINE. EQ_CHARS contains \s, which includes newlines, so
@@ -1634,11 +1766,41 @@ final class Checks
 
        This never asserts the claim is false. It asserts the answer has not
        shown it to be true, which is a different and much safer statement. */
+    /* Three claim shapes were missing, and each is a way of saying "and there
+       are no others" without tripping `exclusive`: a construction said to
+       generate every solution, a universal wearing an adjective ("always
+       positive"), and infinitude of a series rather than of a solution set.
+       Mirrors CLAIM_RE in index.html. */
     private const CLAIM_RE = [
-        'infinitude' => '/\b(infinitely\s+many|there\s+are\s+infinite|unbounded(?:ly)?\s+many|arbitrarily\s+(?:large|many))\b/iu',
-        'universal'  => '/\b(for\s+all\s+|for\s+every\s+|always\s+(?:holds|true)|in\s+every\s+case)\b/iu',
+        'infinitude' => '/\b(infinitely\s+many|there\s+are\s+infinite|unbounded(?:ly)?\s+many|arbitrarily\s+(?:large|many)|the\s+(?:sum|series)\s+(?:is\s+infinite|diverges))\b/iu',
+        'universal'  => '/\b(for\s+all\s+|for\s+every\s+|always\s+(?:holds|true)|in\s+every\s+case|the\s+expression\s+is\s+always)\b/iu',
         'exclusive'  => '/\b(only\s+(?:solutions?|values?|these|\(|the\s+pair)|the\s+unique\s+solution|no\s+other\s+(?:solutions?|values?)|these\s+are\s+all\s+the)\b/iu',
+        'generates'  => '/\b((?:this\s+)?recurrence\s+generates|generates?\s+(?:all|every)\s+(?:the\s+)?solutions?|all\s+(?:the\s+)?solutions?\s+(?:arise|are\s+obtained|are\s+generated|follow|come)\b|every\s+solution\s+(?:arises|is\s+obtained|is\s+generated)|continuing\s+(?:this|the)\s+pattern)/iu',
         'never'      => '/\b(never\s+(?:happens|holds|occurs|prime)|is\s+never\b|cannot\s+ever\b)\b/iu',
+    ];
+
+    /* ---------- DESCENT IS NOT A MAGIC WORD ----------
+       PROOF_RE accepts "vieta" and "descent" as evidence that an argument is
+       present, and for every other technique on that list the word does come
+       with the argument. Descent is the exception: "by Vieta jumping, all
+       solutions follow" is a complete sentence that says nothing, and it was
+       accepted. A descent argument has obligations that are checkable as text
+       — the second root is an INTEGER, it is SMALLER under the ordering used,
+       and the descent TERMINATES with classified base cases. Naming none of
+       them is not a proof. Mirrors index.html. */
+    private const DESCENT_RE = '/\b(vieta|descent|jumping)\b/iu';
+    /* PROOF_RE minus the descent family: is any OTHER argument present? */
+    private const OTHER_PROOF_RE =
+        '/\b(induction|inductive\s+step|base\s+case|contradiction|suppose\s+not|assume\s+for\s+contradiction|'
+      . 'pigeonhole|well[-\s]ordering|minimal\s+counterexample|bijection|construct(?:ion|ed)?\s+(?:a|an|the)\s+|'
+      . 'therefore\s+by\s+induction|q\.?e\.?d|∎|hence\s+every|for\s+each\s+k\b)\b/iu';
+    private const DESCENT_DUTY = [
+        ['/\b(integer|integral|whole\s+number)\b/iu', 'that the second root is an integer'],
+        ['/\b(smaller|small(?:est)?|decreas\w+|minimal|least|strictly\s+less|reduces?|descend\w*|drops?)\b/iu',
+         'that the second root is smaller under the ordering used'],
+        ['/\b(terminat\w+|base\s+case|minimal\s+(?:counterexample|solution|triple)|well[-\s]ordering|'
+       . 'cannot\s+(?:decrease|descend)\s+forever|finitely\s+many\s+steps|bottom(?:s\s+out)?)\b/iu',
+         'that the descent terminates'],
     ];
 
     /* Language that would carry a real argument. Deliberately generous: the
@@ -1696,8 +1858,27 @@ final class Checks
             'infinitude' => 'that infinitely many exist',
             'universal'  => 'that it holds in every case',
             'exclusive'  => 'that these are the only solutions',
+            'generates'  => 'that this construction produces every solution',
             'never'      => 'that it never happens',
         ][$kind];
+
+        /* Descent named, nothing else offered, and the obligations unmet: the
+           "by Vieta jumping all solutions follow" case, which must not pass on
+           the strength of the word. */
+        if ($handwave === null && preg_match(self::DESCENT_RE, $s) && !preg_match(self::OTHER_PROOF_RE, $s)) {
+            $gaps = [];
+            foreach (self::DESCENT_DUTY as $duty) {
+                if (!preg_match($duty[0], $s)) $gaps[] = $duty[1];
+            }
+            if (count($gaps)) {
+                return [['kind' => 'claim', 'ok' => false, 'claimType' => $kind,
+                    'text' => 'the answer claims ' . $label . ' by descent, but the descent is not '
+                            . 'established — it never shows ' . implode(', nor ', $gaps)
+                            . '. A jump that produces smaller solutions proves nothing about '
+                            . 'completeness until the descent is known to terminate and its base '
+                            . 'cases are classified']];
+            }
+        }
 
         if ($handwave !== null) {
             return [['kind' => 'claim', 'ok' => false, 'claimType' => $kind,
@@ -1787,7 +1968,15 @@ final class Checks
         /* N = a x b [x c …]. The trailing guard stops "12 = 3 x 4 + 1" being
            read as a factorisation — a product continuing into a sum is an
            expression, not a factor list. */
-        $re = '/(?:^|[^\d.])(\d{2,15})\s*=\s*(\d{1,15}(?:\s*[×x*·]\s*\d{1,15})+)(?![\d.\s]*[+\-^\/])/iu';
+        /* Two faults in one line, and together they DISPUTED a correct answer.
+           The trailing guard's whitespace class spanned newlines, so it looked
+           onto the NEXT line for its + or -; and the product group could
+           backtrack, so the engine settled for a shorter product that kept the
+           guard happy. "30 = 3 x 2 x 5" followed by a line starting "25 + 169"
+           was read as the claim 30 = 3 x 2 and reported as false. The class no
+           longer crosses a line, and the product group is atomic. Mirrors
+           factorisationClaims() in index.html. */
+        $re = '/(?:^|[^\d.])(\d{2,15})\s*=\s*(?>(\d{1,15}(?:[ \t]*[×x*·][ \t]*\d{1,15})+))(?![\d.\t ]*[+\-^\/])/iu';
         if (!preg_match_all($re, $s, $ms, PREG_SET_ORDER)) return;
         foreach ($ms as $m) {
             if (count($out) >= 8) break;
@@ -1863,7 +2052,9 @@ final class Checks
         return $out;
     }
 
-    private static function firstFactor(int $n): int
+    /* PUBLIC: the counterexample engine names the factor that refutes a
+       primality claim, and one factoriser is better than two. */
+    public static function firstFactor(int $n): int
     {
         for ($i = 2; $i * $i <= $n; $i++) if ($n % $i === 0) return $i;
         return $n;
@@ -2114,7 +2305,34 @@ final class Checks
                worse extreme and would certify a wrong answer as correct. */
             BandB2::transformCheck($question, $body),
             BandB2::uniqueness($question, $body),
-            BandB2::extremumCheck($question, $body)
+            BandB2::extremumCheck($question, $body),
+            /* Domain and certified exhaustion. Reads the domain the question
+               sets — positive, non-negative, distinct — and rejects a claimed
+               value outside it; then, for the one shape whose search region can
+               be PROVED finite, enumerates that region whole. It never reports a
+               bounded search as a completeness proof. */
+            Exhaustion::check($question, $body),
+            /* Sequence identification. "This is the Fibonacci sequence" is a
+               claim, and 1, 1, 2, 5, 13 — every other Fibonacci number, which is
+               what the Markov equation produces — is the case that makes it one
+               worth checking. */
+            SequenceId::check($question, $body),
+            /* The counterexample engine. A universal claim is refuted by one
+               value, and until this existed nothing looked — "n^2 + n + 41 is
+               prime for all n" is prime for n = 0…39 and composite at 40. It can
+               only ever FAIL: a clean search is not a proof and must never be
+               reported as one. */
+            Counterexample::check($question, $body),
+            /* The derivation chain. Substitution says the ANSWER is a root;
+               this says whether the WORKING that reached it kept every
+               solution on the way — dividing 2x^2 = 6x by x loses x = 0 and
+               every line after it is still true. */
+            StepChain::check($question, $body),
+            /* Unit arithmetic. Units.php asks whether the answer is the right
+               KIND of thing; this asks whether the number and the unit follow
+               from the working — "60 km/h = 21 m/s" and "5 kg x 2 m/s^2 = 10 J"
+               are both invisible to a dimension-only check. */
+            Qty::check($question, $body)
         );
 
         /* A soft check is advisory: it reports something worth telling the
@@ -2133,7 +2351,10 @@ final class Checks
            in the milder step-level bucket. */
         /* integrity is answer-level and then some: a misread question makes
            the answer wrong no matter how clean the working is. */
-        $answerLevel = ['subst' => true, 'units' => true, 'integrity' => true, 'question' => true, 'claim' => true, 'primality' => true, 'truncated' => true, 'contradiction' => true, 'roots' => true, 'system' => true, 'deriv' => true, 'integral' => true];
+        /* domain and exhaust are ANSWER-level. A value outside the domain the
+           question set is not a wrong step, it is a wrong answer; a solution
+           set missing a member is not a presentational matter either. */
+        $answerLevel = ['subst' => true, 'units' => true, 'integrity' => true, 'question' => true, 'claim' => true, 'primality' => true, 'truncated' => true, 'contradiction' => true, 'roots' => true, 'domain' => true, 'exhaust' => true, 'system' => true, 'deriv' => true, 'integral' => true];
 
         /* A question with no answer is its own outcome, and flattening it into
            "the answer is wrong" tells a student to try again at something
@@ -2165,7 +2386,14 @@ final class Checks
         $passedProofs = array_values(array_filter($passed,
             static fn($c) => isset($certifying[$c['kind'] ?? ''])));
         $completeProved = false;
-        foreach ($passed as $c) if (($c['kind'] ?? '') === 'roots') { $completeProved = true; break; }
+        /* `exhaust` joins `roots` as a way to DISCHARGE the completeness flag,
+           and it is the only one that can do so for more than one variable.
+           Nothing else may: a bounded search that found no more is not a proof
+           that there are no more. */
+        foreach ($passed as $c) {
+            $k = $c['kind'] ?? '';
+            if ($k === 'roots' || $k === 'exhaust') { $completeProved = true; break; }
+        }
         $evidenceOnly = false;
         $CORROB = array_fill_keys(Capability::corroboratingKinds(), true);
         $certifyingChecks = array_values(array_filter($passedProofs, static fn($c) => !isset($CORROB[$c['kind']])));

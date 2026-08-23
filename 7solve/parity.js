@@ -130,6 +130,101 @@ const VERDICTS = [
   ['Solve x^2-164x+424=0', '## ✅ Answer\nx = 88 - 30√7'],
   ['Solve x^2-164x+424=0', '## ✅ Answer\nx = 82 - 30√7 (x = 82 + 30√7 is extraneous)'],
   ['What is photosynthesis?', '## ✅ Answer\nIt converts light into sugar.'],
+  /* DOMAIN, COMPLETENESS AND SEQUENCE IDENTIFICATION — added 2026-08-23 with the
+     checkers themselves. Each of these was a wrong verdict before them:
+
+       "positive integers" answered −2          reached `checked`
+       three verified pairs of a Markov-type    reached `checked` on
+         equation with infinitely many          substitution alone
+       1, 1, 2, 5, 13 called "Fibonacci"        was never read at all
+
+     They live here rather than only in adversarial.js because these three
+     checkers exist in BOTH engines, and a rule ported to one and not the other
+     is the divergence this corpus is for. */
+  ['Find all positive integers n with n^2-4=0.', '## ✅ Answer\nn = 2 and n = -2'],
+  ['Find all positive integers n with n^2-4=0.', '## ✅ Answer\nn = 2'],
+  ['Find all integers n with n^2-4=0.',          '## ✅ Answer\nn = 2 and n = -2'],
+  ['Find all non-negative integers n with n^2-n=0.', '## ✅ Answer\nn = 0 and n = 1'],
+  ['Find all distinct positive integers x,y with x+y=4.', '## ✅ Answer\n(2,2)'],
+  ['Find all primes p with p^2-4=0.',            '## ✅ Answer\np = 2'],
+  ['Find all primes p with p^2-4=0.',            '## ✅ Answer\np = 2 and p = -2'],
+  ['Find all primes p with p^2-4p+3=0.',         '## ✅ Answer\np = 3'],
+  ['Find all primes p with p^2-4p+3=0.',         '## ✅ Answer\np = 1 and p = 3'],
+  ['Find all positive integers x,y with x > y and x+y=10.', '## ✅ Answer\n(3,7)'],
+  ['Find all positive integers x,y with x > y and x+y=10.', '## ✅ Answer\n(7,3)'],
+  /* COUNTEREXAMPLES AND THE TWO NEW COMPLETENESS ROUTES — added with the
+     checkers. A universal claim refuted by one value, a Diophantine equation
+     killed by a modular obstruction, and a range the question itself stated. */
+  ['Is n^2+n+41 always prime?', '## ✅ Answer\nn^2 + n + 41 is prime for every n.'],
+  ['Show the inequality holds.', '## ✅ Answer\nFor all n, n^2 > 2n.'],
+  ['Show the inequality holds.', '## ✅ Answer\nFor all n, n^2 + 1 > n.'],
+  ['Is the expression positive?', '## ✅ Answer\nThe expression x^2 - 4 is always positive.'],
+  ['Is the expression positive?', '## ✅ Answer\nThe expression x^2 + 1 is always positive.'],
+  ['Solve x + e^x = 0',          '## ✅ Answer\nNo real solution, because e^x is always positive.'],
+  ['Find all integers x,y with x^2-3y^2=2.', '## ✅ Answer\nThere are no integer solutions.'],
+  ['Find all integers x,y with x^2-3y^2=2.', '## ✅ Answer\nThe solutions are (2,1) and (5,3).'],
+  ['Find all integers x,y with x^2-3y^2=1.', '## ✅ Answer\n(1,0) and (2,1)'],
+  ['Find all positive integers n with 1 <= n <= 100 such that n^2-9=0.', '## ✅ Answer\nn = 3'],
+  ['Find all positive integers n with n <= 100 such that n^2-5n+6=0.',   '## ✅ Answer\nn = 2'],
+  ['Find all positive integers n with n <= 100 such that n^2-5n+6=0.',   '## ✅ Answer\nn = 2 and n = 3'],
+
+  /* CLOSED-FORM ARITHMETIC, THE DERIVATION CHAIN, AND AN EQUATION THAT BOUNDS
+     ITS OWN VARIABLES. All three live in both engines, so a rule ported to one
+     and not the other is exactly the divergence this corpus exists to catch. */
+  ['What is 2^10?',            '## ✅ Answer\n2^10 = 1024'],
+  ['What is 2^10?',            '## ✅ Answer\n2^10 = 1000'],
+  ['Simplify √144',            '## ✅ Answer\n√144 = 12'],
+  ['Simplify √144',            '## ✅ Answer\n√144 = 14'],
+  ['Evaluate (3+4)²',          '## ✅ Answer\n(3+4)² = 49'],
+  ['Evaluate (3+4)²',          '## ✅ Answer\n(3+4)² = 25'],
+  ['What is 15% of 200?',      '## ✅ Answer\n15% of 200 = 30'],
+  ['What is 15% of 200?',      '## ✅ Answer\n15% of 200 = 35'],
+  ['Solve 2x^2 = 6x',          '## ✅ Answer\nx = 3\n\n## 📖 Steps\n1. Start from 2x^2 = 6x.\n2. Divide both sides by x: 2x = 6.\n3. So x = 3.'],
+  ['Solve 2x^2 = 6x',          '## ✅ Answer\nx = 0 and x = 3\n\n## 📖 Steps\n1. Either x = 0, or dividing by x gives 2x = 6.\n2. So x = 0 or x = 3.'],
+  ['Solve 2(x+3) - 4 = 10',    '## ✅ Answer\nx = 4\n\n## 📖 Steps\n1. 2(x+3) - 4 = 10\n2. 2x + 6 - 4 = 10\n3. 2x + 2 = 10\n4. 2x = 8\n5. x = 4'],
+  ['Find all positive integers x,y with 3x + 5y = 31.', '## ✅ Answer\n(7,2) and (2,5)'],
+  ['Find all positive integers x,y with 3x + 5y = 31.', '## ✅ Answer\n(7,2)'],
+  ['Find all positive integers x,y with x^2 + y^2 = 25.', '## ✅ Answer\n(3,4) and (4,3)'],
+  ['Find all positive integers x,y with xy = 12.', '## ✅ Answer\n(1,12), (2,6), (3,4), (4,3), (6,2) and (12,1)'],
+  ['Find all non-negative integers x,y with xy = 12.', '## ✅ Answer\n(1,12)'],
+
+  /* UNIT ARITHMETIC. The dimensional analyser knows km and m are both lengths
+     and deliberately not how many of one make the other, so a wrong conversion
+     and a unit that does not follow from the working were both invisible. Both
+     engines carry the new table, so both must read these the same way. */
+  ['Find the force.',   '## ✅ Answer\nF = 5 kg × 2 m/s² = 10 N'],
+  ['Find the force.',   '## ✅ Answer\nF = 5 kg × 2 m/s² = 10 J'],
+  ['Find the force.',   '## ✅ Answer\nF = 5 kg × 2 m/s² = 20 N'],
+  ['Convert to m/s.',   '## ✅ Answer\n60 km/h = 16.67 m/s'],
+  ['Convert to m/s.',   '## ✅ Answer\n60 km/h = 21 m/s'],
+  ['Convert to metres.','## ✅ Answer\n2.5 km = 2500 m'],
+  ['Convert to metres.','## ✅ Answer\n2.5 km = 250 m'],
+  ['Convert to kelvin.','## ✅ Answer\n25 °C = 298 K'],
+  ['Convert to kelvin.','## ✅ Answer\n25 °C = 25 K'],
+  ['Find the work done.','## ✅ Answer\nW = 5 N × 3 m = 15 J'],
+  ['Find the work done.','## ✅ Answer\nW = 5 N × 3 m = 15 N'],
+  ['Find the power.',   '## ✅ Answer\nP = 12 V × 2 A = 24 W'],
+  ['Find the power.',   '## ✅ Answer\nP = 12 V × 2 A = 24 J'],
+  ['Find the concentration.', '## ✅ Answer\nc = 0.5 mol / 2 L = 0.25 mol/L'],
+  ['Find the concentration.', '## ✅ Answer\nc = 0.5 mol / 2 L = 0.5 mol/L'],
+  ['Find all positive integers n with n^2=2^n.', '## ✅ Answer\nn = 2 and n = 4'],
+  ['Find all positive integers n with n^2=2^n.', '## ✅ Answer\nn = 2'],
+  ['Find all positive integers x,y satisfying x^2+xy+y^2=3^{x+y}.',
+   '## ✅ Answer\nThere are no positive integer solutions.'],
+  ['Find all positive integers x,y satisfying x^2+xy+y^2=3^{x+y}.',
+   '## ✅ Answer\nThe solutions are (1,2) and (2,1).'],
+  ['Find all positive integers x,y with x^2+y^2+1=3xy.',
+   '## ✅ Answer\nThe solutions are (1,1), (2,5) and (5,13).'],
+  ['What sequence is this?', '## ✅ Answer\nIt is the Fibonacci sequence 1, 1, 2, 5, 13, 34.'],
+  ['What sequence is this?', '## ✅ Answer\nIt is the Fibonacci sequence 1, 1, 2, 3, 5, 8, 13.'],
+  ['What sequence is this?', '## ✅ Answer\nIt is an arithmetic progression 2, 5, 8, 11, 15.'],
+  ['What sequence is this?', '## ✅ Answer\nIt is a geometric sequence 3, 6, 12, 24, 49.'],
+  ['What sequence is this?', '## ✅ Answer\nThey are the triangular numbers 1, 3, 6, 15.'],
+  /* Descent named without its obligations, and descent with them. */
+  ['Find all positive integers x,y,z with x^2+y^2+z^2=3xyz.',
+   '## ✅ Answer\nAll solutions arise from (1,1,1) by Vieta jumping.'],
+  ['Find all positive integers x,y,z with x^2+y^2+z^2=3xyz.',
+   '## ✅ Answer\nAll solutions arise from (1,1,1).\n\n## 📝 Steps\n1. The second root x\' = 3yz - x is an integer.\n2. It is strictly smaller when x is largest.\n3. The descent terminates; the base case is (1,1,1).'],
   ['Simplify 2/3 + 1/3',   '## ✅ Answer\n2/3 + 1/3 = 1'],
   ['Simplify 2/3 + 1/3',   '## ✅ Answer\n2/3 + 1/3 = 2'],
   ['Find P',               '## ✅ Answer\nP = 4/36 = 1/9'],

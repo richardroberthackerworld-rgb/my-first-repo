@@ -184,10 +184,27 @@ final class BandB2
         /* Sweep the positives first. A "find all positive integers" question
            deserves counterexamples a student recognises. Negatives are still
            swept, just second. */
+        /* And the sweep stays inside the domain the question set. Sweeping 0
+           and the negatives for a question that said "positive integers" turns
+           the one correct answer into "it also holds for n = −2", which disputes
+           a right reply — the same constraint blindness that let −2 be ACCEPTED
+           as an answer, pointed the other way. Mirrors uniqueness() in
+           index.html. */
+        $uDom = Exhaustion::domainOf($question);
         $order = [];
         for ($n = 1; $n <= 120; $n++) $order[] = $n;
         $order[] = 0;
         for ($n = -1; $n >= -30; $n--) $order[] = $n;
+        /* Filtered through domainBreak rather than through a lower bound written
+           out again here. A prime question is the case that showed why: its
+           bound is 2, but 4 is inside that bound and is still not a candidate,
+           and a sweep offering "it also holds for n = 4" against a question
+           about primes disputes a correct answer. Mirrors index.html. */
+        if ($uDom !== null) {
+            $order = array_values(array_filter($order, static function ($n) use ($uDom, $v) {
+                return Exhaustion::domainBreak($uDom, [$v], [(float)$n]) === null;
+            }));
+        }
 
         $t = $tests[0]; $others = []; $checked = 0;
         foreach ($order as $n) {
@@ -203,7 +220,10 @@ final class BandB2
         if (!count($others) && $checked < 10) return [];
         if (!count($others)) {
             return [['kind' => 'unique', 'ok' => true,
-                'text' => 'no other value of ' . $v . ' between −30 and 120 satisfies ' . $t['label']]];
+                'text' => 'no other value of ' . $v . ' between '
+                        . str_replace('-', '−', (string)min($order))
+                        . ' and 120 satisfies ' . $t['label']
+                        . ($uDom !== null ? ', within the ' . $uDom['label'] . ' the question asked for' : '')]];
         }
         sort($others);
         $shown = array_slice($others, 0, 4);

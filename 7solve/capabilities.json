@@ -52,6 +52,42 @@
       "describes": "Uniqueness established"
     },
     {
+      "kind": "domain",
+      "authority": "proof",
+      "needs_complete": false,
+      "describes": "Every claimed value lies in the domain the question set"
+    },
+    {
+      "kind": "exhaust",
+      "authority": "proof",
+      "needs_complete": false,
+      "describes": "The solution set is complete over a region proved to contain every solution"
+    },
+    {
+      "kind": "sequence",
+      "authority": "proof",
+      "needs_complete": false,
+      "describes": "A named sequence really does satisfy the recurrence and indexing claimed for it"
+    },
+    {
+      "kind": "counter",
+      "authority": "proof",
+      "needs_complete": false,
+      "describes": "A universal claim in the answer is refuted by an explicit counterexample"
+    },
+    {
+      "kind": "step",
+      "authority": "corroborating",
+      "needs_complete": false,
+      "describes": "Each step of the working keeps the solution set of the step before it"
+    },
+    {
+      "kind": "unitconv",
+      "authority": "proof",
+      "needs_complete": false,
+      "describes": "A unit conversion, or the unit a calculation produces, is right in magnitude and dimension"
+    },
+    {
       "kind": "condition",
       "authority": "proof",
       "needs_complete": false,
@@ -161,6 +197,18 @@
     },
     {
       "kind": "method",
+      "authority": "advisory",
+      "needs_complete": false,
+      "describes": null
+    },
+    {
+      "kind": "direction",
+      "authority": "advisory",
+      "needs_complete": false,
+      "describes": null
+    },
+    {
+      "kind": "sigfig",
       "authority": "advisory",
       "needs_complete": false,
       "describes": null
@@ -402,6 +450,84 @@
         "php": "BandB2::uniqueness($question, $body),"
       },
       "note": "Band B part 2: ported to PHP so /v1 matches the site. Was JS-only, so the website could certify on it and the API could not."
+    },
+    {
+      "checker": "exhaustion",
+      "emits": [
+        "domain",
+        "exhaust"
+      ],
+      "engines": {
+        "js": "try { checks = checks.concat(exhaustion(question, text)); } catch(e){}",
+        "php": "Exhaustion::check($question, $body)"
+      },
+      "note": "Reads the domain the question sets (positive/non-negative/distinct integers) and rejects a claimed value outside it; then, for P = c^(linear form) only, PROVES a bound on the search region by induction in exact integer arithmetic and enumerates that region whole. Emits nothing when the bound cannot be proved — a bounded search is not a completeness proof."
+    },
+    {
+      "checker": "sequenceCheck",
+      "emits": [
+        "sequence"
+      ],
+      "engines": {
+        "js": "try { checks = checks.concat(sequenceCheck(question, text)); } catch(e){}",
+        "php": "SequenceId::check($question, $body)"
+      },
+      "note": "Checks a named sequence against the terms actually written. The case it exists for is 1, 1, 2, 5, 13 — every OTHER Fibonacci number, which the Markov equation produces — where the recurrence is a(n) = 3a(n-1) - a(n-2) and calling it Fibonacci gets the indexing and the next term wrong."
+    },
+    {
+      "checker": "counterexample",
+      "emits": [
+        "counter"
+      ],
+      "engines": {
+        "js": "try { checks = checks.concat(counterexample(question, text)); } catch(e){}",
+        "php": "Counterexample::check($question, $body)"
+      },
+      "note": "Hunts for a value that refutes a universal claim the answer made — a primality, a sign or parity, or an inequality asserted for every value. It can only ever FAIL: a clean search is not a proof and must never be reported as one, so a claim it cannot refute is left to unproved(), which asks whether an argument was given."
+    },
+    {
+      "checker": "stepChain",
+      "emits": [
+        "step"
+      ],
+      "engines": {
+        "js": "try { checks = checks.concat(stepChain(question, text)); } catch(e){}",
+        "php": "StepChain::check($question, $body)"
+      },
+      "note": "Walks the working line by line and compares consecutive equations by SOLUTION SET. A step may gain solutions (squaring does) but may never lose one: dividing 2x^2 = 6x by x loses x = 0, every later line is still true, and substitution passes the answer. Corroborating, because a sound derivation of the wrong thing is still wrong."
+    },
+    {
+      "checker": "unitmath",
+      "emits": [
+        "unitconv"
+      ],
+      "engines": {
+        "js": "try { checks = checks.concat(unitmath(question, text)); } catch(e){}",
+        "php": "Qty::check($question, $body)"
+      },
+      "note": "Carries MAGNITUDE as well as dimension, which the frozen Units table deliberately does not: 60 km/h = 21 m/s and F = 5 kg x 2 m/s^2 = 10 J are both invisible to a dimension-only check. Temperature is an offset scale, not a factor. Reads a line only when BOTH sides carry units it knows, and refuses an unknown unit rather than guessing."
+    },
+    {
+      "checker": "sigfigs",
+      "emits": [
+        "sigfig"
+      ],
+      "engines": {
+        "js": "try { checks = checks.concat(sigfigs(question, text)); } catch(e){}",
+        "php": null
+      },
+      "note": "Advisory: an answer quoted to nine figures from data measured to one is over-claimed, and it costs marks. Reads only numbers that carry units — a coefficient in an equation is not a measurement — and needs three more figures than the data before it says anything."
+    },
+    {
+      "checker": "directionCheck",
+      "emits": [
+        "direction"
+      ],
+      "engines": {
+        "js": "try { checks = checks.concat(directionCheck(question, text)); } catch(e){}",
+        "php": null
+      },
+      "note": "Advisory: a one-directional step (squaring, clearing a denominator, dividing by an expression) incurs the debt of substituting every candidate back, and this reports the debt unpaid. It reads prose, so it may never decide the badge; substitution is what actually catches an extraneous root."
     },
     {
       "checker": "optimality",

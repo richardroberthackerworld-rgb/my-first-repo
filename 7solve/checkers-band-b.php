@@ -258,12 +258,18 @@ final class BandB
     private static function isMathToken(string $tok): bool
     {
         if ($tok === '') return false;
-        if (!preg_match('/^[0-9a-zA-Z^²³⁴*\/+\-−–—().|]+$/u', $tok)) return false;
+        /* ⁰¹⁵⁶⁷⁸⁹ were missing while ²³⁴ were present, so a claim about n⁵ was
+           not a maths token at all and the expression was abandoned at it. Same
+           gap EQ_CHARS had. Mirrors isMathToken() in index.html. */
+        if (!preg_match('/^[0-9a-zA-Z^⁰¹²³⁴⁵⁶⁷⁸⁹⁻*\/+\-−–—().|]+$/u', $tok)) return false;
         return !self::isWordToken($tok);
     }
 
-    /** The longest run of maths tokens at one end of a fragment, parsed. */
-    private static function grabExpr(string $frag, bool $fromEnd): ?array
+    /** The longest run of maths tokens at one end of a fragment, parsed.
+        PUBLIC because the counterexample engine reads claims the same way; two
+        copies of this walk would drift, and then the two checkers would disagree
+        about where an expression ends. */
+    public static function grabExpr(string $frag, bool $fromEnd): ?array
     {
         $clean = preg_replace('/^[.,;:]+|[.,;:]+$/', '', trim($frag));
         $words = array_values(array_filter(preg_split('/\s+/', $clean), static fn($x) => $x !== ''));

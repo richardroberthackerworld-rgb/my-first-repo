@@ -209,6 +209,16 @@ final class Units
     public static function answerUnit(string $answer): ?array
     {
         $zone = Checks::claimZone(Checks::deLatex($answer));
+        /* THE ANSWER IS AFTER THE LAST EQUALS SIGN, not at the start of the
+           line. Reading the first number-with-a-unit was right while answers
+           were written "a = 25 N" and wrong the moment one showed its working
+           on the same line: "F = 5 kg x 2 m/s^2 = 10 N" was read as 5 kg, a
+           mass, and a correct force answer was disputed for being a mass.
+           Mirrors uAnswerUnit() in index.html. */
+        $lastEq = strrpos($zone, '=');
+        if ($lastEq !== false && trim(substr($zone, $lastEq + 1)) !== '') {
+            $zone = substr($zone, $lastEq + 1);
+        }
         /* A number, then a unit: "25 m/s²", "= 9.8 m s⁻²", "3.5 N". */
         if (!preg_match_all('/(-?\d[\d,]*(?:\.\d+)?)\s*([a-zA-ZΩµ][a-zA-ZΩµ\s\/\^\-\d²³⁻¹·]{0,14})/u',
                             $zone, $ms, PREG_SET_ORDER)) return null;

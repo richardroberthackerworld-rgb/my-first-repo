@@ -483,7 +483,7 @@
       <table>
         <tr><th>Field</th><th>Notes</th></tr>
         <tr><td><code>verified</code></td><td>Boolean. <code>true</code> only for <code>CHECKED</code>. This is the field to branch on.</td></tr>
-        <tr><td><code>checks[].kind</code></td><td><code>integrity</code>, <code>subst</code> and <code>units</code> dispute the answer; <code>arith</code> disputes a step in the working.</td></tr>
+        <tr><td><code>checks[].kind</code></td><td><code>integrity</code>, <code>subst</code>, <code>units</code>, <code>domain</code>, <code>exhaust</code> and <code>counter</code> dispute the answer; <code>arith</code>, <code>sequence</code>, <code>step</code> and <code>unitconv</code> dispute a step in the working. <code>unitconv</code> checks a unit conversion or the unit a calculation produces, in magnitude as well as dimension — <code>units</code> asks whether the answer is the right kind of thing, <code>unitconv</code> asks whether the number and the unit follow from the working. <code>counter</code> carries an explicit counterexample to a universal claim and can only ever fail — a clean search is not a proof. <code>step</code> means the working lost a solution between one line and the next. <code>domain</code> means a value satisfies the equation but not the domain the question set (positive, non-negative, distinct, prime, or an ordering between variables). <code>exhaust</code> is the only kind that certifies a multi-variable solution set as COMPLETE, and it is emitted only where a bound on the search region was proved rather than searched — see <em>What it can check</em>.</td></tr>
         <tr><td><code>checks[].text</code></td><td>Human-readable and safe to show a student verbatim.</td></tr>
         <tr><td><code>checks</code> order</td><td>Failures first. A receipt that buries the failure under ten ticks contradicts its own heading.</td></tr>
       </table>
@@ -498,6 +498,40 @@
       before any arithmetic is examined. It deliberately declines trigonometric
       equations, because degrees-or-radians is a convention your question may
       not share and a wrong verdict is worse than none.
+    </p>
+
+    <h3>Domain, and what “all solutions” is allowed to mean</h3>
+    <p>
+      A question that says <em>positive integers</em>, <em>non-negative
+      integers</em>, <em>distinct</em>, <em>primes</em>, or <em>x &gt; y</em>
+      has narrowed the domain, and a value satisfying the equation but not the
+      domain is not a solution. That is the <code>domain</code> kind, and it
+      disputes the answer.
+    </p>
+    <p>
+      A question that says <em>find all</em> is asking for something stronger
+      than a list of solutions that check out. Substitution proves each value
+      genuine; it cannot prove there are no others, and for
+      <code>x² + y² + 1 = 3xy</code> there are infinitely many. So for a
+      multi-variable “find all”, passing substitutions alone return
+      <code>UNVERIFIED</code>, never <code>CHECKED</code> — the receipt still
+      shows that each value was checked.
+    </p>
+    <p>
+      <code>CHECKED</code> for such a question requires the <code>exhaust</code>
+      kind, which is emitted only where the search region was <strong>proved
+      finite</strong> rather than assumed. Today that is the family
+      <code>P(x₁…x_k) = c^L</code> with <code>P</code> a polynomial,
+      <code>c ≥ 2</code> an integer and <code>L</code> a linear form with every
+      coefficient at least 1, over integers bounded below. There, with
+      <code>s = Σxᵢ</code>, <code>M</code> the sum of the absolute values of
+      <code>P</code>’s coefficients and <code>d</code> its degree, every
+      solution has <code>s &lt; S₀</code> because <code>|P| ≤ M·s^d</code> while
+      <code>c^s &gt; M·s^d</code> for all <code>s ≥ S₀</code> — proved by
+      induction in exact integer arithmetic, not asserted from “exponentials
+      grow faster” — and the region below <code>S₀</code> is then enumerated
+      whole. Outside that family the API says nothing about completeness rather
+      than reporting a bounded search as a proof.
     </p>
 
     <h3>Question integrity</h3>

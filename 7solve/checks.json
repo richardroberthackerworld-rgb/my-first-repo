@@ -115,6 +115,48 @@
       "note": "Band B part 2: ported to PHP so /v1 matches the site. Was JS-only, so the website could certify on it and the API could not."
     },
     {
+      "name": "exhaustion",
+      "js": "try { checks = checks.concat(exhaustion(question, text)); } catch(e){}",
+      "php": "Exhaustion::check($question, $body)",
+      "note": "Reads the domain the question sets (positive/non-negative/distinct integers) and rejects a claimed value outside it; then, for P = c^(linear form) only, PROVES a bound on the search region by induction in exact integer arithmetic and enumerates that region whole. Emits nothing when the bound cannot be proved — a bounded search is not a completeness proof."
+    },
+    {
+      "name": "sequenceCheck",
+      "js": "try { checks = checks.concat(sequenceCheck(question, text)); } catch(e){}",
+      "php": "SequenceId::check($question, $body)",
+      "note": "Checks a named sequence against the terms actually written. The case it exists for is 1, 1, 2, 5, 13 — every OTHER Fibonacci number, which the Markov equation produces — where the recurrence is a(n) = 3a(n-1) - a(n-2) and calling it Fibonacci gets the indexing and the next term wrong."
+    },
+    {
+      "name": "counterexample",
+      "js": "try { checks = checks.concat(counterexample(question, text)); } catch(e){}",
+      "php": "Counterexample::check($question, $body)",
+      "note": "Hunts for a value that refutes a universal claim the answer made — a primality, a sign or parity, or an inequality asserted for every value. It can only ever FAIL: a clean search is not a proof and must never be reported as one, so a claim it cannot refute is left to unproved(), which asks whether an argument was given."
+    },
+    {
+      "name": "stepChain",
+      "js": "try { checks = checks.concat(stepChain(question, text)); } catch(e){}",
+      "php": "StepChain::check($question, $body)",
+      "note": "Walks the working line by line and compares consecutive equations by SOLUTION SET. A step may gain solutions (squaring does) but may never lose one: dividing 2x^2 = 6x by x loses x = 0, every later line is still true, and substitution passes the answer. Corroborating, because a sound derivation of the wrong thing is still wrong."
+    },
+    {
+      "name": "unitmath",
+      "js": "try { checks = checks.concat(unitmath(question, text)); } catch(e){}",
+      "php": "Qty::check($question, $body)",
+      "note": "Carries MAGNITUDE as well as dimension, which the frozen Units table deliberately does not: 60 km/h = 21 m/s and F = 5 kg x 2 m/s^2 = 10 J are both invisible to a dimension-only check. Temperature is an offset scale, not a factor. Reads a line only when BOTH sides carry units it knows, and refuses an unknown unit rather than guessing."
+    },
+    {
+      "name": "sigfigs",
+      "js": "try { checks = checks.concat(sigfigs(question, text)); } catch(e){}",
+      "php": null,
+      "note": "Advisory: an answer quoted to nine figures from data measured to one is over-claimed, and it costs marks. Reads only numbers that carry units — a coefficient in an equation is not a measurement — and needs three more figures than the data before it says anything."
+    },
+    {
+      "name": "directionCheck",
+      "js": "try { checks = checks.concat(directionCheck(question, text)); } catch(e){}",
+      "php": null,
+      "note": "Advisory: a one-directional step (squaring, clearing a denominator, dividing by an expression) incurs the debt of substituting every candidate back, and this reports the debt unpaid. It reads prose, so it may never decide the badge; substitution is what actually catches an extraneous root."
+    },
+    {
       "name": "optimality",
       "js": "try { if(!extremum.length) checks = checks.concat(optimality(question, text)); } catch(e){}",
       "php": null

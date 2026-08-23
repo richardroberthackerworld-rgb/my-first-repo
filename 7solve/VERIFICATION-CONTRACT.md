@@ -616,3 +616,434 @@ and `hasSteps` accepts `📝` alongside `📖`. Testing only the prompt's templa
 would have left the shape students actually receive unguarded, so that exact
 answer is now a fixture.
 
+---
+
+# Phase 3 — ingestion, domain, and what "all solutions" may mean
+
+Added 2026-08-23 after a student pasted a rendered equation into the box.
+
+## The clipboard is part of the verifier
+
+`x² + xy + y² = 3^(x+y)` copied off a rendered page arrives as `text/plain`
+in seven stacked lines:
+
+```
+x
+2
++xy+y
+2
+=3
+x+y
+.
+```
+
+which reads as `x·2 + xy + y·2 = 3x + y`. **A different problem.** The reported
+"the solver changed the equation" was not the solver: the equation was already
+wrong when it reached the box, and every check downstream agreed with it,
+because `integrity` compares the answer against the QUESTION and the question
+itself was corrupt.
+
+No verifier can recover from this. `MathPaste` in `index.html` reads the
+clipboard's HTML flavour first (LaTeX in `<annotation encoding="…x-tex">`,
+then MathML, then `<sup>`/`<sub>`), and falls back to a stacked-lines reader
+that fires only on that exact shape. `solve()` runs the same reader again,
+because OCR, a shared `?q=` link and the example chips never pass through a
+paste event. **Every repair is announced with the reading it produced**, in the
+box, where a student can edit it. A guess nobody can see is the same failure as
+the shredding.
+
+## Two new answer-level kinds
+
+| kind | meaning | engines |
+|---|---|---|
+| `domain` | a claimed value satisfies the equation but not the domain the question set | both |
+| `exhaust` | the solution set is complete over a region **proved** to contain every solution | both |
+| `sequence` | a named sequence really does satisfy the recurrence and indexing claimed | both |
+| `direction` | advisory: a one-directional step was used and no candidate was substituted back | JS only |
+
+`domain` reads positive / non-negative / integer / prime / distinct, and an
+ordering between two variables. One reader — `domainBreak` — judges the
+answer's claims AND filters the engine's own enumeration and sweeps, because
+two readers would let the engine demand a solution its own rules reject.
+
+## "Found" and "proven complete" are different states
+
+Substitution proves a value genuine. It cannot prove there are no others. For a
+question that asks for **all** solutions, passing substitutions alone therefore
+carry `needsComplete` and cannot reach `checked` — the browser shows
+`worked`/`plain`, `/v1` shows `unverified`, and the receipt still says the
+values were checked. This already held for the single-variable root branch; it
+now holds for multi-variable tuples too, which is where three verified pairs of
+`x² + y² + 1 = 3xy` used to earn a green badge on an equation with infinitely
+many solutions.
+
+Only `roots` or `exhaust` discharge the flag. **Nothing else may**, and in
+particular a bounded search that found no more is not a proof that there are no
+more.
+
+## The one bound the engine can prove
+
+`exhaust` fires only for `P(x₁…x_k) = c^L`, with `P` a polynomial, `c ≥ 2`
+an integer, `L` a linear form with every coefficient ≥ 1, over integers bounded
+below. With `s = Σxᵢ`, `M = Σ|coefficients of P|` and `d = deg P`:
+
+```
+|P|  ≤ M·s^d     every xᵢ ≤ s, so every monomial ∏xᵢ^eᵢ ≤ s^(Σeᵢ) ≤ s^d for s ≥ 1
+c^L  ≥ c^s       every coefficient of L is ≥ 1
+```
+
+and `c^s > M·s^d` for every `s ≥ S₀` **by induction**, not by asymptotics:
+
+```
+base   c^S₀ > M·S₀^d
+step   (s+1)^d ≤ c·s^d for s ≥ s₁, hence c^(s+1) = c·c^s > c·M·s^d ≥ M·(s+1)^d
+```
+
+Both are decided in exact integers — `BigInt` in the browser, a small
+decimal-limb `Bignum` in PHP, because `bcmath` cannot be assumed on a shared
+host and `c^s` overflows a float long before `S₀` is reached. Every solution
+then has `s < S₀`, a finite region, which is enumerated whole. Outside that
+family the checker emits **nothing**.
+
+`adversarial.js` re-derives both halves of that induction in exact integers
+itself, rather than trusting the code that produced them.
+
+## Descent is not a magic word
+
+`PROOF_RE` accepts "vieta" and "descent" as evidence that an argument is
+present, and for every other technique on that list the word comes with the
+argument. Descent is the exception: *"by Vieta jumping, all solutions follow"*
+is a complete sentence that says nothing. Where descent is the ONLY argument
+named, the answer must also show that the second root is an integer, that it is
+smaller under the ordering used, and that the descent terminates. Naming none of
+them fails the `claim` check.
+
+## The third harness
+
+```
+node parity.js            do the two engines agree
+node negative-control.js  is every checker actually wired
+node adversarial.js       IS THE VERDICT RIGHT
+```
+
+The first two can both be green while the product is wrong, and were. Every
+case in `adversarial.js` is an attack, and every family carries a control — an
+honest answer of the same shape that must survive untouched, because a checker
+that disputes everything passes an attack suite perfectly.
+
+**A known limit of negative-control.** It reports a JS-only checker as
+load-bearing, but it reaches that verdict through parity's registry-conformance
+check, which proves the wiring LINE is present rather than that the checker does
+anything. `PARITY_NO_REGISTRY=1` no longer disables that check — it only
+removes it from the case count — so the comment in `negative-control.js` that
+says conformance is off is stale. JS-only checkers are therefore pinned by
+direct assertion in `adversarial.js` instead.
+
+---
+
+# Phase 4 — the ingestion invariant, counterexamples, two more completeness routes
+
+## The invariant, stated once
+
+> **original problem ≡ parsed problem ≡ solved problem**
+
+Held by `Ingest.read()` in `index.html`, **before** the model is asked and
+before `Detect` reads anything, because a wrong reading of the question is the
+one error no later check can catch — every later check compares the answer
+against the question, so a corrupt question is one the answer agrees with.
+
+Three outcomes:
+
+| | meaning |
+|---|---|
+| CLEAN | the text is what the student meant; solve it |
+| REPAIRED | recoverable — stacked exponents, LaTeX — so it is repaired, the reading is **shown in the box**, then solved |
+| FATAL | it cannot be read with confidence. **Stop.** Say what is unreadable and ask |
+
+FATAL is the point. An engine that always produces an answer will, on a bad
+transcription, produce a confident answer to a question nobody asked, and a
+student will write it in an exam. Today FATAL means an `[unclear]` /
+`[illegible]` / `???` marker left by a transcriber, or brackets that do not
+close in text that is mathematical. Prose is not judged for brackets.
+
+The reading is rendered into `#qRead` under the composer — one line, silent
+when the reading is exactly what was typed, red when it is a refusal.
+
+## A photo is read before it is solved, not while
+
+A photo used to go straight to the model with *"read the question in the
+attached photo and solve it fully"*. Transcription and solution happened in one
+invisible step, so when the transcription was wrong the student never saw the
+question that was answered — **and neither did the verifier**, which was handed
+the empty typed box, so `integrity` had nothing to compare and every check that
+needs the question went quiet. A misread photo produced a confident answer with
+no badge to warn of it.
+
+The pipeline is now split, which is what makes each stage checkable:
+
+```
+photo → transcribe → reconstruct → confidence → SHOW → solve
+```
+
+The transcription lands in the confirm box that already existed; the difference
+is that it is no longer opt-in. It costs one extra model call per photo. The
+confirm button **declines** while an `[unclear]` marker is still in the text —
+filling that gap is the one thing only the student can do.
+
+## The counterexample engine
+
+`counter`, in both engines. A universal claim is refuted by one value, which is
+the cheapest decisive mathematics there is, and nothing looked. An answer could
+assert *"n² + n + 41 is prime for all n"* — Euler's polynomial, prime for
+n = 0…39 and composite at 40 — and no check would open it.
+
+Three shapes: a primality asserted for every n, a sign or parity asserted
+always, and an inequality asserted for every value.
+
+**It can only ever FAIL.** Searching a range and finding nothing is not a proof,
+and this must never turn "I looked" into "it is true" — the exact confusion the
+completeness gate exists to stop. A clean search emits nothing and the claim is
+left to `unproved`, which asks whether an *argument* was given.
+
+Silent on purpose: a sentence that already denies or qualifies the claim,
+trigonometry, equalities (`identityCheck` reads those), and anything that does
+not parse. A near-zero value is not a counterexample: `e^x is always positive`
+is true, and a plain `> 0` test on a float calls `e^−50 = 2·10⁻²²` "not
+positive". The sign tests carry the same margin the inequality shape does, and
+inside it the point is **undecidable**, not false.
+
+## Two more ways to prove a solution set complete
+
+`exhaust` had one route. It now has three, tried in this order:
+
+1. **A modular obstruction.** If L(x) − R(x) is never ≡ 0 (mod m) for *any*
+   residue tuple, it is never 0 over the integers, so there are no integer
+   solutions at all — a finite exhaustive sweep, not a search, and the only
+   route that works over the unbounded integers. `x² − 3y² = 2` is the standard
+   case: squares are 0 or 1 mod 3. The sweep is exhaustive over (ℤ/m)^k, so the
+   cap is on m — 200 for one variable, 60 for two, 24 for three.
+2. **The growth lemma** (Phase 3), for the P = c^L family.
+3. **A bound the question itself stated** — "find all n with 1 ≤ n ≤ 100" hands
+   over the finite region, so enumerating it *is* the proof. **One variable
+   only**: "x ≤ 100" in a two-variable question might bound one variable or
+   both, and guessing the generous way means missing a solution and then calling
+   the list complete, which is the worst failure this module can produce.
+
+Finding no route means the checker says **nothing** about completeness. A Pell
+equation still returns `unverified`, correctly.
+---
+
+# Phase 5 — the machine calculates, the chain is walked, the PDF is read
+
+## `Calc` — arithmetic is not a language task
+
+> the model reasons; the machine calculates.
+
+7Solve already carried an exact parser, an exact root finder, a symbolic
+differentiator and a primality test, and used every one of them **only to mark
+the model's homework**. The model was still doing the arithmetic. Asking a
+language model for 17 × 23 + 45 is strictly worse than computing it, because
+the answer is decidable and guessing at a decidable thing is never justified.
+
+So before the question is sent, everything in it that can be settled exactly is
+settled exactly, and the values go into the prompt as given facts under a block
+the model is told not to recompute. Today that covers: closed numeric
+expressions written in prose, the exact real roots of the question's own
+equation (including *no real solutions*), gcd/lcm, primality, and the symbolic
+derivative. Nothing is a guess — every fact comes from the same engine that
+checks the answer afterwards, so the prompt and the verifier can never disagree.
+
+**Algebra contributes no arithmetic facts.** `Solve x² − 5x + 6 = 0` contains
+the run "2 − 5", and offering "2 − 5 = −3" as a computed fact would hand the
+model a true statement about nothing and invite it to use the number. A sentence
+carrying an algebra signature — a variable with a power, a coefficient stuck to
+a letter — is skipped entirely; its **roots** are the fact worth having.
+
+## The second arithmetic pass
+
+`evalFlat` reads digits and four operators, deliberately, so that it can never
+guess. The cost was that everything else went unchecked: `2^10 = 1024`,
+`√144 = 12`, `(3+4)² = 49`, `3/4 + 1/8 = 7/8` and `15% of 200 = 30` were all
+invisible — and a model gets those wrong far more often than it gets 12 × 3
+wrong.
+
+`closedForm` turns the exact algebra parser on any line whose two sides are both
+**closed numeric expressions**. A variable surviving on either side means it is
+algebra and the pass says nothing. It only reads lines `evalFlat` could not have
+read — one carrying a power, a root, a bracket, a superscript or a percentage —
+so nothing is ever reported twice under two names. The percent rewrite is for
+the parser; the receipt shows the line the student actually wrote.
+
+## `step` — the derivation chain
+
+Every other checker judges the answer. This one walks the working and asks, at
+each line: does this follow from the one before it?
+
+```
+2x² = 6x
+2x  = 6      ← divided by x
+x   = 3
+```
+
+Every line after the division is true. `x = 3` substitutes back perfectly, so
+`subst` passes it, and **x = 0 has silently disappeared**. The step that lost it
+is step 2, and nothing said so.
+
+Consecutive equations are compared by **solution set**, not by text. A step may
+legitimately GAIN solutions — squaring does, and `direction` speaks to that —
+but may never LOSE one. The first line where a root disappears is the first line
+that is wrong; the rest are downstream of it, so only the first is reported.
+
+Declines: more than one variable, residuals whose roots cannot be found exactly,
+a root outside the domain the question set (it was never a solution to lose), a
+root the answer states somewhere (the working split a case), and bare
+`x = 3` answer statements — those are `solutionCompleteness`'s verdict under a
+name that already exists.
+
+**Corroborating, never certifying.** A flawless derivation of the wrong thing is
+still wrong.
+
+## Backtracking, not carrying on
+
+Re-solving used to be triggered only by a **disputed answer**. A derivation that
+loses a root on line two and then reaches a value that substitutes back
+perfectly is corrupted reasoning with a correct-looking conclusion — and it
+teaches the method that produced it. `stepfail` now sends the question back too,
+with the step named.
+
+The re-solve also picks its winner by **rank** now
+(`checked` < unverified < `stepfail` < `disputed`, then fewer failures) instead
+of by "did the second attempt avoid being disputed" — which could accept an
+outright disputed second answer after a step-level retry.
+
+## A fourth completeness route: the equation bounds its own variables
+
+`ax + by = c`, `x² + y² = 25`, `xy = 12`, `x + 2y + 3z = 20` — most of what a
+school Diophantine question actually looks like. None needs a growth lemma or a
+stated range, because the equation already pins every variable.
+
+Write it as `P(x) = C` with every coefficient of `P` positive and `C > 0`, over
+integers `xᵢ ≥ 1`. Every term is then positive, so each term is at most the whole
+sum; and since every `xⱼ ≥ 1`, dropping the other factors only makes it smaller:
+
+```
+a·xᵢ^eᵢ ≤ a·∏xⱼ^eⱼ ≤ C     so    xᵢ ≤ (C/a)^(1/eᵢ)
+```
+
+taking the smallest such bound over the monomials containing `xᵢ`. A finite box,
+proved rather than assumed, then enumerated whole.
+
+`xᵢ ≥ 1` is load-bearing, which is why a **non-negative** domain is declined:
+with `xⱼ = 0` allowed, `xy = 12` puts no bound on `x` at all.
+
+## A PDF that holds a question goes to the solver
+
+The PDF tab sent everything to the chapter reader, so a student with a PDF of
+one question was handed a study tool and left to copy the question out by hand.
+The split is by length, because that is what actually distinguishes a chapter
+from a worksheet, and the short branch goes through exactly the gate a photo
+does: read it, reconstruct the mathematics, show it, and only then solve.
+
+## Steps the student can follow
+
+The prompt now specifies what a step *is*: (a) what you are about to do and why
+that is the right move here, (b) the line of mathematics in full, (c) the
+result. A step showing only (b) is a step a stuck student cannot follow, because
+(a) is the thing they are stuck on. Plus: split a line that changes more than
+one thing; carry the state forward so no value appears from nowhere; and say
+what you divided by, because that is where solutions get lost.
+
+## An operational note
+
+`negative-control.js` rewrites `index.html` 34 times. On Windows that fails with
+`UNKNOWN (errno -4094)` if the preview dev server is holding the file. **Stop the
+preview before running it.** It leaves `.negative-control-restore.json` behind
+when it dies; the next run restores from it, and the files were byte-identical to
+the sidecar when this happened, so nothing was lost.
+---
+
+# Phase 6 — units, with magnitude
+
+`Units`/`units.php` answers one question: **is the answer the right KIND of
+thing?** It knows km and m are both lengths and deliberately knows nothing
+about how many of one make the other. That is correct for what it does, and
+blind to the two errors a physics answer actually makes:
+
+```
+60 km/h = 21 m/s              a conversion done wrong
+F = 5 kg × 2 m/s² = 10 J      units that do not follow from the working
+```
+
+Both are silent. Both are decidable. Neither was checked.
+
+## The quantity engine
+
+`Q_UNITS` / `Qty` carries **magnitude as well as dimension**: every unit knows
+its factor to SI, and temperature knows its **offset**, because 25 °C is not
+25 × something K and treating it as one is its own classic error.
+
+Everything goes to SI, **dimension is compared first and magnitude second**, and
+the tolerance for the magnitude comes from the decimals the student wrote —
+`60 km/h = 16.67 m/s` is right to the two places it claims, and failing it would
+be pedantry rather than verification.
+
+It refuses: a unit it does not know; more than one slash without brackets; an
+offset scale inside a product (25 °C × 2 is not a temperature); and any line
+where only one side carries a unit, because that is a definition, not a
+calculation.
+
+Two parsing rules earn their place:
+
+- **A slash is division only when it is spaced.** `m/s` is one unit and
+  `120 km / 2 h` is a division. Splitting on every slash tore `5 kg × 2 m/s²`
+  into pieces and the flagship case of the whole checker went silent.
+- **The unit must consume the whole segment.** `0.5 mol / 2 L` read as *0.5 mol*
+  with `/ 2 L` quietly dropped turns a concentration into an amount. A reader
+  that discards what it did not understand is a reader that invents quantities.
+
+**Scientific notation is one number.** `3.0 × 10^8` is normalised before
+anything else looks at the line — its `×` is not a multiplication, and reading
+it as one turns the speed of light into 3 metres times a hundred million.
+
+## Why there are two unit tables, and what stops them drifting
+
+`Units::DIM` is a **published contract** — `/v1` has returned its verdicts for
+months — and it stores dimension only, over five base quantities. `Q_UNITS`
+stores dimension, factor and offset over **six**, because amount of substance is
+a base quantity and concentration cannot be expressed without it. Widening the
+frozen table would change a shipped API for a new checker's benefit.
+
+So the duplication is made safe by **two invariants in `adversarial.js`** rather
+than by trust:
+
+1. every unit named in **both** tables must agree about its dimension;
+2. every **prefixed** unit must agree with its base about dimension *and*
+   factor — kJ is a thousand J and nothing else. A table of eighty units written
+   by hand will contain a typo, and a wrong factor here is a wrong verdict on a
+   student's physics.
+
+   (`min` is excluded by name: it is a minute, not a milli-inch. It is the only
+   name in the table where the prefix reading is a coincidence.)
+
+## A pre-existing false positive this exposed
+
+`answerUnit` took the **first** number-with-a-unit in the claim zone. That was
+right while answers were written `a = 25 N`, and wrong the moment one showed its
+working on the same line: `F = 5 kg × 2 m/s² = 10 N` was read as **5 kg**, a
+mass, and a correct force answer was disputed for being a mass. The answer is
+what follows the **last** equals sign. Fixed in both engines.
+
+## Significant figures
+
+`sigfig`, **advisory**. An answer quoted to nine figures from data measured to
+one is not wrong, it is over-claimed, and it costs marks in every board exam in
+the country. It is also the one check here that depends on how the *question*
+was written rather than on mathematics, so it belongs in the receipt and must
+never touch the badge.
+
+Conservative by construction: it reads only numbers that **carry units** — a
+coefficient in an equation is not a measurement — and needs three more figures
+than the data before it says anything. Trailing zeros after a decimal point are
+significant (2.40 is three figures) and before one are not (2400 does not say
+whether the hundreds were measured); getting that backwards would make the whole
+check nonsense.
