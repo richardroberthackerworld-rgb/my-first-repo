@@ -8774,7 +8774,43 @@ function looksLikeAnswer(md){
   const leaked = /\bI'?ll produce\b|\bI need to produce\b|\bI'?m Phi\b|as an AI language model/i.test(md.slice(0, 400));
   return hasHeading && !leaked;
 }
-const CONTINUE_MSG = 'Continue EXACTLY from where your previous message stopped. Do not repeat anything already written, do not add any commentary — just continue the answer seamlessly and finish it, including any diagram.';
+/* The continuation instruction is given to the model as a USER turn, and a
+   model that is told "continue from where you stopped" will sometimes reason
+   about that instruction in its reply — out loud, in the student's answer:
+
+     *  Wait, the user said "Continue EXACTLY from where your previous message
+        stopped."
+     *  The previous message stopped at `x^`.
+
+   That reached production. Rule 6 of the system prompt already forbids visible
+   self-narration, but the system prompt is about the ANSWER and this is a
+   fresh instruction about the mechanics of answering, so the model treated the
+   two as different things. The rule is repeated here, pointed at the thing
+   that actually went wrong. */
+const CONTINUE_MSG = 'Continue EXACTLY from where your previous message stopped. Do not repeat anything already written. ' +
+  'Write ONLY the continuation of the answer itself — never a word about this instruction, about where the previous ' +
+  'message stopped, or about what you are going to do next. No "Wait", no "Let me", no notes to yourself, no bullet ' +
+  'points planning the continuation. Pick the mathematics up mid-sentence if that is where it stopped, finish the ' +
+  'answer seamlessly, and include any diagram.';
+/* Where it is safe to resume. A reply that stops inside a formula — an odd
+   number of $, an unclosed bracket, or a trailing operator — cannot be
+   continued token-by-token, so the incomplete tail is dropped back to the last
+   line boundary and that line is written again. Only the last line is ever
+   given up, and only when it is genuinely broken: a reply that stopped cleanly
+   is passed through untouched. */
+function resumePoint(text){
+  const s = String(text || '');
+  const cut = s.lastIndexOf('\n');
+  if(cut <= 0) return s;                       // one line only: nothing safe to trim to
+  const tail = s.slice(cut + 1);
+  if(!tail.trim()) return s;                   // already at a clean boundary
+  const dollars = (tail.match(/\$/g) || []).length;
+  const opens = (tail.match(/[([{]/g) || []).length - (tail.match(/[)\]}]/g) || []).length;
+  const dangling = /[+\-*/^=<>\\]\s*$|[A-Za-z0-9]\^\s*$/.test(tail.trimEnd());
+  if(dollars % 2 === 0 && opens <= 0 && !dangling) return s;   // the last line is complete
+  return s.slice(0, cut);
+}
+
 // thrown when a model replies with no usable text — the caller retries it without thinking
 const noTextErr = why => Object.assign(new Error(why), { noText:true });
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -8879,9 +8915,20 @@ async function runAttempt(a, sys, userText, img){
       }
       let full = out.text;
       for(let i=0; i<2 && out.truncated; i++){   // cut-off answer → auto-continue
-        try{ out = await call(full); }catch(e){ break; }
+        /* NEVER RESUME MID-TOKEN. A reply cut at "x^" was continued with
+           "2 - 4(y²…", and the two halves were glued straight together: the
+           formula was split down the middle, the $ delimiters ended up
+           unbalanced, and the finished answer was rejected as incomplete even
+           though every line of its mathematics was right.
+
+           So the tail is trimmed back to the last complete LINE before asking
+           for more. The model then re-writes the line it was halfway through
+           instead of being asked to finish a token it can no longer see. A few
+           words are regenerated; a broken formula is not. */
+        const safe = resumePoint(full);
+        try{ out = await call(safe); }catch(e){ break; }
         if(!out.text) break;
-        full += (full.endsWith('\n') || out.text.startsWith('\n') ? '' : '\n') + out.text;
+        full = safe + (safe.endsWith('\n') || out.text.startsWith('\n') ? '' : '\n') + out.text;
       }
       return full;
     }catch(e){
@@ -18335,7 +18382,16 @@ var Verify = (function(){
 
      ADVISORY: the mathematics is untouched, so it appears in the receipt and
      never in the failure count. PORT of Checks::presentation in verify.php. */
-  var LEAK_RE = /(?:^|[.!?]\s+|\n)\s*(wait|hold on|hmm+|actually|oh(?:\s|,)|let me (?:re-?check|recalculate|reconsider|try again|redo|verify that)|on second thought|i made a mistake|that(?:'s| is) (?:wrong|not right)|scratch that|let me start over|is that right\??|no,? wait)\b/gi;
+  /* A LIST MARKER MUST NOT HIDE THE SELF-TALK. The production answer that
+     prompted this wrote its planning as bullets —
+
+         *   Wait, the previous message used `x^2`. I will use `x²`.
+         *   Let's write.
+
+     — and the line-start anchor did not survive the "*   " in between, so the
+     loudest possible leak went unreported. Bullets, dashes and numbered items
+     are now stepped over before the word is looked for. */
+  var LEAK_RE = /(?:^|[.!?]\s+|\n)[ \t]*(?:[-*•>]+[ \t]*|\d+[.)][ \t]*)*(wait|hold on|hmm+|actually|oh(?:\s|,)|let me (?:re-?check|recalculate|reconsider|try again|redo|verify that)|on second thought|i made a mistake|that(?:'s| is) (?:wrong|not right)|scratch that|let me start over|is that right\??|no,? wait)\b/gi;
 
   function leaks(md){
     /* Code may legitimately contain any of these words, and a programming
@@ -19511,6 +19567,28 @@ function paintVerif(md){
     label = '✗ Verification failed'; cls = 'verif disputed';
     title = '7Solve checked this answer against the question independently and it did not hold. ' +
             'Do not use the result — read what failed below.';
+    /* CUT OFF IS NOT WRONG, AND SAYING SO MATTERS.
+       An answer to x² + y² + z² = xyz arrived with every solution correct, the
+       Vieta descent argued properly, six substitutions passing — and a red
+       "✗ Verification failed" badge, because the reply had been truncated
+       mid-formula and `truncated` is answer-level. The mathematics was
+       flawless. What failed was the generation.
+
+       Telling that student their mathematics did not hold is a lie, and it is
+       the kind of lie that teaches them to stop reading the badge. The state
+       stays `disputed` — the answer must still not be trusted, and /v1 must
+       keep returning what it has always returned — but the words change when
+       the ONLY thing that failed is that the answer stops early.
+
+       If anything else failed too, the answer really is wrong and the original
+       wording stands. */
+    var cutOff = r.failed.length > 0 && r.failed.every(function(c){ return c.kind === 'truncated'; });
+    if(cutOff){
+      label = '⚠ This answer is cut off'; cls = 'verif unchecked';
+      title = 'Everything that could be checked in this answer held up — the failure is that ' +
+              'the reply stops before it finishes. Ask again, or ask it to continue from where ' +
+              'it stopped. Do not treat what is here as the whole solution.';
+    }
   } else if(r.state === 'stepfail'){
     label = '⚠ A step does not hold'; cls = 'verif unchecked';
     title = 'The final answer was not contradicted, but a line of the working is wrong — ' +

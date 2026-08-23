@@ -1714,8 +1714,12 @@ final class Checks
 
        Reported as ADVISORY. The mathematics is untouched by it, so it appears
        in the receipt and never in the failure count. */
+    /* A LIST MARKER MUST NOT HIDE THE SELF-TALK. A production answer wrote its
+       planning as bullets — "*   Wait, the previous message used x^2" — and the
+       line-start anchor did not survive the "*   " in between, so the loudest
+       possible leak went unreported. Mirrors LEAK_RE in index.html. */
     private const LEAK_RE =
-        '/(?:^|[.!?]\s+|\n)\s*(wait|hold on|hmm+|actually|oh(?:\s|,)|let me (?:re-?check|recalculate|reconsider|try again|redo|verify that)|'
+        '/(?:^|[.!?]\s+|\n)[ \t]*(?:[-*•>]+[ \t]*|\d+[.)][ \t]*)*(wait|hold on|hmm+|actually|oh(?:\s|,)|let me (?:re-?check|recalculate|reconsider|try again|redo|verify that)|'
       . 'on second thought|i made a mistake|that(?:\'s| is) (?:wrong|not right)|scratch that|'
       . 'let me start over|is that right\??|no,? wait)\b/iu';
 

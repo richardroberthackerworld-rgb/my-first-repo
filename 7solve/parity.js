@@ -207,6 +207,12 @@ const VERDICTS = [
   ['Find the power.',   '## ✅ Answer\nP = 12 V × 2 A = 24 J'],
   ['Find the concentration.', '## ✅ Answer\nc = 0.5 mol / 2 L = 0.25 mol/L'],
   ['Find the concentration.', '## ✅ Answer\nc = 0.5 mol / 2 L = 0.5 mol/L'],
+
+  /* Self-talk written as bullets. The line-start anchor in LEAK_RE did not
+     survive the "*   " in between, so the loudest leak this engine has ever
+     seen went unreported — in both languages, which is why it belongs here. */
+  ['Solve it.', '## ✅ Answer\nx = 3\n\n## 📖 Steps\n    *   Wait, the previous message used x^2.\n    *   Let me recheck that.'],
+  ['Solve it.', '## ✅ Answer\nx = 3\n\n## 📖 Steps\n1. Add 6 to both sides.\n2. Divide by 3.'],
   ['Find all positive integers n with n^2=2^n.', '## ✅ Answer\nn = 2 and n = 4'],
   ['Find all positive integers n with n^2=2^n.', '## ✅ Answer\nn = 2'],
   ['Find all positive integers x,y satisfying x^2+xy+y^2=3^{x+y}.',

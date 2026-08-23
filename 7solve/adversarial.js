@@ -76,6 +76,7 @@ function load() {
   const delat = cut('function deLatex(md){', '\nwindow.deLatex7 = deLatex;', 'deLatex');
   const paste = cut('var MathPaste = (function(){', '\nwindow.MathPaste = MathPaste;', 'the MathPaste module');
   const ingest = cut('var Ingest = (function(){', '\nwindow.Ingest = Ingest;', 'the Ingest module');
+  const resume = cut('function resumePoint(text){', '\n}', 'resumePoint') + '\n}';
   const verify = cut('var Verify = (function(){', '\n})();', 'the Verify module') + '\n})();';
   const sandbox = {
     window: {}, console, W: {}, $: () => null, state: {},
@@ -87,13 +88,14 @@ function load() {
     delat + '\nwindow.deLatex7 = deLatex;\n' +
     paste + '\nwindow.MathPaste = MathPaste;\n' +
     verify + '\nwindow.Verify = Verify;\n' +
-    ingest + '\nwindow.Ingest = Ingest;\n' +
-    'this.__V = Verify; this.__A = Verify.Algebra; this.__P = MathPaste; this.__L = deLatex; this.__I = Ingest;',
+    ingest + '\nwindow.Ingest = Ingest;\n' + resume + '\n' +
+    'this.__V = Verify; this.__A = Verify.Algebra; this.__P = MathPaste; this.__L = deLatex; this.__I = Ingest; this.__R = resumePoint;',
     sandbox, { timeout: 15000 });
   if (!sandbox.__V || !sandbox.__P || !sandbox.__I) throw new Error('the modules did not load');
-  return { V: sandbox.__V, A: sandbox.__A, P: sandbox.__P, deLatex: sandbox.__L, I: sandbox.__I };
+  if (typeof sandbox.__R !== 'function') throw new Error('resumePoint did not load');
+  return { V: sandbox.__V, A: sandbox.__A, P: sandbox.__P, deLatex: sandbox.__L, I: sandbox.__I, R: sandbox.__R };
 }
-const { V, A, P, deLatex, I } = load();
+const { V, A, P, deLatex, I, R } = load();
 
 /* Canonical outcome, per VERIFICATION-CONTRACT.md. */
 const CANON = {
@@ -977,6 +979,104 @@ for (const [name, q, a, want] of SIGFIG) {
   }
   check('units', 'the tables actually overlap enough to be worth comparing',
         compared >= 15, true, 'compared ' + compared + ' units');
+}
+
+/* ============================================================
+   13. A CUT-OFF ANSWER IS NOT A WRONG ANSWER
+   ------------------------------------------------------------
+   An answer to x² + y² + z² = xyz arrived with every solution
+   correct, the Vieta descent argued properly and six
+   substitutions passing — and a red "Verification failed"
+   badge, because the reply had been truncated mid-formula.
+
+   Four things were wrong and all four are pinned here: the
+   badge said the mathematics failed when it had not; the
+   continuation prompt let the model narrate itself into the
+   answer; the two halves were spliced mid-token, which is what
+   unbalanced the delimiters; and the leak detector could not
+   see self-talk written as bullet points.
+   ============================================================ */
+
+/* The engine's own verdict on that answer: the mathematics is FINE and the
+   only failure is that it stops early. */
+{
+  const q = 'Find all positive integers x, y, z with x^2 + y^2 + z^2 = xyz.';
+  const cut = '## ✅ Answer\nAll solutions come from (3, 3, 3) by the jump (x,y,z) → (yz - x, y, z)$.\n\n- (3, 3, 3)\n- (6, 3, 3)\n- (15, 6, 3)\n- (39, 15, 3)\n- (87, 15, 6)\n\n## 📖 Steps\n1. The second root w = yz - x is a positive integer.\n2. It is strictly smaller, so the descent terminates at the base case.\n3. (b) $w < x ⇔ (';
+  const r = V.run(q, cut);
+  const kinds = r.checks.map((c) => c.kind + (c.ok ? '+' : '-'));
+  check('cutoff', 'every claimed triple still substitutes',
+        r.checks.filter((c) => c.kind === 'subst' && c.ok).length >= 5, true, kinds.join(','));
+  check('cutoff', 'the ONLY failure is that it stops early',
+        r.failed.map((c) => c.kind).join(','), 'truncated', kinds.join(','));
+  /* and if the mathematics is wrong TOO, the answer really is wrong and the
+     softer wording must not apply */
+  const alsoWrong = cut.replace('- (6, 3, 3)', '- (6, 3, 4)');
+  const r2 = V.run(q, alsoWrong);
+  check('cutoff', 'a wrong AND cut-off answer still fails on the mathematics',
+        r2.failed.some((c) => c.kind === 'subst'), true,
+        r2.failed.map((c) => c.kind).join(','));
+}
+
+/* THE BADGE WORDING. Read out of paintVerif rather than asserted from
+   memory: a student who is told their mathematics did not hold, when it did,
+   learns to stop reading the badge. */
+{
+  const pv = html.indexOf('function paintVerif(md){');
+  const body = html.slice(pv, pv + 4000);
+  check('cutoff', 'paintVerif has a separate wording for a cut-off answer',
+        /cutOff[\s\S]{0,200}label = '⚠ This answer is cut off'/.test(body) ? 'present' : 'MISSING',
+        'present');
+  check('cutoff', 'it applies only when NOTHING else failed',
+        /r\.failed\.every\(function\(c\)\{ return c\.kind === 'truncated'; \}\)/.test(body)
+          ? 'guarded' : 'UNGUARDED', 'guarded',
+        'an answer that is both wrong and cut off must still read as wrong');
+  check('cutoff', 'the cut-off badge is not green',
+        /label = '⚠ This answer is cut off'; cls = 'verif unchecked'/.test(body) ? 'amber' : 'NOT AMBER',
+        'amber');
+}
+
+/* NEVER RESUME MID-TOKEN. A reply cut at "x^" continued with "2 - 4(y²…"
+   and glued straight on split the formula down the middle — which is what
+   unbalanced the $ and got the finished answer rejected. */
+const RESUME = [
+  ['cut mid-formula',  'line one\n2. (b) $x < x ⇔ x^', 'trim'],
+  ['cut mid-bracket',  'line one\n3. Since (y² + z²', 'trim'],
+  ['cut after an operator', 'line one\n4. So x = 3 +', 'trim'],
+  ['a complete last line', 'line one\n5. Therefore x = 3.', 'keep'],
+  ['already at a boundary', 'line one\nline two\n', 'keep'],
+  ['one line and nothing safe to trim to', 'just one incomplete $line', 'keep'],
+];
+for (const [name, text, want] of RESUME) {
+  const got = R(text) === text ? 'keep' : 'trim';
+  check('cutoff', 'resumePoint: ' + name, got, want, JSON.stringify(R(text).slice(-30)));
+}
+
+/* THE CONTINUATION PROMPT must forbid the narration that reached production:
+   "Wait, the user said Continue EXACTLY from where your previous message
+   stopped." — written into a student's answer. */
+{
+  const m = html.match(/const CONTINUE_MSG = ([\s\S]{0,700}?);\n/);
+  const msg = m ? m[1] : '';
+  check('cutoff', 'the continuation prompt exists', !!msg, true);
+  check('cutoff', 'it forbids narrating the instruction itself',
+        /never a word about this instruction/i.test(msg) ? 'forbidden' : 'NOT FORBIDDEN', 'forbidden');
+  check('cutoff', 'it names the words that actually leaked',
+        /No "Wait"/.test(msg) && /notes to yourself/.test(msg) ? 'named' : 'NOT NAMED', 'named');
+}
+
+/* A LIST MARKER MUST NOT HIDE SELF-TALK. This is the one that would have
+   turned the whole incident into a plain presentation warning. */
+const LEAKS = [
+  ['a bullet-prefixed Wait', 'Some working.\n\n    *   Wait, the previous message used x^2.', true],
+  ['a numbered Actually', 'Some working.\n2. Actually, let me redo that.', true],
+  ['a dashed Let me re-check', 'Some working.\n- Let me recheck that.', true],
+  ['a bare Wait at a line start', 'Some working.\nWait, that is wrong.', true],
+  ['ordinary numbered steps', '1. Add 6 to both sides.\n2. Divide by 3.', false],
+  ['the word waiting inside a sentence', 'The waiting time is 5 minutes.', false],
+  ['a bulleted step that is not self-talk', '- Substitute x = 3 into the equation.', false],
+];
+for (const [name, md, want] of LEAKS) {
+  check('cutoff', 'leaks: ' + name, V.leaks(md).length > 0, want, JSON.stringify(V.leaks(md)));
 }
 
 /* ---------- report ---------- */
