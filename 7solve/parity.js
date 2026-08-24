@@ -315,6 +315,16 @@ const VERDICTS = [
    '## ✅ Answer\nAll solutions arise from (1,1) by jumping.'],
   ['Find all positive integers x,y,z with x^2+y^2+z^2=xyz.',
    '## ✅ Answer\nThe solutions are (3,3,3) and (3,3,6). The next one is'],
+  /* SUPERSCRIPT LETTERS AND SIGNS. Decoded in deLatex, which exists in both
+     engines — an equation the site can read and the API cannot is exactly the
+     disagreement this file exists to stop. */
+  ['Solve 2\u207f\u207a\u00b9 = 8 for n.', '## ✅ Answer\nn = 2'],
+  ['Solve 2\u207f\u207a\u00b9 = 8 for n.', '## ✅ Answer\nn = 3'],
+  ['Find all positive integers x,y satisfying x\u00b2+xy+y\u00b2=3\u02e3\u207a\u02b8.',
+   '## ✅ Answer\nThere are no positive integer solutions.'],
+  ['Find all positive integers x,y satisfying x\u00b2+xy+y\u00b2=3\u02e3\u207a\u02b8.',
+   '## ✅ Answer\nThe solutions are (1,2) and (2,1).'],
+  ['Solve 10\u207b\u00b3 \u00d7 x = 5', '## ✅ Answer\nx = 5000'],
   ['Simplify 2/3 + 1/3',   '## ✅ Answer\n2/3 + 1/3 = 1'],
   ['Simplify 2/3 + 1/3',   '## ✅ Answer\n2/3 + 1/3 = 2'],
   ['Find P',               '## ✅ Answer\nP = 4/36 = 1/9'],

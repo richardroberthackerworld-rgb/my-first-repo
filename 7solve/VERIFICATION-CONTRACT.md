@@ -1047,3 +1047,130 @@ than the data before it says anything. Trailing zeros after a decimal point are
 significant (2.40 is three figures) and before one are not (2400 does not say
 whether the hundreds were measured); getting that backwards would make the whole
 check nonsense.
+## The fifth completeness route, and the first that reaches an infinite set
+
+Every route above works the same way: find a region, prove it holds every
+solution, enumerate it. A growth bound, a modular obstruction, a
+positive-coefficient box, a range the question stated. That is the whole
+toolkit, and none of it can touch a question whose solution set is infinite:
+
+    x² + y² + z² = xyz          infinitely many triples
+    x² + y² = k(xy + 1)         an infinite ladder
+    x² − Dy² = 1                infinitely many, by Pell
+
+So for those the engine could only REFUTE — find one solution the answer left
+out — and never certify. `descent` and `pell` are the two routes that can.
+
+### `descent`
+
+Applies when the equation is quadratic in each variable, carries a genuine
+cross term, is symmetric under swapping variables, and the domain is the
+positive integers. Two or three variables.
+
+1. Fixing all but one variable leaves `A·xᵢ² + B·xᵢ + C = 0`. A solution is one
+   root; the other is the Vieta partner, an integer when `A = ±1`. It is
+   computed and then substituted back — verified, not assumed.
+2. Jump whichever coordinate the jump lowers. Positive integers cannot fall
+   forever, so every solution descends to a TERMINAL: one no jump lowers. This
+   is well-ordering, not a search.
+3. Order `x₁ ≤ … ≤ x_k`. At a terminal the largest is the SMALLER root of its
+   own quadratic, and an upward parabola is non-negative at or left of its
+   smaller root, so `P(x₁, …, x_{k−1}, x_{k−1}) ≥ 0`. The other way to be
+   terminal is for the partner to leave the domain, and since `xₖ·xₖ' = C`
+   that means `C ≤ 0`. Both regions are bounded by the sign of a leading
+   coefficient.
+4. The solution set is the union of the orbits of the terminals.
+
+Step 3 has a gap the code closes explicitly. The bound `F(x) < 0` only confines
+`x` where the leading coefficient of `Q(x, ·)` in `y` is negative; where it is
+not, the strip is unbounded and `F` says nothing about it. Those strips are
+closed separately, by showing the discriminant of `P` in the last variable is
+negative for every `y ≥ x` — recovered exactly by finite differences, then
+bounded the same way. **If any strip cannot be closed, the checker returns
+nothing at all.** It never reports an unproved box as a proof.
+
+For `x² + y² + z² = xyz`: `F(x) = 3x² − x³` is negative beyond `x = 3`, the
+strips `x = 1` and `x = 2` have negative discriminant, and `(3,3,3)` is the
+only terminal. So the solution set is exactly its orbit — and `(3,3,3) is the
+only triple` is wrong in one nameable way: it is where the descent STOPS, not
+what the descent CLASSIFIES.
+
+`x² + y² − 5xy = 25` has three terminals, `(1,8)`, `(3,16)` and `(5,25)`. An
+answer that jumps from one of them is correct in every line and has a third of
+the solutions. That is the case nothing else here could see.
+
+### `pell`
+
+`x² − Dy² = N` has no cross term, so the partner of `x` is `−x` and `descent`
+declines it by design. Its families come from the fundamental unit of
+`x² − Dy² = 1`, taken from the continued fraction of `√D`. Every class has a
+representative with
+
+    0 ≤ y ≤ y₁√N / √(2(x₁+1))       for N > 0
+    0 ≤ y ≤ y₁√(−N) / √(2(x₁−1))    for N < 0
+
+(Nagell), so searching that range and taking each representative together with
+its conjugate `(x, −y)` gives every ladder there is. The conjugate is
+load-bearing: `x² − 2y² = 7` splits into `3,13,75,437…` and `5,27,157,915…`,
+and the second is reached only by climbing from `(3,−1)`.
+
+Both engines decline above 3·10⁷ so every product stays an exact integer in
+PHP as well as in JavaScript. `x² − 61y² = 1` has a fundamental solution of
+1766319049; an engine that quietly lost precision there would be worse than
+one that says nothing.
+
+### What they may and may not decide
+
+`descent` and `pell` join `roots` and `exhaust` as the kinds that can discharge
+the completeness flag, and they are the only two that reach an infinite set. A
+bounded search still may not: both return nothing unless the region came out of
+the leading-coefficient argument and every open strip was closed.
+
+When either certifies, two weaker findings are superseded, because under those
+conditions they are not merely redundant but wrong:
+
+* the `claim` complaint that a descent was named without its obligations — the
+  engine supplied them, computed rather than read. It survives as an advisory
+  `method` note, so the student is still told the lines are missing; it just no
+  longer decides the badge.
+* a failing `exhaust` witness. Its generative rule is textual: a solution below
+  the answer's largest listed value is treated as a hole. Against "every
+  solution is obtained from (3,3,3) by the jumps … (6,15,87)" it offered
+  `(3,15,39)`, which is in that orbit. If the classification is proved, every
+  witness a bounded search finds is a member of the set.
+
+Neither supersession fires unless `descent` or `pell` came back `ok`.
+
+## Superscripts that are not digits
+
+`x²` and `x⁴` parse. `2ⁿ⁺¹`, `3ˣ⁺ʸ` and `10⁻³` never did — superscript letters
+and the superscript plus and minus were not decoded anywhere, so the equation
+was dropped entirely: no integrity check, no substitution, no completeness, and
+nothing on the page saying the question had not been read.
+
+Decoded in `deLatex`, which exists in both engines, rather than in the paste
+handler — a shared link, an OCR read and the API all reach the tokeniser
+without passing the clipboard, and `/v1` has no clipboard at all. Digit-only
+runs are left exactly as written: they parse already, and rewriting `x²` as
+`x^(2)` would change text the student is looking at for no gain.
+
+The decoder is nested INSIDE `deLatex` on purpose. The harnesses cut that
+function out of the file by its own boundaries to run it in a sandbox, so a
+sibling helper would not be there and the tests would pass against a `deLatex`
+that never decoded anything.
+
+## The paste that cannot be repaired, only reported
+
+`x2 + xy + y2 = 3x+y` has no structure left to recover from. It could be
+`x² + xy + y² = 3^(x+y)`; it could be a sequence question. Rewriting it would
+invent a problem the student never set, which `MathPaste` refuses to do — so it
+is reported instead, and the report is narrow: a letter followed straight by a
+digit, where the SAME letter also appears on its own. Mathematics writes
+coefficients in front, so a bare `x2` beside a bare `x` is a lost exponent far
+more often than anything else. `a1 + a2 + a3 = 6` does not trip it, because `a`
+never appears alone.
+
+The clipboard BUTTON also went through none of this. `Ctrl+V` read through
+`MathPaste`; the button assigned the clipboard straight to the box — same
+clipboard, two different questions depending on which the student used, and the
+button is the one on the screen. Both routes read the same way now.

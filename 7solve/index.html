@@ -9191,7 +9191,52 @@ window.needsLive7 = needsLive;
    something it can actually evaluate.
    ============================================================ */
 function deLatex(md){
-  var s = String(md == null ? '' : md);
+  /* ---------- superscript letters and signs ----------
+     A SUPERSCRIPT THE TOKENISER CANNOT READ IS AN EQUATION THROWN AWAY.
+     Superscript digits already parse — x² and x⁴ both do. Superscript LETTERS
+     and the superscript plus and minus never have, so
+
+         2ⁿ⁺¹ = 8        3ˣ⁺ʸ = 9        10⁻³
+
+     produced no equation at all: no integrity check, no substitution, no
+     completeness. The answer came back with nothing said about it, and nothing
+     on the page indicated the question had not even been read.
+
+     It is decoded here rather than in the paste handler because the paste
+     handler is only one way in. A shared link, an OCR read and the API all
+     reach the tokeniser without passing it, and /v1 has no clipboard at all.
+
+     Digit-only runs are left alone: they parse already, and rewriting x² into
+     x^(2) would change text the student is looking at for no gain.
+
+     Nested inside deLatex on purpose. The parity and adversarial harnesses cut
+     this function out of the file by its own boundaries to run it in a sandbox,
+     so a sibling helper would simply not be there — the tests would pass
+     against a deLatex that never decoded anything.
+
+     Mirrors deSuper() in verify.php. */
+  var UNI_SUPER = {
+    '\u2070':'0','\u00b9':'1','\u00b2':'2','\u00b3':'3','\u2074':'4','\u2075':'5',
+    '\u2076':'6','\u2077':'7','\u2078':'8','\u2079':'9',
+    '\u207a':'+','\u207b':'-','\u207c':'=','\u207d':'(','\u207e':')',
+    '\u2071':'i','\u207f':'n',
+    '\u1d43':'a','\u1d47':'b','\u1d9c':'c','\u1d48':'d','\u1d49':'e','\u1da0':'f',
+    '\u1d4d':'g','\u02b0':'h','\u02b2':'j','\u1d4f':'k','\u02e1':'l','\u1d50':'m',
+    '\u1d52':'o','\u1d56':'p','\u02b3':'r','\u02e2':'s','\u1d57':'t','\u1d58':'u',
+    '\u1d5b':'v','\u02b7':'w','\u02e3':'x','\u02b8':'y','\u1dbb':'z'
+  };
+  var s = String(md == null ? '' : md).replace(
+    /[\u2070\u00b9\u00b2\u00b3\u2074-\u2079\u207a-\u207f\u2071\u1d43\u1d47\u1d9c\u1d48\u1d49\u1da0\u1d4d\u02b0\u02b2\u1d4f\u02e1\u1d50\u1d52\u1d56\u02b3\u02e2\u1d57\u1d58\u1d5b\u02b7\u02e3\u02b8\u1dbb]+/g,
+    function(run){
+      var plain = '', i;
+      for(i = 0; i < run.length; i++){
+        var ch = UNI_SUPER[run.charAt(i)];
+        if(ch === undefined) return run;
+        plain += ch;
+      }
+      if(/^[0-9]+$/.test(plain)) return run;      /* already parses; leave it be */
+      return '^(' + plain + ')';
+    });
   /* Braced superscripts must get through this gate too. Checking only for a
      backslash or a dollar meant "x^{2} - 164x + 424 = 0" — no delimiters,
      exactly how a model writes it inline in markdown — was returned
@@ -9501,6 +9546,56 @@ var MathPaste = (function(){
     return buf;
   }
 
+  /* ---------- 4. SUPERSCRIPTS THAT ARE NOT DIGITS ----------
+     A rendered exponent that survives the clipboard AS AN EXPONENT arrives as
+     Unicode superscript characters, and the parser reads only some of them:
+
+         x²  + y²  = 25      parses
+         x⁴  = 16            parses
+         2ⁿ⁺¹ = 8            DOES NOT PARSE
+         3ˣ⁺ʸ = 9            DOES NOT PARSE
+         10⁻³                DOES NOT PARSE
+
+     Superscript DIGITS were handled. Superscript letters and the superscript
+     plus and minus never were, so the equation was dropped on the floor — no
+     integrity check, no substitution, no completeness, nothing. The answer
+     came back unverified with no indication that the question had not even
+     been read, which is the same failure as the shredding this module exists
+     for, one layer further in.
+
+     Only runs that the parser cannot already read are rewritten. x² is left
+     exactly as the student pasted it, because turning it into x^(2) would
+     announce a repair on almost every paste and teach them to ignore the
+     notice. A run is rewritten when it carries a letter, a sign, or a bracket
+     — the three things that do not parse. */
+  var SUPER = {
+    '\u2070':'0','\u00b9':'1','\u00b2':'2','\u00b3':'3','\u2074':'4','\u2075':'5',
+    '\u2076':'6','\u2077':'7','\u2078':'8','\u2079':'9',
+    '\u207a':'+','\u207b':'-','\u207c':'=','\u207d':'(','\u207e':')',
+    '\u2071':'i','\u207f':'n',
+    '\u1d43':'a','\u1d47':'b','\u1d9c':'c','\u1d48':'d','\u1d49':'e','\u1da0':'f',
+    '\u1d4d':'g','\u02b0':'h','\u02b2':'j','\u1d4f':'k','\u02e1':'l','\u1d50':'m',
+    '\u1d52':'o','\u1d56':'p','\u02b3':'r','\u02e2':'s','\u1d57':'t','\u1d58':'u',
+    '\u1d5b':'v','\u02b7':'w','\u02e3':'x','\u02b8':'y','\u1dbb':'z'
+  };
+  var SUPER_RUN = /[\u2070\u00b9\u00b2\u00b3\u2074-\u2079\u207a-\u207f\u2071\u1d43\u1d47\u1d9c\u1d48\u1d49\u1da0\u1d4d\u02b0\u02b2\u1d4f\u02e1\u1d50\u1d52\u1d56\u02b3\u02e2\u1d57\u1d58\u1d5b\u02b7\u02e3\u02b8\u1dbb]+/g;
+  function unsuper(src){
+    var text = String(src == null ? '' : src), touched = false;
+    var out = text.replace(SUPER_RUN, function(run){
+      var plain = '', i;
+      for(i = 0; i < run.length; i++){
+        var ch = SUPER[run.charAt(i)];
+        if(ch === undefined) return run;                 /* not one we can read */
+        plain += ch;
+      }
+      /* digits alone already parse — leave the student's own notation be */
+      if(/^[0-9]+$/.test(plain)) return run;
+      touched = true;
+      return '^(' + plain + ')';
+    });
+    return { text:out, changed:touched };
+  }
+
   function tidy(s){
     return String(s)
       .replace(/\u00a0/g, ' ')
@@ -9515,6 +9610,45 @@ var MathPaste = (function(){
       .trim();
   }
 
+  /* ---------- WHEN THE EXPONENT IS GONE AND CANNOT BE GUESSED BACK ----------
+     The worst clipboard result is the one that arrives as a single tidy line:
+
+         x2 + xy + y2 = 3x+y
+
+     There is nothing structural left. It could be x² + xy + y² = 3^(x+y), and
+     it could be a sequence question about x2 and y2. unshred cannot help,
+     because nothing is stacked; the HTML reader cannot help, because there was
+     no HTML. Rewriting it would invent a problem the student never set, which
+     this module refuses to do.
+
+     So it is REPORTED instead. The signal is narrow on purpose: a letter
+     followed straight by a digit, where the SAME letter also appears on its
+     own somewhere in the line. Mathematics writes coefficients in front —
+     3x, not x3 — so a bare x2 next to a bare x is a lost exponent far more
+     often than it is anything else.
+
+     a1 + a2 + a3 = 6 does NOT trip it, because `a` never appears alone: that
+     is a sequence, and telling a student their sequence question looks broken
+     would be worse than saying nothing. */
+  function flattened(text){
+    var t = String(text == null ? '' : text);
+    if(t.indexOf('=') < 0) return null;
+    if(/[\^\u00b2\u00b3\u2074-\u2079]/.test(t)) return null;     /* an exponent survived; nothing was lost */
+    var hits = t.match(/\b[a-z][2-9]\b/g);
+    if(!hits || hits.length < 2) return null;
+    var seen = {}, i, letter;
+    for(i = 0; i < hits.length; i++){
+      letter = hits[i].charAt(0);
+      if(seen[letter]) continue;
+      /* the same letter, on its own or against another letter, elsewhere */
+      if(new RegExp('(?:^|[^a-z0-9])' + letter + '(?![a-z0-9])|[a-z]' + letter + '\\b|\\b' + letter + '[a-z]').test(t))
+        seen[letter] = 1;
+    }
+    var names = Object.keys(seen);
+    if(names.length < 2) return null;
+    return names.map(function(v){ return v + '2'; }).join(' and ');
+  }
+
   /* ---------- the public reading ----------
      `text` is the clipboard's text/plain, `html` its text/html. Returns the
      text to insert and whether anything was repaired, so the caller can say
@@ -9523,11 +9657,18 @@ var MathPaste = (function(){
     var plain = String(text == null ? '' : text);
     var viaHtml = fromHtml(html);
     if(viaHtml && viaHtml.replace(/\s+/g, '') !== plain.replace(/\s+/g, ''))
-      return { text: viaHtml, changed: true, how: 'html' };
-    if(viaHtml) return { text: viaHtml, changed: false, how: 'html' };
+      return finish(viaHtml, true, 'html');
+    if(viaHtml) return finish(viaHtml, false, 'html');
     var u = unshred(plain);
-    if(u.changed) return { text: tidy(u.text), changed: true, how: 'lines' };
-    return { text: plain, changed: false, how: 'plain' };
+    if(u.changed) return finish(tidy(u.text), true, 'lines');
+    return finish(plain, false, 'plain');
+  }
+  /* Every route out of read() goes through here, so an exponent the parser
+     cannot read is fixed whether it came from the HTML flavour, the
+     stacked-lines reader, or a plain paste that needed nothing else. */
+  function finish(text, changed, how){
+    var u = unsuper(text);
+    return { text:u.text, changed: changed || u.changed, how: u.changed && !changed ? 'super' : how };
   }
 
   /* Does this text still look like a shredded expression? Used by the solve
@@ -9535,10 +9676,13 @@ var MathPaste = (function(){
      the example chips all reach the box without passing through `read`. */
   function shredded(text){
     var u = unshred(text);
-    return u.changed ? tidy(u.text) : null;
+    var t = u.changed ? tidy(u.text) : String(text == null ? '' : text);
+    var v = unsuper(t);
+    return (u.changed || v.changed) ? v.text : null;
   }
 
-  return { read: read, shredded: shredded, unshred: unshred, fromHtml: fromHtml, mml: mml };
+  return { read: read, shredded: shredded, unshred: unshred, fromHtml: fromHtml, mml: mml,
+           unsuper: unsuper, flattened: flattened };
 })();
 window.MathPaste = MathPaste;
 
@@ -13724,7 +13868,20 @@ if(qt) qt.addEventListener('paste', function(e){
   try { html = cd.getData('text/html') || ''; } catch(err){}
   var read;
   try { read = MathPaste.read(plain, html); } catch(err){ return; }
-  if(!read || !read.changed || !read.text) return;
+  if(!read || !read.changed || !read.text){
+    /* NOTHING TO REPAIR IS NOT THE SAME AS NOTHING WRONG.
+       "x2 + xy + y2 = 3x+y" needs no repair because there is nothing left to
+       repair with — the exponents are gone and no rule can put them back
+       without inventing a problem the student never set. Saying so is the only
+       honest move: they can see their own question and we cannot. */
+    try {
+      var lost = MathPaste.flattened(plain);
+      if(lost) toast('That paste may have lost its exponents — ' + lost +
+                     ' look like they were ' + lost.replace(/2/g, '\u00b2') +
+                     '. Check the question before solving it.');
+    } catch(err2){}
+    return;
+  }
   e.preventDefault();
   var txt = read.text.slice(0, 1000);
   var ok = false;
@@ -13765,8 +13922,38 @@ if(pasteBtn) pasteBtn.addEventListener('click', async function(e){
       var type = items[i].types.find(function(t){ return t.indexOf('image/') === 0; });
       if(type){ W.setImage(new File([await items[i].getType(type)], 'pasted.png', {type:type})); return; }
     }
+    /* THE BUTTON HAD ITS OWN PATH AND IT WAS THE RAW ONE.
+       Ctrl+V went through MathPaste and came out with its exponents intact;
+       this button read the clipboard and assigned it straight to the box. Same
+       clipboard, same student, two different questions depending on which one
+       they happened to use — and the button is the one on the screen, so it is
+       the one a phone user reaches for. It reads the same way now.
+
+       Only text/plain is available here (the async clipboard API gives no
+       text/html for a readText call), so the HTML route cannot run — but the
+       stacked-lines reader and the superscript reader both can, and between
+       them they are what fixes a paste off a rendered page. */
     var txt = await navigator.clipboard.readText();
-    if(txt && qt){ qt.value = txt.slice(0, 1000); qt.dispatchEvent(new Event('input',{bubbles:true})); return; }
+    if(txt && qt){
+      var got = null;
+      try { got = MathPaste.read(txt, ''); } catch(err2){}
+      var put = (got && got.text) ? got.text : txt;
+      qt.value = put.slice(0, 1000);
+      qt.dispatchEvent(new Event('input',{bubbles:true}));
+      if(got && got.changed){
+        var eq2 = (put.match(/[^\n]*[=<>][^\n]*/) || [put])[0].trim();
+        toast('Pasted maths was put back together: ' + (eq2.length > 60 ? eq2.slice(0, 60) + '…' : eq2) +
+              ' — edit it if that is not your question.');
+      } else {
+        try {
+          var lost2 = MathPaste.flattened(txt);
+          if(lost2) toast('That paste may have lost its exponents — ' + lost2 +
+                          ' look like they were ' + lost2.replace(/2/g, '\u00b2') +
+                          '. Check the question before solving it.');
+        } catch(err3){}
+      }
+      return;
+    }
     toast('Nothing on the clipboard to paste.');
   } catch(err){ toast('Your browser blocked clipboard access — use Ctrl+V instead.'); }
 });
@@ -20719,6 +20906,11 @@ var Verify = (function(){
            counterexample:counterexample, modulusObstruction:modulusObstruction, statedBound:statedBound,
            claimsAll:function(t){ return CLAIMS_ALL.test(String(t || '')); },
            realRootsOf:realRootsOf,
+           /* terminalBox and stripHasNothing are exported for the same reason
+              positiveBound and growthBound are: they ARE the proof, and a test
+              that can only see the sentence the proof produced cannot tell a
+              real bound from a plausible-sounding one. */
+           terminalBox:terminalBox, stripHasNothing:stripHasNothing,
            positiveBound:positiveBound, polyExpand:polyExpand,
            stepChain:stepChain, unitmath:unitmath, sigfigs:sigfigs, witness:witness,
            bookkeeping:bookkeeping,

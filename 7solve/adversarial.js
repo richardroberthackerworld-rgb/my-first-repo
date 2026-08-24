@@ -1683,6 +1683,55 @@ for (const [name, kind, text, wanted] of COMPLAINTS) {
         '[' + cut.checks.map((c) => c.kind).join(',') + ']');
 }
 
+/* ---- THE STRIP ARGUMENT, TESTED ON THE PROOF AND NOT ON ITS SENTENCE ----
+   The terminal bound F(x) < 0 only confines x where the leading coefficient of
+   Q(x, ·) in y is negative. Where it is not, the strip is UNBOUNDED in y and
+   the bound says nothing about it at all — for x²+y²+z²=xyz that is x = 1 and
+   x = 2, and they are closed by a second argument: the discriminant of P in z
+   is negative for every y, so no real z exists, let alone an integer one.
+
+   Without that second argument the box is not proved and the certification is
+   worth nothing. But removing it changes no VERDICT on any equation this suite
+   otherwise covers — the enumeration finds the same terminals either way — so
+   a test reading only the badge cannot see it go. That is precisely the shape
+   of hole that has bitten this file three times, so the proof is checked
+   directly, the way positiveBound and growthBound already are.
+
+   x²+y²+z²+3(xy+yz+zx)=xyz is the control: its strip at x = 1 genuinely
+   cannot be cleared, and an engine that pretended otherwise would be
+   certifying over a region it never bounded. */
+{
+  const markov = {'e2,0,0':1,'e0,2,0':1,'e0,0,2':1,'e1,1,1':-1};
+  const hard   = {'e2,0,0':1,'e0,2,0':1,'e0,0,2':1,
+                  'e1,1,0':3,'e0,1,1':3,'e1,0,1':3,'e1,1,1':-1};
+  const b = V.terminalBox(markov, 3);
+  check('family', 'the terminal box for x²+y²+z²=xyz is x ≤ 3, y ≤ 3',
+        b ? b.his.join(',') : 'NONE', '3,3');
+  check('family', 'and it names the polynomial that proves it',
+        !!b && /F\(x\) = -1x\^3\+3x\^2/.test(b.why), true, b ? b.why : '');
+  check('family', 'x = 1 and x = 2 are the strips the bound does not reach',
+        b ? b.open.join(',') : 'NONE', '1,2',
+        'the leading coefficient in y is not negative there, so F says nothing');
+  check('family', 'the strip x = 1 is proved empty, not assumed empty',
+        V.stripHasNothing(markov, 3, 1), true);
+  check('family', 'and so is x = 2',
+        V.stripHasNothing(markov, 3, 2), true);
+
+  const hb = V.terminalBox(hard, 3);
+  check('family', 'the control equation also leaves strips open',
+        !!hb && hb.open.length > 0, true, hb ? JSON.stringify(hb.open) : 'no box');
+  check('family', 'but its strip at x = 1 CANNOT be cleared',
+        V.stripHasNothing(hard, 3, 1), false,
+        'an engine that cleared this one would be certifying over an unbounded region');
+  check('family', 'so descentCheck must decline that equation outright',
+        (V.run('Find all positive integers x,y,z with x^2+y^2+z^2+3*(x*y+y*z+z*x)=x*y*z.',
+               '## ✅ Answer\nAll solutions arise from (1,1,1) by Vieta jumping, and so on.').checks || [])
+          .some((c) => c.kind === 'descent'), false);
+  check('family', 'and the clearing is wired into the checker, not merely present',
+        /if\(!stripHasNothing\(P, k, box\.open\[i\]\)\) return \[\];/.test(html) ? 'wired' : 'NOT WIRED',
+        'wired', 'the box would then be asserted rather than proved');
+}
+
 /* THE SOLVE PATH MUST ACTUALLY CALL THEM. Every case above goes through
    V.run, so this one is about the manifest: a checker registered but not
    wired is the hole that hid stepChain, sigfigs and bookkeeping. */
@@ -1694,6 +1743,106 @@ for (const [name, kind, text, wanted] of COMPLAINTS) {
   check('family', 'and both may discharge the completeness flag',
         /c\.kind === 'descent' \|\| c\.kind === 'pell'/.test(html) ? 'yes' : 'NO', 'yes',
         'without this a proved classification still reads unverified');
+}
+
+/* ============================================================
+   20. THE PASTE THAT ARRIVES AS A DIFFERENT QUESTION
+   ------------------------------------------------------------
+   MathPaste was built for one shape of this — an equation shredded into
+   stacked lines by the clipboard. Three more were still getting through.
+
+   1. SUPERSCRIPTS THAT ARE NOT DIGITS. x² and x⁴ parse. 2ⁿ⁺¹, 3ˣ⁺ʸ and 10⁻³
+      never did, so the equation was dropped entirely — no integrity check, no
+      substitution, no completeness, and nothing on the page saying the
+      question had not been read. Fixed in deLatex rather than in the paste
+      handler, because a shared link, an OCR read and the API all reach the
+      tokeniser without passing the clipboard.
+
+   2. THE CLIPBOARD BUTTON HAD ITS OWN PATH, AND IT WAS THE RAW ONE. Ctrl+V
+      went through MathPaste; the button assigned the clipboard straight to
+      the box. Same clipboard, two different questions depending on which the
+      student used — and the button is the one on the screen, so it is the one
+      a phone user reaches for.
+
+   3. THE FLATTENING THAT CANNOT BE REPAIRED. "x2 + xy + y2 = 3x+y" has no
+      structure left to recover from. Rewriting it would invent a problem the
+      student never set, so it is REPORTED instead — and the report is narrow
+      enough that a sequence question is never dragged into it.
+   ============================================================ */
+
+/* ---- 1. superscript letters and signs ---- */
+for (const [src, want] of [
+  ['2\u207f\u207a\u00b9 = 8',            '2^(n+1) = 8'],
+  ['3\u02e3\u207a\u02b8 = 9',            '3^(x+y) = 9'],
+  ['10\u207b\u00b3',                  '10^(-3)'],
+  ['x\u00b2 + xy + y\u00b2 = 3\u02e3\u207a\u02b8', 'x\u00b2 + xy + y\u00b2 = 3^(x+y)'],
+  /* digits alone already parse, so they are left exactly as pasted */
+  ['x\u00b2 + y\u00b2 = 25',              'x\u00b2 + y\u00b2 = 25'],
+  ['x\u2074 = 16',                    'x\u2074 = 16'],
+]) {
+  check('paste', 'deLatex reads ' + JSON.stringify(src),
+        deLatex(src), want);
+}
+{
+  /* the point of decoding it: the equation becomes visible to the engine */
+  const e = V.findEquation(deLatex('2\u207f\u207a\u00b9 = 8'));
+  check('paste', 'and the equation is then actually found',
+        e && e.eq ? e.eq.vars.join(',') : 'NOT PARSED', 'n');
+  const before = V.findEquation('2\u207f\u207a\u00b9 = 8');
+  check('paste', 'where the raw superscript form finds nothing at all',
+        before && before.eq ? 'parsed' : 'nothing', 'nothing',
+        'this is what the decoding is for');
+  /* the reported question, end to end */
+  const rep = V.findEquation(deLatex('x\u00b2 + xy + y\u00b2 = 3\u02e3\u207a\u02b8'));
+  check('paste', 'the reported question survives the clipboard',
+        rep && rep.eq ? rep.eq.vars.join(',') : 'NOT PARSED', 'x,y');
+}
+
+/* ---- 2. MathPaste applies the same decoding on every route in ---- */
+for (const [name, src, want] of [
+  ['a plain paste',   '2\u207f\u207a\u00b9 = 8',        '2^(n+1) = 8'],
+  ['a stacked paste', 'x\n2\n+xy+y\n2\n=3\nx+y\n.', 'x^(2)+xy+y^(2)=3^(x+y).'],
+]) {
+  const r = P.read(src, '');
+  check('paste', name + ' comes out readable', r.text, want);
+  check('paste', name + ' is announced', r.changed, true,
+        'a repair the student cannot see is the same failure as the shredding');
+}
+{
+  const r = P.read('x\u00b2 + y\u00b2 = 25', '');
+  check('paste', 'a paste needing nothing is not announced', r.changed, false,
+        'a notice on every paste teaches students to ignore the notice');
+}
+
+/* ---- 3. the flattening it can only report ---- */
+for (const [src, want] of [
+  ['x2 + xy + y2 = 3x+y',  'x2 and y2'],
+  ['p2 + q2 = pq + 1',     'p2 and q2'],
+  /* a sequence question must NEVER be dragged into this: `a` never appears
+     on its own, so a1 a2 a3 are subscripts and the answer is silence */
+  ['a1 + a2 + a3 = 6',     null],
+  ['x2 + y2 = 25',         null],
+  ['n2 = 2n',              null],
+  /* an exponent survived, so nothing was lost */
+  ['x\u00b2 + xy + y\u00b2 = 3x+y', null],
+  ['x^2 + xy + y2 = 3x+y', null],
+  /* no equation at all */
+  ['see figure 2 and figure 3', null],
+]) {
+  check('paste', 'flattened ' + JSON.stringify(src),
+        P.flattened(src), want);
+}
+
+/* ---- the wiring, because both paste routes are behind a DOM event ---- */
+{
+  check('paste', 'the clipboard button reads through MathPaste',
+        /got = MathPaste\.read\(txt, ''\);/.test(html) ? 'wired' : 'NOT WIRED', 'wired',
+        'it used to assign the clipboard straight to the box');
+  check('paste', 'and Ctrl+V reports a flattening it cannot repair',
+        /MathPaste\.flattened\(plain\)/.test(html) ? 'wired' : 'NOT WIRED', 'wired');
+  check('paste', 'the decoder is INSIDE deLatex, where the harness can see it',
+        /function deLatex\(md\)\{[\s\S]{0,4000}?UNI_SUPER/.test(html) ? 'nested' : 'OUTSIDE', 'nested',
+        'a sibling helper is cut away by the sandbox and the tests would pass against nothing');
 }
 
 /* ---------- report ---------- */

@@ -869,9 +869,56 @@ final class Checks
        "0 checks" — which looks like a clean run and is in fact total blindness.
        That is the worst possible failure for a verifier, so this runs before
        every check rather than being an optional tidy-up. */
+    /* ---------- superscript letters and signs ----------
+       A SUPERSCRIPT THE TOKENISER CANNOT READ IS AN EQUATION THROWN AWAY.
+       Superscript digits already parse — x² and x⁴ both do. Superscript LETTERS
+       and the superscript plus and minus never have, so
+    
+           2ⁿ⁺¹ = 8        3ˣ⁺ʸ = 9        10⁻³
+    
+       produced no equation at all: no integrity check, no substitution, no
+       completeness. The answer came back with nothing said about it, and nothing
+       on the page indicated the question had not even been read.
+    
+       It is decoded here rather than in the paste handler because the paste
+       handler is only one way in. A shared link, an OCR read and the API all
+       reach the tokeniser without passing it, and /v1 has no clipboard at all.
+    
+       Digit-only runs are deliberately left alone: they parse already, and
+       rewriting x² into x^(2) would change text the student is looking at for
+       no gain.
+
+       Mirrors deSuper() in index.html. */
+    private const UNI_SUPER = [
+        '⁰' => '0', '¹' => '1', '²' => '2', '³' => '3', '⁴' => '4', '⁵' => '5',
+        '⁶' => '6', '⁷' => '7', '⁸' => '8', '⁹' => '9',
+        '⁺' => '+', '⁻' => '-', '⁼' => '=', '⁽' => '(', '⁾' => ')',
+        'ⁱ' => 'i', 'ⁿ' => 'n',
+        'ᵃ' => 'a', 'ᵇ' => 'b', 'ᶜ' => 'c', 'ᵈ' => 'd', 'ᵉ' => 'e', 'ᶠ' => 'f',
+        'ᵍ' => 'g', 'ʰ' => 'h', 'ʲ' => 'j', 'ᵏ' => 'k', 'ˡ' => 'l', 'ᵐ' => 'm',
+        'ᵒ' => 'o', 'ᵖ' => 'p', 'ʳ' => 'r', 'ˢ' => 's', 'ᵗ' => 't', 'ᵘ' => 'u',
+        'ᵛ' => 'v', 'ʷ' => 'w', 'ˣ' => 'x', 'ʸ' => 'y', 'ᶻ' => 'z',
+    ];
+    private const UNI_SUPER_RUN =
+        '/[⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼⁽⁾ⁱⁿᵃᵇᶜᵈᵉᶠᵍʰʲᵏˡᵐᵒᵖʳˢᵗᵘᵛʷˣʸᶻ]+/u';
+    public static function deSuper(string $str): string
+    {
+        if (!preg_match(self::UNI_SUPER_RUN, $str)) return $str;
+        return (string)preg_replace_callback(self::UNI_SUPER_RUN, static function ($m) {
+            $run = $m[0];
+            $plain = '';
+            foreach (preg_split('//u', $run, -1, PREG_SPLIT_NO_EMPTY) as $ch) {
+                if (!isset(self::UNI_SUPER[$ch])) return $run;
+                $plain .= self::UNI_SUPER[$ch];
+            }
+            if (preg_match('/^[0-9]+$/', $plain)) return $run;   /* already parses */
+            return '^(' . $plain . ')';
+        }, $str);
+    }
+
     public static function deLatex(string $md): string
     {
-        $s = $md;
+        $s = self::deSuper($md);
         /* The fast path must also let braced superscripts through. Checking
            only for a backslash or a dollar meant "x^{2} - 164x + 424 = 0" —
            no delimiters, exactly how a model writes it inline in markdown —
