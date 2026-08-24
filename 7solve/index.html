@@ -10107,14 +10107,36 @@ var RESOLVE_GUIDANCE = {
   sequence:
     'The sequence you named does not satisfy the recurrence you claim for it. Check the ' +
     'recurrence against the terms you actually wrote, and check the indexing — a ' +
-    'subsequence of a familiar sequence is not that sequence.'
+    'subsequence of a familiar sequence is not that sequence.',
+  descent:
+    'Your VALUES are right and your CLASSIFICATION is wrong. Every solution you listed ' +
+    'satisfies the equation; the set you say they form is not the set. Do not check them again.\n' +
+    'The commonest way this goes wrong is a case split on a ratio. Bounding one quantity ' +
+    'between two multiples of another — say z ≤ xy ≤ 3z — does NOT make xy/z an integer. ' +
+    'It is a rational in that range, and 3/2 is in the range. A case split over k = 1, 2, 3 ' +
+    'then misses every solution whose ratio is not a whole number, which is most of them.\n' +
+    'A descent also shows only that the minimal element is AT LEAST some value. It does not ' +
+    'show every solution CONTAINS that value, and it does not show the tree has one branch.',
+  pell:
+    'Your VALUES are right and your CLASSIFICATION is wrong. x² − Dy² = N has infinitely ' +
+    'many solutions and they fall into families, each climbing by the fundamental unit of ' +
+    'x² − Dy² = 1. Multiplying one solution by that unit walks its OWN family and never ' +
+    'leaves it, so finding one solution and iterating can never reach the others. Do not ' +
+    're-verify the values you gave; give the families.',
 };
-/* the order decides which guidance leads: the most specific diagnosis first */
-var RESOLVE_ORDER = ['exhaust', 'counter', 'domain', 'step', 'books', 'unitconv', 'sequence'];
+/* descent and pell lead, because they are the only two that come with the answer 
+   attached rather than only a complaint. */
+var RESOLVE_ORDER = ['descent', 'pell', 'exhaust', 'counter', 'domain', 'step', 'books', 'unitconv', 'sequence'];
 
 function resolveComplaint(report, question){
   var failed = (report && report.failed) || [];
   var lead = '';
+  /* A checker that PROVED the answer carries it on `fix`. That goes first and in
+     full: telling a model what the answer is beats telling it to try again, and
+     the same false triple came back four times under the second treatment. */
+  var handed = [];
+  for(var h = 0; h < failed.length; h++)
+    if(failed[h] && failed[h].fix && handed.indexOf(failed[h].fix) < 0) handed.push(failed[h].fix);
   for(var i = 0; i < RESOLVE_ORDER.length && !lead; i++){
     if(failed.some(function(f){ return f.kind === RESOLVE_ORDER[i]; })) lead = RESOLVE_GUIDANCE[RESOLVE_ORDER[i]];
   }
@@ -10126,11 +10148,17 @@ function resolveComplaint(report, question){
       'known solution and show both results still satisfy the equation. If a value fails, ' +
       'do not present it.';
   }
+  var handover = handed.length
+    ? '\nTHE VERIFICATION ENGINE HAS ALREADY COMPUTED THE ANSWER. It is not a hint and ' +
+      'not a guess — it was derived independently and proved:\n\n' + handed.join('\n\n') +
+      '\n\nWrite THAT up, with the reasoning shown. Do not re-derive it from scratch and ' +
+      'do not re-check the solutions you already had right.\n'
+    : '';
   return 'Your previous answer FAILED independent verification. These checks were run ' +
     'against the original question by a separate engine, not by you. They are arithmetic ' +
     'and substitution — not opinions, and not negotiable:\n\n' +
     failed.map(function(f, i){ return (i + 1) + '. ' + f.text; }).join('\n') +
-    '\n\n' + lead +
+    '\n\n' + lead + '\n' + handover +
     '\nIf you cannot produce a correct answer, say so plainly instead of offering one ' +
     'that fails these checks.\n\nORIGINAL QUESTION: ' + question;
 }
@@ -17335,8 +17363,34 @@ var Verify = (function(){
              (Object.keys(covered).length || 'none') + ' of them and never reaches ' + fmtT(mm) +
              ', which satisfies the equation and is in no jump-orbit of anything the answer lists. ' +
              'A correct descent from one starting solution gives one family; it does not give the others. ' +
-             proof }];
+             proof, fix:handover }];
     }
+
+    /* THE ENGINE HAS THE ANSWER; IT SHOULD SAY SO.
+       Everything below refutes. Refuting is what stops a wrong answer reaching a
+       student, and it is not what gets them a right one: the same false answer
+       came back four times, because "your list is incomplete, find the ones you
+       left out" is a request to re-derive a classification the model has already
+       failed at, with the same tools that failed.
+
+       By this point the classification is PROVED and sitting in local variables.
+       Handing it over turns the re-solve from another attempt at a hard problem
+       into writing up a result — and it is the verifier supplying ground truth to
+       the solver, which is the direction this whole engine is built to run in.
+
+       Carried on the finding as `fix`, so resolveComplaint can lead with it and
+       the receipt is unchanged. */
+    var sample = orb.set.slice().sort(function(a, b){
+      var ma = Math.max.apply(null, a), mb = Math.max.apply(null, b);
+      return ma - mb;
+    }).slice(0, 6).map(function(t){ return '(' + t.join(', ') + ')'; }).join(', ');
+    var handover = 'The solution set of ' + src + ' over ' + dom.label + ' is exactly the ' +
+      (terms.length > 1 ? 'union of the orbits of ' : 'orbit of ') + rootList +
+      ' under the Vieta jump — replace any one coordinate by the OTHER root of the ' +
+      'quadratic the equation becomes in that coordinate, keeping the rest fixed' +
+      (orb.infinite ? ', which never terminates upwards' : '') + '. The smallest members are ' +
+      sample + (orb.infinite ? ', and it continues forever.' : '.') +
+      ' That classification is proved: ' + proof + '.';
 
     /* ---- a closed list against an orbit that keeps going ---- */
     if(orb.infinite && wantsAll && !gen && real){
@@ -17354,7 +17408,7 @@ var Verify = (function(){
              rootList + ' — which is not the same thing as what the descent classifies: the ' +
              'solution set is the whole orbit of ' + (terms.length > 1 ? 'those triples' : 'that one') +
              ' under the jumps, and reversing a descent from the bottom climbs the ladder forever. ' +
-             proof }];
+             proof, fix:handover }];
     }
 
     /* ---- a claimed solution that is not one ---- */
@@ -17362,7 +17416,7 @@ var Verify = (function(){
       text:'the answer puts forward ' + fmtT(bogus) + ', which does not satisfy ' + src +
            '. Every genuine solution lies in the orbit of ' + rootList +
            ' under the Vieta jumps, and this one does not — which usually means the jump map ' +
-           'itself is wrong, not the arithmetic that followed it' }];
+           'itself is wrong, not the arithmetic that followed it', fix:handover }];
 
     /* ---- everything checks out: this IS the classification ---- */
     if(real && !missing.length && (gen || !orb.infinite)){
@@ -17513,6 +17567,15 @@ var Verify = (function(){
       'conjugate gives every family there is. That is exhaustion over a proved range, not a sample';
 
     /* which ladder does each claimed pair sit on? */
+    var pellFix = 'The solutions of ' + src + ' over ' + dom.label + ' are exactly ' +
+      (lads.length > 1 ? 'the ' + lads.length + ' families starting (' : 'the family starting (') +
+      lads.map(function(l){ return l.base.join(', '); }).join(') and (') +
+      '), each climbing by the fundamental unit (' + u.x + ', ' + u.y + '): from (a, b) the next ' +
+      'solution is (a·' + u.x + ' + ' + pe.D + '·b·' + u.y + ', a·' + u.y + ' + b·' + u.x + '). ' +
+      'The first few are ' +
+      lads.map(function(l){ return l.rung.slice(0, 4).map(function(p){ return '(' + p.join(', ') + ')'; }).join(', '); })
+          .join('  and  ') + ', continuing forever. That classification is proved: ' + proof + '.';
+
     var covered = {}, real = 0, bogus = null, biggest = 0, i, j;
     for(i = 0; i < claims.length; i++){
       var cx = claims[i][0], cy = claims[i][1];
@@ -17525,7 +17588,7 @@ var Verify = (function(){
     }
     if(bogus) return [{ kind:'pell', ok:false,
       text:'the answer puts forward (' + vars.join(',') + ') = (' + bogus.join(',') + '), which does not ' +
-           'satisfy ' + src + '. ' + proof }];
+           'satisfy ' + src + '. ' + proof, fix:pellFix }];
     if(!real) return [];
 
     var missing = [];
@@ -17537,7 +17600,7 @@ var Verify = (function(){
              'answer reaches ' + (lads.length - missing.length) + '. (' + vars.join(',') + ') = (' +
              mb.join(', ') + ') satisfies the equation and is on none of the ladders the answer builds — ' +
              'multiplying one solution by the fundamental unit climbs its own family and never leaves it, ' +
-             'so finding one solution and iterating cannot reach the others. ' + proof }];
+             'so finding one solution and iterating cannot reach the others. ' + proof, fix:pellFix }];
     }
 
     /* a finite list offered as everything, when the ladder never stops */
@@ -17554,7 +17617,7 @@ var Verify = (function(){
         text:'the answer gives a finite list and presents it as every solution, but ' + src +
              ' has infinitely many. (' + vars.join(',') + ') = (' + next.join(', ') + ') satisfies it too, ' +
              'and every solution multiplied by the fundamental unit (' + u.x + ', ' + u.y + ') gives ' +
-             'another — so the list can never be closed by listing. ' + proof }];
+             'another — so the list can never be closed by listing. ' + proof, fix:pellFix }];
     }
     if(!missing.length && gen){
       return [{ kind:'pell', ok:true,

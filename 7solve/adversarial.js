@@ -1937,6 +1937,93 @@ for (const [name, line, counts] of [
         'wired');
 }
 
+/* ============================================================
+   22. TELLING THE SOLVER THE ANSWER INSTEAD OF TELLING IT TO TRY AGAIN
+   ------------------------------------------------------------
+   The badge was right and the same false answer still came back, four times.
+   That is not a verification failure — it is what happens when the only thing
+   the engine says to a wrong answer is that it is wrong.
+
+       "Your LIST is incomplete: find the ones you left out."
+
+   is a request to re-derive a classification the model has already failed at,
+   using the tools that failed. It re-ran the same case split and reached the
+   same conclusion, as it would every time.
+
+   By the time descentCheck refutes, it has PROVED the classification: the
+   terminals, the jump, the orbit. Handing that over turns the re-solve from
+   another attempt at a hard problem into writing up a result — the verifier
+   supplying ground truth to the solver, which is the direction this engine is
+   built to run in.
+
+   None of the cases above would notice if the handover disappeared: they read
+   the badge, and the badge is already right. It is checked here directly. */
+{
+  const q = 'Find all positive integers x, y, z with x^2 + y^2 + z^2 = xyz';
+  const r = V.run(q, '## ✅ Final Answer\n(x, y, z) = (3, 3, 3)\n\n' +
+                     '## 📖 Steps\n4. Hence z ≤ xy ≤ 3z. Write xy = kz with integer k in 1,2,3.\n' +
+                     '12. Conclusion – The only positive integer triple is (3,3,3).');
+  check('handover', 'the reported answer is still refused', CANON[r.state], 'disputed');
+
+  const d = (r.checks || []).filter((c) => c.kind === 'descent')[0];
+  check('handover', 'the descent finding carries the answer it proved',
+        !!d && typeof d.fix === 'string' && d.fix.length > 80, true,
+        'without fix the complaint can only say "try again"');
+
+  const msg = C(r, q);
+  for (const [what, re] of [
+    ['it says the engine already has the answer', /HAS ALREADY COMPUTED THE ANSWER/],
+    ['it names the orbit and its root',           /orbit of \(x,y,z\) = \(3,3,3\)/],
+    ['it lists real members of that orbit',       /\(3, 3, 6\)[\s\S]*\(3, 6, 15\)/],
+    ['it says the set does not terminate',        /continues forever/],
+    ['it asks for a write-up, not a re-derivation', /Write THAT up[\s\S]*not re-derive it/],
+    ['it says not to re-check what was right',    /do not re-check the solutions you already had right/],
+  ]) {
+    check('handover', what, re.test(msg) ? 'said' : 'NOT SAID', 'said', msg.slice(0, 300));
+  }
+
+  /* the specific fallacy this answer keeps making, named */
+  check('handover', 'and the ratio fallacy in its step 4 is named',
+        /does NOT make xy\/z an integer/.test(msg) ? 'named' : 'NOT NAMED', 'named',
+        'z ≤ xy ≤ 3z bounds a RATIO; 9/6 = 3/2 is in range and in none of its three cases');
+}
+
+/* PELL HANDS OVER TOO, and its answer is a recurrence rather than an orbit. */
+{
+  const q = 'Find all positive integers x, y with x^2 - 2y^2 = 7';
+  const r = V.run(q, '## ✅ Answer\nThe solutions are (3,1), (13,9) and (75,53).');
+  const p = (r.checks || []).filter((c) => c.kind === 'pell')[0];
+  check('handover', 'the pell finding carries its classification',
+        !!p && typeof p.fix === 'string' && p.fix.length > 80, true);
+  const msg = C(r, q);
+  check('handover', 'and the complaint gives both families',
+        /\(3, 1\)/.test(msg) && /\(5, 3\)/.test(msg), true, msg.slice(0, 300));
+  check('handover', 'and the rule for climbing them',
+        /fundamental unit \(3, 2\)/.test(msg) ? 'given' : 'NOT GIVEN', 'given');
+}
+
+/* descent and pell must LEAD the guidance. They are the only two that arrive
+   with the answer attached, and the default paragraph — "substitute your values
+   back into the original equation" — is exactly the wrong thing to say to an
+   answer whose values were right all along. That was the bug for exhaust and it
+   would have been the bug again here. */
+{
+  const msg = C({ failed: [
+    { kind: 'subst',   text: 'something about a value' },
+    { kind: 'descent', text: 'the classification is wrong', fix: 'THE PROVED ANSWER' },
+  ] }, 'Q?');
+  check('handover', 'descent guidance outranks the substitution advice',
+        /Your VALUES are right and your CLASSIFICATION is wrong/.test(msg) ? 'leads' : 'BURIED',
+        'leads', msg.slice(0, 240));
+  check('handover', 'and the handover is carried through verbatim',
+        msg.indexOf('THE PROVED ANSWER') >= 0, true);
+  const bare = C({ failed: [{ kind: 'subst', text: 'x = 5 put back gives 9 != 0' }] }, 'Q?');
+  check('handover', 'a wrong VALUE still gets the substitution advice',
+        /substitute it back into the original equation/.test(bare) ? 'said' : 'NOT SAID', 'said');
+  check('handover', 'and no handover is invented when nothing proved one',
+        /HAS ALREADY COMPUTED THE ANSWER/.test(bare) ? 'INVENTED' : 'silent', 'silent');
+}
+
 /* ---------- report ---------- */
 if (bad.length) {
   console.log('\nADVERSARIAL FAILED — ' + bad.length + ' of ' + ran + ' attacks got through\n');
