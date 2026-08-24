@@ -851,8 +851,14 @@ function runPhp(payload) {
             $sig[] = $mark;
         }
         sort($sig);
+        $tier = $r['correction'] === null ? '' : '|corrected';
+        /* slipOf exists so the badge tier can match a substitution to the value
+           the descent corrected. It is presentation scaffolding and /v1 has
+           never carried it, so Checks::run strips it again before returning —
+           and this is what proves the strip is still there. */
+        foreach ($r['checks'] as $ck) if (array_key_exists('slipOf', $ck)) $tier .= '|LEAKED-slipOf';
         $out['verdicts'][] = ['state' => $r['state'], 'n' => $r['checked'],
-                              'sig' => implode(',', $sig)];
+                              'sig' => implode(',', $sig) . $tier];
     }
     echo json_encode($out);
   `;
@@ -1601,7 +1607,12 @@ function checkBadgeContract(html) {
   const bad = [];
   const pv = html.indexOf('function paintVerif(md){');
   if (pv < 0) return ['badge: paintVerif not found in index.html'];
-  const body = html.slice(pv, pv + 4000);
+  /* The window has to reach the LAST state branch, not just the first few. It
+     was 4000 characters, sized for the code as it stood; a comment added inside
+     the disputed branch pushed  past the end and this guard reported
+     that nothing maps to the green badge — a guard failing on its own slice
+     rather than on the thing it guards. */
+  const body = html.slice(pv, pv + 12000);
 
   /* 1. the question field the renderer verifies against */
   const read = body.match(/Verify\.run\(\s*W\.state\s*&&\s*W\.state\.([A-Za-z_$][\w$]*)/);
@@ -1716,7 +1727,12 @@ function checkVerificationAuthority(html) {
   /* 3. the authoritative badge names its authority */
   const pv = html.indexOf('function paintVerif(md){');
   if (pv >= 0) {
-    const body = html.slice(pv, pv + 4000);
+    /* The window has to reach the LAST state branch, not just the first few. It
+     was 4000 characters, sized for the code as it stood; a comment added inside
+     the disputed branch pushed  past the end and this guard reported
+     that nothing maps to the green badge — a guard failing on its own slice
+     rather than on the thing it guards. */
+  const body = html.slice(pv, pv + 12000);
     const green = body.match(/r\.state === 'checked'\)\{[\s\S]{0,300}?label = '([^']*)'; cls = '([^']*)'/);
     if (!green) {
       bad.push('authority: could not read the checked-state badge label — guard is stale');
@@ -2050,9 +2066,12 @@ function norm(v) {
        gets compared, in both languages. */
     const r = V.run(c.q, c.a);
     const checks = (r.checks || []).filter((x) => !JS_ONLY[x.kind]);
+    /* The BADGE TIER is compared too. A site that softens a badge the API still
+       calls a flat failure is the disagreement that matters most here: a student
+       and their teacher would be reading two different verdicts on one answer. */
     const sig = checks.map((x) => x.kind + (x.ok ? '+' : '-') +
       (x.kind === 'descent' && /slip in one number/.test(String(x.text)) ? ':slip' : ''))
-      .sort().join(',');
+      .sort().join(',') + (r.correction ? '|corrected' : '');
     const js = { state: r.state, n: checks.length, sig };
     const ph = php.verdicts[i];
     contractPairs.push({ q: c.q, a: c.a, js: js.state, php: ph.state });

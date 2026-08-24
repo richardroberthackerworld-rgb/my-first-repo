@@ -112,6 +112,7 @@ function jsRun(q, a) {
     sig: checks.map((x) => x.kind + (x.ok ? '+' : '-') +
       (x.kind === 'descent' && /slip in one number/.test(String(x.text)) ? ':slip' : ''))
       .sort().join(','),
+    correction: r.correction ? String(r.correction.slipOf) : null,
     descent: d ? String(d.text) : '',
     fix: d && d.fix ? String(d.fix) : '',
     complaint: C(r, q),
@@ -174,7 +175,10 @@ const script = [
   '    sort($sig);',
   '    $d = "";',
   '    foreach ($r["checks"] as $ck) if ($ck["kind"] === "descent") $d = (string)$ck["text"];',
-  '    $out[] = ["state" => $r["state"], "sig" => implode(",", $sig), "descent" => $d];',
+  '    $leak = "";',
+  '    foreach ($r["checks"] as $ck) if (array_key_exists("slipOf", $ck)) $leak = "LEAKED";',
+  '    $out[] = ["state" => $r["state"], "sig" => implode(",", $sig), "descent" => $d,',
+  '              "correction" => $r["correction"], "leak" => $leak];',
   '}',
   'echo json_encode($out);',
 ].join('\n');
@@ -195,6 +199,8 @@ if (php) {
     ok(c[0] + ': same verdict', jS === pS, 'js=' + j.state + '  php=' + p.state);
     ok(c[0] + ': same parity signature', j.sig === p.sig,
        'js=[' + j.sig + ']  php=[' + p.sig + ']');
+    ok(c[0] + ': same badge tier', (j.correction || null) === (p.correction || null),
+       'js=' + j.correction + '  php=' + p.correction);
     ok(c[0] + ': same diagnosis', j.descent === p.descent,
        'js=' + j.descent.slice(0, 90) + '  ||  php=' + p.descent.slice(0, 90));
   });
@@ -203,7 +209,47 @@ if (php) {
              'it to steer. Both engines carry the same diagnosis, which is what an API caller sees.');
 }
 
-console.log('\n6. NOTHING FAILS SILENTLY');
+console.log('\n6. THE THIRD BADGE');
+ok('the slip is marked as a correction', slip.correction === '(x,y) = (77,368)',
+   'correction=' + slip.correction);
+ok('and its VERDICT is still disputed — the tier is presentation only',
+   slip.state === 'disputed', 'state=' + slip.state);
+ok('a broken construction is never softened to a correction', broken.correction === null,
+   'correction=' + broken.correction);
+ok('a false completeness claim is never softened either', wrong.correction === null,
+   'correction=' + wrong.correction);
+ok('a fully correct answer carries no correction', good.correction === null,
+   'correction=' + good.correction);
+{
+  const pv = live.indexOf('function paintVerif(md){');
+  const body = pv >= 0 ? live.slice(pv, pv + 12000) : '';
+  ok('the served badge reads the tier the engine computed',
+     /var corrected = r\.correction \|\| null;/.test(body));
+  ok('and renders its own class rather than the red one',
+     /label = '⚠ Verified with one correction'; cls = 'verif corrected';/.test(body));
+  ok('and tells the student their method is sound', /Your method is sound\./.test(body));
+  ok('the corrected style is served and is not the green one',
+     /\.verif\.corrected\{/.test(live) &&
+     !/\.verif\.corrected\{[^}]*background:var\(--ok-tint\)/.test(live));
+  ok('only a checked answer may still claim verification',
+     !/cls = 'verif';/.test(body.slice(body.indexOf('corrected'), body.indexOf('} else if(cutOff)'))));
+}
+
+console.log('\n7. /v1 IS UNCHANGED BY THIS RELEASE');
+{
+  const v1 = fs.readFileSync(path.join(__dirname, 'v1.php'), 'utf8');
+  const at = v1.indexOf('ok_out([');
+  const outBlock = at >= 0 ? v1.slice(at, v1.indexOf(']);', at)) : '';
+  ok('the response field list does not mention the new tier',
+     outBlock.length > 0 && !/correction/.test(outBlock),
+     'a presentation tier must not leak into a published contract');
+  if (php) php.forEach((p, i) => {
+    ok(cases[i][0] + ': no slipOf reaches the response', p.leak !== 'LEAKED',
+       'Checks::run must strip it before /v1 serialises the checks');
+  });
+}
+
+console.log('\n8. NOTHING FAILS SILENTLY');
 let threw = 0;
 const probes = cases.concat([
   ['empty', '', ''], ['junk', '???', 'x'],

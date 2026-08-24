@@ -2533,6 +2533,26 @@ final class Checks
        an unbalanced one is wrong before anyone asks which account it hit.
        Registering the kind without adding it here left it reporting
        "a step does not hold" on an answer that was simply wrong. */
+        /* ---------- THE ONE TIER BETWEEN GREEN AND RED ----------
+           A student wrote a complete, correct classification of x²+y²−5xy=25 —
+           all three families, the jump map right, the descent argued — and
+           mistyped one pair out of nine. The badge said VERIFICATION FAILED, in
+           the same red as an answer wrong from its first line.
+
+           PRESENTATION AND NOTHING ELSE. $r['state'] does not move: it stays
+           disputed, the answer still must not be copied, and /v1 returns exactly
+           what it always returned — the field computed here is not in ok_out's
+           list, and slipOf is stripped from the checks below.
+
+           WHAT IT REFUSES TO SOFTEN is the design. It needs a descent finding
+           that already carried the slip diagnosis — which itself requires a
+           sound construction, most of the answer inside the proved orbit, and a
+           near member to correct TO — and then every other failing check must be
+           the substitution of that same value. One unrelated failure of any kind
+           and it is null. A broken construction never reaches here at all,
+           because it never gets the slip diagnosis.
+
+           Mirrors correctionOnly() in index.html; parity compares the result. */
         $answerLevel = ['subst' => true, 'units' => true, 'integrity' => true, 'question' => true, 'claim' => true, 'primality' => true, 'truncated' => true, 'contradiction' => true, 'roots' => true, 'domain' => true, 'exhaust' => true, 'system' => true, 'deriv' => true, 'integral' => true, 'books' => true, 'descent' => true, 'pell' => true];
 
         /* A question with no answer is its own outcome, and flattening it into
@@ -2634,8 +2654,40 @@ final class Checks
                 || $traceState === 'VERIFIED') $overall = 'PARTIALLY_VERIFIED';
         else                                   $overall = 'NOT_VERIFIED';
 
+        /* The presentation tier. Computed here so both engines derive it from
+           the same checks, and compared by parity — a site that softens a badge
+           the API still calls a flat failure is the disagreement that matters
+           most, because a student and a teacher would be reading two different
+           verdicts on one answer. */
+        $correction = null;
+        if ($state === 'disputed') {
+            $slip = null;
+            foreach ($checks as $ck)
+                if (($ck['kind'] ?? '') === 'descent' && ($ck['ok'] ?? true) === false
+                    && !empty($ck['slipOf'])) { $slip = $ck; break; }
+            if ($slip !== null) {
+                $correction = $slip;
+                foreach ($checks as $ck) {
+                    if (($ck['ok'] ?? true) !== false || !empty($ck['soft'])) continue;
+                    if (($ck['kind'] ?? '') === 'descent' && !empty($ck['slipOf'])) continue;
+                    /* the only other failure this tier tolerates is the
+                       substitution of the very value the descent corrected */
+                    if (($ck['kind'] ?? '') === 'subst'
+                        && strpos((string)$ck['text'], (string)$slip['slipOf']) !== false) continue;
+                    $correction = null; break;
+                }
+            }
+        }
+        /* slipOf has done its job. Stripping it keeps /v1's checks array byte
+           identical to every release before this one. */
+        $strip = static function (array $list): array {
+            foreach ($list as $i => $ck) { unset($ck['slipOf']); $list[$i] = $ck; }
+            return $list;
+        };
+
         return [
             'state'   => $state,
+            'correction' => $correction === null ? null : (string)$correction['slipOf'],
             'trust'   => [
                 'question'   => 'QUESTION_' . $question,
                 'arithmetic' => 'ARITHMETIC_' . $arithmetic,
@@ -2652,7 +2704,7 @@ final class Checks
                still REACH the receipt. Building this from failed+passed alone
                dropped them entirely, so the API counted a presentation note in
                'checked' and then never showed it. */
-            'checks'  => array_merge($failed, $passed, $advisory),
+            'checks'  => $strip(array_merge($failed, $passed, $advisory)),
         ];
     }
 }

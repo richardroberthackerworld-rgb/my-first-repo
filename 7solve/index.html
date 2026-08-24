@@ -1860,6 +1860,13 @@ footer{
    because this text has to be read on its own tint. */
 .verif.disputed{background:var(--err-tint);border-color:#f6c9d8;color:var(--err-ink)}
 
+/* THE ONE TIER BETWEEN VERIFIED AND FAILED. A correct method with a mistyped
+   value is not a failed method, and it must not wear the alarm colour — but it
+   is not green either, because the answer as written still contains a wrong
+   number. It takes the warning weights, which is what "there is something here
+   to fix" already looks like everywhere else on this page. */
+.verif.corrected{background:var(--warn-tint);border-color:#f0dcb0;color:var(--warn-ink)}
+
 /* The receipt: what ran, in one line per check. Written only when something
    actually ran, so an empty list means the row is not on the page at all. */
 .verif-note li.note .m{color:var(--muted,#8a8f98)}.verif-note li.note{opacity:.85}
@@ -17450,6 +17457,11 @@ var Verify = (function(){
             '. Every genuine solution lies in the orbit of ' + rootList +
             ' under the Vieta jumps, and this one does not — which usually means the jump map ' +
             'itself is wrong, not the arithmetic that followed it',
+        /* The slipped value, structured. The badge tier below has to know WHICH
+           value the slip was, so it can tell a substitution that failed for that
+           same value from one that failed for any other reason — and reading it
+           back out of the sentence would make the badge depend on wording. */
+        slipOf: slip ? fmtT(bogus) : null,
         fix: slip
           ? 'Your classification is correct — keep it exactly as it is. One listed value is ' +
             'wrong: ' + fmtT(bogus) + ' should be ' + fmtT(near) + '. Correct that single ' +
@@ -20736,6 +20748,47 @@ var Verify = (function(){
   }
 
   /* ---------- the report ---------- */
+  /* ---------- THE ONE TIER BETWEEN GREEN AND RED ----------
+     A student wrote a complete, correct classification of x²+y²−5xy=25 —
+     all three families, the jump map right, the descent argued — and mistyped
+     one pair out of nine. The badge said VERIFICATION FAILED, in the same red
+     as an answer that is wrong from the first line.
+
+     That is a lie about their work, and it is the kind of lie that teaches a
+     student to stop reading the badge.
+
+     THIS IS PRESENTATION AND NOTHING ELSE. `state` does not move: it stays
+     `disputed`, the answer still must not be trusted or copied, and /v1
+     returns exactly what it always returned. The same thing was done for a
+     truncated reply a few releases ago, for the same reason and in the same
+     place — the verdict is the engine's, the wording is the student's.
+
+     WHAT IT REFUSES TO SOFTEN is the whole design. The tier needs a descent
+     finding that already carried the slip diagnosis — which itself requires a
+     correct construction, most of the answer landing inside the proved orbit,
+     and a near member to correct TO — and then it requires that EVERY other
+     failing check is the substitution of that same value. One unrelated
+     failure of any kind and the badge is red again. A broken construction
+     never reaches here at all, because it never gets the slip diagnosis. */
+  function correctionOnly(all){
+    var slip = null, i, c;
+    for(i = 0; i < all.length; i++){
+      c = all[i];
+      if(c && c.kind === 'descent' && c.ok === false && c.slipOf){ slip = c; break; }
+    }
+    if(!slip) return null;
+    for(i = 0; i < all.length; i++){
+      c = all[i];
+      if(!c || c.ok !== false || c.soft) continue;
+      if(c === slip) continue;
+      /* the only other failure this tier tolerates is the substitution of the
+         very value the descent has already identified and corrected */
+      if(c.kind === 'subst' && String(c.text).indexOf(slip.slipOf) >= 0) continue;
+      return null;
+    }
+    return slip;
+  }
+
   function run(question, md){
     /* Strip LaTeX from BOTH sides ONCE, here, exactly as Checks::run does.
        It used to be done by whichever checker remembered to — substitution,
@@ -21026,6 +21079,8 @@ var Verify = (function(){
     var evidenceOnly = passedProofs.length > 0 && !completeProved &&
                        passedProofs.some(function(c){ return c.needsComplete === true; });
 
+    var correction = null;
+
     if(invalidQuestion)            state = 'invalid_question';
     else if(failedAnswer.length)   state = 'disputed';       // ✗ the ANSWER does not hold
     else if(failedWorking.length)  state = 'stepfail';       // ⚠ a line of the working is wrong
@@ -21040,7 +21095,11 @@ var Verify = (function(){
     else if(hasSteps)              state = 'explained';
     else                           state = 'plain';
 
-    return { state:state, checks:checks, passed:passed, failed:failed,
+    /* Computed only for a disputed answer, and it never changes state — it is
+       the presentation tier and nothing more. */
+    if(state === 'disputed') correction = correctionOnly(checks);
+
+    return { state:state, correction:correction, checks:checks, passed:passed, failed:failed,
              failedProofs:failedProofs, passedProofs:passedProofs,
              failedAnswer:failedAnswer, failedWorking:failedWorking, advisory:advisory,
              hasSteps:hasSteps, numeric:numeric };
@@ -21059,6 +21118,10 @@ var Verify = (function(){
               positiveBound and growthBound are: they ARE the proof, and a test
               that can only see the sentence the proof produced cannot tell a
               real bound from a plausible-sounding one. */
+           /* correctionOnly is exported for the same reason terminalBox is: it
+              decides which of three badges a student sees, and a test that can
+              only observe the badge cannot drive the cases it must REFUSE. */
+           correctionOnly:correctionOnly,
            terminalBox:terminalBox, stripHasNothing:stripHasNothing,
            answerClaimZone:answerClaimZone,
            positiveBound:positiveBound, polyExpand:polyExpand,
@@ -21175,8 +21238,36 @@ function paintVerif(md){
 
        If anything else failed too, the answer really is wrong and the original
        wording stands. */
-    var cutOff = r.failed.length > 0 && r.failed.every(function(c){ return c.kind === 'truncated'; });
-    if(cutOff){
+    /* A CORRECT METHOD WITH ONE MISTYPED VALUE IS NOT A FAILED METHOD.
+       Same argument as the cut-off reply directly above, and the same handling.
+
+       An answer classified x² + y² − 5xy = 25 completely and correctly — all
+       three families, the jump map right, the descent argued, eight of nine
+       pairs genuine — and mistyped (77,368) for (77,369). It got
+       "✗ Verification failed", in the same red as an answer wrong from its
+       first line, and the words told the student their mathematics did not
+       hold. It did. One number was typed wrong.
+
+       `state` does not move. The answer still must not be copied as it stands,
+       `disputed` is what the receipt and /v1 carry, and every rule that
+       produced that verdict is untouched. What changes is which of three things
+       the badge says, and the engine already decided which: r.correction is set
+       only when the descent diagnosed a slip — which needs a sound construction
+       and a proved orbit to correct against — and every other failing check is
+       the substitution of that same value. Anything else at all and this is
+       skipped and the red badge stands. */
+    var corrected = r.correction || null;
+    var cutOff = !corrected && r.failed.length > 0 &&
+                 r.failed.every(function(c){ return c.kind === 'truncated'; });
+    if(corrected){
+      label = '⚠ Verified with one correction'; cls = 'verif corrected';
+      /* Built from the diagnosis rather than re-derived: the sentence the engine
+         already wrote names the value it corrected TO, and two readers of the
+         same fact drift. */
+      var to = String(corrected.text).match(/gives ([^,]+?), which does/);
+      title = 'Verified with one correction: ' + corrected.slipOf + ' should be ' +
+              (to ? to[1].trim() : 'the value the jump gives') + '. Your method is sound.';
+    } else if(cutOff){
       label = '⚠ This answer is cut off'; cls = 'verif unchecked';
       title = 'Everything that could be checked in this answer held up — the failure is that ' +
               'the reply stops before it finishes. Ask again, or ask it to continue from where ' +

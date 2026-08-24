@@ -2094,6 +2094,130 @@ for (const [name, line, counts] of [
         !!d && /slip in one number/.test(d.text) ? 'EXCUSED' : 'not excused', 'not excused');
 }
 
+/* ============================================================
+   24. THE ONE TIER BETWEEN VERIFIED AND FAILED
+   ------------------------------------------------------------
+   A correct method with a mistyped value wore the same red badge as an answer
+   that is wrong from its first line, and the same words: "7Solve checked this
+   answer and it did not hold." It did hold. One number was typed wrong.
+
+   The tier is PRESENTATION. state stays disputed, the receipt is unchanged,
+   /v1 returns what it always returned, and no verification rule moved. What
+   moved is which of three things the badge says.
+
+   Everything below is about what it REFUSES to soften, because a tier that
+   let a wrong answer look nearly right would be worse than the red badge it
+   replaces.
+   ============================================================ */
+const SLIP_Q = 'Find all positive integers x, y with x^2 + y^2 - 5xy = 25';
+const SLIP_A =
+  '## ✅ Final Answer\n' +
+  'All positive integer solutions of x^2 + y^2 - 5xy = 25 are obtained by repeatedly applying ' +
+  'the Vieta-jump to the three minimal solutions (1,8), (3,16), (5,25).\n' +
+  'The first few are (1,8), (3,16), (5,25), (8,39), (16,77), (25,120), (39,187), (77,368), (120,575), and so on.\n' +
+  '\n## 📖 Steps\n1. As a quadratic in x: x^2 - 5yx + (y^2 - 25) = 0, so the other root is 5y - x.\n' +
+  '2. The minimal pairs are (1,8), (3,16), (5,25).';
+
+/* ---- the four verdicts the tier has to keep apart ---- */
+{
+  /* 1. a genuine slip → YELLOW */
+  const slip = V.run(SLIP_Q, SLIP_A);
+  check('tier', 'a genuine slip keeps the disputed VERDICT', slip.state, 'disputed',
+        'the tier is presentation; the answer still must not be copied as written');
+  check('tier', 'and is marked as a correction', !!slip.correction, true);
+  check('tier', 'naming the value that slipped',
+        slip.correction ? slip.correction.slipOf : 'NONE', '(x,y) = (77,368)');
+
+  /* 2. a genuinely broken method → RED, never yellow */
+  const broken = V.run('Find all positive integers x,y,z with x^2+y^2+z^2=3xyz.',
+                       '## ✅ Answer\nAll solutions arise from (1,2,3) by Vieta jumping.');
+  check('tier', 'a broken construction stays disputed', broken.state, 'disputed');
+  check('tier', 'and is NEVER softened to a correction', broken.correction, null,
+        'this is the failure the descent engine exists to catch');
+
+  /* 3. a fully correct answer → GREEN, and the tier does not touch it */
+  const good = V.run('Find all positive integers x, y, z with x^2 + y^2 + z^2 = xyz',
+                     '## ✅ Answer\nEvery solution is obtained from (3,3,3) by the jumps; ' +
+                     'for example (3,3,6), (3,6,15), (6,15,87). The family continues forever.');
+  check('tier', 'a correct classification is still verified', good.state, 'checked');
+  check('tier', 'and carries no correction', good.correction, null,
+        'nothing needs fixing, so nothing may be offered as needing fixing');
+
+  /* 4. a false completeness claim → RED */
+  const wrong = V.run('x^2+y^2+z^2=xyz',
+                      '## ✅ Final Answer\n(x, y, z) = (3, 3, 3)\n\n## 📖 Steps\n' +
+                      '12. Conclusion – The only positive integer triple satisfying the original equation is (3,3,3).');
+  check('tier', 'a false claim of completeness stays disputed', wrong.state, 'disputed');
+  check('tier', 'and is NEVER softened to a correction', wrong.correction, null);
+}
+
+/* WHAT THE TIER REFUSES, WHICH IS THE WHOLE DESIGN.
+   correctionOnly needs a descent finding that already carried the slip
+   diagnosis — which itself needs a sound construction, most of the answer
+   inside the proved orbit, and a near member to correct TO — AND every other
+   failing check must be the substitution of that same value. One unrelated
+   failure of any kind and the badge is red again. These drive that guard
+   directly, because a tier that leaked would be worse than the red badge it
+   replaces. */
+{
+  const C_ = (report) => report.correction;
+
+  /* a second, unrelated wrong value alongside the slip */
+  const two = V.run(SLIP_Q, SLIP_A.replace('(120,575), and so on', '(120,575), (7,7), and so on'));
+  check('tier', 'a SECOND wrong value is not a correction', C_(two), null,
+        'state=' + two.state + ' [' + two.checks.filter((c) => !c.ok).map((c) => c.kind).join(',') + ']');
+
+  /* an unrelated failing check of another kind, on an otherwise slipping answer */
+  const hand = { state: 'disputed', checks: [
+    { kind: 'descent', ok: false, slipOf: '(x,y) = (77,368)', text: 'slip in one number' },
+    { kind: 'subst',   ok: false, text: '(x,y) = (77,368) in ... gives -327 ≠ 25' },
+  ] };
+  check('tier', 'the shape the tier is built for is recognised',
+        !!V.correctionOnly(hand.checks), true);
+  for (const extra of [
+    { kind: 'units',     ok: false, text: 'the answer is in newtons' },
+    { kind: 'integrity', ok: false, text: 'the working restates the question wrongly' },
+    { kind: 'arith',     ok: false, text: '2 + 2 = 5' },
+    { kind: 'subst',     ok: false, text: '(x,y) = (8,39) in ... gives 0 ≠ 25' },
+    { kind: 'roots',     ok: false, text: 'a root is missing' },
+  ]) {
+    check('tier', 'a failing ' + extra.kind + ' alongside the slip forces red',
+          V.correctionOnly(hand.checks.concat([extra])), null, JSON.stringify(extra.text));
+  }
+  /* an ADVISORY failure must not force red — it never decides a verdict anywhere else */
+  check('tier', 'a soft advisory note alongside the slip is tolerated',
+        !!V.correctionOnly(hand.checks.concat([{ kind: 'method', ok: false, soft: true, text: 'note' }])),
+        true, 'advisory notes are context, not verdicts');
+  /* a descent failure WITHOUT the slip marker is a broken method, not a slip */
+  check('tier', 'a descent failure with no slipOf is not a correction',
+        V.correctionOnly([{ kind: 'descent', ok: false, text: 'the jump map is wrong' }]), null);
+}
+
+/* THE BADGE ITSELF. paintVerif is DOM code and cannot run in this sandbox, so
+   the branch is pinned against the source — the same way the solve-path wiring
+   is, and for the same reason: an engine that computes the tier and a badge
+   that never reads it would pass every case above. */
+{
+  const pv = html.indexOf('function paintVerif(md){');
+  const body = pv >= 0 ? html.slice(pv, pv + 12000) : '';
+  check('tier', 'the badge reads the tier the engine computed',
+        /var corrected = r\.correction \|\| null;/.test(body) ? 'wired' : 'NOT WIRED', 'wired');
+  check('tier', 'and renders its own class, not the red one',
+        /label = '⚠ Verified with one correction'; cls = 'verif corrected';/.test(body) ? 'yes' : 'NO', 'yes');
+  check('tier', 'and says the method is sound',
+        /Your method is sound\./.test(body) ? 'yes' : 'NO', 'yes');
+  check('tier', 'and names both the wrong value and the right one',
+        /corrected\.slipOf \+ ' should be '/.test(body) ? 'yes' : 'NO', 'yes');
+  check('tier', 'the corrected class exists in the stylesheet',
+        /\.verif\.corrected\{/.test(html) ? 'yes' : 'NO', 'yes');
+  check('tier', 'and it is NOT the green class',
+        /\.verif\.corrected\{[^}]*background:var\(--ok-tint\)/.test(html) ? 'GREEN' : 'not green', 'not green',
+        'only a checked answer may look verified');
+  check('tier', 'the tier never reaches a non-disputed state',
+        /if\(state === 'disputed'\) correction = correctionOnly\(checks\);/.test(html) ? 'guarded' : 'UNGUARDED',
+        'guarded', 'a green or unchecked answer must never acquire a correction');
+}
+
 /* ---------- report ---------- */
 if (bad.length) {
   console.log('\nADVERSARIAL FAILED — ' + bad.length + ' of ' + ran + ' attacks got through\n');

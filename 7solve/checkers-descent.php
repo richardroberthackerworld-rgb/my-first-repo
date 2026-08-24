@@ -666,7 +666,14 @@ final class Descent
                 if ($same === $k - 1 && $diff < $nearDiff) { $nearDiff = $diff; $near = $cand; }
             }
             $slip = ($near !== null && $real > 2);
+            /* The slipped value, structured. The badge tier needs to know WHICH
+               value it was, so it can tell a substitution that failed for that
+               same value from one that failed for any other reason — and reading
+               it back out of the sentence would make the badge depend on wording.
+               Checks::run strips it again before the response is built, so /v1
+               returns exactly what it always returned. */
             return [['kind' => 'descent', 'ok' => false,
+                'slipOf' => $slip ? self::fmtTuple($vars, $bogus) : null,
                 'text' => $slip
                     ? 'the classification is right and one of the values in it is not. '
                       . self::fmtTuple($vars, $bogus) . ' does not satisfy ' . $src . ' — the jump from the pair '
