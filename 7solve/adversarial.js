@@ -2208,6 +2208,44 @@ const SLIP_A =
         /Your method is sound\./.test(body) ? 'yes' : 'NO', 'yes');
   check('tier', 'and names both the wrong value and the right one',
         /corrected\.slipOf \+ ' should be '/.test(body) ? 'yes' : 'NO', 'yes');
+  /* and takes the corrected value from the FIELD. The sentence assembled below
+     would read correctly even if the badge itself had gone back to a fallback
+     string, so the badge's own expression is pinned as well. */
+  check('tier', 'and takes the corrected value from the field',
+        /\(corrected\.slipTo \|\| /.test(body) ? 'yes' : 'NO', 'yes');
+
+  /* THE SENTENCE ITSELF, BUILT THE WAY paintVerif BUILDS IT.
+     Everything above this pins the WIRING, and the wiring was fine: the badge
+     read the tier, rendered its own class, and reached for the corrected value.
+     It reached for it with /gives ([^,]+?), which does/ — and the value is
+     "(x,y) = (77,369)", which contains a comma. The match failed and the badge
+     told the student their pair "should be ?". The one sentence the tier exists
+     to show, with the number missing, live in production.
+
+     Nothing that only reads the source could have seen that. So the sentence is
+     assembled here from the same fields the badge uses and read back. */
+  {
+    const c = V.run(SLIP_Q, SLIP_A).correction;
+    const line = 'Verified with one correction: ' + (c && c.slipOf) +
+                 ' should be ' + (c && c.slipTo) + '. Your method is sound.';
+    check('tier', 'the badge sentence names the value that is wrong',
+          /\(x,y\) = \(77,368\) should be/.test(line), true, line);
+    check('tier', 'and the value it should be',
+          /should be \(x,y\) = \(77,369\)\./.test(line), true, line);
+    check('tier', 'and no placeholder survives into it',
+          /\?|undefined|null|the value the jump gives/.test(line) ? 'PLACEHOLDER' : 'clean',
+          'clean', line);
+    check('tier', 'the corrected value is a FIELD, not parsed out of the prose',
+          typeof (c && c.slipTo) === 'string' && c.slipTo.length > 3, true,
+          'a badge that parses a sentence changes when the sentence is reworded');
+    check('tier', 'and it really is a solution, unlike the one it replaces',
+          (function () {
+            const n = (t) => (String(t).match(/\((-?\d+),\s*(-?\d+)\)\s*$/) || []).slice(1).map(Number);
+            const f = (x, y) => x * x + y * y - 5 * x * y;
+            const to = n(c && c.slipTo), of = n(c && c.slipOf);
+            return to.length === 2 && f(to[0], to[1]) === 25 && f(of[0], of[1]) !== 25;
+          })(), true);
+  }
   check('tier', 'the corrected class exists in the stylesheet',
         /\.verif\.corrected\{/.test(html) ? 'yes' : 'NO', 'yes');
   check('tier', 'and it is NOT the green class',

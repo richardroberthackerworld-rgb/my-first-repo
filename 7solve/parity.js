@@ -882,12 +882,15 @@ function runPhp(payload) {
             $sig[] = $mark;
         }
         sort($sig);
-        $tier = $r['correction'] === null ? '' : '|corrected';
+        $tier = $r['correction'] === null ? '' : '|corrected:' . $r['correction'];
         /* slipOf exists so the badge tier can match a substitution to the value
            the descent corrected. It is presentation scaffolding and /v1 has
            never carried it, so Checks::run strips it again before returning —
            and this is what proves the strip is still there. */
-        foreach ($r['checks'] as $ck) if (array_key_exists('slipOf', $ck)) $tier .= '|LEAKED-slipOf';
+        foreach ($r['checks'] as $ck) {
+            if (array_key_exists('slipOf', $ck)) $tier .= '|LEAKED-slipOf';
+            if (array_key_exists('slipTo', $ck)) $tier .= '|LEAKED-slipTo';
+        }
         $out['verdicts'][] = ['state' => $r['state'], 'n' => $r['checked'],
                               'sig' => implode(',', $sig) . $tier];
     }
@@ -2102,7 +2105,8 @@ function norm(v) {
        and their teacher would be reading two different verdicts on one answer. */
     const sig = checks.map((x) => x.kind + (x.ok ? '+' : '-') +
       (x.kind === 'descent' && /slip in one number/.test(String(x.text)) ? ':slip' : ''))
-      .sort().join(',') + (r.correction ? '|corrected' : '');
+      .sort().join(',') +
+      (r.correction ? '|corrected:' + r.correction.slipOf + ' > ' + r.correction.slipTo : '');
     const js = { state: r.state, n: checks.length, sig };
     const ph = php.verdicts[i];
     contractPairs.push({ q: c.q, a: c.a, js: js.state, php: ph.state });

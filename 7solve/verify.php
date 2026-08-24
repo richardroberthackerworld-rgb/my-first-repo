@@ -2785,13 +2785,20 @@ final class Checks
         /* slipOf has done its job. Stripping it keeps /v1's checks array byte
            identical to every release before this one. */
         $strip = static function (array $list): array {
-            foreach ($list as $i => $ck) { unset($ck['slipOf']); $list[$i] = $ck; }
+            foreach ($list as $i => $ck) { unset($ck['slipOf'], $ck['slipTo']); $list[$i] = $ck; }
             return $list;
         };
 
         return [
             'state'   => $state,
-            'correction' => $correction === null ? null : (string)$correction['slipOf'],
+            /* Both values, so parity compares the pair the badge will SHOW and not
+               merely that a correction exists. The badge read "(77,368) should be ?"
+               in production — it recovered the corrected value by matching
+               /gives ([^,]+?), which does/ against the diagnosis, and the value it
+               was looking for contains a comma — while every check that only asked
+               whether a correction existed stayed green. */
+            'correction' => $correction === null ? null
+                : (string)$correction['slipOf'] . ' > ' . (string)($correction['slipTo'] ?? ''),
             'trust'   => [
                 'question'   => 'QUESTION_' . $question,
                 'arithmetic' => 'ARITHMETIC_' . $arithmetic,

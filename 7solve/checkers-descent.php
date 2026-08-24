@@ -674,6 +674,7 @@ final class Descent
                returns exactly what it always returned. */
             return [['kind' => 'descent', 'ok' => false,
                 'slipOf' => $slip ? self::fmtTuple($vars, $bogus) : null,
+                'slipTo' => $slip ? self::fmtTuple($vars, $near) : null,
                 'text' => $slip
                     ? 'the classification is right and one of the values in it is not. '
                       . self::fmtTuple($vars, $bogus) . ' does not satisfy ' . $src . ' — the jump from the pair '
