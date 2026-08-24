@@ -365,6 +365,18 @@ const VERDICTS = [
   ],
   ['Solve x^2-5x+6=0',
    '## ✅ Final Answer\nx = 2\n\n## 📖 Steps\n1. Case x > 0: the only solution is x = 2.'],
+  /* A correct classification with one mistyped pair. Both engines must reach
+     the same verdict AND the same diagnosis — an API that calls the method
+     broken while the site calls it a typo is the disagreement that matters. */
+  ['Find all positive integers x, y with x^2 + y^2 - 5xy = 25',
+      '## ✅ Final Answer\n' +
+      'All positive integer solutions of x^2 + y^2 - 5xy = 25 are obtained by repeatedly applying ' +
+      'the Vieta-jump to the three minimal solutions (1,8), (3,16), (5,25).\n' +
+      'The first few are (1,8), (3,16), (5,25), (8,39), (16,77), (25,120), (39,187), (77,368), (120,575), and so on.\n' +
+      '\n## 📖 Steps\n1. As a quadratic in x: x^2 - 5yx + (y^2 - 25) = 0, so the other root is 5y - x.\n' +
+      '2. Jumping the larger coordinate strictly decreases it, so the descent terminates.\n' +
+      '3. The minimal pairs are (1,8), (3,16), (5,25), and every solution descends to one of them.'
+  ],
   ['Simplify 2/3 + 1/3',   '## ✅ Answer\n2/3 + 1/3 = 1'],
   ['Simplify 2/3 + 1/3',   '## ✅ Answer\n2/3 + 1/3 = 2'],
   ['Find P',               '## ✅ Answer\nP = 4/36 = 1/9'],
@@ -825,8 +837,19 @@ function runPhp(payload) {
            can report invalid_question with one check while disagreeing about
            whether that check PASSED — which is the difference between telling
            a student their answer was right and telling them it was wrong. */
+        /* descent carries one more thing worth comparing: WHICH fault it found.
+           "one listed value is a typo, the method is sound" and "the jump map
+           itself is probably wrong" are the same kind, the same ok, and opposite
+           instructions to a student — one says change a digit, the other says
+           rebuild the proof. A PHP that drifted between them was invisible here
+           until this went in. */
         $sig = [];
-        foreach ($r['checks'] as $ck) $sig[] = $ck['kind'] . ($ck['ok'] ? '+' : '-');
+        foreach ($r['checks'] as $ck) {
+            $mark = $ck['kind'] . ($ck['ok'] ? '+' : '-');
+            if ($ck['kind'] === 'descent' && strpos((string)$ck['text'], 'slip in one number') !== false)
+                $mark .= ':slip';
+            $sig[] = $mark;
+        }
         sort($sig);
         $out['verdicts'][] = ['state' => $r['state'], 'n' => $r['checked'],
                               'sig' => implode(',', $sig)];
@@ -2027,7 +2050,9 @@ function norm(v) {
        gets compared, in both languages. */
     const r = V.run(c.q, c.a);
     const checks = (r.checks || []).filter((x) => !JS_ONLY[x.kind]);
-    const sig = checks.map((x) => x.kind + (x.ok ? '+' : '-')).sort().join(',');
+    const sig = checks.map((x) => x.kind + (x.ok ? '+' : '-') +
+      (x.kind === 'descent' && /slip in one number/.test(String(x.text)) ? ':slip' : ''))
+      .sort().join(',');
     const js = { state: r.state, n: checks.length, sig };
     const ph = php.verdicts[i];
     contractPairs.push({ q: c.q, a: c.a, js: js.state, php: ph.state });

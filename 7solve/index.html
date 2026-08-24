@@ -17411,12 +17411,52 @@ var Verify = (function(){
              proof, fix:handover }];
     }
 
-    /* ---- a claimed solution that is not one ---- */
-    if(bogus) return [{ kind:'descent', ok:false,
-      text:'the answer puts forward ' + fmtT(bogus) + ', which does not satisfy ' + src +
-           '. Every genuine solution lies in the orbit of ' + rootList +
-           ' under the Vieta jumps, and this one does not — which usually means the jump map ' +
-           'itself is wrong, not the arithmetic that followed it', fix:handover }];
+    /* ---- a claimed solution that is not one ----
+       TWO VERY DIFFERENT FAULTS LOOK THE SAME HERE, and saying the wrong one is
+       worse than saying nothing. A reported answer classified x²+y²−5xy=25
+       perfectly — all three families, the jump map x' = 5y − x exactly right,
+       eight of its nine listed pairs correct — and then wrote (77,368) where the
+       jump gives (77,369). One digit.
+
+       The message it got was that the jump map is probably wrong. That is the
+       diagnosis for an answer whose whole construction is broken, and telling a
+       student their correct method is suspect because of a typo sends them back
+       to rebuild something that was already right.
+
+       So the two are separated by what the rest of the answer did. If most of
+       what it listed IS in the orbit, the construction is working and this is a
+       slip — and the engine has the orbit, so it can say which value was meant
+       rather than only that this one is wrong. */
+    if(bogus){
+      var bsorted = sortedTuple(bogus), near = null, nearDiff = Infinity, oi, oj;
+      for(oi = 0; oi < orb.set.length; oi++){
+        var cand = orb.set[oi], same = 0, diff = 0;
+        for(oj = 0; oj < k; oj++){
+          if(cand[oj] === bsorted[oj]) same++;
+          else diff += Math.abs(cand[oj] - bsorted[oj]);
+        }
+        /* every coordinate but one already agrees: this is the pair it meant */
+        if(same === k - 1 && diff < nearDiff){ nearDiff = diff; near = cand; }
+      }
+      var slip = near && real >= 2 && real > 2;
+      return [{ kind:'descent', ok:false,
+        text: slip
+          ? 'the classification is right and one of the values in it is not. ' +
+            fmtT(bogus) + ' does not satisfy ' + src + ' — the jump from the pair before it ' +
+            'gives ' + fmtT(near) + ', which does. Every other solution the answer lists is ' +
+            'genuine and lies in the orbit of ' + rootList + ', so the method is sound and ' +
+            'this is a slip in one number, not a fault in the construction'
+          : 'the answer puts forward ' + fmtT(bogus) + ', which does not satisfy ' + src +
+            '. Every genuine solution lies in the orbit of ' + rootList +
+            ' under the Vieta jumps, and this one does not — which usually means the jump map ' +
+            'itself is wrong, not the arithmetic that followed it',
+        fix: slip
+          ? 'Your classification is correct — keep it exactly as it is. One listed value is ' +
+            'wrong: ' + fmtT(bogus) + ' should be ' + fmtT(near) + '. Correct that single ' +
+            'number and change nothing else. Do not re-derive the families, do not re-check ' +
+            'the jump map, and do not re-verify the pairs that were already right.'
+          : handover }];
+    }
 
     /* ---- everything checks out: this IS the classification ---- */
     if(real && !missing.length && (gen || !orb.infinite)){

@@ -2024,6 +2024,76 @@ for (const [name, line, counts] of [
         /HAS ALREADY COMPUTED THE ANSWER/.test(bare) ? 'INVENTED' : 'silent', 'silent');
 }
 
+/* ============================================================
+   23. A TYPO IS NOT A BROKEN METHOD
+   ------------------------------------------------------------
+   Reported from the live site, and the badge was right. The answer classified
+   x² + y² − 5xy = 25 completely and correctly: all three families, the jump
+   map x' = 5y − x exactly right, the descent argued properly, and eight of its
+   nine listed pairs genuine. Then it wrote (77,368) where the jump gives
+   (77,369). One digit. 5929 + 135424 − 141680 = −327.
+
+   Red is the right badge — a wrong pair in a list of solutions is something a
+   student copies down. What was wrong was the REASON:
+
+       "...which usually means the jump map itself is wrong, not the
+        arithmetic that followed it"
+
+   That is the diagnosis for an answer whose whole construction is broken, and
+   this construction was perfect. Telling a student their correct method is
+   suspect because of a typo sends them back to rebuild something that was
+   already right.
+
+   The two are told apart by what the rest of the answer did, and the engine
+   has the orbit — so it can name the value that was meant instead of only the
+   one that is wrong.
+   ============================================================ */
+{
+  const q = 'Find all positive integers x, y with x^2 + y^2 - 5xy = 25';
+  const r = V.run(q,
+    '## ✅ Final Answer\n' +
+    'All positive integer solutions of x^2 + y^2 - 5xy = 25 are obtained by repeatedly applying ' +
+    'the Vieta-jump to the three minimal solutions (1,8), (3,16), (5,25).\n' +
+    'The first few are (1,8), (3,16), (5,25), (8,39), (16,77), (25,120), (39,187), (77,368), (120,575), and so on.\n' +
+    '\n## 📖 Steps\n1. As a quadratic in x: x^2 - 5yx + (y^2 - 25) = 0, so the other root is 5y - x.\n' +
+    '2. Jumping the larger coordinate strictly decreases it, so the descent terminates.\n' +
+    '3. The minimal pairs are (1,8), (3,16), (5,25), and every solution descends to one of them.'
+  );
+  check('slip', 'a wrong pair in the list is still refused', CANON[r.state], 'disputed');
+  const d = (r.checks || []).filter((c) => c.kind === 'descent')[0];
+  check('slip', 'and it is called a slip, not a broken construction',
+        !!d && /slip in one number, not a fault in the construction/.test(d.text), true,
+        d ? d.text.slice(0, 200) : 'no descent finding');
+  check('slip', 'and the method is explicitly cleared',
+        !!d && /the method is sound/.test(d.text), true, d ? d.text.slice(0, 200) : '');
+  check('slip', 'and the jump map is NOT blamed',
+        !!d && /jump map/.test(d.text) ? 'BLAMED' : 'not blamed', 'not blamed',
+        d ? d.text.slice(0, 200) : '');
+  check('slip', 'and the value that was meant is named',
+        !!d && /\(77,369\)/.test(d.text), true, d ? d.text.slice(0, 240) : '');
+  const msg = C(r, q);
+  check('slip', 'the re-solve asks for one number to change and nothing else',
+        /should be \(x,y\) = \(77,369\)[\s\S]*change nothing else/.test(msg), true, msg.slice(0, 300));
+  check('slip', 'and tells it not to rebuild the families',
+        /Do not re-derive the families/.test(msg), true);
+}
+
+/* THE CONTROL, and it is the whole reason the two are separated. An answer
+   whose construction really IS broken must still get the harsher diagnosis —
+   otherwise this softening would excuse exactly the failures the descent engine
+   was built to catch. Here the family is built on a triple that is not a
+   solution at all, so nothing else in the answer stands to clear the method. */
+{
+  const r = V.run('Find all positive integers x,y,z with x^2+y^2+z^2=3xyz.',
+                  '## ✅ Answer\nAll solutions arise from (1,2,3) by Vieta jumping.');
+  const d = (r.checks || []).filter((c) => c.kind === 'descent')[0];
+  check('slip', 'a family built on a non-solution is still a broken construction',
+        !!d && /which usually means the jump map/.test(d.text), true,
+        d ? d.text.slice(0, 200) : 'no descent finding');
+  check('slip', 'and it is NOT excused as a slip',
+        !!d && /slip in one number/.test(d.text) ? 'EXCUSED' : 'not excused', 'not excused');
+}
+
 /* ---------- report ---------- */
 if (bad.length) {
   console.log('\nADVERSARIAL FAILED — ' + bad.length + ' of ' + ran + ' attacks got through\n');

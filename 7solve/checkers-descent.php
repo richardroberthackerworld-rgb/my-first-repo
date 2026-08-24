@@ -644,12 +644,40 @@ final class Descent
                         . $proof]];
         }
 
-        /* ---- a claimed solution that is not one ---- */
-        if ($bogus !== null) return [['kind' => 'descent', 'ok' => false,
-            'text' => 'the answer puts forward ' . self::fmtTuple($vars, $bogus) . ', which does not satisfy ' . $src
-                    . '. Every genuine solution lies in the orbit of ' . $rootList
-                    . ' under the Vieta jumps, and this one does not — which usually means the jump map '
-                    . 'itself is wrong, not the arithmetic that followed it']];
+        /* ---- a claimed solution that is not one ----
+           TWO VERY DIFFERENT FAULTS LOOK THE SAME HERE. A reported answer
+           classified x²+y²−5xy=25 perfectly — all three families, the jump map
+           x' = 5y − x exactly right, eight of its nine listed pairs correct — and
+           then wrote (77,368) where the jump gives (77,369). One digit.
+
+           It was told the jump map is probably wrong, which is the diagnosis for
+           an answer whose whole construction is broken. Telling a student their
+           correct method is suspect because of a typo sends them back to rebuild
+           something that was already right. */
+        if ($bogus !== null) {
+            $bsorted = self::sortedTuple($bogus);
+            $near = null; $nearDiff = INF;
+            foreach ($orb['set'] as $cand) {
+                $same = 0; $diff = 0;
+                for ($oj = 0; $oj < $k; $oj++) {
+                    if ((float)$cand[$oj] === (float)$bsorted[$oj]) $same++;
+                    else $diff += abs($cand[$oj] - $bsorted[$oj]);
+                }
+                if ($same === $k - 1 && $diff < $nearDiff) { $nearDiff = $diff; $near = $cand; }
+            }
+            $slip = ($near !== null && $real > 2);
+            return [['kind' => 'descent', 'ok' => false,
+                'text' => $slip
+                    ? 'the classification is right and one of the values in it is not. '
+                      . self::fmtTuple($vars, $bogus) . ' does not satisfy ' . $src . ' — the jump from the pair '
+                      . 'before it gives ' . self::fmtTuple($vars, $near) . ', which does. Every other solution the '
+                      . 'answer lists is genuine and lies in the orbit of ' . $rootList . ', so the method is sound '
+                      . 'and this is a slip in one number, not a fault in the construction'
+                    : 'the answer puts forward ' . self::fmtTuple($vars, $bogus) . ', which does not satisfy ' . $src
+                      . '. Every genuine solution lies in the orbit of ' . $rootList
+                      . ' under the Vieta jumps, and this one does not — which usually means the jump map '
+                      . 'itself is wrong, not the arithmetic that followed it']];
+        }
 
         /* ---- everything checks out: this IS the classification ---- */
         if ($real && !$missing && ($gen || !$orb['infinite'])) {
