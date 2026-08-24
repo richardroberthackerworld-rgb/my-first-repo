@@ -9910,6 +9910,87 @@ function showReading(ing){
                  ' — edit the box if that is not what you meant.';
 }
 
+/* WHAT TO TELL A MODEL THAT GOT IT WRONG, GIVEN WHAT IT GOT WRONG.
+   The re-solve instruction used to be one paragraph written for one failure:
+   a wrong VALUE. "Substitute it back into the original equation and show the
+   substitution. If a value fails, do not present it."
+
+   That is exactly the wrong thing to say about a completeness failure. The
+   answer that prompted this — "the only positive integer triple satisfying
+   x² + y² + z² = xyz is (3,3,3)" — substitutes back perfectly. (3,3,3) IS a
+   solution. Told to check its values again, the model checks them, finds them
+   correct, and returns the same answer. It did that repeatedly, and the
+   instruction was the reason: it was being asked to re-examine the one part of
+   its answer that was already right.
+
+   So the complaint now leads with guidance for the KIND of thing that failed,
+   and the counterexample the engine found comes first rather than buried in a
+   numbered list. */
+var RESOLVE_GUIDANCE = {
+  exhaust:
+    'Your VALUES are not the problem — they satisfy the equation. Your LIST is ' +
+    'incomplete: the solution named above also satisfies the question and is missing ' +
+    'from your answer. Do not re-verify the solutions you already gave; find the ones ' +
+    'you left out.\n' +
+    'If you used descent or Vieta jumping, check this specific step: a descent shows ' +
+    'the minimal element is AT LEAST some value. It does not show that every solution ' +
+    'CONTAINS that value, and it does not show the tree of solutions has one branch. ' +
+    'Reversing a descent from a base case reaches every solution only if you have ' +
+    'shown the descent from every solution reaches that base case.\n' +
+    'Either include the missing solution and everything it generates, or state plainly ' +
+    'that you cannot characterise the full solution set.',
+  domain:
+    'A value you gave satisfies the equation but not the DOMAIN the question set — ' +
+    'positive, non-negative, distinct, prime, or an ordering between the variables. ' +
+    'Re-read the restriction in the question and drop or replace any value that breaks ' +
+    'it. The arithmetic was never the issue.',
+  counter:
+    'A universal claim in your answer is FALSE, and the value that refutes it is named ' +
+    'above. One counterexample settles it. Either withdraw the claim, or restrict it to ' +
+    'the range where it actually holds and say what that range is.',
+  step:
+    'Your final value may be right; a LINE OF THE WORKING is not. The step named above ' +
+    'loses a solution — dividing by an expression that can be zero, or cancelling a ' +
+    'factor, drops the case where it vanishes. Redo that step, handle the dropped case ' +
+    'explicitly, and keep every solution the earlier line had.',
+  books:
+    'The entry does not balance. Every journal entry debits exactly what it credits, ' +
+    'whichever accounts you chose. Recompute both columns and correct the figures.',
+  unitconv:
+    'The UNITS do not follow from the working, or a conversion is wrong. Redo it in SI ' +
+    'base units and show the conversion factor you used. Remember that °C to K is an ' +
+    'offset of 273.15, not a multiplication.',
+  sequence:
+    'The sequence you named does not satisfy the recurrence you claim for it. Check the ' +
+    'recurrence against the terms you actually wrote, and check the indexing — a ' +
+    'subsequence of a familiar sequence is not that sequence.'
+};
+/* the order decides which guidance leads: the most specific diagnosis first */
+var RESOLVE_ORDER = ['exhaust', 'counter', 'domain', 'step', 'books', 'unitconv', 'sequence'];
+
+function resolveComplaint(report, question){
+  var failed = (report && report.failed) || [];
+  var lead = '';
+  for(var i = 0; i < RESOLVE_ORDER.length && !lead; i++){
+    if(failed.some(function(f){ return f.kind === RESOLVE_ORDER[i]; })) lead = RESOLVE_GUIDANCE[RESOLVE_ORDER[i]];
+  }
+  /* the default is the original wording, which is right for a wrong VALUE */
+  if(!lead){
+    lead = 'Solve the question again from the beginning.\n' +
+      'Before you state ANY solution, substitute it back into the original equation and ' +
+      'show that substitution. Before you state any transformation, apply it twice to a ' +
+      'known solution and show both results still satisfy the equation. If a value fails, ' +
+      'do not present it.';
+  }
+  return 'Your previous answer FAILED independent verification. These checks were run ' +
+    'against the original question by a separate engine, not by you. They are arithmetic ' +
+    'and substitution — not opinions, and not negotiable:\n\n' +
+    failed.map(function(f, i){ return (i + 1) + '. ' + f.text; }).join('\n') +
+    '\n\n' + lead +
+    '\nIf you cannot produce a correct answer, say so plainly instead of offering one ' +
+    'that fails these checks.\n\nORIGINAL QUESTION: ' + question;
+}
+
 /* ================= Solve flow ================= */
 async function solve(extraQuestion){
   if(state.busy) return;
@@ -10098,17 +10179,7 @@ async function solve(extraQuestion){
       if(st) st.textContent = report.state === 'stepfail'
         ? 'A step in that working does not hold — solving it again…'
         : 'That did not check out — solving it again…';
-      const complaint =
-        'Your previous answer FAILED independent verification. These checks were run ' +
-        'against the original question by a separate engine, not by you:\n\n' +
-        report.failed.map(function(f, i){ return (i + 1) + '. ' + f.text; }).join('\n') +
-        '\n\nThe checks are arithmetic and substitution — they are not opinions, and they ' +
-        'are correct. Solve the question again from the beginning.\n' +
-        'Before you state ANY solution, substitute it back into the original equation and ' +
-        'show that substitution. Before you state any transformation, apply it twice to a ' +
-        'known solution and show both results still satisfy the equation. If a value fails, ' +
-        'do not present it. If you cannot find a correct answer, say so plainly instead of ' +
-        'offering one that fails these checks.\n\nORIGINAL QUESTION: ' + qForCheck;
+      const complaint = resolveComplaint(report, qForCheck);
       try {
         const second = await getAnswer(complaint, state.imageData, {idem});
         second.text = deLatex(second.text);

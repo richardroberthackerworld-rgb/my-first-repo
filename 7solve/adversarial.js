@@ -79,6 +79,7 @@ function load() {
   const resume = cut('function resumePoint(text){', '\n}', 'resumePoint') + '\n}';
   const shape = 'var DOC_QUESTION_MAX = 6000;\n' +
     cut('function looksLikeQuestions(t){', '\n}', 'looksLikeQuestions') + '\n}';
+  const complain = cut('var RESOLVE_GUIDANCE = {', '/* ================= Solve flow ================= */', 'resolveComplaint');
   const verify = cut('var Verify = (function(){', '\n})();', 'the Verify module') + '\n})();';
   const sandbox = {
     window: {}, console, W: {}, $: () => null, state: {},
@@ -90,16 +91,17 @@ function load() {
     delat + '\nwindow.deLatex7 = deLatex;\n' +
     paste + '\nwindow.MathPaste = MathPaste;\n' +
     verify + '\nwindow.Verify = Verify;\n' +
-    ingest + '\nwindow.Ingest = Ingest;\n' + resume + '\n' + shape + '\n' +
-    'this.__V = Verify; this.__A = Verify.Algebra; this.__P = MathPaste; this.__L = deLatex; this.__I = Ingest; this.__R = resumePoint; this.__Q = looksLikeQuestions;',
+    ingest + '\nwindow.Ingest = Ingest;\n' + resume + '\n' + shape + '\n' + complain + '\n' +
+    'this.__V = Verify; this.__A = Verify.Algebra; this.__P = MathPaste; this.__L = deLatex; this.__I = Ingest; this.__R = resumePoint; this.__Q = looksLikeQuestions; this.__C = resolveComplaint;',
     sandbox, { timeout: 15000 });
   if (!sandbox.__V || !sandbox.__P || !sandbox.__I) throw new Error('the modules did not load');
   if (typeof sandbox.__R !== 'function') throw new Error('resumePoint did not load');
   if (typeof sandbox.__Q !== 'function') throw new Error('looksLikeQuestions did not load');
+  if (typeof sandbox.__C !== 'function') throw new Error('resolveComplaint did not load');
   return { V: sandbox.__V, A: sandbox.__A, P: sandbox.__P, deLatex: sandbox.__L, I: sandbox.__I,
-           R: sandbox.__R, Q: sandbox.__Q };
+           R: sandbox.__R, Q: sandbox.__Q, C: sandbox.__C };
 }
-const { V, A, P, deLatex, I, R, Q } = load();
+const { V, A, P, deLatex, I, R, Q, C } = load();
 
 /* Canonical outcome, per VERIFICATION-CONTRACT.md. */
 const CANON = {
@@ -1418,6 +1420,86 @@ for (const [name, q, ans] of NO_CLAIM) {
   check('phrasing', 'not held to completeness: ' + name,
         r.checks.some((c) => c.kind === 'exhaust' && !c.ok), false,
         'state=' + r.state + ' [' + r.checks.map((c) => c.kind + (c.ok ? '+' : '-')).join(',') + ']');
+}
+
+/* ============================================================
+   18. TELLING THE MODEL WHAT KIND OF THING IT GOT WRONG
+   ------------------------------------------------------------
+   The re-solve instruction was one paragraph written for one
+   failure — a wrong VALUE: "substitute it back and show the
+   substitution; if a value fails, do not present it."
+
+   That is the wrong thing to say about a completeness failure.
+   "The only positive integer triple satisfying x²+y²+z²=xyz is
+   (3,3,3)" substitutes back perfectly — (3,3,3) IS a solution.
+   Told to check its values again, the model checked them, found
+   them correct, and returned the same answer. Repeatedly. The
+   instruction was the reason.
+   ============================================================ */
+const COMPLAINTS = [
+  ['a completeness failure', 'exhaust',
+   'the answer presents its list as complete, but (x,y,z) = (3,3,6) also satisfies it',
+   [/Your LIST is incomplete/, /Do not re-verify the solutions you already gave/,
+    /AT LEAST some value/, /\(3,3,6\)/]],
+  ['a domain failure', 'domain', 'n = -2 is not positive',
+   [/not the DOMAIN the question set/, /The arithmetic was never the issue/]],
+  ['a refuted universal', 'counter', 'n = 40 gives 1681 = 41 x 41, which is not prime',
+   [/One counterexample settles it/]],
+  ['a broken step', 'step', 'the derivation breaks at step 2',
+   [/LINE OF THE WORKING/, /loses a solution/]],
+  ['an unbalanced entry', 'books', 'debits come to 50,000 and credits to 45,000',
+   [/debits exactly what it credits/]],
+  ['a unit that does not follow', 'unitconv', 'the units do not follow',
+   [/SI base units/, /273\.15/]],
+  ['a misnamed sequence', 'sequence', 'the terms do not satisfy a\(n\) = a\(n-1\) + a\(n-2\)',
+   [/check the indexing/]],
+];
+for (const [name, kind, text, wanted] of COMPLAINTS) {
+  const msg = C({ failed: [{ kind: kind, text: text }] }, 'Q?');
+  for (const re of wanted) {
+    check('resolve', name + ' → complaint says ' + String(re).slice(0, 38),
+          re.test(msg) ? 'said' : 'NOT SAID', 'said', msg.slice(0, 200));
+  }
+  check('resolve', name + ' → the failure text itself is included',
+        msg.indexOf(text.replace(/\\/g, '')) >= 0 || msg.indexOf(text) >= 0, true, msg.slice(0, 160));
+}
+
+/* And the solve path must actually USE it. The cases above call
+   resolveComplaint directly, so replacing the call site with a hard-coded
+   string leaves them all green — the third time that hole has appeared in
+   this suite, after stepChain, sigfigs and bookkeeping. Static, because the
+   call sits in the solve flow behind a live model call. */
+{
+  const q = String.fromCharCode(39);
+  const at = html.indexOf('report.state === ' + q + 'disputed' + q);
+  const body = at >= 0 ? html.slice(at, at + 2500) : '';
+  check('resolve', 'the re-solve calls resolveComplaint',
+        /const complaint = resolveComplaint\(report, qForCheck\);/.test(body) ? 'wired' : 'NOT WIRED',
+        'wired', 'the kind-aware complaint is built but never sent');
+  check('resolve', 'and the complaint is what gets re-asked',
+        /getAnswer\(complaint,/.test(body) ? 'sent' : 'NOT SENT', 'sent');
+}
+
+/* A WRONG VALUE still gets the original advice — that paragraph was never
+   wrong, it was only ever wrong as the ONLY thing the engine could say. */
+{
+  const msg = C({ failed: [{ kind: 'subst', text: 'x = 5 put back into 3x - 6 = 0 gives 9 != 0' }] }, 'Solve 3x - 6 = 0');
+  check('resolve', 'a wrong value still gets the substitution advice',
+        /substitute it back into the original equation/.test(msg) ? 'said' : 'NOT SAID', 'said');
+  check('resolve', 'and not the completeness advice',
+        /Your LIST is incomplete/.test(msg) ? 'WRONG ADVICE' : 'correct', 'correct');
+}
+
+/* The most specific diagnosis leads. An answer can fail several checks at
+   once, and being told to re-substitute when the real fault is an incomplete
+   list is what produced the same wrong answer three times over. */
+{
+  const msg = C({ failed: [
+    { kind: 'subst', text: 'something about a value' },
+    { kind: 'exhaust', text: '(3,3,6) is missing' },
+  ] }, 'Q?');
+  check('resolve', 'completeness guidance outranks the generic advice',
+        /Your LIST is incomplete/.test(msg) ? 'leads' : 'BURIED', 'leads', msg.slice(0, 200));
 }
 
 /* ---------- report ---------- */
