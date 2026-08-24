@@ -49,6 +49,7 @@ require_once __DIR__ . '/checkers-counterexample.php';
 require_once __DIR__ . '/checkers-stepchain.php';
 require_once __DIR__ . '/checkers-quantity.php';
 require_once __DIR__ . '/checkers-books.php';
+require_once __DIR__ . '/checkers-descent.php';
 require_once __DIR__ . '/calculus-phase1.php';
 
 final class Algebra
@@ -1880,7 +1881,7 @@ final class Checks
                 if (!preg_match($duty[0], $s)) $gaps[] = $duty[1];
             }
             if (count($gaps)) {
-                return [['kind' => 'claim', 'ok' => false, 'claimType' => $kind,
+                return [['kind' => 'claim', 'ok' => false, 'claimType' => $kind, 'viaDescent' => true,
                     'text' => 'the answer claims ' . $label . ' by descent, but the descent is not '
                             . 'established — it never shows ' . implode(', nor ', $gaps)
                             . '. A jump that produces smaller solutions proves nothing about '
@@ -2321,6 +2322,8 @@ final class Checks
                be PROVED finite, enumerates that region whole. It never reports a
                bounded search as a completeness proof. */
             Exhaustion::check($question, $body),
+            Descent::check($question, $body),
+            Descent::pell($question, $body),
             /* Sequence identification. "This is the Fibonacci sequence" is a
                claim, and 1, 1, 2, 5, 13 — every other Fibonacci number, which is
                what the Markov equation produces — is the case that makes it one
@@ -2350,6 +2353,69 @@ final class Checks
             Books::check($question, $body)
         );
 
+        /* ---- A PROVED DESCENT SETTLES THE PROSE COMPLAINT ABOUT THE DESCENT ----
+           The claim checker reads the words and asks whether the four obligations
+           of a descent were STATED. It says so itself: it establishes that the
+           reasoning is present, never that it is correct.
+
+           Descent::check does the opposite — it computes the partner, substitutes
+           it back, proves the box the terminals lie in and enumerates it. When
+           that comes back ok, the descent is established to a higher standard
+           than any wording would have reached, and holding the answer red for not
+           having spelled the same steps out is judging the write-up rather than
+           the mathematics.
+
+           Mirrors the same pass in index.html, and it has to: without it the site
+           certified an answer the API disputed, which is the one thing parity
+           exists to stop. */
+        /* ---- A PROVED CLASSIFICATION OUTRANKS THE SEARCH THAT GUESSED AT IT ----
+           Two findings below descentCheck are asking the same question with weaker
+           tools, and when the classification comes back proved they are not merely
+           redundant — they are WRONG, and they were turning a certified answer red.
+
+           claim (generates / exclusive) reads the prose for an argument. descent
+           supplied one, computed rather than read.
+
+           exhaust offers a witness it believes the answer left out. Its generative
+           rule is textual: a solution below the answer's largest listed value is
+           treated as a hole. For "every solution is obtained from (3,3,3) by the
+           jumps; for example (3,3,6), (3,6,15), (6,15,87)" it offered (3,15,39) —
+           which IS in that orbit, sits below 87, and was never left out at all.
+
+           descent certifies only when every terminal is reached by something the
+           answer put forward and every claimed tuple is a genuine solution. Under
+           those conditions the solution set IS the orbit, so any witness a bounded
+           search turns up is a member of it. The proof settles it.
+
+           Nothing here fires unless descent or pell came back ok. When they do not,
+           both findings dispute exactly as they did before. */
+        $proved = false;
+        foreach ($checks as $c)
+            if ((($c['kind'] ?? '') === 'descent' || ($c['kind'] ?? '') === 'pell')
+                && ($c['ok'] ?? false) === true) { $proved = true; break; }
+        if ($proved) {
+            foreach ($checks as $i => $c) {
+                if (($c['ok'] ?? true) !== false) continue;
+                $kind = $c['kind'] ?? '';
+                if ($kind === 'claim' && (!empty($c['viaDescent'])
+                        || ($c['claimType'] ?? '') === 'generates' || ($c['claimType'] ?? '') === 'exclusive')) {
+                    $checks[$i] = ['kind' => 'method', 'ok' => true,
+                        'text' => 'the write-up asserts the solution set without proving it — it never says that the '
+                                . 'second root is an integer, that it is smaller, or that the descent terminates. The '
+                                . 'engine established all three independently, so the answer is right; but a marker '
+                                . 'reading only what is written here would be entitled to ask for those lines'];
+                    continue;
+                }
+                if ($kind === 'exhaust') {
+                    $checks[$i] = ['kind' => 'method', 'ok' => true,
+                        'text' => 'a bounded search put forward a solution it took to be missing from the answer. The '
+                                . 'classification above proves the solution set is the whole orbit of the terminals, '
+                                . 'and that solution is in it — so nothing was left out, and the proved result stands '
+                                . 'over the search'];
+                }
+            }
+        }
+
         /* A soft check is advisory: it reports something worth telling the
            student that is NOT a mathematical fault — presentation, or a limit
            on what could be tested. It belongs in the receipt and nowhere near
@@ -2374,7 +2440,7 @@ final class Checks
        an unbalanced one is wrong before anyone asks which account it hit.
        Registering the kind without adding it here left it reporting
        "a step does not hold" on an answer that was simply wrong. */
-        $answerLevel = ['subst' => true, 'units' => true, 'integrity' => true, 'question' => true, 'claim' => true, 'primality' => true, 'truncated' => true, 'contradiction' => true, 'roots' => true, 'domain' => true, 'exhaust' => true, 'system' => true, 'deriv' => true, 'integral' => true, 'books' => true];
+        $answerLevel = ['subst' => true, 'units' => true, 'integrity' => true, 'question' => true, 'claim' => true, 'primality' => true, 'truncated' => true, 'contradiction' => true, 'roots' => true, 'domain' => true, 'exhaust' => true, 'system' => true, 'deriv' => true, 'integral' => true, 'books' => true, 'descent' => true, 'pell' => true];
 
         /* A question with no answer is its own outcome, and flattening it into
            "the answer is wrong" tells a student to try again at something
@@ -2412,7 +2478,14 @@ final class Checks
            that there are no more. */
         foreach ($passed as $c) {
             $k = $c['kind'] ?? '';
-            if ($k === 'roots' || $k === 'exhaust') { $completeProved = true; break; }
+            /* descent and pell join roots and exhaust, and they are the only two
+               that reach an INFINITE solution set: every solution descends to a
+               terminal, the terminals lie in a box that is proved rather than
+               searched, and the solution set is the union of their orbits. A
+               bounded search still may not discharge the flag — those two return
+               nothing at all unless the region came out of the leading-coefficient
+               argument and every open strip was cleared. */
+            if ($k === 'roots' || $k === 'exhaust' || $k === 'descent' || $k === 'pell') { $completeProved = true; break; }
         }
         $evidenceOnly = false;
         $CORROB = array_fill_keys(Capability::corroboratingKinds(), true);

@@ -304,10 +304,34 @@ const VERDICTS = [
    'Solve x^3-6x^2+11x-6=0',
    '## ✅ Final Answer\nx = 1, x = 2', 'disputed'],
 
-  /* ---- 5. DESCENT: named is not proved ---- */
-  ['descent', '"by Vieta jumping all solutions follow"',
+  /* ---- 5. DESCENT: named is not proved ----
+     THESE TWO CASES CHANGED VERDICT WHEN descentCheck LANDED, and the change is
+     the point of it rather than a weakening.
+
+     Both expectations were written when the only thing the engine could do with
+     a descent was read the words. "By Vieta jumping all solutions follow" was
+     disputed because the four obligations were unstated, and the answer that
+     stated them was merely left alone — the engine had no way to tell whether
+     the descent it described was the right one.
+
+     It can now. descentCheck computes the Vieta partner, substitutes it back,
+     proves the box every terminal lies in and enumerates it: for
+     x²+y²+z²=3xyz the only terminal is (1,1,1), so the solution set really is
+     its orbit and both answers really are correct.
+
+     Holding them red for not spelling out a proof the engine has already done
+     would be marking the write-up, not the mathematics. The prose complaint
+     survives as an advisory note — see 'method' in the receipt — so a student
+     is still told the three lines are missing. It just no longer decides the
+     badge. The wrong version of the same answer is one case below, and it is
+     still disputed. */
+  ['descent', '"by Vieta jumping" is now checked instead of taken on trust',
    'Find all positive integers x,y,z with x^2+y^2+z^2=3xyz.',
    '## ✅ Final Answer\nAll solutions arise from (1,1,1) by Vieta jumping.\n\n' +
+   '## 📖 Step-by-Step Solution\n1. By Vieta jumping all solutions follow.', 'verified'],
+  ['descent', 'and the same claim built on a NON-solution is still refused',
+   'Find all positive integers x,y,z with x^2+y^2+z^2=3xyz.',
+   '## ✅ Final Answer\nAll solutions arise from (1,2,3) by Vieta jumping.\n\n' +
    '## 📖 Step-by-Step Solution\n1. By Vieta jumping all solutions follow.', 'disputed'],
   ['descent', 'a descent that states its obligations is accepted',
    'Find all positive integers x,y,z with x^2+y^2+z^2=3xyz.',
@@ -317,7 +341,7 @@ const VERDICTS = [
    'root 3yz - x is an integer.\n' +
    '2. If x is the largest of the three, that second root is positive and strictly smaller.\n' +
    '3. A strictly decreasing sequence of positive integers is finite, so the descent ' +
-   'terminates; the base case is (1,1,1).', 'unverified'],
+   'terminates; the base case is (1,1,1).', 'verified'],
   ['descent', '"continuing this pattern gives the rest"',
    'Find all positive integer solutions.',
    '## ✅ Final Answer\nContinuing this pattern gives all solutions.', 'disputed'],
@@ -1391,14 +1415,24 @@ for (const [t, want] of CLAIMS) {
    (99,70) and then (577,408), which is outside the 300-wide box, so the
    search comes back empty and every substitution passes.
 
-   What stops a green badge there is needsComplete: a claim of completeness
-   means passing substitutions are evidence, not a verdict. Nothing else in
-   the engine is holding that line, so it is asserted on its own. */
+   What stopped a green badge there was needsComplete: a claim of completeness
+   means passing substitutions are evidence, not a verdict. Nothing else in the
+   engine was holding that line, so it is still asserted on its own below.
+
+   THE VERDICT ITSELF IS NOW STRONGER. pellCheck does not search a box — it
+   takes the fundamental unit (3,2) from the continued fraction of √2 and
+   climbs, so (577,408) is two multiplications away rather than outside a
+   window. The claim is not merely unproved any more; it is refuted, with the
+   solution that refutes it named. Disputed is a better answer than silence
+   and this expectation was raised to it deliberately. */
 {
   const r = V.run('Solve x^2 - 2y^2 = 1 in positive integers.', '## ✅ Answer\nThe only solutions are (3,2), (17,12) and (99,70).\n\n## 📖 Steps\n1. By induction, with base case (3,2), no others exist.');
-  check('phrasing', 'a correct-so-far list with an unproved completeness claim is NOT verified',
-        CANON[r.state], 'unverified',
+  check('phrasing', 'a correct-so-far list claiming completeness is now REFUTED, not just unproved',
+        CANON[r.state], 'disputed',
         'state=' + r.state + ' [' + r.checks.map((c) => c.kind + (c.ok ? '+' : '-')).join(',') + ']');
+  check('phrasing', 'and the refutation names the solution that breaks it',
+        r.checks.some((c) => c.kind === 'pell' && !c.ok && /577/.test(c.text)), true,
+        (r.checks.filter((c) => c.kind === 'pell')[0] || {}).text || 'no pell finding');
   check('phrasing', 'and its substitutions carry the completeness flag',
         r.checks.some((c) => c.kind === 'subst' && c.ok && c.needsComplete === true), true,
         'without the flag, three passing substitutions would certify the claim');
@@ -1500,6 +1534,166 @@ for (const [name, kind, text, wanted] of COMPLAINTS) {
   ] }, 'Q?');
   check('resolve', 'completeness guidance outranks the generic advice',
         /Your LIST is incomplete/.test(msg) ? 'leads' : 'BURIED', 'leads', msg.slice(0, 200));
+}
+
+/* ============================================================
+   19. THE FAMILY THE DESCENT NEVER REACHES
+   ------------------------------------------------------------
+   Three complaints, one gap. Every completeness route in the engine
+   worked by finding a finite region and enumerating it, so none of them
+   could touch a question whose answer is infinite — and those are the
+   ones that go wrong:
+
+     Vieta jumping        the leap inside it was never checked
+     "find all"           the list was where the descent stopped
+     Pell / recurrence    one branch of a tree with several
+
+   The third is the worst, because the answer is not wrong anywhere a
+   substitution can reach. x² + y² − 5xy = 25 has THREE families, rooted
+   at (1,8), (3,16) and (5,25). An answer that jumps from (1,8) and
+   writes out its ladder is correct in every single line and has found a
+   third of the solutions.
+   ============================================================ */
+
+/* ---- the three-family equation ---- */
+{
+  const Q = 'Find all positive integers x,y with x^2+y^2-5xy=25.';
+  const one = V.run(Q, '## ✅ Answer\nStarting from (1,8) and jumping, all solutions are (1,8), (8,39), (39,187), and so on.');
+  check('family', 'one correct ladder out of three is not every solution',
+        CANON[one.state], 'disputed', 'state=' + one.state);
+  const f = (one.checks || []).filter((c) => c.kind === 'descent')[0];
+  check('family', 'and the finding says how many families there are',
+        !!f && /3 families/.test(f.text), true, f ? f.text.slice(0, 160) : 'no descent finding');
+  check('family', 'and names one the answer never reaches',
+        !!f && /\(3,16\)|\(5,25\)/.test(f.text), true, f ? f.text.slice(0, 220) : '');
+  check('family', 'and does not accuse it of arithmetic it got right',
+        !!f && !/does not satisfy/.test(f.text), true, f ? f.text.slice(0, 160) : '');
+
+  const all = V.run(Q, '## ✅ Answer\nThere are three families, from (1,8), (3,16) and (5,25); each generates the rest by the jump.');
+  check('family', 'all three families IS every solution',
+        CANON[all.state], 'verified', 'state=' + all.state +
+        ' [' + all.checks.map((c) => c.kind + (c.ok ? '+' : '-')).join(',') + ']');
+}
+
+/* ---- the reported question, both ways round ---- */
+{
+  const Q = 'Find all positive integers x,y,z with x^2+y^2+z^2=xyz.';
+  const stop = V.run(Q, '## ✅ Answer\nThe only positive integer triple is (3,3,3).');
+  check('family', 'the terminal of the descent is not the solution set',
+        CANON[stop.state], 'disputed', 'state=' + stop.state);
+  const d = (stop.checks || []).filter((c) => c.kind === 'descent')[0];
+  check('family', 'and the finding says WHICH mistake that is',
+        !!d && /where the descent STOPS/.test(d.text), true, d ? d.text.slice(0, 200) : 'no descent finding');
+
+  const orbit = V.run(Q, '## ✅ Answer\nEvery solution is obtained from (3,3,3) by the jumps; for example (3,3,6), (3,6,15), (6,15,87).');
+  check('family', 'the orbit of (3,3,3) IS the solution set, and is certified',
+        CANON[orbit.state], 'verified', 'state=' + orbit.state +
+        ' [' + orbit.checks.map((c) => c.kind + (c.ok ? '+' : '-')).join(',') + ']');
+  const p = (orbit.checks || []).filter((c) => c.kind === 'descent' && c.ok)[0];
+  check('family', 'and the proof states the bound it actually proved',
+        !!p && /F\(x\) = /.test(p.text) && /x ≤ 3/.test(p.text), true, p ? p.text.slice(0, 300) : '');
+  check('family', 'and says the empty strips were cleared, not skipped',
+        !!p && /discriminant there is negative/.test(p.text), true, p ? p.text.slice(0, 340) : '');
+}
+
+/* A DESCENT WITH NOTHING TO LAND ON. x²+y²+z²=5xyz has no terminal at all,
+   and a solution set whose every member descends to a terminal that does not
+   exist is empty. That is a proof of emptiness, not a failed search. */
+{
+  const Q = 'Find all positive integers x,y,z with x^2+y^2+z^2=5xyz.';
+  const none = V.run(Q, '## ✅ Answer\nThere are no positive integer solutions.');
+  check('family', 'no terminal means no solutions, and saying so is right',
+        CANON[none.state], 'verified', 'state=' + none.state);
+  const bad = V.run(Q, '## ✅ Answer\nThe solutions are (1,1,1) and (1,2,3).');
+  check('family', 'and inventing solutions for it is refused',
+        CANON[bad.state], 'disputed', 'state=' + bad.state);
+}
+
+/* THE JUMP MAP IS AUDITED BY ITS OUTPUT. An answer that writes the wrong
+   partner formula is caught because the triples it then lists are not in the
+   orbit — the same error, found arithmetically instead of by reading the
+   formula back out of the prose. */
+{
+  const r = V.run('Find all positive integers x,y,z with x^2+y^2+z^2=3xyz.',
+                  '## ✅ Answer\nAll solutions arise from (1,2,3) by Vieta jumping.');
+  check('family', 'a family built on a triple that is not a solution',
+        CANON[r.state], 'disputed', 'state=' + r.state);
+}
+
+/* ---- Pell: the ladder the fundamental unit cannot climb onto ---- */
+{
+  const Q = 'Find all positive integers x,y with x^2-2y^2=7.';
+  const one = V.run(Q, '## ✅ Answer\nThe solutions are obtained from (3,1) by the fundamental unit: (3,1), (13,9), (75,53), and so on.');
+  check('family', 'one Pell ladder out of two is not every solution',
+        CANON[one.state], 'disputed', 'state=' + one.state);
+  const f = (one.checks || []).filter((c) => c.kind === 'pell')[0];
+  check('family', 'and it names the family that was missed',
+        !!f && /\(5, 3\)/.test(f.text), true, f ? f.text.slice(0, 220) : 'no pell finding');
+  check('family', 'and says why iterating one solution cannot find it',
+        !!f && /climbs its own family/.test(f.text), true, f ? f.text.slice(0, 260) : '');
+
+  const both = V.run(Q, '## ✅ Answer\nThere are two families, obtained from (3,1) and (5,3) by the fundamental unit, and so on.');
+  check('family', 'both ladders IS every solution',
+        CANON[both.state], 'verified', 'state=' + both.state +
+        ' [' + both.checks.map((c) => c.kind + (c.ok ? '+' : '-')).join(',') + ']');
+}
+
+/* THE FUNDAMENTAL UNIT IS COMPUTED, NOT LOOKED UP. x² − 61y² = 1 has the
+   famous fundamental solution 1766319049, which is past the point where
+   these engines can stay exact — so they decline rather than answer with a
+   number that lost precision. Declining is a verdict this suite pins,
+   because an engine that quietly rounded here would be worse than one that
+   said nothing. */
+{
+  const r = V.run('Find all positive integers x,y with x^2-61y^2=1.',
+                  '## ✅ Answer\nThe only solution is (1766319049, 226153980).');
+  check('family', 'a fundamental solution past the exact range is declined',
+        (r.checks || []).some((c) => c.kind === 'pell'), false,
+        'state=' + r.state + ' [' + r.checks.map((c) => c.kind).join(',') + ']');
+}
+
+/* ---- what these two must REFUSE to look at ---- */
+{
+  /* no cross term: the partner of x is -x and there is nothing to jump */
+  const pell = V.run('Find all positive integers x,y with x^2-2y^2=1.',
+                     '## ✅ Answer\nAll solutions arise from (3,2) and so on.');
+  check('family', 'the descent engine leaves Pell to the Pell engine',
+        (pell.checks || []).some((c) => c.kind === 'descent'), false,
+        '[' + pell.checks.map((c) => c.kind).join(',') + ']');
+  /* D a perfect square: x^2 - 4y^2 = 9 factorises, it is not a Pell equation */
+  const sq = V.run('Find all positive integers x,y with x^2-4y^2=9.',
+                   '## ✅ Answer\nThe only solution is (5,2), obtained from the unit and so on.');
+  check('family', 'a square D is not a Pell equation and is declined',
+        (sq.checks || []).some((c) => c.kind === 'pell'), false,
+        '[' + sq.checks.map((c) => c.kind).join(',') + ']');
+  /* not symmetric: the ordering x1 <= ... <= xk is what makes the bound legal */
+  const asym = V.run('Find all positive integers x,y with 2x^2+3y^2=5xy+1.',
+                     '## ✅ Answer\nAll solutions arise from (1,1) by jumping.');
+  check('family', 'an equation with no symmetry gets no terminal bound',
+        (asym.checks || []).some((c) => c.kind === 'descent'), false,
+        '[' + asym.checks.map((c) => c.kind).join(',') + ']');
+  /* a reply cut off mid-list has not put a solution set forward at all */
+  const cut = V.run('Find all positive integers x,y,z with x^2+y^2+z^2=xyz.',
+                    '## ✅ Answer\nThe solutions are (3,3,3) and (3,3,6). The next one is');
+  check('family', 'a truncated answer is not judged on completeness',
+        (cut.checks || []).some((c) => c.kind === 'descent'), false,
+        '[' + cut.checks.map((c) => c.kind + (c.ok ? '+' : '-')).join(',') + ']');
+  check('family', 'it is judged on having stopped early, which is the useful thing to say',
+        (cut.checks || []).some((c) => c.kind === 'truncated' && !c.ok), true,
+        '[' + cut.checks.map((c) => c.kind).join(',') + ']');
+}
+
+/* THE SOLVE PATH MUST ACTUALLY CALL THEM. Every case above goes through
+   V.run, so this one is about the manifest: a checker registered but not
+   wired is the hole that hid stepChain, sigfigs and bookkeeping. */
+{
+  check('family', 'descentCheck is wired into Verify.run',
+        /checks = checks\.concat\(descentCheck\(question, text\)\);/.test(html) ? 'wired' : 'NOT WIRED', 'wired');
+  check('family', 'pellCheck is wired into Verify.run',
+        /checks = checks\.concat\(pellCheck\(question, text\)\);/.test(html) ? 'wired' : 'NOT WIRED', 'wired');
+  check('family', 'and both may discharge the completeness flag',
+        /c\.kind === 'descent' \|\| c\.kind === 'pell'/.test(html) ? 'yes' : 'NO', 'yes',
+        'without this a proved classification still reads unverified');
 }
 
 /* ---------- report ---------- */

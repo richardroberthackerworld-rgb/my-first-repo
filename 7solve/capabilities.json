@@ -1,7 +1,7 @@
 {
   "_": "CANONICAL CAPABILITY MANIFEST. The single source of truth for what 7Solve can check, what each check may conclude, and which subject a question belongs to. checks.json and the PROOF set in index.html are GENERATED from this file; capability.php reads it at runtime. Nothing here may be duplicated by hand anywhere else — tools/gate-capabilities.js fails the build if a generated artifact drifts. Authority lives on the KIND, never on the subject or the checker, so a subject cannot grant itself certification power by declaring it.",
   "schema": "7solve.capability/1",
-  "version": "2026-08-21",
+  "version": "2026-08-24",
   "kinds": [
     {
       "kind": "subst",
@@ -176,6 +176,18 @@
       "authority": "proof",
       "needs_complete": false,
       "describes": "The system is linear with a unique solution and it is this one"
+    },
+    {
+      "kind": "descent",
+      "authority": "proof",
+      "needs_complete": false,
+      "describes": "The solution set is classified by a descent whose terminals are enumerated over a proved region"
+    },
+    {
+      "kind": "pell",
+      "authority": "proof",
+      "needs_complete": false,
+      "describes": "Every family of a Pell equation is accounted for, over the range that provably holds a representative of each"
     },
     {
       "kind": "presentation",
@@ -468,6 +480,28 @@
         "php": "Exhaustion::check($question, $body)"
       },
       "note": "Reads the domain the question sets (positive/non-negative/distinct integers) and rejects a claimed value outside it; then, for P = c^(linear form) only, PROVES a bound on the search region by induction in exact integer arithmetic and enumerates that region whole. Emits nothing when the bound cannot be proved — a bounded search is not a completeness proof."
+    },
+    {
+      "checker": "descentCheck",
+      "emits": [
+        "descent"
+      ],
+      "engines": {
+        "js": "try { checks = checks.concat(descentCheck(question, text)); } catch(e){}",
+        "php": "Descent::check($question, $body),"
+      },
+      "note": "Runs the Vieta descent itself instead of reading it out of the prose, and proves the box every terminal lies in — the first completeness route here that reaches an infinite solution set."
+    },
+    {
+      "checker": "pellCheck",
+      "emits": [
+        "pell"
+      ],
+      "engines": {
+        "js": "try { checks = checks.concat(pellCheck(question, text)); } catch(e){}",
+        "php": "Descent::pell($question, $body),"
+      },
+      "note": "x^2 - Dy^2 = N has no cross term, so the descent has nothing to jump. Its families come from the fundamental unit instead, and Nagell bounds the range that holds a representative of every one."
     },
     {
       "checker": "sequenceCheck",

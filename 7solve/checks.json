@@ -121,6 +121,18 @@
       "note": "Reads the domain the question sets (positive/non-negative/distinct integers) and rejects a claimed value outside it; then, for P = c^(linear form) only, PROVES a bound on the search region by induction in exact integer arithmetic and enumerates that region whole. Emits nothing when the bound cannot be proved — a bounded search is not a completeness proof."
     },
     {
+      "name": "descentCheck",
+      "js": "try { checks = checks.concat(descentCheck(question, text)); } catch(e){}",
+      "php": "Descent::check($question, $body),",
+      "note": "Runs the Vieta descent itself instead of reading it out of the prose, and proves the box every terminal lies in — the first completeness route here that reaches an infinite solution set."
+    },
+    {
+      "name": "pellCheck",
+      "js": "try { checks = checks.concat(pellCheck(question, text)); } catch(e){}",
+      "php": "Descent::pell($question, $body),",
+      "note": "x^2 - Dy^2 = N has no cross term, so the descent has nothing to jump. Its families come from the fundamental unit instead, and Nagell bounds the range that holds a representative of every one."
+    },
+    {
       "name": "sequenceCheck",
       "js": "try { checks = checks.concat(sequenceCheck(question, text)); } catch(e){}",
       "php": "SequenceId::check($question, $body)",
