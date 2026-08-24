@@ -8,7 +8,7 @@
 <!-- Build stamp. Bump this whenever the site is rebuilt: it is the one place
      to look to answer "is the new version actually live?" — Settings shows it,
      the console logs it, and you can read it straight out of view-source. -->
-<meta name="7solve-build" content="2026-08-24.7">
+<meta name="7solve-build" content="2026-08-24.8">
 <link rel="icon" href="favicon.ico?v=7by4" sizes="any">
 <link rel="icon" href="assets/logo.svg?v=7by4" type="image/svg+xml">
 <link rel="icon" href="favicon.png?v=7by4" type="image/png" sizes="96x96">
@@ -21389,7 +21389,7 @@ function paintVerif(md){
                  r.failed.every(function(c){ return c.kind === 'truncated'; });
     if(corrected){
       label = '⚠ Verified with one correction'; cls = 'verif corrected';
-      THE CORRECTED VALUE IS A FIELD, NOT A PARSE. The badge used to recover it
+      /* THE CORRECTED VALUE IS A FIELD, NOT A PARSE. The badge used to recover it
       from the diagnosis sentence with /gives ([^,]+?), which does/ — and the value
       it was looking for is "(x,y) = (77,369)", which contains a comma. The match
       failed and the badge read "should be ?" to the student: the one sentence the
@@ -21397,6 +21397,7 @@ function paintVerif(md){
       
       slipOf was already carried as a field for exactly this reason. slipTo joins
       it. Nothing about the badge now depends on how the diagnosis is worded.
+       */
       title = 'Verified with one correction: ' + corrected.slipOf + ' should be ' +
               (corrected.slipTo || 'the value the jump gives') + '. Your method is sound.';
     } else if(cutOff){

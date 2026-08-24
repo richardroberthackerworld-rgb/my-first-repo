@@ -395,6 +395,29 @@ const VERDICTS = [
    '## ✅ Answer\nBy the Pell equation k^2-21y^2=100 with (k0,y0)=(11,1), the solutions are ' +
    '(1,8), (3,16), (5,25) and (121,25).'],
   ['Simplify 2/3 + 1/3',   '## ✅ Answer\n2/3 + 1/3 = 1'],
+  /* A LABEL BEHIND A CHAINED EQUALITY. (187,8) is a (k,y) pair written as the
+     tail of (k,y) = <expression> = (187,8). It satisfies neither the question
+     nor the answer's own Pell equation, so neither the aux-equation rule nor
+     the 24-character window excludes it — only walking the chain back to its
+     head does, and both engines have to walk it the same way. */
+  ['Find all positive integers x, y with x^2 + y^2 - 5xy = 25',
+   '## ✅ Answer\nThe solutions are (1,8), (3,16), (5,25) and their jumps.\n' +
+   '\n## 📖 Steps\n1. The Pell equation is k^2-21y^2=100, with (k0,y0)=(11,1).\n' +
+   '2. At n=1: (k,y)=(55*11+21*12*1, 55*1+12*11)=(187,8), giving x=39 and x=1.'],
+  /* The sentence-boundary guard on the chain walk: the (k,y) label sits before a
+     full stop and (x,y) after it, so only stopping at the boundary reads (1,8)
+     as the claim it is. Both engines, or a genuine solution vanishes on one. */
+  ['Find all positive integers x, y with x^2 + y^2 - 5xy = 25',
+   '## ✅ Answer\nThe Pell base is (k,y) = (11,1). Therefore (x,y) = (1,8) is a solution,\n' +
+   'and so are (3,16) and (5,25), together with everything the jump generates.'],
+  /* The chain walk's sentence-boundary guard, driven properly: the tuple's own
+     label sits behind an expression so the short window finds nothing, and a
+     FOREIGN label sits before the full stop. Only stopping at the boundary picks
+     up (x,y) rather than (k,y) — and getting that wrong deletes a real solution
+     from the answer on whichever engine loses the guard. */
+  ['Find all positive integers x, y with x^2 + y^2 - 5xy = 25',
+   '## ✅ Answer\nThe Pell base is (k,y) = (11,1). Then (x,y) = ((5y+k)/2, y) = (1,8),\n' +
+   'and the other families start (3,16) and (5,25).'],
   ['Simplify 2/3 + 1/3',   '## ✅ Answer\n2/3 + 1/3 = 2'],
   /* Each of these separates ONE rule of the tuple reader from the others, so a
      PHP that lost only that rule cannot hide behind the rest.

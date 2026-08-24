@@ -14970,6 +14970,36 @@ var Verify = (function(){
      machinery AND NOT the question". A pair that answers the question is a
      claim no matter what else it happens to satisfy.
      */
+  /* A LABEL CAN SIT ON THE FAR SIDE OF A CHAINED EQUALITY. The 24-character
+     window catches "(k,y) = (11,1)". It does not catch
+     
+         (k,y) = (55*11 + 21*12*1, 55*1 + 12*11) = (187,8)
+     
+     where the label is forty characters to the left with an arithmetic expression
+     in between — and (187,8) satisfies neither the question nor the answer's own
+     Pell equation, so neither existing rule excluded it and the receipt reported a
+     (k,y) pair as a claimed (x,y) solution.
+     
+     So when the tuple is the RIGHT-HAND SIDE of an equals sign, the chain is walked
+     left to its head. The walk stops at a full stop, a semicolon or a newline,
+     because a label on the other side of a sentence boundary belongs to a different
+     statement: "(k,y) = (11,1). The solutions are (1,8)" must still read (1,8) as a
+     claim, and it does. */
+  var LABEL_HEAD = /\(\s*([A-Za-z][A-Za-z0-9_'′]{0,3}(?:\s*,\s*[A-Za-z][A-Za-z0-9_'′]{0,3}){1,2})\s*\)\s*=/;
+  function labelBefore(md, at){
+    var near = String(md).slice(Math.max(0, at - 24), at);
+    var lab = labelVars(near);
+    if(lab) return lab;
+    if(!/=\s*$/.test(near)) return null;          /* not the tail of a chain */
+    var win = String(md).slice(Math.max(0, at - 200), at);
+    var cut = Math.max(win.lastIndexOf('. '), win.lastIndexOf('\n'), win.lastIndexOf(';'));
+    if(cut >= 0) win = win.slice(cut + 1);
+    var m = win.match(LABEL_HEAD);
+    if(!m) return null;
+    return m[1].split(',').map(function(v){
+      return v.trim().replace(/[0-9_'′]+$/, '').replace(/[₀-₉ₙ]+$/, '').toLowerCase();
+    });
+  }
   function claimedTuples(md, nvars, vars, ownEq){
     var out = [], seen = {};
     if(nvars < 2) return out;
@@ -14978,7 +15008,7 @@ var Verify = (function(){
     var re = /\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*(?:,\s*(-?\d+(?:\.\d+)?)\s*)?\)/g, m;
     while((m = re.exec(md)) !== null){
       if(want){
-        var lab = labelVars(String(md).slice(Math.max(0, m.index - 24), m.index));
+        var lab = labelBefore(md, m.index);
         if(lab && lab.length === want.length){
           var same = true;
           for(var li = 0; li < lab.length; li++) if(lab[li] !== want[li]) same = false;

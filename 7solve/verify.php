@@ -1109,6 +1109,45 @@ final class Checks
         }
         return $out;
     }
+    /* A LABEL CAN SIT ON THE FAR SIDE OF A CHAINED EQUALITY. The 24-character
+       window catches "(k,y) = (11,1)". It does not catch
+       
+           (k,y) = (55*11 + 21*12*1, 55*1 + 12*11) = (187,8)
+       
+       where the label is forty characters to the left with an arithmetic expression
+       in between — and (187,8) satisfies neither the question nor the answer's own
+       Pell equation, so neither existing rule excluded it and the receipt reported a
+       (k,y) pair as a claimed (x,y) solution.
+       
+       So when the tuple is the RIGHT-HAND SIDE of an equals sign, the chain is walked
+       left to its head. The walk stops at a full stop, a semicolon or a newline,
+       because a label on the other side of a sentence boundary belongs to a different
+       statement: "(k,y) = (11,1). The solutions are (1,8)" must still read (1,8) as a
+       claim, and it does. */
+    private const LABEL_HEAD =
+        '/\(\s*([A-Za-z][A-Za-z0-9_\'′]{0,3}(?:\s*,\s*[A-Za-z][A-Za-z0-9_\'′]{0,3}){1,2})\s*\)\s*=/u';
+    private static function labelBefore(string $md, int $at): ?array
+    {
+        $near = substr($md, max(0, $at - 24), min(24, $at));
+        $lab = self::labelVars($near);
+        if ($lab !== null) return $lab;
+        if (!preg_match('/=\s*$/u', $near)) return null;   /* not the tail of a chain */
+        $win = substr($md, max(0, $at - 200), min(200, $at));
+        $cut = max(strrpos($win, '. ') === false ? -1 : strrpos($win, '. '),
+                   strrpos($win, "\n") === false ? -1 : strrpos($win, "\n"),
+                   strrpos($win, ';') === false ? -1 : strrpos($win, ';'));
+        if ($cut >= 0) $win = substr($win, $cut + 1);
+        if (!preg_match(self::LABEL_HEAD, $win, $m)) return null;
+        $out = [];
+        foreach (explode(',', $m[1]) as $v) {
+            $v = trim($v);
+            $v = preg_replace('/[0-9_\'′]+$/u', '', $v);
+            $v = preg_replace('/[₀₁₂₃₄₅₆₇₈₉ₙ]+$/u', '', $v);
+            $out[] = mb_strtolower($v);
+        }
+        return $out;
+    }
+
     /** Equations the ANSWER states over variables that are not the question's. */
     private static function auxEquations(string $md, array $vars): array
     {
@@ -1168,7 +1207,7 @@ final class Checks
             if (count($tup) !== $nvars) continue;
             if ($want !== null) {
                 $at = (int)$m[0][1];
-                $lab = self::labelVars(substr($md, max(0, $at - 24), min(24, $at)));
+                $lab = self::labelBefore($md, $at);
                 if ($lab !== null && count($lab) === count($want) && $lab !== $want) continue;
                 /* a pair that answers the QUESTION is a claim, whatever else it satisfies */
                 $solves = false;

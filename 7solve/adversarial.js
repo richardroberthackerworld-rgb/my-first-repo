@@ -2296,6 +2296,42 @@ const SLIP_A =
     ['a claim beside the machinery','k^2-21y^2=100 and the solutions are (1,8)',      ['1,8']],
     ['a wrong value stays a claim', 'k^2-21y^2=100 gives (121,25)',                   ['121,25']],
     /* the coincidence: (25,5) solves BOTH the question and k²−21y²=100 */
+    /* the label on the far side of a chained equality: (187,8) satisfies
+       neither the question nor the answer's Pell equation, so only following
+       the chain back to its head keeps it out of the claims */
+    ['a chained label',            '(k,y)=(55*11+21*12*1, 55*1+12*11)=(187,8)',      []],
+    ['a chain that IS ours',       'x = 5, so (x,y) = (5,25)',                       ['5,25']],
+    ['a chain broken by a stop',   '(k,y) = (11,1). The solutions are (1,8)',        ['1,8']],
+    /* The case above never reaches the chain walk at all — (1,8) is not preceded
+       by an equals sign, so the 24-character window settles it. THIS one does:
+       the tuple is the tail of a chain, and the only thing keeping the foreign
+       label on the far side of the full stop out of it is the sentence-boundary
+       guard. Without that guard (1,8) is read as a (k,y) pair and a genuine
+       solution disappears from the answer. */
+    ['a chain whose own label is nearest',
+                                   '(k,y) = (11,1). Therefore (x,y) = (1,8)',        ['1,8']],
+    ['and the same across a newline',
+                                   '(k,y) = (11,1)' + String.fromCharCode(10) + 'Therefore (x,y) = (1,8)', ['1,8']],
+    ['a chain whose own label is behind an expression',
+                                   '(k,y) = (11,1). Then (x,y) = (a+b, c) = (1,8)',  ['1,8']],
+    ['the same, foreign label after the stop',
+                                   '(x,y) = (1,8). Then (k,y) = (a+b, c) = (187,8)', ['1,8']],
+    /* The chain walk fires ONLY when the tuple is the tail of an equals chain.
+       Without that gate it would scan back from any bracketed pair and pick up a
+       label it was never attached to — here (187,8) follows the word 'also', not
+       an equals sign, so the walk must not run and the pair stays a claim. It is
+       then disputed on its arithmetic, which is the honest outcome: the engine
+       has no evidence it is anything other than a claimed solution.
+
+       Pinned because the choice is a real one. Skipping it would arguably be
+       kinder and would also be a rule this suite has not justified, and a reader
+       changing the gate should have to change a test that says which way it
+       goes rather than discover it later from a receipt. */
+    ['a pair after prose, not after an equals',
+                                   '(k,y) = (11,1) and also (187,8)',                ['187,8']],
+    ['a foreign label in the SAME clause still wins',
+                                   '(k,y) = (11,1) = (187,8)',                       []],
+    ['a chain broken by a newline','(k,y) = (11,1)' + String.fromCharCode(10) + 'The solutions are (1,8)', ['1,8']],
     ['a solution that also solves the machinery',
                                     'k^2-21y^2=100 and the solutions include (25,5)', ['25,5']],
   ]) {
