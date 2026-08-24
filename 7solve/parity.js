@@ -240,6 +240,22 @@ const VERDICTS = [
    '## ✅ Answer\nAll positive integer solutions are the permutations of the infinite family (3, an, an+1) where an+2 = 3an+1 - an.\nThe first few triples are (3,3,3), (3,3,6), (3,6,15), (3,15,39), (3,39,102), …'],
   ['Find all positive integers a,b,c with a^2+b^2+c^2=3abc.',
    '## ✅ Answer\nThe recurrence generates (1,1,1), (1,1,2), (1,2,5), (1,5,13), (2,5,29).'],
+
+  /* THE SAME FALSE ANSWER UNDER FOUR PHRASINGS. Two of them used to earn a
+     green badge, because every completeness gate read "find all" out of the
+     QUESTION while the claim was being made by the ANSWER. Both engines now
+     read the answer's own claim, so both must agree on all four. */
+  ['Find all positive integers x, y, z with x^2 + y^2 + z^2 = xyz.', '## ✅ Answer\nThe only positive integer triple (x, y, z) satisfying x^2 + y^2 + z^2 = xyz is (3, 3, 3).'],
+  ['Solve x^2 + y^2 + z^2 = xyz in positive integers.',              '## ✅ Answer\nThe only positive integer triple (x, y, z) satisfying x^2 + y^2 + z^2 = xyz is (3, 3, 3).'],
+  ['Find all x, y, z with x^2 + y^2 + z^2 = xyz.',                   '## ✅ Answer\nThe only positive integer triple (x, y, z) satisfying x^2 + y^2 + z^2 = xyz is (3, 3, 3).'],
+  ['x^2 + y^2 + z^2 = xyz',                                          '## ✅ Answer\nThe only positive integer triple (x, y, z) satisfying x^2 + y^2 + z^2 = xyz is (3, 3, 3).'],
+  /* and the control: examples offered, nothing claimed */
+  ['Solve x^2 + y^2 + z^2 = xyz in positive integers.',
+   '## ✅ Answer\nHere are some solutions: (3,3,3) and (3,3,6).'],
+  /* A list that is right as far as the search reaches, with completeness
+     still unproved: (577,408) is outside the box, so no witness exists and
+     needsComplete is the only thing holding the badge back. */
+  ['Solve x^2 - 2y^2 = 1 in positive integers.', '## ✅ Answer\nThe only solutions are (3,2), (17,12) and (99,70).\n\n## 📖 Steps\n1. By induction, with base case (3,2), no others exist.'],
   ['Find all positive integers x,y with x^2 + y^2 = 25.', '## ✅ Answer\n(3,4) and (4,3)'],
 
   /* DOUBLE ENTRY, in both engines. Accounting was the largest unverifiable

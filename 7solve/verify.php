@@ -1296,7 +1296,11 @@ final class Checks
                a "find all" question carries the same needsComplete flag the
                single-variable branch has carried since Phase 1. Mirrors
                substitution() in index.html. */
-            $mustBeAll = (bool)preg_match(Exhaustion::ALL_ASKED_RE, $question);
+            /* The question's wording is not the only way a completeness claim gets
+               made — an answer saying "the only solutions are ..." has made one
+               itself, and a passing substitution must not certify it alone. */
+            $mustBeAll = (bool)preg_match(Exhaustion::ALL_ASKED_RE, $question)
+                      || (bool)preg_match(Exhaustion::CLAIMS_ALL, Checks::claimZone($md));
             $out = [];
             foreach (array_slice($tuples, 0, 10) as $tp) {
                 $env = [];

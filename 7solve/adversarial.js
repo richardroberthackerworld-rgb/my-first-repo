@@ -1328,6 +1328,98 @@ for (const [name, t, want] of DOCSHAPE) {
         body.slice(0, 160));
 }
 
+/* ============================================================
+   17. THE PHRASING OF THE QUESTION MUST NOT DECIDE THE VERDICT
+   ------------------------------------------------------------
+   The same false answer — "the only positive integer triple is
+   (3,3,3)", which (3,3,6) refutes — was caught or waved through
+   purely on how the student happened to word the ask:
+
+     "Find all positive integers x,y,z with x²+y²+z²=xyz"  disputed
+     "Solve x²+y²+z²=xyz in positive integers"             VERIFIED
+     "x²+y²+z²=xyz"                                        VERIFIED
+
+   Two of those three put a green badge on a false answer, which
+   is the worst outcome this engine has. Every completeness gate
+   was reading ALL_ASKED out of the QUESTION, and the answer had
+   said "the ONLY triple" in all three.
+
+   Found by running the LIVE site against a student's report, not
+   by the suite — which is why every phrasing is pinned here now.
+   ============================================================ */
+{
+  const md = '## ✅ Final Answer\n**The only positive integer triple (x, y, z) satisfying x² + y² + z² = xyz is (3, 3, 3).**\n\n## 📖 Steps\n1. Vieta jumping descent.\n\n## 🎯 Final Result\n(x,y,z) = (3,3,3)';
+  const PHRASINGS = [
+    'Find all positive integers x, y, z with x^2 + y^2 + z^2 = xyz.',
+    'Solve x^2 + y^2 + z^2 = xyz in positive integers.',
+    'Find all x, y, z with x^2 + y^2 + z^2 = xyz.',
+    'x^2 + y^2 + z^2 = xyz',
+    'Solve x^2 + y^2 + z^2 = xyz',
+    'Determine every positive integer triple with x^2 + y^2 + z^2 = xyz.',
+  ];
+  for (const q of PHRASINGS) {
+    const r = V.run(q, md);
+    check('phrasing', 'a false completeness claim is caught however the question is worded: ' + q.slice(0, 44),
+          CANON[r.state], 'disputed', 'state=' + r.state + ' [' + r.checks.map((c) => c.kind + (c.ok ? '+' : '-')).join(',') + ']');
+  }
+}
+
+/* The detector has to be tight, because it now decides whether an answer is
+   held to a completeness standard at all. A claim about a METHOD is not a
+   claim about a solution set. */
+const CLAIMS = [
+  ['the only positive integer triple is (3,3,3)', true],
+  ['(3,3,3) is the only solution', true],
+  ['there is no other solution', true],
+  ['these are all the solutions', true],
+  ['the unique pair is (2,3)', true],
+  ['the only way to solve this is by substitution', false],
+  ['the only method that works here is descent', false],
+  ['here are some solutions: (3,3,3) and (3,3,6)', false],
+  ['a few examples are (1,1) and (2,5)', false],
+  ['the only difficulty is the algebra', false],
+];
+for (const [t, want] of CLAIMS) {
+  check('phrasing', 'claimsAll: ' + JSON.stringify(t).slice(0, 50), V.claimsAll(t), want);
+}
+
+/* THE HALF THE WITNESS ROUTE CANNOT COVER. When the claimed list happens to
+   be right as far as the search reaches, no witness exists to find — and the
+   completeness claim is still unproved. x² − 2y² = 1 has (3,2), (17,12),
+   (99,70) and then (577,408), which is outside the 300-wide box, so the
+   search comes back empty and every substitution passes.
+
+   What stops a green badge there is needsComplete: a claim of completeness
+   means passing substitutions are evidence, not a verdict. Nothing else in
+   the engine is holding that line, so it is asserted on its own. */
+{
+  const r = V.run('Solve x^2 - 2y^2 = 1 in positive integers.', '## ✅ Answer\nThe only solutions are (3,2), (17,12) and (99,70).\n\n## 📖 Steps\n1. By induction, with base case (3,2), no others exist.');
+  check('phrasing', 'a correct-so-far list with an unproved completeness claim is NOT verified',
+        CANON[r.state], 'unverified',
+        'state=' + r.state + ' [' + r.checks.map((c) => c.kind + (c.ok ? '+' : '-')).join(',') + ']');
+  check('phrasing', 'and its substitutions carry the completeness flag',
+        r.checks.some((c) => c.kind === 'subst' && c.ok && c.needsComplete === true), true,
+        'without the flag, three passing substitutions would certify the claim');
+}
+
+/* AND THE CONTROLS. An answer that claims nothing must not be dragged into a
+   completeness standard it never invoked — offering examples is not the same
+   as saying they are everything. */
+const NO_CLAIM = [
+  ['examples offered, nothing claimed', 'Solve x^2 + y^2 + z^2 = xyz in positive integers.',
+   'Here are some solutions: (3,3,3) and (3,3,6).'],
+  ['a single solution asked for', 'Find a positive integer solution of x^2+y^2+z^2=xyz.',
+   '(3,3,3) works.'],
+  ['"only" about the method, not the answer', 'Solve x^2 - 5x + 6 = 0',
+   'The only way to solve this is by factorising. x = 2 and x = 3.'],
+];
+for (const [name, q, ans] of NO_CLAIM) {
+  const r = V.run(q, '## ✅ Answer\n' + ans);
+  check('phrasing', 'not held to completeness: ' + name,
+        r.checks.some((c) => c.kind === 'exhaust' && !c.ok), false,
+        'state=' + r.state + ' [' + r.checks.map((c) => c.kind + (c.ok ? '+' : '-')).join(',') + ']');
+}
+
 /* ---------- report ---------- */
 if (bad.length) {
   console.log('\nADVERSARIAL FAILED — ' + bad.length + ' of ' + ran + ' attacks got through\n');
