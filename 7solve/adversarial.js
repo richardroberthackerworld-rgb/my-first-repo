@@ -1845,6 +1845,98 @@ for (const [src, want] of [
         'a sibling helper is cut away by the sandbox and the tests would pass against nothing');
 }
 
+/* ============================================================
+   21. THE CONCLUSION THE ENGINE WAS NOT READING
+   ------------------------------------------------------------
+   Reported from the live site. The answer is the same false one as ever —
+   "the only positive integer triple is (3,3,3)", refuted by (3,3,6) giving
+   54 = 54 — but it reached GREEN through a door none of the earlier fixes
+   had closed.
+
+   Its ✅ Final Answer section is just:  (x, y, z) = (3, 3, 3)
+
+   That names a triple and claims nothing. The claim is in step 12 of the
+   working, under 📖 — and claimZone is the ✅ and 🎯 sections only, so
+   CLAIMS_ALL never saw it. With a question that did not say "find all"
+   either, no completeness gate engaged at all, and three passing
+   substitutions certified the answer outright.
+
+   This is the phrasing bug one door along: first it was decided by how the
+   QUESTION was worded, then by which SECTION of the answer the model happened
+   to put its conclusion in. The claim is now read from the conclusion
+   wherever it sits.
+
+   THE MATHEMATICS, for the record, breaks at step 4. z ≤ xy ≤ 3z does NOT
+   make xy an integer multiple of z — xy/z is a rational in [1,3]. For
+   (3,3,6) it is 9/6 = 3/2, which is in none of the three cases the answer
+   then works through, so the whole case split misses it.
+   ============================================================ */
+{
+  const REPORTED =
+    '## ✅ Final Answer\n' +
+    '**(x, y, z) = (3, 3, 3)**\n' +
+    '\n## 📖 Step-by-Step Solution\n' +
+    '1. Because the equation is symmetric, let x ≤ y ≤ z.\n' +
+    '2. From x²+y²+z² = xyz we have z² ≤ xyz, so xy ≥ z.\n' +
+    '3. Also xyz = x²+y²+z² ≤ 3z², so xy ≤ 3z.\n' +
+    '4. Hence z ≤ xy ≤ 3z. Write xy = kz with integer k in 1,2,3.\n' +
+    '5. Case k=1: x² + y² = 0, impossible for positive integers.\n' +
+    '6. Case k=2: x²y² = 4(x² + y²), which has no positive integer solutions.\n' +
+    '7. Case k=3: 2x²y² = 9(x² + y²), so 1/x² + 1/y² = 2/9.\n' +
+    '9. Try x = 3: 1/9 + 1/y² = 2/9, so y = 3.\n' +
+    '11. With x = y = 3 and xy = 3z, we get 9 = 3z so z = 3.\n' +
+    '12. Conclusion – The only positive integer triple satisfying the original equation is (3,3,3).\n' +
+    '\n## 🔍 Verification\nLHS: 3² + 3² + 3² = 27. RHS: 3 · 3 · 3 = 27.\n' +
+    '\n## 🎯 Final Result\n(x, y, z) = (3, 3, 3)'
+  ;
+  for (const q of [
+    'Find all positive integers x, y, z with x^2 + y^2 + z^2 = xyz',
+    'Solve x^2+y^2+z^2=xyz in positive integers',
+    'x^2+y^2+z^2=xyz',
+    'Find all x, y, z with x^2+y^2+z^2=xyz',
+  ]) {
+    const r = V.run(q, REPORTED);
+    check('conclusion', 'a claim in the working still counts: ' + JSON.stringify(q.slice(0, 40)),
+          CANON[r.state], 'disputed',
+          'state=' + r.state + ' [' + r.checks.map((c) => c.kind + (c.ok ? '+' : '-')).join(',') + ']');
+  }
+  const r = V.run('x^2+y^2+z^2=xyz', REPORTED);
+  check('conclusion', 'and the refutation names the triple it left out',
+        (r.checks || []).some((c) => !c.ok && /\(3,3,6\)/.test(c.text)), true,
+        (r.checks || []).filter((c) => !c.ok).map((c) => c.text.slice(0, 90)).join(' | '));
+  check('conclusion', 'the domain comes from the conclusion too, since nothing else states it',
+        /positive integers/.test(String(V.domainOf(V.answerClaimZone(REPORTED)) &&
+                                        V.domainOf(V.answerClaimZone(REPORTED)).label)), true,
+        'a completeness gate with no domain has nothing to enumerate over');
+}
+
+/* A CLAIM ABOUT A SUB-CASE IS NOT A CLAIM ABOUT THE PROBLEM. This is the
+   control, and it matters more than the case above: an answer that shows its
+   working case by case must not be dragged into a completeness standard by a
+   sentence that was only ever about one branch. Disputing correct work for
+   the crime of being thorough would be a worse bug than the one being fixed. */
+for (const [name, line, counts] of [
+  ['a bare conclusion',        '12. Conclusion – The only solutions are x = 1 and x = 2.', true],
+  ['scoped by a case',         'Case k=1: the only solution is x = 1.',                    false],
+  ['scoped by an if',          'If k = 1 then the only solution is x = 1.',                false],
+  ['scoped by a supposition',  'Suppose x > y. Then the only solution is x = 1.',          false],
+  ['scoped by a range',        'For x ≥ 4 the only solutions are x = 1 and x = 2.',        false],
+  ['scoped by an assumption',  'Assume z is even; the only pairs are (1,2) and (3,4).',    false],
+]) {
+  const md = '## ✅ Final Answer\nx = 1\n\n## 📖 Steps\n' + line;
+  check('conclusion', name + ' → read as a claim about the whole problem',
+        V.claimsAll(V.answerClaimZone(md)), counts, JSON.stringify(line));
+}
+{
+  /* and the widening must not disturb an answer that made no such claim */
+  const plain = '## ✅ Final Answer\nx = 2\n\n## 📖 Steps\n1. Divide by 3.\n2. So x = 2.';
+  check('conclusion', 'an answer claiming nothing is left claiming nothing',
+        V.claimsAll(V.answerClaimZone(plain)), false);
+  check('conclusion', 'and the widened zone is wired into the completeness gate',
+        /var dom = domainOf\(question\) \|\| domainOf\(answerClaimZone\(md\)\);/.test(html) ? 'wired' : 'NOT WIRED',
+        'wired');
+}
+
 /* ---------- report ---------- */
 if (bad.length) {
   console.log('\nADVERSARIAL FAILED — ' + bad.length + ' of ' + ran + ' attacks got through\n');

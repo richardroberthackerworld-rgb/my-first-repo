@@ -861,6 +861,52 @@ final class Checks
         $zone = self::withHead($md, '✅') . "\n" . self::withHead($md, '🎯');
         if (trim($zone) !== '') return $zone;
         return mb_substr($md, 0, 400);
+    }
+    /* ---------- A CONCLUSION IS A CLAIM WHEREVER THE ANSWER PUTS IT ----------
+       claimZone is the ✅ and 🎯 sections, and every completeness gate read
+       CLAIMS_ALL out of it. A reported answer put its claim somewhere else:
+
+           ## ✅ Final Answer
+           (x, y, z) = (3, 3, 3)
+           ...
+           12. Conclusion – The only positive integer triple satisfying the
+               original equation is (3,3,3).
+
+       The Final Answer names a triple and claims nothing. The claim is in step
+       12, outside the zone, so CLAIMS_ALL never saw it — and with a question
+       that did not say "find all" either, nothing asked for completeness at
+       all. Three passing substitutions certified it GREEN. The answer is false:
+       (3,3,6) gives 54 = 54.
+
+       This is the phrasing bug one door along. It used to be decided by how the
+       QUESTION was worded; that was fixed by also reading the answer's own
+       claim — and then decided by which SECTION the model happened to put its
+       conclusion in.
+
+       Scoped lines are excluded: a claim about a sub-case is not a claim about
+       the problem, and holding the whole answer to "Case k=1 … the only
+       solution is …" would dispute correct work for showing its cases.
+
+       The DOMAIN is read from the same widened zone, and has to be. "The only
+       positive integer triple" is the only place that answer says which integers
+       it means, and a completeness gate with no domain has nothing to enumerate
+       over.
+
+       Mirrors answerClaimZone() in index.html. */
+    private const CASE_SCOPED =
+        '/\b(cases?|sub-?cases?|if|when|whenever|assume|suppose|provided|given that|otherwise|either)\b'
+      . '|\bfor\s+[a-z]\s*(?:[≥>≤<=]|is)/iu';
+    public static function answerClaimZone(string $md): string
+    {
+        $zone = self::claimZone($md);
+        $extra = [];
+        foreach (preg_split('/\r?\n/', $md) as $line) {
+            if (!preg_match(Exhaustion::CLAIMS_ALL, $line)) continue;
+            if (preg_match(self::CASE_SCOPED, $line)) continue;
+            if (strpos($zone, $line) !== false) continue;
+            $extra[] = $line;
+        }
+        return $extra ? $zone . "\n" . implode("\n", $extra) : $zone;
     }
 
     /* ---------- LaTeX → plain maths ----------
@@ -1348,7 +1394,7 @@ final class Checks
                made — an answer saying "the only solutions are ..." has made one
                itself, and a passing substitution must not certify it alone. */
             $mustBeAll = (bool)preg_match(Exhaustion::ALL_ASKED_RE, $question)
-                      || (bool)preg_match(Exhaustion::CLAIMS_ALL, Checks::claimZone($md));
+                      || (bool)preg_match(Exhaustion::CLAIMS_ALL, Checks::answerClaimZone($md));
             $out = [];
             foreach (array_slice($tuples, 0, 10) as $tp) {
                 $env = [];

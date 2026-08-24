@@ -529,7 +529,7 @@ final class Descent
     public static function check(string $question, string $md): array
     {
         $full = $md;
-        $zone = Checks::claimZone($full);
+        $zone = Checks::answerClaimZone($full);
         $dom = Exhaustion::domainOf($question);
         if ($dom === null) $dom = Exhaustion::domainOf($zone);
         if ($dom === null || $dom['low'] === null || $dom['low'] < 1) return [];
@@ -771,7 +771,7 @@ final class Descent
     public static function pell(string $question, string $md): array
     {
         $full = $md;
-        $zone = Checks::claimZone($full);
+        $zone = Checks::answerClaimZone($full);
         $dom = Exhaustion::domainOf($question);
         if ($dom === null) $dom = Exhaustion::domainOf($zone);
         if ($dom === null || $dom['low'] === null || $dom['low'] < 0) return [];

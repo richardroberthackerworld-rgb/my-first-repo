@@ -683,7 +683,7 @@ final class Exhaustion
            triple" — it has scoped its own claim, and judging that claim inside
            the scope it chose is fair. It is the answer being checked. */
         $dom = self::domainOf($question);
-        if ($dom === null) $dom = self::domainOf(Checks::claimZone($md));
+        if ($dom === null) $dom = self::domainOf(Checks::answerClaimZone($md));
         if ($dom === null) return [];
         $found = Checks::findEquation($question);
         if ($found === null) return [];
@@ -693,7 +693,7 @@ final class Exhaustion
         if (Algebra::hasTrig($eq['L']) || Algebra::hasTrig($eq['R'])) return [];
 
         $out = [];
-        $zone = Checks::claimZone($md);
+        $zone = Checks::answerClaimZone($md);
 
         /* ---- what the answer puts forward ---- */
         $claims = [];

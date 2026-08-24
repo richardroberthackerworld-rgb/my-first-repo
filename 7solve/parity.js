@@ -325,6 +325,46 @@ const VERDICTS = [
   ['Find all positive integers x,y satisfying x\u00b2+xy+y\u00b2=3\u02e3\u207a\u02b8.',
    '## ✅ Answer\nThe solutions are (1,2) and (2,1).'],
   ['Solve 10\u207b\u00b3 \u00d7 x = 5', '## ✅ Answer\nx = 5000'],
+  /* THE CONCLUSION IN THE WORKING. The ✅ section names a triple and claims
+     nothing; step 12 claims it is the only one. Both engines must read the
+     claim from the same place or the API and the site disagree on a false
+     answer, which is the worst shape this corpus exists to catch. */
+  ['Find all positive integers x, y, z with x^2 + y^2 + z^2 = xyz',
+   '## ✅ Final Answer\n' +
+   '**(x, y, z) = (3, 3, 3)**\n' +
+   '\n## 📖 Step-by-Step Solution\n' +
+   '1. Because the equation is symmetric, let x ≤ y ≤ z.\n' +
+   '2. From x²+y²+z² = xyz we have z² ≤ xyz, so xy ≥ z.\n' +
+   '3. Also xyz = x²+y²+z² ≤ 3z², so xy ≤ 3z.\n' +
+   '4. Hence z ≤ xy ≤ 3z. Write xy = kz with integer k in 1,2,3.\n' +
+   '5. Case k=1: x² + y² = 0, impossible for positive integers.\n' +
+   '6. Case k=2: x²y² = 4(x² + y²), which has no positive integer solutions.\n' +
+   '7. Case k=3: 2x²y² = 9(x² + y²), so 1/x² + 1/y² = 2/9.\n' +
+   '9. Try x = 3: 1/9 + 1/y² = 2/9, so y = 3.\n' +
+   '11. With x = y = 3 and xy = 3z, we get 9 = 3z so z = 3.\n' +
+   '12. Conclusion – The only positive integer triple satisfying the original equation is (3,3,3).\n' +
+   '\n## 🔍 Verification\nLHS: 3² + 3² + 3² = 27. RHS: 3 · 3 · 3 = 27.\n' +
+   '\n## 🎯 Final Result\n(x, y, z) = (3, 3, 3)'
+  ],
+  ['x^2+y^2+z^2=xyz',
+   '## ✅ Final Answer\n' +
+   '**(x, y, z) = (3, 3, 3)**\n' +
+   '\n## 📖 Step-by-Step Solution\n' +
+   '1. Because the equation is symmetric, let x ≤ y ≤ z.\n' +
+   '2. From x²+y²+z² = xyz we have z² ≤ xyz, so xy ≥ z.\n' +
+   '3. Also xyz = x²+y²+z² ≤ 3z², so xy ≤ 3z.\n' +
+   '4. Hence z ≤ xy ≤ 3z. Write xy = kz with integer k in 1,2,3.\n' +
+   '5. Case k=1: x² + y² = 0, impossible for positive integers.\n' +
+   '6. Case k=2: x²y² = 4(x² + y²), which has no positive integer solutions.\n' +
+   '7. Case k=3: 2x²y² = 9(x² + y²), so 1/x² + 1/y² = 2/9.\n' +
+   '9. Try x = 3: 1/9 + 1/y² = 2/9, so y = 3.\n' +
+   '11. With x = y = 3 and xy = 3z, we get 9 = 3z so z = 3.\n' +
+   '12. Conclusion – The only positive integer triple satisfying the original equation is (3,3,3).\n' +
+   '\n## 🔍 Verification\nLHS: 3² + 3² + 3² = 27. RHS: 3 · 3 · 3 = 27.\n' +
+   '\n## 🎯 Final Result\n(x, y, z) = (3, 3, 3)'
+  ],
+  ['Solve x^2-5x+6=0',
+   '## ✅ Final Answer\nx = 2\n\n## 📖 Steps\n1. Case x > 0: the only solution is x = 2.'],
   ['Simplify 2/3 + 1/3',   '## ✅ Answer\n2/3 + 1/3 = 1'],
   ['Simplify 2/3 + 1/3',   '## ✅ Answer\n2/3 + 1/3 = 2'],
   ['Find P',               '## ✅ Answer\nP = 4/36 = 1/9'],

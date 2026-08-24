@@ -16325,6 +16325,52 @@ var Verify = (function(){
      one. */
   var CLAIMS_ALL = /\b(?:the\s+only|is\s+the\s+only|are\s+the\s+only|the\s+unique|no\s+other|precisely\s+the|these\s+are\s+all|no\s+further|and\s+no\s+others?)\b[^.!?\n]{0,60}\b(?:solutions?|triples?|pairs?|values?|answers?|integers?|numbers?|roots?)\b/i;
 
+  /* ---------- A CONCLUSION IS A CLAIM WHEREVER THE ANSWER PUTS IT ----------
+     claimZone is the ✅ and 🎯 sections, and every completeness gate read
+     CLAIMS_ALL out of it. A reported answer put its claim somewhere else:
+
+         ## ✅ Final Answer
+         (x, y, z) = (3, 3, 3)
+         ...
+         12. Conclusion – The only positive integer triple satisfying the
+             original equation is (3,3,3).
+
+     The Final Answer names a triple and claims nothing. The claim is in step
+     12, outside the zone, so CLAIMS_ALL never saw it — and with a question
+     that did not say "find all" either, nothing asked for completeness at all.
+     Three passing substitutions then certified it GREEN. The answer is false:
+     (3,3,6) gives 54 = 54.
+
+     This is the phrasing bug again, one door along. It used to be decided by
+     how the QUESTION was worded; that was fixed by also reading the answer's
+     own claim — and then decided by which SECTION of the answer the model
+     happened to put its conclusion in.
+
+     So the claim is now read from the conclusion wherever it sits. Scoped
+     lines are excluded, because a claim about a sub-case is not a claim about
+     the problem: "Case k=1 … the only solution is …" is reasoning, and
+     holding the whole answer to it would dispute correct work for the crime of
+     showing its cases.
+
+     The DOMAIN is read from the same widened zone, and has to be. "The only
+     positive integer triple" is the only place that answer says which integers
+     it means, and a completeness gate with no domain has nothing to enumerate
+     over. */
+  var CASE_SCOPED =
+    /\b(cases?|sub-?cases?|if|when|whenever|assume|suppose|provided|given that|otherwise|either)\b|\bfor\s+[a-z]\s*(?:[≥>≤<=]|is)/i;
+  function answerClaimZone(md){
+    var full = String(md == null ? '' : md);
+    var zone = claimZone(full);
+    var lines = full.split(/\r?\n/), extra = [], i;
+    for(i = 0; i < lines.length; i++){
+      if(!CLAIMS_ALL.test(lines[i])) continue;
+      if(CASE_SCOPED.test(lines[i])) continue;
+      if(zone.indexOf(lines[i]) >= 0) continue;
+      extra.push(lines[i]);
+    }
+    return extra.length ? zone + '\n' + extra.join('\n') : zone;
+  }
+
   var GENERATIVE = /\b(arise[sn]? from|obtained (?:from|by)|generated (?:from|by)|generates? (?:all|every|the rest)|recurrence|and so on|infinitely many|unboundedly many|famil(?:y of|ies)|this family|of the form|iterat\w+|continu\w+)\b|…|\.\.\./i;
 
   /* ---------- A WITNESS REFUTES; ONLY A BOUND CAN PROVE ----------
@@ -16996,7 +17042,7 @@ var Verify = (function(){
        domain at all, and the answer that follows says "the only positive
        integer triple" — it has scoped its own claim, and judging that claim
        inside the scope it chose is fair. It is the answer being checked. */
-    var dom = domainOf(question) || domainOf(claimZone(String(md == null ? '' : md)));
+    var dom = domainOf(question) || domainOf(answerClaimZone(md));
     if(!dom) return [];
     var found = findEquation(question);
     if(!found) return [];
@@ -17006,7 +17052,7 @@ var Verify = (function(){
 
     var out = [];
     var full = String(md == null ? '' : md);
-    var zone = claimZone(full);
+    var zone = answerClaimZone(full);
 
     /* ---- what the answer puts forward ---- */
     var claims = [];
@@ -17200,7 +17246,7 @@ var Verify = (function(){
 
   /* ---------- the checker itself ---------- */
   function descentCheck(question, md){
-    var full = String(md == null ? '' : md), zone = claimZone(full);
+    var full = String(md == null ? '' : md), zone = answerClaimZone(full);
     var dom = domainOf(question) || domainOf(zone);
     if(!dom || dom.low === null || dom.low < 1) return [];    /* positive integers only */
     var found = findEquation(question); if(!found) return [];
@@ -17442,7 +17488,7 @@ var Verify = (function(){
     return { D:D, N:N };
   }
   function pellCheck(question, md){
-    var full = String(md == null ? '' : md), zone = claimZone(full);
+    var full = String(md == null ? '' : md), zone = answerClaimZone(full);
     var dom = domainOf(question) || domainOf(zone);
     if(!dom || dom.low === null || dom.low < 0) return [];
     var found = findEquation(question); if(!found) return [];
@@ -20911,6 +20957,7 @@ var Verify = (function(){
               that can only see the sentence the proof produced cannot tell a
               real bound from a plausible-sounding one. */
            terminalBox:terminalBox, stripHasNothing:stripHasNothing,
+           answerClaimZone:answerClaimZone,
            positiveBound:positiveBound, polyExpand:polyExpand,
            stepChain:stepChain, unitmath:unitmath, sigfigs:sigfigs, witness:witness,
            bookkeeping:bookkeeping,
