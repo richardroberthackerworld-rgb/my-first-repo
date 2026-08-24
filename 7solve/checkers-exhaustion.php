@@ -700,7 +700,7 @@ final class Exhaustion
         if (count($vars) === 1) {
             foreach (Checks::claimedRoots($zone, $vars[0]) as $n) $claims[] = [(float)$n];
         } else {
-            $claims = Checks::claimedTuples($md, count($vars));
+            $claims = Checks::claimedTuples($md, count($vars), $vars, $eq);
         }
 
         /* ---- 1. CONSTRAINT PRESERVATION ---- */

@@ -574,7 +574,7 @@ final class Descent
         /* ---- nothing is terminal: the equation has no solutions at all ---- */
         if (!$terms) {
             $saysNone = (bool)preg_match(self::NONE_CLAIMED, $zone);
-            $claimed0 = Checks::claimedTuples($full, $k);
+            $claimed0 = Checks::claimedTuples($full, $k, $vars, $eq);
             if (!$saysNone && !$claimed0) return [];
             $ok = $saysNone && !$claimed0;
             return [['kind' => 'descent', 'ok' => $ok,
@@ -588,7 +588,7 @@ final class Descent
         /* ---- the solution set is the union of the orbits of the terminals ---- */
         $ceiling = $k === 2 ? 1000000.0 : 100000.0;
         $orb = self::orbitOf($P, $terms, $k, $low, $ceiling, 400);
-        $claims = Checks::claimedTuples($full, $k);
+        $claims = Checks::claimedTuples($full, $k, $vars, $eq);
         $wantsAll = (bool)preg_match(Exhaustion::ALL_ASKED_RE, $question)
                  || (bool)preg_match(Exhaustion::CLAIMS_ALL, $zone);
         $gen = (bool)preg_match(self::GENERATIVE, $full);
@@ -826,7 +826,7 @@ final class Descent
         if ($got === null || !$got['ladders']) return [];
         $lads = $got['ladders'];
         $src = trim((string)$found['src']);
-        $claims = Checks::claimedTuples($full, 2);
+        $claims = Checks::claimedTuples($full, 2, $vars, $eq);
         $wantsAll = (bool)preg_match(Exhaustion::ALL_ASKED_RE, $question)
                  || (bool)preg_match(Exhaustion::CLAIMS_ALL, $zone);
         $gen = (bool)preg_match(self::GENERATIVE, $full);

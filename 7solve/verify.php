@@ -1073,17 +1073,121 @@ final class Checks
         return is_finite($n) ? $n : null;
     }
 
-    public static function claimedTuples(string $md, int $nvars): array
+    /* ---------- A VALUE OF ANOTHER EQUATION IS NOT A CLAIMED SOLUTION ----------
+       Every number pair in brackets was read as a solution the answer was putting
+       forward. A reported answer solved x²+y²−5xy=25 by the standard route — as a
+       quadratic in x, require the discriminant 21y²+100 to be a square, solve the
+       Pell equation k²−21y²=100 — and wrote (k₀,y₀) = (11,1) and the fundamental
+       unit (55,12). Both were harvested as claimed (x,y) solutions and both were
+       disputed. Neither was ever offered as a solution; they are the working.
+
+       Two rules, and the second is the one that carries it:
+
+         · a tuple LABELLED with variables that are not the question's
+           — "(k,y) = (11,1)" is working, "(x,y) = (1,8)" is a claim
+         · a tuple that SOLVES an equation the answer itself states over
+           different variables — (11,1) solves k²−21y²=100, (55,12) solves
+           u²−21v²=1, and neither solves the question
+
+       The second needs no vocabulary and no guessing about phrasing. It only
+       ever withdraws a dispute, and only when the answer supplied the equation
+       that explains the pair: (121,25) in that same answer solves nothing it
+       wrote down, so it stays disputed — correctly, it is a real mistake.
+
+       Mirrors claimedTuples() and auxEquations() in index.html. */
+    private const TUPLE_LABEL =
+        '/\(\s*([A-Za-z][A-Za-z0-9_\'′]{0,3}(?:\s*,\s*[A-Za-z][A-Za-z0-9_\'′]{0,3}){1,2})\s*\)\s*(?:=|:|\bis\b|\bare\b)?\s*$/u';
+    private static function labelVars(string $text): ?array
+    {
+        if (!preg_match(self::TUPLE_LABEL, $text, $m)) return null;
+        $out = [];
+        foreach (explode(',', $m[1]) as $v) {
+            $v = trim($v);
+            $v = preg_replace('/[0-9_\'′]+$/u', '', $v);
+            $v = preg_replace('/[₀₁₂₃₄₅₆₇₈₉ₙ]+$/u', '', $v);
+            $out[] = mb_strtolower($v);
+        }
+        return $out;
+    }
+    /** Equations the ANSWER states over variables that are not the question's. */
+    private static function auxEquations(string $md, array $vars): array
+    {
+        $out = []; $seen = [];
+        $want = $vars; sort($want); $want = implode(',', $want);
+        $re = '/' . self::EQ_CHARS . '{1,80}=' . self::EQ_CHARS . '{1,80}/u';
+        if (!preg_match_all($re, $md, $ms)) return $out;
+        foreach ($ms[0] as $hit) {
+            if (count($out) >= 8) break;
+            $words = preg_split('/\s+/u', trim($hit));
+            $n = count($words);
+            for ($a = 0; $a < $n && $a < 8 && count($out) < 8; $a++) {
+                for ($b = $n; $b > $a; $b--) {
+                    $cand = rtrim(trim(implode(' ', array_slice($words, $a, $b - $a))), '.,;:');
+                    if (strpos($cand, '=') === false) continue;
+                    if (!self::looksAlgebraic($cand)) continue;
+                    if (isset($seen[$cand])) continue;
+                    $seen[$cand] = 1;
+                    $eq = Algebra::parseEquation($cand);
+                    /* continue, not break: one SPAN failing is not the run failing,
+                       and a shorter span of the same match may be the equation. */
+                    if ($eq === null || count($eq['vars']) !== count($vars)) continue;
+                    $ev = $eq['vars']; sort($ev);
+                    if (implode(',', $ev) === $want) continue;
+                    if (Algebra::hasTrig($eq['L']) || Algebra::hasTrig($eq['R'])) continue;
+                    $out[] = $eq;
+                    break;
+                }
+            }
+        }
+        return $out;
+    }
+   /* A COINCIDENCE MUST NOT COST A CLAIM. (25,5) solves the question —
+       625 + 25 − 625 = 25 — and it also solves the Pell equation the same answer
+       introduced, 625 − 525 = 100. Skipping every tuple that satisfies the
+       machinery threw that one away, and with it the whole (5,25) family: the
+       descent then reported two families missing from an answer that had listed
+       all three.
+    
+       So the test is not "does it solve the machinery" but "does it solve the
+       machinery AND NOT the question". A pair that answers the question is a
+       claim no matter what else it happens to satisfy.
+      */
+    public static function claimedTuples(string $md, int $nvars, ?array $vars = null, ?array $ownEq = null): array
     {
         $out = [];
         $seen = [];
         if ($nvars < 2) return $out;
+        $want = null;
+        if ($vars !== null) { $want = array_map(static fn($v) => mb_strtolower((string)$v), $vars); }
+        $aux = null;
         $re = '/\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*(?:,\s*(-?\d+(?:\.\d+)?)\s*)?\)/u';
-        if (!preg_match_all($re, $md, $ms, PREG_SET_ORDER)) return $out;
+        if (!preg_match_all($re, $md, $ms, PREG_SET_ORDER | PREG_OFFSET_CAPTURE)) return $out;
         foreach ($ms as $m) {
-            $tup = [(float)$m[1], (float)$m[2]];
-            if (isset($m[3]) && $m[3] !== '') $tup[] = (float)$m[3];
+            $tup = [(float)$m[1][0], (float)$m[2][0]];
+            if (isset($m[3]) && $m[3][0] !== '') $tup[] = (float)$m[3][0];
             if (count($tup) !== $nvars) continue;
+            if ($want !== null) {
+                $at = (int)$m[0][1];
+                $lab = self::labelVars(substr($md, max(0, $at - 24), min(24, $at)));
+                if ($lab !== null && count($lab) === count($want) && $lab !== $want) continue;
+                /* a pair that answers the QUESTION is a claim, whatever else it satisfies */
+                $solves = false;
+                if ($ownEq !== null) {
+                    $qenv = [];
+                    foreach ($ownEq['vars'] as $qi => $qn) $qenv[$qn] = $tup[$qi] ?? 0;
+                    $solves = Algebra::holdsAt($ownEq, $qenv) === true;
+                }
+                if (!$solves) {
+                    if ($aux === null) $aux = self::auxEquations($md, $want);
+                    $isAux = false;
+                    foreach ($aux as $ae) {
+                        $env = [];
+                        foreach ($ae['vars'] as $vi => $vn) $env[$vn] = $tup[$vi] ?? 0;
+                        if (Algebra::holdsAt($ae, $env) === true) { $isAux = true; break; }
+                    }
+                    if ($isAux) continue;
+                }
+            }
             $key = implode(',', $tup);
             if (isset($seen[$key])) continue;
             $seen[$key] = 1;
@@ -1380,7 +1484,7 @@ final class Checks
                checked the first and declared the answer fully verified while
                (5,1,1) gives 27 ≠ 15. Every tuple an answer puts forward as a
                solution is a claim, wherever on the page it is written. */
-            $tuples = self::claimedTuples($md, count($eq['vars']));
+            $tuples = self::claimedTuples($md, count($eq['vars']), $eq['vars'], $eq);
             if (!count($tuples)) return [];
             /* FOUND IS NOT ALL. "Find all positive integers x, y with
                x² + y² + 1 = 3xy" answered with (1,1), (2,5) and (5,13) reached

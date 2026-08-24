@@ -14872,15 +14872,142 @@ var Verify = (function(){
      Several variables: "(5, 3)", "(x, y) = (5, 3)", "x = 5, y = 3"
      The multivariate forms are the ones that did not exist before, and are
      exactly what the Diophantine bug needed. */
-  function claimedTuples(md, nvars){
+  /* ---------- A PAIR OF AUXILIARY VARIABLES IS NOT A CLAIMED SOLUTION ----------
+     Every number pair in brackets was read as a solution the answer was putting
+     forward. A reported answer solved x²+y²−5xy=25 by the standard route —
+     treat it as a quadratic in x, require the discriminant 21y²+100 to be a
+     square, and solve the Pell equation k²−21y²=100 — and wrote
+
+         (k₀,y₀) = (11,1)     the base of the Pell equation
+         (u₁,v₁) = (55,12)    the fundamental unit
+
+     Both were harvested as claimed (x,y) solutions and both were disputed,
+     because 11²+1−55 is 67 and not 25. Neither was ever offered as a solution;
+     they are the working. Auxiliary variables are how half of number theory is
+     written, so this fires on correct answers — the worst kind of false
+     positive this engine has.
+
+     A tuple is skipped when the text immediately before it NAMES the variables
+     it belongs to and those are not the question's. "(k,y) = (11,1)" is
+     labelled and mismatched, so it is working; "(x,y) = (1,8)" is labelled and
+     matched, so it is a claim; and a bare "(1,8)" carries no label and is read
+     as a claim exactly as before. Nothing becomes invisible by accident: an
+     answer has to say which variables it means before this will let a pair go.
+
+     Subscripts and primes are stripped first, so k₀, k_n and k' are all k. */
+  var TUPLE_LABEL = /\(\s*([A-Za-z][A-Za-z0-9_'′]{0,3}(?:\s*,\s*[A-Za-z][A-Za-z0-9_'′]{0,3}){1,2})\s*\)\s*(?:=|:|\bis\b|\bare\b)?\s*$/;
+  function labelVars(text){
+    var m = String(text).match(TUPLE_LABEL);
+    if(!m) return null;
+    return m[1].split(',').map(function(v){
+      return v.trim().replace(/[0-9_'′]+$/, '').replace(/[₀-₉ₙ]+$/, '').toLowerCase();
+    });
+  }
+  /* ---------- A VALUE OF ANOTHER EQUATION IS NOT A CLAIMED SOLUTION ----------
+     The label rule catches "(k,y) = (11,1)". It does not catch the same pair
+     written into a sentence — "Starting from (11,1) and iterating" — and a
+     vocabulary of words like `unit` and `base` was the first thing tried and is
+     guesswork: it would have skipped "the base (1,8) generates the rest", which
+     IS a claim, and it would miss the next phrasing nobody thought of.
+
+     There is an arithmetic test that does the job properly. An answer that
+     introduces machinery states its equation:
+
+         k² − 21y² = 100        the Pell equation the discriminant becomes
+         u² − 21v² = 1          the equation whose unit generates the rest
+
+     (11,1) satisfies the first. (55,12) satisfies the second. Neither satisfies
+     the question, and neither was ever offered as a solution to it — they are
+     values of the equations the answer itself wrote down, in the answer's own
+     variables. So a tuple is skipped when it solves an equation stated in the
+     answer over DIFFERENT variables from the question's.
+
+     This only ever withdraws a dispute, and it withdraws one only when the
+     answer supplied the equation that explains the pair. (121,25) satisfies
+     nothing in that answer, so it stays disputed — which is right, because it
+     is a genuine mistake. */
+  function auxEquations(md, vars){
+    var out = [], want = vars.slice().sort().join(','), seen = {};
+    var text = String(md == null ? '' : md);
+    var re = new RegExp(EQ_CHARS + '{1,80}=' + EQ_CHARS + '{1,80}', 'g'), m;
+    /* The same word-eating findEquation uses, and for the same reason: an
+       equation in a sentence comes out of the scan with the sentence attached,
+       and "Starting from" is not algebra. Trimming a word at a time from each
+       end is what finds the equation inside the prose. */
+    while((m = re.exec(text)) !== null && out.length < 8){
+      var words = m[0].trim().split(/\s+/);
+      for(var a = 0; a < words.length && a < 8 && out.length < 8; a++){
+        for(var b = words.length; b > a; b--){
+          var cand = words.slice(a, b).join(' ').trim().replace(/[.,;:]+$/, '');
+          if(cand.indexOf('=') < 0) continue;
+          if(!looksAlgebraic(cand)) continue;
+          if(seen[cand]) continue;
+          seen[cand] = 1;
+          var eq = parseEquation(cand);
+          /* continue, not break: a candidate that fails is one SPAN failing, and
+             a shorter span of the same match may still be the equation. Breaking
+             here abandoned the whole run — "u^2-21v^2=1 has" tokenises h*a*s into
+             three more variables, fails the arity test, and took the real
+             equation one word to its left down with it. */
+          if(!eq || eq.vars.length !== vars.length) continue;
+          if(eq.vars.slice().sort().join(',') === want) continue;   /* the question's own */
+          if(hasTrig(eq.L) || hasTrig(eq.R)) continue;
+          out.push(eq);
+          break;
+        }
+      }
+    }
+    return out;
+  }
+  /* A COINCIDENCE MUST NOT COST A CLAIM. (25,5) solves the question —
+     625 + 25 − 625 = 25 — and it also solves the Pell equation the same answer
+     introduced, 625 − 525 = 100. Skipping every tuple that satisfies the
+     machinery threw that one away, and with it the whole (5,25) family: the
+     descent then reported two families missing from an answer that had listed
+     all three.
+  
+     So the test is not "does it solve the machinery" but "does it solve the
+     machinery AND NOT the question". A pair that answers the question is a
+     claim no matter what else it happens to satisfy.
+     */
+  function claimedTuples(md, nvars, vars, ownEq){
     var out = [], seen = {};
     if(nvars < 2) return out;
+    var want = vars ? vars.map(function(v){ return String(v).toLowerCase(); }) : null;
+    var aux = null;                       /* built once, and only if a tuple gets that far */
     var re = /\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*(?:,\s*(-?\d+(?:\.\d+)?)\s*)?\)/g, m;
     while((m = re.exec(md)) !== null){
+      if(want){
+        var lab = labelVars(String(md).slice(Math.max(0, m.index - 24), m.index));
+        if(lab && lab.length === want.length){
+          var same = true;
+          for(var li = 0; li < lab.length; li++) if(lab[li] !== want[li]) same = false;
+          if(!same) continue;                    /* labelled, and not our variables */
+        }
+      }
       var tup = [parseFloat(m[1]), parseFloat(m[2])];
       if(m[3] !== undefined) tup.push(parseFloat(m[3]));
       if(tup.length !== nvars) continue;
       if(!tup.every(isFinite)) continue;
+      if(want){
+        /* a pair that answers the QUESTION is a claim, whatever else it satisfies */
+        var solves = false;
+        if(ownEq){
+          var qenv = {};
+          for(var qi = 0; qi < ownEq.vars.length; qi++) qenv[ownEq.vars[qi]] = tup[qi];
+          solves = holdsAt(ownEq, qenv) === true;
+        }
+        if(!solves){
+          if(aux === null) aux = auxEquations(md, want);
+          var isAux = false;
+          for(var ai = 0; ai < aux.length && !isAux; ai++){
+            var env = {};
+            for(var vi = 0; vi < aux[ai].vars.length; vi++) env[aux[ai].vars[vi]] = tup[vi];
+            if(holdsAt(aux[ai], env) === true) isAux = true;
+          }
+          if(isAux) continue;           /* a value of the answer's own machinery */
+        }
+      }
       var key = tup.join(',');
       if(seen[key]) continue;
       seen[key] = 1;
@@ -15585,7 +15712,7 @@ var Verify = (function(){
        claimed (5,3) now evaluates 35 against 45 and fails, instead of being
        silently skipped because the old regex could not see a y. */
     if(eq.vars.length >= 2){
-      var tuples = claimedTuples(fullAnswer, eq.vars.length);
+      var tuples = claimedTuples(fullAnswer, eq.vars.length, eq.vars, eq);
       if(!tuples.length) return [];
       /* FOUND IS NOT ALL, and this is where that used to be forgotten.
          "Find all positive integers x, y with x² + y² + 1 = 3xy" answered with
@@ -17094,7 +17221,7 @@ var Verify = (function(){
     if(vars.length === 1){
       claimedRootsOf(zone, vars[0]).forEach(function(n){ claims.push([n]); });
     } else {
-      claims = claimedTuples(full, vars.length);
+      claims = claimedTuples(full, vars.length, vars, eq);
     }
 
     /* ---- 1. CONSTRAINT PRESERVATION ----
@@ -17327,7 +17454,7 @@ var Verify = (function(){
     /* ---- nothing is terminal: the equation has no solutions at all ---- */
     if(!terms.length){
       var saysNone = NONE_CLAIMED.test(zone);
-      var claimed0 = claimedTuples(full, k);
+      var claimed0 = claimedTuples(full, k, vars, eq);
       if(!saysNone && !claimed0.length) return [];
       return [{ kind:'descent', ok: saysNone && !claimed0.length,
         text: (saysNone && !claimed0.length
@@ -17340,7 +17467,7 @@ var Verify = (function(){
     /* ---- the solution set is the union of the orbits of the terminals ---- */
     var ceiling = k === 2 ? 1000000 : 100000;
     var orb = orbitOf(P, terms, k, low, ceiling, 400);
-    var claims = claimedTuples(full, k);
+    var claims = claimedTuples(full, k, vars, eq);
     var wantsAll = ALL_ASKED.test(String(question || '')) || CLAIMS_ALL.test(zone);
     var gen = GENERATIVE.test(full);
     var fmtT = function(t){ return fmtTuple(vars, t); };
@@ -17608,7 +17735,7 @@ var Verify = (function(){
     if(completeness(full).length) return [];        /* a reply cut off mid-list has claimed nothing */
     var got = pellLadders(pe.D, pe.N, u, 12); if(!got || !got.ladders.length) return [];
     var lads = got.ladders, src = String(found.src).trim();
-    var claims = claimedTuples(full, 2);
+    var claims = claimedTuples(full, 2, vars, eq);
     var wantsAll = ALL_ASKED.test(String(question || '')) || CLAIMS_ALL.test(zone);
     var gen = GENERATIVE.test(full);
     if(!claims.length && !wantsAll) return [];
@@ -21121,7 +21248,7 @@ var Verify = (function(){
            /* correctionOnly is exported for the same reason terminalBox is: it
               decides which of three badges a student sees, and a test that can
               only observe the badge cannot drive the cases it must REFUSE. */
-           correctionOnly:correctionOnly,
+           correctionOnly:correctionOnly, claimedTuples:claimedTuples,
            terminalBox:terminalBox, stripHasNothing:stripHasNothing,
            answerClaimZone:answerClaimZone,
            positiveBound:positiveBound, polyExpand:polyExpand,
