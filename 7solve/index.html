@@ -21389,7 +21389,7 @@ function paintVerif(md){
                  r.failed.every(function(c){ return c.kind === 'truncated'; });
     if(corrected){
       label = '⚠ Verified with one correction'; cls = 'verif corrected';
-      THE CORRECTED VALUE IS A FIELD, NOT A PARSE. The badge used to recover it
+      /* THE CORRECTED VALUE IS A FIELD, NOT A PARSE. The badge used to recover it
       from the diagnosis sentence with /gives ([^,]+?), which does/ — and the value
       it was looking for is "(x,y) = (77,369)", which contains a comma. The match
       failed and the badge read "should be ?" to the student: the one sentence the
@@ -21397,6 +21397,7 @@ function paintVerif(md){
       
       slipOf was already carried as a field for exactly this reason. slipTo joins
       it. Nothing about the badge now depends on how the diagnosis is worded.
+       */
       title = 'Verified with one correction: ' + corrected.slipOf + ' should be ' +
               (corrected.slipTo || 'the value the jump gives') + '. Your method is sound.';
     } else if(cutOff){

@@ -8,7 +8,7 @@
 <!-- Build stamp. Bump this whenever the site is rebuilt: it is the one place
      to look to answer "is the new version actually live?" — Settings shows it,
      the console logs it, and you can read it straight out of view-source. -->
-<meta name="7solve-build" content="2026-08-24.6">
+<meta name="7solve-build" content="2026-08-24.7">
 <link rel="icon" href="favicon.ico?v=7by4" sizes="any">
 <link rel="icon" href="assets/logo.svg?v=7by4" type="image/svg+xml">
 <link rel="icon" href="favicon.png?v=7by4" type="image/png" sizes="96x96">
@@ -17589,6 +17589,7 @@ var Verify = (function(){
            same value from one that failed for any other reason — and reading it
            back out of the sentence would make the badge depend on wording. */
         slipOf: slip ? fmtT(bogus) : null,
+        slipTo: slip ? fmtT(near) : null,
         fix: slip
           ? 'Your classification is correct — keep it exactly as it is. One listed value is ' +
             'wrong: ' + fmtT(bogus) + ' should be ' + fmtT(near) + '. Correct that single ' +
@@ -21388,12 +21389,16 @@ function paintVerif(md){
                  r.failed.every(function(c){ return c.kind === 'truncated'; });
     if(corrected){
       label = '⚠ Verified with one correction'; cls = 'verif corrected';
-      /* Built from the diagnosis rather than re-derived: the sentence the engine
-         already wrote names the value it corrected TO, and two readers of the
-         same fact drift. */
-      var to = String(corrected.text).match(/gives ([^,]+?), which does/);
+      THE CORRECTED VALUE IS A FIELD, NOT A PARSE. The badge used to recover it
+      from the diagnosis sentence with /gives ([^,]+?), which does/ — and the value
+      it was looking for is "(x,y) = (77,369)", which contains a comma. The match
+      failed and the badge read "should be ?" to the student: the one sentence the
+      whole tier exists to show, with the number missing.
+      
+      slipOf was already carried as a field for exactly this reason. slipTo joins
+      it. Nothing about the badge now depends on how the diagnosis is worded.
       title = 'Verified with one correction: ' + corrected.slipOf + ' should be ' +
-              (to ? to[1].trim() : 'the value the jump gives') + '. Your method is sound.';
+              (corrected.slipTo || 'the value the jump gives') + '. Your method is sound.';
     } else if(cutOff){
       label = '⚠ This answer is cut off'; cls = 'verif unchecked';
       title = 'Everything that could be checked in this answer held up — the failure is that ' +

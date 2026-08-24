@@ -112,7 +112,15 @@ function jsRun(q, a) {
     sig: checks.map((x) => x.kind + (x.ok ? '+' : '-') +
       (x.kind === 'descent' && /slip in one number/.test(String(x.text)) ? ':slip' : ''))
       .sort().join(','),
-    correction: r.correction ? String(r.correction.slipOf) : null,
+    /* The same composite PHP reports, so the pair the badge will SHOW is what
+       gets compared and not merely that a correction exists. */
+    correction: r.correction
+      ? String(r.correction.slipOf) + ' > ' + String(r.correction.slipTo)
+      : null,
+    badgeLine: r.correction
+      ? 'Verified with one correction: ' + r.correction.slipOf + ' should be ' +
+        (r.correction.slipTo || 'the value the jump gives') + '. Your method is sound.'
+      : null,
     descent: d ? String(d.text) : '',
     fix: d && d.fix ? String(d.fix) : '',
     complaint: C(r, q),
@@ -210,7 +218,8 @@ if (php) {
 }
 
 console.log('\n6. THE THIRD BADGE');
-ok('the slip is marked as a correction', slip.correction === '(x,y) = (77,368)',
+ok('the slip is marked as a correction',
+   String(slip.correction) === '(x,y) = (77,368) > (x,y) = (77,369)',
    'correction=' + slip.correction);
 ok('and its VERDICT is still disputed — the tier is presentation only',
    slip.state === 'disputed', 'state=' + slip.state);
@@ -218,6 +227,26 @@ ok('a broken construction is never softened to a correction', broken.correction 
    'correction=' + broken.correction);
 ok('a false completeness claim is never softened either', wrong.correction === null,
    'correction=' + wrong.correction);
+/* THE SENTENCE A STUDENT ACTUALLY READS. Everything else here proved the badge
+   was WIRED, and the badge was wired — it shipped in .6 reading
+   "(77,368) should be ?", because it recovered the corrected value out of the
+   diagnosis with a regex that stops at a comma, and the value contains one.
+   Nothing that reads the source can see that, so the sentence is assembled here
+   from the served fields and read back. Plain string tests on purpose: the
+   thing being checked is prose, and a regex over prose is how the bug happened. */
+{
+  const line = String(slip.badgeLine || '');
+  ok('the badge sentence names the value that is wrong',
+     line.indexOf('(x,y) = (77,368) should be') >= 0, line);
+  ok('and the value it should be',
+     line.indexOf('should be (x,y) = (77,369).') >= 0, line);
+  ok('and it tells the student their method is sound',
+     line.indexOf('Your method is sound.') >= 0, line);
+  for (const junk of ['?', 'undefined', 'null', 'the value the jump gives', 'NaN']) {
+    ok('and no placeholder survives into it: ' + JSON.stringify(junk),
+       line.indexOf(junk) < 0, line);
+  }
+}
 ok('a fully correct answer carries no correction', good.correction === null,
    'correction=' + good.correction);
 {
