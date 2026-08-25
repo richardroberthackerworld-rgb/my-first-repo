@@ -680,7 +680,10 @@ final class Checks
             $body = preg_replace('/^\s*[-*•]\s+|^\s*\d+[.)]\s+/u', '',
                      preg_replace('/\*\*|__/u', '', $line));
             $parts = explode('=', $body);
-            if (count($parts) < 2 || count($parts) > 4) continue;
+            /* A real work-and-time line runs to five or six links:
+               "Net = 1/12 + 1/18 - 1/36 = 3/36 + 2/36 - 1/36 = 4/36 = 1/9".
+               At a cap of four it was dropped entirely. Mirrors index.html. */
+            if (count($parts) < 2 || count($parts) > 6) continue;
             for ($p = 0; $p + 1 < count($parts); $p++) {
                 /* A COMMA INSIDE A NUMBER IS NOT A LIST SEPARATOR. This split
                    exists for "x = 1, y = 2", but it also cut "Rs 10,000" into
@@ -749,10 +752,19 @@ final class Checks
                    The writer has already decided which by whether they scaled.
                    Rejecting either one disputes correct work, so both are
                    accepted; a wrong figure still has to miss both. */
+                /* A FRACTION IS EXACT, and tol() cannot see that. "5/36" holds
+                   no decimal point, so tol returned half a unit and compared
+                   0.1111 against 0.1389 as equal — every fraction chain passed,
+                   right or wrong. "3/36 + 2/36 - 1/36 = 5/36" wore a green
+                   badge. A written fraction states an exact value, so it is
+                   held to one. */
+                $fracRhs = (bool)preg_match('~^-?\d+\s*/\s*-?\d+$~u', trim($rhsShown));
                 $ok = $pctRhs
                     ? (self::near($a * 100, $b * 100, $rhsShown)
                        || self::near($a, $b * 100, $rhsShown))
-                    : self::near($a, $b, $rhs);
+                    : ($fracRhs
+                        ? abs($a - $b) <= 1e-9 * max(1.0, abs($a), abs($b))
+                        : self::near($a, $b, $rhs));
                 $out[] = ['kind' => 'arith', 'ok' => $ok,
                           'text' => trim(preg_replace('/\s+/u', ' ', $lhsShown . ' = ' . $rhsShown)),
                           'got' => Algebra::round6($a), 'want' => Algebra::round6($b)];
@@ -833,6 +845,20 @@ final class Checks
                splits on every '=' and judges the chain whole. Mirrors
                index.html. */
             if (preg_match('/^[ \t]*[-+*\/×÷][ \t]*\d/u', substr($md, $at + strlen($whole)))) continue;
+            /* …and not a claim about its last term either. The guard above
+               catches a match that stops short; this catches one that STARTS
+               short. In "… = 3/36 + 2/36 - 1/36 = 4/36" the scan resumed inside
+               the second link and matched "2/36 - 1/36 = 4/36", dropping the
+               leading 3/36 — false, so correct work was reported as broken. If
+               the character before is an operator, the expression began
+               earlier and this is its tail. Mirrors index.html. */
+            /* Emphasis is stripped BEFORE the test, or "**2 + 3 = 5**" reads as
+               preceded by a multiplication sign and the whole answer goes
+               unchecked. A genuine "3 * " keeps its single star and is still
+               refused. Mirrors index.html. */
+            $pre = preg_replace('/[ \t]+$/u', '', substr($md, 0, $at));
+            $pre = preg_replace('/(\*\*|__)+$/u', '', $pre);
+            if (preg_match('/[-+*\/×÷·⋅∙−]$/u', $pre)) continue;
             if (preg_match('/[()^%]/u', $whole)) continue;
             if (preg_match('/[\x{221A}\x{221B}\x{221C}]/u', $whole)) continue;
 

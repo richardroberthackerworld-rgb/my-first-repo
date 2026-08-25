@@ -1471,6 +1471,37 @@ const ABSOLUTE = [
   ['U ascii unaffected','A calculation.',
    '## ✅ Answer\n**2000**\n\n## 📖 Steps\n1. 2500 - 500 = 2000\n', 'checked'],
 
+  /* WORK-AND-TIME: a long fraction chain, which is how every rate problem is
+     solved and the staple of SSC and bank papers. Three separate faults sat on
+     this one line:
+
+       "Net = 1/12 + 1/18 - 1/36 = 3/36 + 2/36 - 1/36 = 4/36 = 1/9"
+
+     1. the flat scanner resumed INSIDE the second link and matched
+        "2/36 - 1/36 = 4/36", dropping the leading 3/36 — false, so correct
+        work was called a broken step;
+     2. closedForm capped chains at four links and dropped this five-link line
+        entirely, so nothing checked it at all;
+     3. tol() reads precision off the written form, and "5/36" has no decimal
+        point — so half a unit was allowed against values of 0.111 and 0.139
+        and EVERY fraction chain passed, right or wrong.
+
+     A wrong MIDDLE and a wrong LAST link are pinned separately: a chain judged
+     only at its ends is not judged. */
+  ['V rate chain right', 'Two pipes fill a tank in 12 and 18 hours; a third empties it in 36.',
+   '## ✅ Answer\n**9 hours**\n\n## 📖 Steps\n' +
+   '1. Net in one hour = 1/12 + 1/18 - 1/36 = 3/36 + 2/36 - 1/36 = 4/36 = 1/9\n', 'checked'],
+  ['V rate chain bad middle', 'Two pipes fill a tank in 12 and 18 hours; a third empties it in 36.',
+   '## ✅ Answer\n**9 hours**\n\n## 📖 Steps\n' +
+   '1. Net in one hour = 1/12 + 1/18 - 1/36 = 3/36 + 2/36 - 1/36 = 5/36 = 1/9\n', 'stepfail'],
+  ['V rate chain bad last', 'Two pipes fill a tank in 12 and 18 hours; a third empties it in 36.',
+   '## ✅ Answer\n**8 hours**\n\n## 📖 Steps\n' +
+   '1. Net in one hour = 1/12 + 1/18 - 1/36 = 3/36 + 2/36 - 1/36 = 4/36 = 1/8\n', 'stepfail'],
+  /* the mid-expression guard must not swallow a bolded answer: "**2 + 3 = 5**"
+     is preceded by an asterisk that is emphasis, not multiplication */
+  ['V bold not multiply', 'What is 2 + 3?',
+   '## ✅ Answer\n**2 + 3 = 5**', 'checked'],
+
   ['Q chem unicode',     'Balance H₂ + O₂ → H₂O',
    '## ✅ Answer\n**2H₂ + O₂ → 2H₂O**\n\n## 🎯 Final Result\n2H₂ + O₂ → 2H₂O', 'checked'],
 

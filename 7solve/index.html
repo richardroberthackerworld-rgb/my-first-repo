@@ -14429,7 +14429,10 @@ var Verify = (function(){
       if(line.indexOf('`') >= 0) continue;              // code, not mathematics
       var body = line.replace(/\*\*|__/g, '').replace(/^\s*[-*•]\s+|^\s*\d+[.)]\s+/, '');
       var parts = body.split('=');
-      if(parts.length < 2 || parts.length > 4) continue;
+      /* A real work-and-time line runs to five or six links:
+           "Net = 1/12 + 1/18 - 1/36 = 3/36 + 2/36 - 1/36 = 4/36 = 1/9".
+           At a cap of four it was dropped entirely and nothing checked it. */
+        if(parts.length < 2 || parts.length > 6) continue;
       for(var p = 0; p + 1 < parts.length; p++){
         /* A leading label — "P = 4/36" — is not part of the arithmetic, so the
            left side is read from the last comma or colon onward. */
@@ -14491,8 +14494,15 @@ var Verify = (function(){
            wrong figure still has to miss both. */
         var pctRhs = rhsShown.indexOf('%') >= 0;
         out.push({ kind:'arith', got:round6(a), want:round6(b),
+          /* A FRACTION IS EXACT, and tol() cannot see that. "5/36" holds no
+             decimal point, so tol returned half a unit and compared 0.1111
+             against 0.1389 as equal — every fraction chain passed, right or
+             wrong. "3/36 + 2/36 - 1/36 = 5/36" wore a green badge. A written
+             fraction states an exact value, so it is held to one. */
           ok: pctRhs ? (near(a * 100, b * 100, rhsShown) || near(a, b * 100, rhsShown))
-                     : near(a, b, rhs),
+             : /^-?\d+\s*\/\s*-?\d+$/.test(String(rhsShown).trim())
+               ? Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(a), Math.abs(b))
+               : near(a, b, rhs),
           text:(lhsShown + ' = ' + rhsShown).replace(/\s+/g, ' ').trim() });
         if(out.length > 24) return;
       }
@@ -14577,6 +14587,21 @@ var Verify = (function(){
          each consecutive pair, so the chain is judged there instead — as a
          whole, which is the only way it means anything. */
       if(/^[ \t]*[-+*\/×÷][ \t]*\d/.test(md.slice(m.index + m[0].length))) continue;
+      /* …AND NOT A CLAIM ABOUT ITS LAST TERM EITHER. The guard above catches a
+         match that stops short; this catches one that STARTS short. In
+
+             Net = 1/12 + 1/18 - 1/36 = 3/36 + 2/36 - 1/36 = 4/36 = 1/9
+
+         the first link is skipped correctly, but the scan then resumes inside
+         the second and matched "2/36 - 1/36 = 4/36" — dropping the leading
+         3/36. That is false, so correct work on a work-and-time problem was
+         reported as a broken step. If the character before this match is an
+         operator, the expression began earlier and this is its tail. */
+      /* Emphasis is stripped BEFORE the test, or "**2 + 3 = 5**" reads as
+         preceded by a multiplication sign and the whole answer goes unchecked.
+         A genuine "3 * " keeps its single star and is still refused. */
+      var pre = md.slice(0, m.index).replace(/[ \t]+$/, '').replace(/(\*\*|__)+$/, '');
+      if(/[-+*\/×÷·⋅∙−]$/.test(pre)) continue;
       if(/[()^√%]/.test(m[0])) continue;                // ambiguous by rule 1
       /* The same term can also be split by the match STARTING mid-surd a few
          characters in — scan back over the digits/operators of this expression
