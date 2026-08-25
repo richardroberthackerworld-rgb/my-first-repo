@@ -1449,6 +1449,28 @@ const ABSOLUTE = [
   ['T long grouping chain','A shopkeeper totals his stock.',
    '## ✅ Answer\n**1 234 568**\n\n## 📖 Steps\n1. Sum = 1 234 567 + 1 = 1 234 568\n', 'checked'],
 
+  /* THE OPERATORS MODELS ACTUALLY TYPE. A real discount answer wrote
+     "2500 − 1800 = 700" with U+2212 MINUS SIGN, not the ASCII hyphen, and
+     "0.20·2500" with a MIDDLE DOT. Neither was an operator to CALC_RE or to
+     evalFlat, so those lines were skipped in silence — no verdict at all,
+     right or wrong. × and ÷ had always been handled; − and · never were, which
+     is easy to miss because they LOOK like the ASCII forms.
+
+     Each wrong twin matters: a skipped line and a passing line are
+     indistinguishable in a receipt until you break one. */
+  ['U unicode minus',   'A calculation.',
+   '## ✅ Answer\n**2000**\n\n## 📖 Steps\n1. 2500 − 500 = 2000\n', 'checked'],
+  ['U unicode minus wrong', 'A calculation.',
+   '## ✅ Answer\n**2100**\n\n## 📖 Steps\n1. 2500 − 500 = 2100\n', 'stepfail'],
+  ['U middle dot',      'A calculation.',
+   '## ✅ Answer\n**500**\n\n## 📖 Steps\n1. 0.20·2500 = 500\n', 'checked'],
+  ['U middle dot wrong','A calculation.',
+   '## ✅ Answer\n**600**\n\n## 📖 Steps\n1. 0.20·2500 = 600\n', 'stepfail'],
+  ['U dot operator',    'A calculation.',
+   '## ✅ Answer\n**12**\n\n## 📖 Steps\n1. 3 ⋅ 4 = 12\n', 'checked'],
+  ['U ascii unaffected','A calculation.',
+   '## ✅ Answer\n**2000**\n\n## 📖 Steps\n1. 2500 - 500 = 2000\n', 'checked'],
+
   ['Q chem unicode',     'Balance H₂ + O₂ → H₂O',
    '## ✅ Answer\n**2H₂ + O₂ → 2H₂O**\n\n## 🎯 Final Result\n2H₂ + O₂ → 2H₂O', 'checked'],
 

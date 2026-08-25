@@ -568,7 +568,7 @@ final class Checks
        represent (brackets, powers, functions, percentages) fails to match and
        the check is skipped rather than approximated. */
     private const CALC_RE =
-        '/(-?\d[\d,]*(?:[ \x{00A0}]\d{3})*(?:\.\d+)?(?:(?:\s*[+\-×÷*\/]\s*|\s+[xX]\s+)-?\d[\d,]*(?:[ \x{00A0}]\d{3})*(?:\.\d+)?)+)\s*=\s*(-?\d[\d,]*(?:[ \x{00A0}]\d{3})*(?:\.\d+)?(?:\s*\/\s*-?\d[\d,]*(?:[ \x{00A0}]\d{3})*(?:\.\d+)?)?)/u';
+        '/(-?\d[\d,]*(?:[ \x{00A0}]\d{3})*(?:\.\d+)?(?:(?:\s*[+\-−×÷·⋅∙*\/]\s*|\s+[xX]\s+)-?\d[\d,]*(?:[ \x{00A0}]\d{3})*(?:\.\d+)?)+)\s*=\s*(-?\d[\d,]*(?:[ \x{00A0}]\d{3})*(?:\.\d+)?(?:\s*\/\s*-?\d[\d,]*(?:[ \x{00A0}]\d{3})*(?:\.\d+)?)?)/u';
 
     /* ⁰¹⁵⁶⁷⁸⁹ were missing while ²³⁴ were present, so an equation was visible
        to this scan at x⁴ and invisible at x⁵ — and deLatex emits every one of
@@ -600,14 +600,22 @@ final class Checks
     /* Flat left-to-right evaluator: × and ÷ first, then + and −. */
     public static function evalFlat(string $src): float
     {
-        $parts = preg_split('/\s*([+\-×÷*\/])\s*/u', trim($src), -1,
+        $parts = preg_split('/\s*([+\-−×÷·⋅∙*\/])\s*/u', trim($src), -1,
                             PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
         if ($parts === false || !count($parts) || count($parts) % 2 === 0) return NAN;
 
         $nums = [self::toNum($parts[0])];
         $ops  = [];
         for ($i = 1; $i < count($parts); $i += 2) {
-            $op = $parts[$i] === '×' ? '*' : ($parts[$i] === '÷' ? '/' : $parts[$i]);
+            /* Models type the typographic operators, not the ASCII ones: a real
+               answer wrote "2500 − 1800 = 700" with U+2212 MINUS and
+               "0.20·2500" with a MIDDLE DOT. Neither was an operator to this
+               evaluator, so those lines were skipped in silence — no verdict at
+               all, right or wrong. Mirrors index.html. */
+            $raw = $parts[$i];
+            $op = ($raw === '×' || $raw === '·' || $raw === '⋅' || $raw === '∙') ? '*'
+                : ($raw === '÷' ? '/'
+                : ($raw === '−' ? '-' : $raw));
             $n  = self::toNum($parts[$i + 1]);
             if (!is_finite($n)) return NAN;
             $ops[] = $op;
