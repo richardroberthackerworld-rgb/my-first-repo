@@ -156,8 +156,22 @@ final class Exhaustion
         if (preg_match('/\b([a-z])\s*(>=|<=|≥|≤|>|<)\s*([a-z])\b/u', $q, $om)) {
             $order = ['a' => $om[1], 'op' => str_replace(['>=', '<='], ['≥', '≤'], $om[2]), 'b' => $om[3]];
         }
+        /* THE PRIME FLAG BELONGS TO THE CHAIN ABOVE, NOT TO THE WHOLE QUESTION.
+           It used to be set by scanning for the word "prime" anywhere, which
+           made it fire on a question that says the word about something ELSE:
+
+               "Let x,y,z be positive integers satisfying x²+y²+z²=3xyz.
+                Define S=x+y+z. Determine all values of S that are prime."
+
+           There "prime" describes S. The flag was applied to x, y and z, so
+           (1,1,1) was failed for "x = 1, which is not prime" while the label
+           still read "positive integers" — a message that contradicts itself
+           in its own sentence, on a correct triple.
+
+           The variables are primes only when PRIMES is what the chain settled
+           on as their domain. */
         return ['low' => $low, 'distinct' => (bool)preg_match('/\bdistinct\b/', $q),
-                'prime' => (bool)preg_match('/\bprimes?\b|\bprime\s+numbers?\b/', $q),
+                'prime' => ($label === 'primes'),
                 'order' => $order, 'label' => $label];
     }
 
