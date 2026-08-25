@@ -714,6 +714,13 @@ final class Checks
             $whole = $m[0][0];
             $at    = $m[0][1];
 
+            /* An expression does not span lines. CALC_RE joins operands with
+               \s*, which matches a newline, so a line ENDING in a number fused
+               with the next line starting in a signed one and produced a
+               fabricated equation, reported to the student as their mistake.
+               See the matching comment in index.html; parity.js compares. */
+            if (strpbrk($whole, "\r\n") !== false) continue;
+
             $before = $at > 0 ? substr($md, $at - 1, 1) : ' ';
             $after  = substr($md, $at + strlen($whole), 1);
             if ($after === false || $after === '') $after = ' ';

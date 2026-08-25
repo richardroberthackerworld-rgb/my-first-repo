@@ -1249,6 +1249,19 @@ const ABSOLUTE = [
      function crosses zero at most once, which settles the solution set without
      a root count. Both are now certified on mathematics, not on evidence —
      subst+ AND roots+, so evidenceOnly is satisfied honestly. */
+  /* AN EXPRESSION DOES NOT SPAN LINES. From a real production answer: a line
+     ending in a number fused with the next line starting in a signed one, and
+     CALC_RE read "1.5671432904 - 0.5671432904 + 1.5671432904 = 1.0" — an
+     equation the student never wrote, false, and reported back to them as
+     their own mistake. Step-by-step working ends lines on numbers constantly.
+     The second case keeps a real single-line error failing, so this cannot
+     decay into simply switching the arithmetic check off. */
+  ['K line-span not fused', 'Solve x + e^x = 0',
+   '## ✅ Answer\n**x = -0.567**\n\n## 🔍 Verification\ne^(-0.5671432904)≈ 1.5671432904\n\n\n' +
+   '-0.5671432904+1.5671432904 = 1.0\n', 'checked'],
+  ['K real arith still caught', 'A merchant totals his stock.',
+   '## ✅ Answer\n**23400**\n\n## 📖 Steps\n1. 12000 + 11400 = 23500\n', 'stepfail'],
+
   ['D monotone',         'Solve exp(x) - 1 = 0',   '## ✅ Answer\n**x = 0**',               'checked'],
   ['E false root',       'Solve x^2-5x+6=0',       '## ✅ Answer\n**x = 2, x = 4**',        'disputed'],
   ['F monotone',         'Solve sqrt(x) = 3',      '## ✅ Answer\n**x = 9**',               'checked'],

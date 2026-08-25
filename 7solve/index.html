@@ -14425,6 +14425,23 @@ var Verify = (function(){
     var out = [], seen = {}, re = new RegExp(CALC_RE.source, 'g'), m;
     while((m = re.exec(md)) !== null){
       if(out.length >= 12) break;                       // a cap, not a sample: 12 lines is plenty
+      /* AN EXPRESSION DOES NOT SPAN LINES. CALC_RE joins its operands with
+         \s*, and \s matches a newline, so a line ENDING in a number fused with
+         the next line starting in a signed one. From a real answer:
+
+             e^(-0.5671432904) is about 1.5671432904
+
+             -0.5671432904 + 1.5671432904 = 1.0
+
+         was read as "1.5671432904 - 0.5671432904 + 1.5671432904 = 1.0", which
+         is false — so a fabricated equation was reported to the student as
+         their own mistake, and the answer was marked "a step does not hold".
+         The line they actually wrote is true. Step-by-step working ends lines
+         on numbers constantly, so this fired on ordinary correct answers.
+
+         Refusing to read across a line break costs only a check this engine
+         was never entitled to make. */
+      if(/[\r\n]/.test(m[0])) continue;
       var before = md[m.index - 1] || ' ';
       var after  = md[m.index + m[0].length] || ' ';
       /* A radical, a superscript or a bracket immediately before the match
