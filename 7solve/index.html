@@ -9283,6 +9283,26 @@ function deLatex(md){
   });
   s = s.replace(/\\sqrt\s*(\w+)/g, '√$1');
 
+  /* FRACTIONS AGAIN, NOW THAT THE ROOTS ARE GONE.
+     "x = \dfrac{-b ± \sqrt{b²-4ac}}{2a}" — the quadratic formula, written the
+     way every textbook writes it — failed the pass above: its first group holds
+     a NESTED \sqrt{...}, and [^{}] cannot cross that. The braces were then
+     stripped by the cleanup at the end, so a student read
+
+         x=\dfrac-b±√(b²-4ac)2a
+
+     which is not a formula at all. \sqrt has since become √(…) with no braces
+     left, so the same rule now matches. \tfrac and \cfrac join \dfrac here —
+     all three are the same fraction wearing a different size. */
+  for(var fi = 0; fi < 2; fi++){
+    s = s.replace(/\\[dtc]?frac\s*\{([^{}]+)\}\s*\{([^{}]+)\}/g, function(_, a, b){
+      var na = /^[\d.]+$/.test(a.trim()) ? a.trim() : '(' + a.trim() + ')';
+      var nb = /^[\d.]+$/.test(b.trim()) ? b.trim() : '(' + b.trim() + ')';
+      return na + '/' + nb;
+    });
+  }
+  s = s.replace(/\\[dtc]?frac\s*(\d|[A-Za-z])\s*(\d|[A-Za-z])/g, '$1/$2');
+
   /* superscripts: ^{2} → ², ^{n} → ^n */
   var SUP = {'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
   s = s.replace(/\^\s*\{\s*(-?\d)\s*\}/g, function(_, d){ return SUP[d] || ('^' + d); });

@@ -1095,6 +1095,24 @@ final class Checks
         }, $s);
         $s = preg_replace('/\\\\sqrt\s*(\w+)/u', '√$1', $s);
 
+        /* Fractions again, now that the roots are gone. The quadratic formula
+           "\dfrac{-b ± \sqrt{b²-4ac}}{2a}" failed the earlier pass because its
+           first group holds a NESTED \sqrt{...} and [^{}] cannot cross that;
+           the braces were then stripped and the student read "\dfrac-b±√(…)2a".
+           \sqrt is now √(…) with no braces, so the same rule matches. \tfrac and
+           \cfrac join \dfrac — the same fraction in a different size.
+           Mirrors index.html. */
+        for ($fi = 0; $fi < 2; $fi++) {
+            $s = preg_replace_callback('/\\\\[dtc]?frac\s*\{([^{}]+)\}\s*\{([^{}]+)\}/u', static function ($m) {
+                $a = trim($m[1]);
+                $b = trim($m[2]);
+                $na = preg_match('/^[\d.]+$/', $a) ? $a : '(' . $a . ')';
+                $nb = preg_match('/^[\d.]+$/', $b) ? $b : '(' . $b . ')';
+                return $na . '/' . $nb;
+            }, $s);
+        }
+        $s = preg_replace('/\\\\[dtc]?frac\s*(\d|[A-Za-z])\s*(\d|[A-Za-z])/u', '$1/$2', $s);
+
         $sup = ['0' => '⁰', '1' => '¹', '2' => '²', '3' => '³', '4' => '⁴',
                 '5' => '⁵', '6' => '⁶', '7' => '⁷', '8' => '⁸', '9' => '⁹'];
         $s = preg_replace_callback('/\^\s*\{\s*(-?\d)\s*\}/u',

@@ -1413,6 +1413,25 @@ const ABSOLUTE = [
   ['R list still splits', 'Solve x + y = 5 and x - y = 1',
    '## ✅ Answer\n**x = 3, y = 2**\n\n## 📖 Steps\n1. Adding: 2x = 6, so x = 3.\n', 'checked'],
 
+  /* THE QUADRATIC FORMULA WAS UNREADABLE. "\dfrac{-b ± \sqrt{b²-4ac}}{2a}" —
+     the way every textbook writes it — failed the fraction pass, because that
+     pass ran BEFORE \sqrt and its first group held a nested \sqrt{...} which
+     [^{}] cannot cross. The braces were then stripped by the cleanup and the
+     student read "x=\dfrac-b±√(b²-4ac)2a", which is not a formula at all.
+
+     Fractions are now resolved a second time after the roots are gone, and
+     \tfrac and \cfrac join \dfrac. The verdicts here are the point: the surds
+     must still be substituted back and the pair proved complete. */
+  ['S quadratic formula', 'Solve x^2 - 6x + 4 = 0 using the quadratic formula.',
+   '## ✅ Answer\n**x = 3 - √5, x = 3 + √5**\n\n## 📖 Steps\n' +
+   '1. x = \\dfrac{-b ± \\sqrt{b²-4ac}}{2a}\n2. b²-4ac = 36-16 = 20\n' +
+   '3. x = \\dfrac{6 ± \\sqrt{20}}{2} = 3 ± √5\n', 'checked'],
+  ['S quadratic wrong surd', 'Solve x^2 - 6x + 4 = 0 using the quadratic formula.',
+   '## ✅ Answer\n**x = 3 - √7, x = 3 + √7**\n\n## 📖 Steps\n' +
+   '1. x = \\dfrac{-b ± \\sqrt{b²-4ac}}{2a}\n2. b²-4ac = 36-16 = 20\n', 'disputed'],
+  ['S tfrac', 'A calculation.',
+   '## ✅ Answer\n**0.5**\n\n## 📖 Steps\n1. \\tfrac{1}{2} = 0.5\n', 'checked'],
+
   ['Q chem unicode',     'Balance H₂ + O₂ → H₂O',
    '## ✅ Answer\n**2H₂ + O₂ → 2H₂O**\n\n## 🎯 Final Result\n2H₂ + O₂ → 2H₂O', 'checked'],
 
