@@ -1344,6 +1344,25 @@ const ABSOLUTE = [
   ['O two digits do not fuse', 'A shopkeeper totals his stock.',
    '## ✅ Answer\n**ok**\n\n## 📖 Steps\n1. 12 34 + 1 = 1235\n', 'stepfail'],
 
+  /* RAW LATEX REACHING THE STUDENT. A real physics answer wrote its working as
+     "s = ut + \frac12 at²", "\bar v = 180\ m / 12\ s" and "12.5\%". deLatex knew
+     \frac{a}{b} but not the brace-less \frac12, and knew nothing of \bar, \bigl,
+     \Longrightarrow or the escaped \% and \ — so eight of ten common forms
+     reached the screen as backslash commands for a student to read past.
+
+     Both engines were equally blind, so parity stayed green: no fixture used
+     these forms. That is the same gap that hid lakh, and these cases close it.
+     The verdicts below are what matters — the arithmetic must still be found
+     underneath the notation. */
+  ['P latex frac braceless', 'A car accelerates from rest at 2.5 m/s^2 for 12 s.',
+   '## ✅ Answer\n**180 m**\n\n## 📖 Steps\n1. s = 0 + \\frac12 × 2.5 × 144 = 180\n', 'checked'],
+  ['P latex frac wrong',     'A car accelerates from rest at 2.5 m/s^2 for 12 s.',
+   '## ✅ Answer\n**175 m**\n\n## 📖 Steps\n1. s = 0 + \\frac12 × 2.5 × 144 = 175\n', 'stepfail'],
+  ['P latex thin space',     'A car accelerates from rest at 2.5 m/s^2 for 12 s.',
+   '## ✅ Answer\n**30 m/s**\n\n## 📖 Steps\n1. v = 0 + 2.5 × 12 = 30\\ m/s\n', 'checked'],
+  ['P latex escaped pct',    'A trader computes his margin.',
+   '## ✅ Answer\n**12.5%**\n\n## 📖 Steps\n1. 4500 / 36000 × 100 = 12.5\\%\n', 'checked'],
+
   ['D monotone',         'Solve exp(x) - 1 = 0',   '## ✅ Answer\n**x = 0**',               'checked'],
   ['E false root',       'Solve x^2-5x+6=0',       '## ✅ Answer\n**x = 2, x = 4**',        'disputed'],
   ['F monotone',         'Solve sqrt(x) = 3',      '## ✅ Answer\n**x = 9**',               'checked'],

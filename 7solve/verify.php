@@ -680,8 +680,12 @@ final class Checks
                    the student actually wrote. */
                 $lhsShown = rtrim(trim(end($lseg)), '.,;:');
                 $rhsShown = rtrim(trim($rseg[0]), '.,;:');
-                $lhs = self::pctExpand($lhsShown);
-                $rhs = self::pctExpand($rhsShown);
+                /* A spaced x is a multiplication sign here too. The main
+                   scanner learned this; closedForm had not, so once percentage
+                   results were handed to it, "4500 / 36000 x 100 = 12.5%" went
+                   unchecked entirely. */
+                $lhs = self::pctExpand(preg_replace('/\s+[xX]\s+/u', '*', $lhsShown));
+                $rhs = self::pctExpand(preg_replace('/\s+[xX]\s+/u', '*', $rhsShown));
                 if ($lhs === '' || $rhs === '') continue;
                 if (!preg_match(self::RICH, $lhs) && !preg_match(self::RICH, $rhs)) continue;
                 if (!preg_match('/\d/u', $lhs) || !preg_match('/\d/u', $rhs)) continue;
@@ -702,8 +706,17 @@ final class Checks
                    is written in puts the written precision against the number
                    it describes. */
                 $pctRhs = (strpos($rhsShown, '%') !== false);
-                $ok = $pctRhs ? self::near($a * 100, $b * 100, $rhsShown)
-                              : self::near($a, $b, $rhs);
+                /* "= 12.5%" is genuinely ambiguous and both readings are in
+                   daily use:
+                       4500/36000      = 12.5%   -> the left side is 0.125
+                       4500/36000 x 100 = 12.5%  -> the left side is 12.5
+                   The writer has already decided which by whether they scaled.
+                   Rejecting either one disputes correct work, so both are
+                   accepted; a wrong figure still has to miss both. */
+                $ok = $pctRhs
+                    ? (self::near($a * 100, $b * 100, $rhsShown)
+                       || self::near($a, $b * 100, $rhsShown))
+                    : self::near($a, $b, $rhs);
                 $out[] = ['kind' => 'arith', 'ok' => $ok,
                           'text' => trim(preg_replace('/\s+/u', ' ', $lhsShown . ' = ' . $rhsShown)),
                           'got' => Algebra::round6($a), 'want' => Algebra::round6($b)];
@@ -771,7 +784,11 @@ final class Checks
                false positive: it tells a student their right answer is wrong. */
             if (preg_match('/[A-Za-z0-9_.^)]/', $before)) continue;
             if (preg_match('/[\x{221A}\x{221B}\x{221C}]/u', $before)) continue;
-            if (preg_match('/[A-Za-z0-9^]/', $after)) continue;
+            /* '%' joins this list: "4500 / 36000 = 12.5%" is correct, but this
+               scanner stops at the % and compares 0.125 against 12.5, failing a
+               right answer. closedForm reads the line WITH the percent sign and
+               gets it right. Mirrors index.html. */
+            if (preg_match('/[A-Za-z0-9^%]/', $after)) continue;
             if (preg_match('/[()^%]/u', $whole)) continue;
             if (preg_match('/[\x{221A}\x{221B}\x{221C}]/u', $whole)) continue;
 
@@ -1044,6 +1061,10 @@ final class Checks
                 return $na . '/' . $nb;
             }, $s);
         }
+        /* \frac12 and \frac 1 2 — LaTeX lets a single token stand in for a
+           braced group, and models use it constantly. Neither form has braces,
+           so the loop above never saw them. Mirrors index.html. */
+        $s = preg_replace('/\\\\d?frac\s*(\d|[A-Za-z])\s*(\d|[A-Za-z])/u', '$1/$2', $s);
 
         $s = preg_replace('/\\\\sqrt\s*\[\s*3\s*\]\s*\{([^{}]+)\}/u', 'cbrt($1)', $s);
         $s = preg_replace_callback('/\\\\sqrt\s*\{([^{}]+)\}/u', static function ($m) {
@@ -1087,8 +1108,38 @@ final class Checks
                a bare command with the braces cleaned up afterwards rather than
                matched as \boxed{...}. */
             'boxed' => '', 'displaystyle' => '', 'textstyle' => '', 'limits' => '',
+            /* Found in REAL answers on 2026-08-25, surviving to the screen as
+               backslash commands: "\frac12", "\bar v", "\bigl(",
+               "\Longrightarrow", "12.5\%". Presentation, not mathematics.
+               Mirrors index.html — parity.js compares the two engines, but no
+               fixture used these forms, which is why the gap sat here unseen. */
+            'bar' => '', 'vec' => '', 'hat' => '', 'dot' => '', 'ddot' => '',
+            'tilde' => '', 'overline' => '', 'underline' => '',
+            'bigl' => '', 'bigr' => '', 'bigm' => '', 'big' => '',
+            'Bigl' => '', 'Bigr' => '', 'Big' => '',
+            'biggl' => '', 'biggr' => '', 'bigg' => '',
+            'Biggl' => '', 'Biggr' => '', 'Bigg' => '',
+            'Longrightarrow' => '⇒', 'longrightarrow' => '→',
+            'Longleftarrow' => '⇐', 'longleftarrow' => '←',
+            'leftarrow' => '←', 'Leftarrow' => '⇐',
+            'leftrightarrow' => '↔', 'Leftrightarrow' => '⇔',
+            'mathbb' => '', 'mathcal' => '', 'mathbf' => '', 'mathit' => '',
+            'mathsf' => '', 'nonumber' => '', 'notag' => '',
+            'propto' => '∝', 'partial' => '∂', 'nabla' => '∇', 'circ' => '°',
+            'perp' => '⊥', 'angle' => '∠',
+            'rho' => 'ρ', 'phi' => 'φ', 'varphi' => 'φ', 'psi' => 'ψ', 'tau' => 'τ',
+            'epsilon' => 'ε', 'varepsilon' => 'ε', 'eta' => 'η', 'zeta' => 'ζ',
+            'kappa' => 'κ', 'nu' => 'ν', 'xi' => 'ξ', 'chi' => 'χ', 'upsilon' => 'υ',
+            'Delta' => 'Δ', 'Sigma' => 'Σ', 'Omega' => 'Ω', 'Phi' => 'Φ',
+            'Psi' => 'Ψ', 'Theta' => 'Θ', 'Lambda' => 'Λ', 'Gamma' => 'Γ', 'Pi' => 'Π',
+            /* Escaped specials: the backslash is LaTeX's, the character is the
+               student's. "12.5\%" must read as 12.5%. */
+            '%' => '%', '$' => '$', '&' => '&', '#' => '#', '_' => '_', ' ' => ' ',
         ];
-        $s = preg_replace_callback('/\\\\([A-Za-z]+|[,;!])/u',
+        /* The escaped specials and the thin space "\ " join the letter commands
+           here. A lone "\\" is NOT matched — the second backslash is not in
+           this class — so the line-break rule below still owns it. */
+        $s = preg_replace_callback('/\\\\([A-Za-z]+|[,;!%$&#_ ])/u',
             static fn($m) => array_key_exists($m[1], $sym) ? $sym[$m[1]] : $m[0], $s);
 
         $s = preg_replace('/\\\\left\s*|\\\\right\s*/u', '', $s);
