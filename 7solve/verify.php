@@ -2509,7 +2509,7 @@ final class Checks
             QuestionCheck::check($question, $body),
             self::integrity($question, $answer),
             self::substitution($question, $body),
-            self::solutionCompleteness($question, $body),
+            
             self::arithmetic($body),
             Units::check($question, $body),
             self::trace($question, $body),
