@@ -14409,15 +14409,27 @@ var Verify = (function(){
         /* The percent rewrite is for the PARSER. The receipt shows what the
            student actually wrote, because "(15/100)*200 = 30" is not the line
            they can go back and look at. */
-        var lhsShown = String(parts[p]).split(/[,;:]/).pop().trim().replace(/[.,;:]+$/, '');
-        var rhsShown = String(parts[p + 1]).split(/[,;:]/)[0].trim().replace(/[.,;:]+$/, '');
+        /* A COMMA INSIDE A NUMBER IS NOT A LIST SEPARATOR. This split exists
+           for "x = 1, y = 2", but it also cut "Rs 10,000" into "Rs 10" and
+           "000", so a correct "20 × 500 = Rs 10,000" was judged as "= 10" and
+           failed. The comma only separates when it is not between two digits. */
+        var SEP = /(?<!\d),|,(?!\d)|[;:]/;
+        var lhsShown = String(parts[p]).split(SEP).pop().trim().replace(/[.,;:]+$/, '');
+        var rhsShown = String(parts[p + 1]).split(SEP)[0].trim().replace(/[.,;:]+$/, '');
         /* A spaced x is a multiplication sign here too. The main scanner
            learned this; closedForm had not, so once percentage results were
            handed to it, "4500 / 36000 x 100 = 12.5%" went unchecked entirely. */
         var xmul = function(t){ return String(t).replace(/\s+[xX]\s+/g, '*'); };
         var lhs = pctExpand(xmul(lhsShown)), rhs = pctExpand(xmul(rhsShown));
         if(!lhs || !rhs) continue;
-        if(!RICH.test(lhs) && !RICH.test(rhs)) continue;  // evalFlat's ground; never report twice
+        /* RICH exists so this scanner takes only what the flat one cannot read
+           — brackets, powers, roots, percentages. A CHAIN is the other such
+           case: "2 × 4 - 3 × 1 = 8 - 3 = 5" is plain arithmetic, but the flat
+           scanner now declines it because its result group holds one number and
+           would judge "= 8" alone. Three or more parts means a chain, and
+           judging it link by link here is the only reading that means anything. */
+        var isChain = parts.length >= 3;
+        if(!isChain && !RICH.test(lhs) && !RICH.test(rhs)) continue;  // evalFlat's ground; never report twice
         if(!/\d/.test(lhs) || !/\d/.test(rhs)) continue;
         if(!/[+\-*/×÷^√]/.test(lhs) && !/[⁰¹²³⁴⁵⁶⁷⁸⁹%]/.test(lhs)) continue;  // nothing computed
         var a = constOf(lhs), b = constOf(rhs);
@@ -14516,6 +14528,17 @@ var Verify = (function(){
          WITH the percent sign and gets it right, so the honest move is to
          leave percentage results to it rather than judge half an expression. */
       if(/[A-Za-z0-9^%]/.test(after)) continue;         // "= 25x", "= 3rd", "= 2^3", "= 12.5%"
+      /* A CHAINED EQUALITY IS NOT A CLAIM ABOUT ITS FIRST TERM.
+         "det = 2 × 4 - 3 × 1 = 8 - 3 = 5" is correct working, but the result
+         group captures a single number, so this read it as "2 × 4 - 3 × 1 = 8",
+         compared 5 against 8, and failed a right answer. Showing the
+         intermediate before the total is how most maths working is written.
+
+         If what follows the result continues the expression, this match is a
+         fragment. closedForm splits the whole line on every '=' and compares
+         each consecutive pair, so the chain is judged there instead — as a
+         whole, which is the only way it means anything. */
+      if(/^[ \t]*[-+*\/×÷][ \t]*\d/.test(md.slice(m.index + m[0].length))) continue;
       if(/[()^√%]/.test(m[0])) continue;                // ambiguous by rule 1
       /* The same term can also be split by the match STARTING mid-surd a few
          characters in — scan back over the digits/operators of this expression

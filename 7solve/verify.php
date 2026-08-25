@@ -674,8 +674,14 @@ final class Checks
             $parts = explode('=', $body);
             if (count($parts) < 2 || count($parts) > 4) continue;
             for ($p = 0; $p + 1 < count($parts); $p++) {
-                $lseg = preg_split('/[,;:]/u', $parts[$p]);
-                $rseg = preg_split('/[,;:]/u', $parts[$p + 1]);
+                /* A COMMA INSIDE A NUMBER IS NOT A LIST SEPARATOR. This split
+                   exists for "x = 1, y = 2", but it also cut "Rs 10,000" into
+                   "Rs 10" and "000", so a correct "20 x 500 = Rs 10,000" was
+                   judged as "= 10" and failed. The comma only separates when it
+                   is not sitting between two digits. */
+                $SEP = '/(?<!\d),|,(?!\d)|[;:]/u';
+                $lseg = preg_split($SEP, $parts[$p]);
+                $rseg = preg_split($SEP, $parts[$p + 1]);
                 /* The percent rewrite is for the PARSER; the receipt shows what
                    the student actually wrote. */
                 $lhsShown = rtrim(trim(end($lseg)), '.,;:');
@@ -687,7 +693,15 @@ final class Checks
                 $lhs = self::pctExpand(preg_replace('/\s+[xX]\s+/u', '*', $lhsShown));
                 $rhs = self::pctExpand(preg_replace('/\s+[xX]\s+/u', '*', $rhsShown));
                 if ($lhs === '' || $rhs === '') continue;
-                if (!preg_match(self::RICH, $lhs) && !preg_match(self::RICH, $rhs)) continue;
+                /* RICH exists so this scanner takes only what the flat one
+                   cannot read — brackets, powers, roots, percentages. A CHAIN
+                   is the other such case: "2 x 4 - 3 x 1 = 8 - 3 = 5" is plain
+                   arithmetic, but the flat scanner now declines it because its
+                   result group holds one number and would judge "= 8" alone.
+                   Three or more parts means a chain, and judging it link by
+                   link here is the only reading that means anything. */
+                $isChain = count($parts) >= 3;
+                if (!$isChain && !preg_match(self::RICH, $lhs) && !preg_match(self::RICH, $rhs)) continue;
                 if (!preg_match('/\d/u', $lhs) || !preg_match('/\d/u', $rhs)) continue;
                 if (!preg_match('/[+\-*\/×÷^√]/u', $lhs) && !preg_match('/[⁰¹²³⁴⁵⁶⁷⁸⁹%]/u', $lhs)) continue;
                 $a = self::constOf($lhs);
@@ -789,6 +803,14 @@ final class Checks
                right answer. closedForm reads the line WITH the percent sign and
                gets it right. Mirrors index.html. */
             if (preg_match('/[A-Za-z0-9^%]/', $after)) continue;
+            /* A chained equality is not a claim about its first term.
+               "2 x 4 - 3 x 1 = 8 - 3 = 5" is correct working, but the result
+               group captures a single number, so this read it as "... = 8",
+               compared 5 against 8, and failed a right answer. If what follows
+               continues the expression, this match is a fragment; closedForm
+               splits on every '=' and judges the chain whole. Mirrors
+               index.html. */
+            if (preg_match('/^[ \t]*[-+*\/×÷][ \t]*\d/u', substr($md, $at + strlen($whole)))) continue;
             if (preg_match('/[()^%]/u', $whole)) continue;
             if (preg_match('/[\x{221A}\x{221B}\x{221C}]/u', $whole)) continue;
 

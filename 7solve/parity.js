@@ -1380,6 +1380,39 @@ const ABSOLUTE = [
    '## ✅ Answer\n**2H2 + O2 -> 2H2O**\n\n## 🎯 Final Result\n2H2 + O2 -> 2H2O', 'checked'],
   ['Q chem state symbols', 'Balance Zn + HCl -> ZnCl2 + H2',
    '## ✅ Answer\n**Zn(s) + 2HCl(aq) -> ZnCl2(aq) + H2(g)**\n\n## 🎯 Final Result\nZn(s) + 2HCl(aq) -> ZnCl2(aq) + H2(g)', 'checked'],
+  /* A CHAINED EQUALITY IS NOT A CLAIM ABOUT ITS FIRST TERM.
+     "det = 2 × 4 - 3 × 1 = 8 - 3 = 5" is correct working, and showing the
+     intermediate before the total is how most maths is written. The flat
+     scanner's result group holds ONE number, so it read "... = 8", compared 5
+     against 8, and failed a right answer.
+
+     Chains now belong to closedForm, which splits on every '=' and judges each
+     consecutive pair — the only reading that means anything. The two wrong
+     twins matter separately: a bad TOTAL and a bad MIDDLE must both be caught,
+     or the chain is only half checked. */
+  ['R chain right',  'Find the determinant of [[2,3],[1,4]]',
+   '## ✅ Answer\n**5**\n\n## 📖 Steps\n1. det = 2 x 4 - 3 x 1 = 8 - 3 = 5\n', 'checked'],
+  ['R chain bad total', 'Find the determinant of [[2,3],[1,4]]',
+   '## ✅ Answer\n**6**\n\n## 📖 Steps\n1. det = 2 x 4 - 3 x 1 = 8 - 3 = 6\n', 'stepfail'],
+  ['R chain bad middle', 'Find the determinant of [[2,3],[1,4]]',
+   '## ✅ Answer\n**5**\n\n## 📖 Steps\n1. det = 2 x 4 - 3 x 1 = 9 - 3 = 5\n', 'stepfail'],
+  ['R chain equal tail', 'A calculation.',
+   '## ✅ Answer\n**60**\n\n## 📖 Steps\n1. 100 - 40 = 60 - 0 = 60\n', 'checked'],
+  /* A COMMA INSIDE A NUMBER IS NOT A LIST SEPARATOR. closedForm splits on
+     commas for "x = 1, y = 2" — and that split also cut "Rs 10,000" into
+     "Rs 10" and "000", so a correct line was judged as "= 10". It only surfaced
+     once chains let closedForm see plain arithmetic, which is why the sweep
+     caught it and 1267 parity cases did not. */
+  ['R comma in number', 'A trader buys 20 units at Rs 500 each',
+   '## ✅ Answer\n**Rs 10,000**\n\n## 📖 Steps\n1. Cost = 20 x 500 = Rs 10,000\n', 'checked'],
+  ['R comma in number wrong', 'A trader buys 20 units at Rs 500 each',
+   '## ✅ Answer\n**Rs 10,500**\n\n## 📖 Steps\n1. Cost = 20 x 500 = Rs 10,500\n', 'stepfail'],
+  ['R indian grouping', 'Goods worth Rs 1,20,000 sold at 25% profit.',
+   '## ✅ Answer\n**Rs 30,000**\n\n## 📖 Steps\n1. Profit = 1,20,000 x 0.25 = Rs 30,000\n', 'checked'],
+  /* the list split must still work */
+  ['R list still splits', 'Solve x + y = 5 and x - y = 1',
+   '## ✅ Answer\n**x = 3, y = 2**\n\n## 📖 Steps\n1. Adding: 2x = 6, so x = 3.\n', 'checked'],
+
   ['Q chem unicode',     'Balance H₂ + O₂ → H₂O',
    '## ✅ Answer\n**2H₂ + O₂ → 2H₂O**\n\n## 🎯 Final Result\n2H₂ + O₂ → 2H₂O', 'checked'],
 
