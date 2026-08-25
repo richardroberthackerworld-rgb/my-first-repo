@@ -1307,6 +1307,24 @@ const ABSOLUTE = [
   ['M pct definition',     'A trader converts a rate.',
    '## ✅ Answer\n**ok**\n\n## 📖 Steps\n1. 5% = 0.05\n', 'checked'],
 
+  /* INDIAN SCALE WORDS. index.html converted lakh and crore; verify.php did
+     not. So "2 lakh + 3 lakh = 5 lakh" was checked on the site and silently
+     unchecked through /v1 — the two engines disagreeing about whether the sum
+     existed at all, with no parity case using a scale word to catch it.
+
+     Converted, never stripped: the mixed line below is the reason. Stripping
+     leaves "2 + 300000 = 500000" and disputes a correct answer. */
+  ['N lakh right',   'A trader computes his books.',
+   '## ✅ Answer\n**ok**\n\n## 📖 Steps\n1. 2 lakh + 3 lakh = 5 lakh\n', 'checked'],
+  ['N lakh wrong',   'A trader computes his books.',
+   '## ✅ Answer\n**ok**\n\n## 📖 Steps\n1. 2 lakh + 3 lakh = 6 lakh\n', 'stepfail'],
+  ['N crore right',  'A trader computes his books.',
+   '## ✅ Answer\n**ok**\n\n## 📖 Steps\n1. 1.5 crore + 2.5 crore = 4 crore\n', 'checked'],
+  ['N mixed scale',  'A trader computes his books.',
+   '## ✅ Answer\n**ok**\n\n## 📖 Steps\n1. 2 lakh + 300000 = 500000\n', 'checked'],
+  ['N lakh + rupees', 'A trader computes his books.',
+   '## ✅ Answer\n**ok**\n\n## 📖 Steps\n1. Rs 2 lakh + Rs 3 lakh = Rs 5 lakh\n', 'checked'],
+
   ['D monotone',         'Solve exp(x) - 1 = 0',   '## ✅ Answer\n**x = 0**',               'checked'],
   ['E false root',       'Solve x^2-5x+6=0',       '## ✅ Answer\n**x = 2, x = 4**',        'disputed'],
   ['F monotone',         'Solve sqrt(x) = 3',      '## ✅ Answer\n**x = 9**',               'checked'],

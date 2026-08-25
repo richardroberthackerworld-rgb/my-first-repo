@@ -721,6 +721,24 @@ final class Checks
         $md = preg_replace('/(?:₹|\$|€|£|Rs\.?|INR|USD)\s*(?=[\d.])/iu', '', $md);
         $md = preg_replace('/(\d)\s*(?:Rs\.?|INR|USD)(?![A-Za-z])/iu', '$1', $md);
 
+        /* Indian scale words. index.html has had this and verify.php had not,
+           so "2 lakh + 3 lakh = 5 lakh" was checked on the site and silently
+           unchecked through /v1 — the two engines disagreeing about whether a
+           sum exists at all. No parity case used a scale word, so nothing
+           caught it.
+
+           CONVERTED, never stripped. Stripping is the quick fix, and on a mixed
+           line — "2 lakh + 300000 = 500000" — it leaves "2 + 300000 = 500000"
+           and DISPUTES an answer that is correct. Multiplying out leaves
+           200000 + 300000 = 500000, which is true. Only spellings that can mean
+           nothing else are listed: `cr` and a bare `L` are far too ambiguous. */
+        $md = preg_replace_callback('/(\d+(?:\.\d+)?)\s*(lakhs?|lacs?|crores?)\b/iu',
+            static function (array $m): string {
+                $mult = (stripos($m[2], 'cr') === 0) ? 1e7 : 1e5;
+                $v = (float)$m[1] * $mult;
+                return is_finite($v) ? (string)(0 + $v) : $m[0];
+            }, $md);
+
         $out = [];
         $seen = [];
         if (!preg_match_all(self::CALC_RE, $md, $ms, PREG_SET_ORDER | PREG_OFFSET_CAPTURE)) {
