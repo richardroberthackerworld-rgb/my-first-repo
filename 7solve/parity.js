@@ -1363,6 +1363,26 @@ const ABSOLUTE = [
   ['P latex escaped pct',    'A trader computes his margin.',
    '## ✅ Answer\n**12.5%**\n\n## 📖 Steps\n1. 4500 / 36000 × 100 = 12.5\\%\n', 'checked'],
 
+  /* MARKDOWN EMPHASIS IS NOT CHEMISTRY. buildSystemPrompt MANDATES a bolded
+     answer, so every balanced equation arrived as "**CH4 + 2O2 -> CO2 + 2H2O**"
+     — and the asterisks broke the left side apart, leaving the fragment
+     "2O2 -> CO2", which does not balance. A correct equation was disputed, and
+     a simple "**2H2 + O2 -> 2H2O**" produced no check at all. Every chemistry
+     answer the site produced was affected.
+
+     The fixtures below carry the bold DELIBERATELY. A bare equation never
+     exercised the bug, which is exactly why nothing caught it. */
+  ['Q chem bold right',  'Balance CH4 + O2 -> CO2 + H2O',
+   '## ✅ Answer\n**CH4 + 2O2 -> CO2 + 2H2O**\n\n## 🎯 Final Result\nCH4 + 2O2 -> CO2 + 2H2O', 'checked'],
+  ['Q chem bold wrong',  'Balance CH4 + O2 -> CO2 + H2O',
+   '## ✅ Answer\n**CH4 + O2 -> CO2 + H2O**\n\n## 🎯 Final Result\nCH4 + O2 -> CO2 + H2O', 'disputed'],
+  ['Q chem simple bold', 'Balance H2 + O2 -> H2O',
+   '## ✅ Answer\n**2H2 + O2 -> 2H2O**\n\n## 🎯 Final Result\n2H2 + O2 -> 2H2O', 'checked'],
+  ['Q chem state symbols', 'Balance Zn + HCl -> ZnCl2 + H2',
+   '## ✅ Answer\n**Zn(s) + 2HCl(aq) -> ZnCl2(aq) + H2(g)**\n\n## 🎯 Final Result\nZn(s) + 2HCl(aq) -> ZnCl2(aq) + H2(g)', 'checked'],
+  ['Q chem unicode',     'Balance H₂ + O₂ → H₂O',
+   '## ✅ Answer\n**2H₂ + O₂ → 2H₂O**\n\n## 🎯 Final Result\n2H₂ + O₂ → 2H₂O', 'checked'],
+
   ['D monotone',         'Solve exp(x) - 1 = 0',   '## ✅ Answer\n**x = 0**',               'checked'],
   ['E false root',       'Solve x^2-5x+6=0',       '## ✅ Answer\n**x = 2, x = 4**',        'disputed'],
   ['F monotone',         'Solve sqrt(x) = 3',      '## ✅ Answer\n**x = 9**',               'checked'],

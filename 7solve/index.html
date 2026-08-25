@@ -19117,6 +19117,16 @@ var Verify = (function(){
 
   function chemistry(md){
     var out = [], seen = {};
+    /* MARKDOWN EMPHASIS IS NOT CHEMISTRY. buildSystemPrompt tells the model to
+       bold its answer, so a balanced equation arrives as
+       "**CH4 + 2O2 -> CO2 + 2H2O**" — and the asterisks broke the left side
+       apart, leaving the fragment "2O2 -> CO2", which of course does not
+       balance. A correct equation was reported as wrong, and a simple one like
+       "**2H2 + O2 -> 2H2O**" produced no check at all.
+
+       Because the prompt MANDATES the bold, this hit essentially every
+       chemistry answer the site produced. */
+    md = String(md == null ? '' : md).replace(/\*\*|__|\*/g, '');
     /* Only an explicit reaction arrow counts. "=" is left out on purpose: it is
        the arithmetic checker's territory, and "2 + 2 = 4" is not a reaction. */
     var re = /([^\n]{1,120}?)\s*(?:-->|->|→|⟶|⇌|⇋|<=>)\s*([^\n]{1,120})/g, m;
