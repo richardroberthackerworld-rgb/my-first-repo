@@ -14439,7 +14439,18 @@ var Verify = (function(){
         /* A spaced x is a multiplication sign here too. The main scanner
            learned this; closedForm had not, so once percentage results were
            handed to it, "4500 / 36000 x 100 = 12.5%" went unchecked entirely. */
-        var xmul = function(t){ return String(t).replace(/\s+[xX]\s+/g, '*'); };
+        /* Normalise exactly what the flat scanner normalises, or the two read
+           the same line differently. A spaced x is multiplication; a space
+           inside a number is a thousands separator, and constOf read "36 000"
+           as 0 — so once chains reached here, every line of a correct answer was
+           checked twice, once right and once with nonsense. */
+        var xmul = function(t){
+          var s2 = String(t).replace(/\s+[xX]\s+/g, '*');
+          for(var k = 0; k < 2; k++){            // "1 234 567" has two groups to close up
+            s2 = s2.replace(/(\d)[  ](\d{3})(?!\d)/g, '$1$2');
+          }
+          return s2;
+        };
         var lhs = pctExpand(xmul(lhsShown)), rhs = pctExpand(xmul(rhsShown));
         if(!lhs || !rhs) continue;
         /* RICH exists so this scanner takes only what the flat one cannot read

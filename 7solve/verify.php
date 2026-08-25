@@ -690,8 +690,22 @@ final class Checks
                    scanner learned this; closedForm had not, so once percentage
                    results were handed to it, "4500 / 36000 x 100 = 12.5%" went
                    unchecked entirely. */
-                $lhs = self::pctExpand(preg_replace('/\s+[xX]\s+/u', '*', $lhsShown));
-                $rhs = self::pctExpand(preg_replace('/\s+[xX]\s+/u', '*', $rhsShown));
+                /* Normalise exactly what the flat scanner normalises, or the two
+                   read the same line differently. A spaced x is multiplication;
+                   a space inside a number is a thousands separator, and constOf
+                   read "36 000" as 0 — so once chains reached here, every line
+                   of a correct answer was checked twice, once right and once
+                   with nonsense. */
+                $norm = static function (string $t): string {
+                    $t = preg_replace('/\s+[xX]\s+/u', '*', $t);
+                    /* run twice: "1 234 567" has two groups to close up */
+                    for ($k = 0; $k < 2; $k++) {
+                        $t = preg_replace('/(\d)[ \x{00A0}](\d{3})(?!\d)/u', '$1$2', $t);
+                    }
+                    return $t;
+                };
+                $lhs = self::pctExpand($norm($lhsShown));
+                $rhs = self::pctExpand($norm($rhsShown));
                 if ($lhs === '' || $rhs === '') continue;
                 /* RICH exists so this scanner takes only what the flat one
                    cannot read — brackets, powers, roots, percentages. A CHAIN

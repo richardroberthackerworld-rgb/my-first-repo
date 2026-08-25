@@ -1432,6 +1432,23 @@ const ABSOLUTE = [
   ['S tfrac', 'A calculation.',
    '## ✅ Answer\n**0.5**\n\n## 📖 Steps\n1. \\tfrac{1}{2} = 0.5\n', 'checked'],
 
+  /* SPACED THOUSANDS INSIDE A CHAIN. Letting chains reach closedForm exposed
+     that its evaluator reads "36 000" as 0 — so every line of a correct answer
+     was checked TWICE, once right and once with nonsense, and a right answer
+     failed. closedForm now normalises exactly what the flat scanner does: a
+     spaced x is multiplication, a space inside a number is a separator.
+
+     "Cost = 15 × 2400 = 36 000" is a three-part line, which is why it reaches
+     closedForm at all and why the plain two-part fixtures never caught it. */
+  ['T chain spaced label', 'A shopkeeper totals his stock.',
+   '## ✅ Answer\n**36 000**\n\n## 📖 Steps\n1. Cost = 15 × 2400 = 36 000\n', 'checked'],
+  ['T chain spaced wrong', 'A shopkeeper totals his stock.',
+   '## ✅ Answer\n**36 500**\n\n## 📖 Steps\n1. Cost = 15 × 2400 = 36 500\n', 'stepfail'],
+  ['T chain spaced x',    'A shopkeeper totals his stock.',
+   '## ✅ Answer\n**40 500**\n\n## 📖 Steps\n1. Total = 15 x 2 700 = 40 500\n', 'checked'],
+  ['T long grouping chain','A shopkeeper totals his stock.',
+   '## ✅ Answer\n**1 234 568**\n\n## 📖 Steps\n1. Sum = 1 234 567 + 1 = 1 234 568\n', 'checked'],
+
   ['Q chem unicode',     'Balance H₂ + O₂ → H₂O',
    '## ✅ Answer\n**2H₂ + O₂ → 2H₂O**\n\n## 🎯 Final Result\n2H₂ + O₂ → 2H₂O', 'checked'],
 
