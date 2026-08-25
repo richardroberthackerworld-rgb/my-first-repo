@@ -649,6 +649,16 @@ final class Checks
 
     private static function pctExpand(string $t): string
     {
+        /* "12000 + 15%" means twelve thousand INCREASED BY fifteen percent,
+           which is how every commerce answer writes a markup. Read literally it
+           became 12000 + 0.15, so a correct "12000 + 15% = 13800" was reported
+           as a broken step — a right answer told it was wrong.
+
+           The rule cannot fire on "20% + 15%", where both sides are already
+           percentages and plain addition is what is meant: it requires DIGITS
+           immediately before the operator, and "20%" puts a % there. */
+        $t = preg_replace('/(\d+(?:\.\d+)?)\s*([+\-])\s*(\d+(?:\.\d+)?)\s*%(?!\s*of)/u',
+                          '$1*(1$2$3/100)', $t);
         $t = preg_replace('/(\d+(?:\.\d+)?)\s*%\s*of\s+/iu', '($1/100)*', $t);
         return preg_replace('/(\d+(?:\.\d+)?)\s*%/u', '($1/100)', $t);
     }
@@ -683,7 +693,18 @@ final class Checks
                 $key = 'c' . preg_replace('/\s+/u', '', $lhs) . '=' . preg_replace('/\s+/u', '', $rhs);
                 if (isset($seen[$key])) continue;
                 $seen[$key] = true;
-                $out[] = ['kind' => 'arith', 'ok' => self::near($a, $b, $rhs),
+                /* A percentage RESULT is compared in percentage units. pctExpand
+                   has already divided by 100, but the tolerance comes from what
+                   the student WROTE — and "30%" has no decimal point, so tol()
+                   allowed half a unit against values of 0.35 and 0.30. Every
+                   percentage comparison passed: "20% + 15% = 30%" carried a
+                   green badge. Scaling both sides back to the units the answer
+                   is written in puts the written precision against the number
+                   it describes. */
+                $pctRhs = (strpos($rhsShown, '%') !== false);
+                $ok = $pctRhs ? self::near($a * 100, $b * 100, $rhsShown)
+                              : self::near($a, $b, $rhs);
+                $out[] = ['kind' => 'arith', 'ok' => $ok,
                           'text' => trim(preg_replace('/\s+/u', ' ', $lhsShown . ' = ' . $rhsShown)),
                           'got' => Algebra::round6($a), 'want' => Algebra::round6($b)];
                 if (count($out) > 24) return;

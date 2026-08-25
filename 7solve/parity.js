@@ -1279,6 +1279,34 @@ const ABSOLUTE = [
   ['L attached x stays algebra', 'Solve 2x + 3 = 7',
    '## ✅ Answer\n**x = 2**\n\n## 📖 Steps\n1. 2x = 4\n2. x = 2\n', 'checked'],
 
+  /* PERCENTAGES, both faults found in one sweep.
+
+     FALSE VERIFY: pctExpand divides by 100, but tol() reads the precision off
+     what the student WROTE — and "30%" has no decimal point, so half a unit was
+     allowed against values of 0.35 and 0.30. EVERY percentage comparison passed,
+     right or wrong. "20% + 15% = 30%" wore a green badge.
+
+     FALSE FAILURE: "12000 + 15%" is a markup, not an addition of 0.15. Read
+     literally it made a correct answer a broken step. The markup rule cannot
+     fire on "20% + 15%" because it needs digits against the operator, and a %
+     sits there instead — which is what keeps percentage POINTS adding plainly. */
+  ['M pct points right',   'A trader computes margins.',
+   '## ✅ Answer\n**ok**\n\n## 📖 Steps\n1. 20% + 15% = 35%\n', 'checked'],
+  ['M pct points wrong',   'A trader computes margins.',
+   '## ✅ Answer\n**ok**\n\n## 📖 Steps\n1. 20% + 15% = 30%\n', 'stepfail'],
+  ['M markup right',       'A trader marks goods up.',
+   '## ✅ Answer\n**ok**\n\n## 📖 Steps\n1. 12000 + 15% = 13800\n', 'checked'],
+  ['M markup wrong',       'A trader marks goods up.',
+   '## ✅ Answer\n**ok**\n\n## 📖 Steps\n1. 12000 + 15% = 12015\n', 'stepfail'],
+  ['M discount right',     'A trader gives a discount.',
+   '## ✅ Answer\n**ok**\n\n## 📖 Steps\n1. 12000 - 8% = 11040\n', 'checked'],
+  ['M percent of right',   'A trader computes commission.',
+   '## ✅ Answer\n**ok**\n\n## 📖 Steps\n1. 15% of 12000 = 1800\n', 'checked'],
+  ['M percent of wrong',   'A trader computes commission.',
+   '## ✅ Answer\n**ok**\n\n## 📖 Steps\n1. 15% of 12000 = 1900\n', 'stepfail'],
+  ['M pct definition',     'A trader converts a rate.',
+   '## ✅ Answer\n**ok**\n\n## 📖 Steps\n1. 5% = 0.05\n', 'checked'],
+
   ['D monotone',         'Solve exp(x) - 1 = 0',   '## ✅ Answer\n**x = 0**',               'checked'],
   ['E false root',       'Solve x^2-5x+6=0',       '## ✅ Answer\n**x = 2, x = 4**',        'disputed'],
   ['F monotone',         'Solve sqrt(x) = 3',      '## ✅ Answer\n**x = 9**',               'checked'],
