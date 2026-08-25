@@ -20971,7 +20971,7 @@ var Verify = (function(){
     var checks = [];
     try { checks = checks.concat(arithmetic(text)); } catch(e){}
     try { checks = checks.concat(substitution(question, text)); } catch(e){}
-    
+    checks = checks.concat(solutionCompleteness(question, text));
     try { checks = checks.concat(units(question, text)); } catch(e){}
     /* first in the receipt: if the question was misread, every verdict below is about a different problem */
     try { checks = checks.concat(trace(question, text)); } catch(e){}
