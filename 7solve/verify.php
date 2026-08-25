@@ -568,7 +568,7 @@ final class Checks
        represent (brackets, powers, functions, percentages) fails to match and
        the check is skipped rather than approximated. */
     private const CALC_RE =
-        '/(-?\d[\d,]*(?:\.\d+)?(?:\s*[+\-×÷*\/]\s*-?\d[\d,]*(?:\.\d+)?)+)\s*=\s*(-?\d[\d,]*(?:\.\d+)?(?:\s*\/\s*-?\d[\d,]*(?:\.\d+)?)?)/u';
+        '/(-?\d[\d,]*(?:\.\d+)?(?:(?:\s*[+\-×÷*\/]\s*|\s+[xX]\s+)-?\d[\d,]*(?:\.\d+)?)+)\s*=\s*(-?\d[\d,]*(?:\.\d+)?(?:\s*\/\s*-?\d[\d,]*(?:\.\d+)?)?)/u';
 
     /* ⁰¹⁵⁶⁷⁸⁹ were missing while ²³⁴ were present, so an equation was visible
        to this scan at x⁴ and invisible at x⁵ — and deLatex emits every one of
@@ -756,7 +756,11 @@ final class Checks
             $lead = substr($md, $cut + 1, $at - $cut - 1);
             if (preg_match('/[A-Za-z]/', $lead)) continue;  // algebra, not arithmetic
 
-            $got   = self::evalFlat($m[1][0]);
+            /* A spaced x is a multiplication sign; evalFlat only knows the
+               symbol operators. An attached x is a variable and never gets
+               here, because CALC_RE requires whitespace on both sides.
+               Mirrors index.html; parity.js compares. */
+            $got   = self::evalFlat(preg_replace('/\s+[xX]\s+/u', '*', $m[1][0]));
             $exact = strpos($m[2][0], '/') !== false;       // result written as a fraction
             $want  = $exact ? self::evalFlat($m[2][0]) : self::toNum($m[2][0]);
             if (!is_finite($got) || !is_finite($want)) continue;

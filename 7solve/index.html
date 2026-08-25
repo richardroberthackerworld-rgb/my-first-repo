@@ -14324,7 +14324,7 @@ var Verify = (function(){
      answer into a failed check. Capturing the whole fraction lets it be
      EVALUATED instead — which verifies the simplification rather than
      skipping it. */
-  var CALC_RE = /(-?\d[\d,]*(?:\.\d+)?(?:\s*[+\-×÷*\/]\s*-?\d[\d,]*(?:\.\d+)?)+)\s*=\s*(-?\d[\d,]*(?:\.\d+)?(?:\s*\/\s*-?\d[\d,]*(?:\.\d+)?)?)/g;
+  var CALC_RE = /(-?\d[\d,]*(?:\.\d+)?(?:(?:\s*[+\-×÷*\/]\s*|\s+[xX]\s+)-?\d[\d,]*(?:\.\d+)?)+)\s*=\s*(-?\d[\d,]*(?:\.\d+)?(?:\s*\/\s*-?\d[\d,]*(?:\.\d+)?)?)/g;
 
   /* ---------- THE SECOND ARITHMETIC PASS: closed forms ----------
      evalFlat is deliberately narrow — digits and the four operators, nothing
@@ -14479,7 +14479,15 @@ var Verify = (function(){
       }
       var lead = md.slice(cut + 1, m.index);
       if(/[A-Za-z]/.test(lead)) continue;               // algebra, not arithmetic
-      var got = evalFlat(m[1]);
+      /* A spaced x is a multiplication sign — "12 x 8" is how most Indian
+         working writes a product, and CALC_RE now matches it. evalFlat only
+         knows the symbol operators, so normalise before evaluating. An
+         ATTACHED x is a variable and never reaches here: the pattern requires
+         whitespace on both sides, so "2x + 3" does not match at all.
+
+         This mattered: "Area = 12 x 8 = 90" was not arithmetic to this engine,
+         so `units` certified it and a wrong answer carried a green badge. */
+      var got = evalFlat(m[1].replace(/\s+[xX]\s+/g, '*'));
       var exact = /\//.test(m[2]);                      // the result is a fraction
       var want = exact ? evalFlat(m[2]) : toNum(m[2]);
       if(!isFinite(got) || !isFinite(want)) continue;

@@ -1262,6 +1262,23 @@ const ABSOLUTE = [
   ['K real arith still caught', 'A merchant totals his stock.',
    '## ✅ Answer\n**23400**\n\n## 📖 Steps\n1. 12000 + 11400 = 23500\n', 'stepfail'],
 
+  /* A SPACED x IS A MULTIPLICATION SIGN. "Area = 12 x 8 = 90" was not
+     arithmetic to this engine at all — CALC_RE knew × and * but not x, which is
+     how most Indian working writes a product. Nothing checked the sum, `units`
+     certified the answer, and a WRONG result carried a green badge. Found by
+     sweeping realistic answers, not by a report.
+
+     An ATTACHED x is still a variable: the pattern requires whitespace both
+     sides, so "2x + 3 = 7" never matches, and the algebra cases below hold. */
+  ['L x-multiply wrong caught', 'Find the area of a rectangle 12 cm by 8 cm',
+   '## ✅ Answer\n**90 cm^2**\n\n## 📖 Steps\n1. Area = 12 x 8 = 90\n', 'stepfail'],
+  ['L x-multiply right passes', 'Find the area of a rectangle 12 cm by 8 cm',
+   '## ✅ Answer\n**96 cm^2**\n\n## 📖 Steps\n1. Area = 12 x 8 = 96\n', 'checked'],
+  ['L x-multiply with rupees', 'A trader buys 20 units at Rs 500 each',
+   '## ✅ Answer\n**Rs 10000**\n\n## 📖 Steps\n1. 20 x Rs 500 = Rs 10,000\n', 'checked'],
+  ['L attached x stays algebra', 'Solve 2x + 3 = 7',
+   '## ✅ Answer\n**x = 2**\n\n## 📖 Steps\n1. 2x = 4\n2. x = 2\n', 'checked'],
+
   ['D monotone',         'Solve exp(x) - 1 = 0',   '## ✅ Answer\n**x = 0**',               'checked'],
   ['E false root',       'Solve x^2-5x+6=0',       '## ✅ Answer\n**x = 2, x = 4**',        'disputed'],
   ['F monotone',         'Solve sqrt(x) = 3',      '## ✅ Answer\n**x = 9**',               'checked'],
