@@ -1325,6 +1325,25 @@ const ABSOLUTE = [
   ['N lakh + rupees', 'A trader computes his books.',
    '## ✅ Answer\n**ok**\n\n## 📖 Steps\n1. Rs 2 lakh + Rs 3 lakh = Rs 5 lakh\n', 'checked'],
 
+  /* A SPACE IS A THOUSANDS SEPARATOR. Found by a real answer to the tiles
+     question: the model wrote "15 × 2400 = 36 000", CALC_RE stopped at the
+     space and read the result as 36, and the orphaned "000" then started a
+     bogus equation of its own — "000 × 0.90 = 2". A completely correct answer
+     came back as three broken steps.
+
+     Only a group of EXACTLY three digits counts, which is what stops "12 34"
+     fusing into 1234. The last case pins that: it must NOT pass. */
+  ['O spaced thousands right', 'A shopkeeper totals his stock.',
+   '## ✅ Answer\n**ok**\n\n## 📖 Steps\n1. 15 × 2400 = 36 000\n', 'checked'],
+  ['O spaced thousands wrong', 'A shopkeeper totals his stock.',
+   '## ✅ Answer\n**ok**\n\n## 📖 Steps\n1. 15 × 2400 = 36 500\n', 'stepfail'],
+  ['O spaced subtraction',     'A shopkeeper totals his stock.',
+   '## ✅ Answer\n**ok**\n\n## 📖 Steps\n1. 40 500 - 36 000 = 4 500\n', 'checked'],
+  ['O long grouping',          'A shopkeeper totals his stock.',
+   '## ✅ Answer\n**ok**\n\n## 📖 Steps\n1. 1 234 567 + 1 = 1 234 568\n', 'checked'],
+  ['O two digits do not fuse', 'A shopkeeper totals his stock.',
+   '## ✅ Answer\n**ok**\n\n## 📖 Steps\n1. 12 34 + 1 = 1235\n', 'stepfail'],
+
   ['D monotone',         'Solve exp(x) - 1 = 0',   '## ✅ Answer\n**x = 0**',               'checked'],
   ['E false root',       'Solve x^2-5x+6=0',       '## ✅ Answer\n**x = 2, x = 4**',        'disputed'],
   ['F monotone',         'Solve sqrt(x) = 3',      '## ✅ Answer\n**x = 9**',               'checked'],

@@ -568,7 +568,7 @@ final class Checks
        represent (brackets, powers, functions, percentages) fails to match and
        the check is skipped rather than approximated. */
     private const CALC_RE =
-        '/(-?\d[\d,]*(?:\.\d+)?(?:(?:\s*[+\-×÷*\/]\s*|\s+[xX]\s+)-?\d[\d,]*(?:\.\d+)?)+)\s*=\s*(-?\d[\d,]*(?:\.\d+)?(?:\s*\/\s*-?\d[\d,]*(?:\.\d+)?)?)/u';
+        '/(-?\d[\d,]*(?:[ \x{00A0}]\d{3})*(?:\.\d+)?(?:(?:\s*[+\-×÷*\/]\s*|\s+[xX]\s+)-?\d[\d,]*(?:[ \x{00A0}]\d{3})*(?:\.\d+)?)+)\s*=\s*(-?\d[\d,]*(?:[ \x{00A0}]\d{3})*(?:\.\d+)?(?:\s*\/\s*-?\d[\d,]*(?:[ \x{00A0}]\d{3})*(?:\.\d+)?)?)/u';
 
     /* ⁰¹⁵⁶⁷⁸⁹ were missing while ²³⁴ were present, so an equation was visible
        to this scan at x⁴ and invisible at x⁵ — and deLatex emits every one of

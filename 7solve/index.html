@@ -14324,7 +14324,7 @@ var Verify = (function(){
      answer into a failed check. Capturing the whole fraction lets it be
      EVALUATED instead — which verifies the simplification rather than
      skipping it. */
-  var CALC_RE = /(-?\d[\d,]*(?:\.\d+)?(?:(?:\s*[+\-×÷*\/]\s*|\s+[xX]\s+)-?\d[\d,]*(?:\.\d+)?)+)\s*=\s*(-?\d[\d,]*(?:\.\d+)?(?:\s*\/\s*-?\d[\d,]*(?:\.\d+)?)?)/g;
+  var CALC_RE = /(-?\d[\d,]*(?:[ \u00A0]\d{3})*(?:\.\d+)?(?:(?:\s*[+\-×÷*\/]\s*|\s+[xX]\s+)-?\d[\d,]*(?:[ \u00A0]\d{3})*(?:\.\d+)?)+)\s*=\s*(-?\d[\d,]*(?:[ \u00A0]\d{3})*(?:\.\d+)?(?:\s*\/\s*-?\d[\d,]*(?:[ \u00A0]\d{3})*(?:\.\d+)?)?)/g;
 
   /* ---------- THE SECOND ARITHMETIC PASS: closed forms ----------
      evalFlat is deliberately narrow — digits and the four operators, nothing
